@@ -4,7 +4,6 @@ about: Crea una nueva funcionalidad para la aplicación.
 title: 'feat: [Título conciso de la funcionalidad]'
 labels: ''
 assignees: ''
-
 ---
 
 ### Descripción

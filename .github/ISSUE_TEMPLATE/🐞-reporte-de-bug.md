@@ -4,7 +4,6 @@ about: Crea un reporte acerca del bug.
 title: 'fix: [Título conciso del bug]'
 labels: ''
 assignees: ''
-
 ---
 
 ### Describe el Bug
