@@ -8,15 +8,16 @@ export interface InputProps
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, icon, ...props }, ref) => {
     const defaultInputClasses =
-      "h-11 border focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400"
+      "w-full h-11 border focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 px-3"
 
     if (icon) {
       return (
         <div className="relative">
           <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-            {React.cloneElement(icon as React.ReactElement, {
-              className: "w-4 h-4 text-gray-500 dark:text-gray-400",
-            })}
+            {React.isValidElement(icon) &&
+              React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
+                className: "w-4 h-4 text-gray-500 dark:text-gray-400",
+              })}
           </div>
           <input
             type={type}
@@ -27,6 +28,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </div>
       )
     }
+    
     return (
       <input
         type={type}

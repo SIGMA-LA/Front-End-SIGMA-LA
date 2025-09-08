@@ -97,9 +97,9 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
-      <Card className="w-full max-w-md bg-white shadow-sm border border-gray-200">
-        <CardHeader className="text-center pb-8 pt-12">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <Card className="w-full max-w-md bg-white shadow-sm border border-gray-20 max-w-sm sm:max-w-md">
+        <CardHeader className="text-center pt-12">
           <div className="flex items-center justify-center space-x-3 mb-8">
             <span className="text-2xl font-semibold text-blue-600">SIGMA - LA</span>
             <div className="flex">
@@ -108,7 +108,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               <ChevronRight className="w-6 h-6 text-blue-400 -ml-2" />
             </div>
           </div>
-          <h1 className="text-2xl font-normal text-gray-800 mb-8">Inicio de sesión</h1>
+          <h1 className="text-2xl font-normal text-gray-800 mb-4">Inicio de sesión</h1>
         </CardHeader>
 
         <CardContent className="px-12 pb-12">
@@ -125,34 +125,38 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               <Label htmlFor="usuario" className="text-sm font-medium text-gray-700">
                 Usuario
               </Label>
-              <Input
-                id="usuario"
-                type="text"
-                value={formData.usuario}
-                onChange={(e) => handleInputChange("usuario", e.target.value)}
-                placeholder="Ingresa tu usuario"
-                className={`h-11 focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 ${
-                  errors.usuario ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.usuario && <p className="text-sm text-red-600 mt-1">{errors.usuario}</p>}
+              <div className="pt-1">
+                <Input
+                  id="usuario"
+                  type="text"
+                  value={formData.usuario}
+                  onChange={(e) => handleInputChange("usuario", e.target.value)}
+                  placeholder="Ingresa tu usuario"
+                  className={`w-full h-10 sm:h-11 lg:h-12 focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 ${
+                    errors.usuario ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.usuario && <p className="text-sm text-red-600 mt-1">{errors.usuario}</p>}
+              </div>
             </div>
+            
 
-            {/* Contraseña Field */}
-            <div className="space-y-2">
+            <div className="space-y-2 ">
               <Label htmlFor="contrasena" className="text-sm font-medium text-gray-700">
                 Contraseña
               </Label>
-              <Input
-                id="contrasena"
-                type="password"
-                value={formData.contrasena}
-                onChange={(e) => handleInputChange("contrasena", e.target.value)}
-                placeholder="Ingresa tu contraseña"
-                className={`h-11 focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 ${
-                  errors.contrasena ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
-              />
+              <div className="pt-1">
+                <Input
+                  id="contrasena"
+                  type="password"
+                  value={formData.contrasena}
+                  onChange={(e) => handleInputChange("contrasena", e.target.value)}
+                  placeholder="Ingresa tu contraseña"
+                  className={`w-full h-10 sm:h-11 lg:h-12 focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 ${
+                    errors.contrasena ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "border-gray-300"
+                  }`}
+                  />
+              </div>
               {errors.contrasena && <p className="text-sm text-red-600 mt-1">{errors.contrasena}</p>}
             </div>
 
