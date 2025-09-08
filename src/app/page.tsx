@@ -1,10 +1,29 @@
+"use client"
 
+import { useState } from "react"
+import LoginForm from "../components/LoginForm"
+import './globals.css'
 
-export default function HomePage() {
+/*
+import Dashboard from "../dashboard"
+import AdminDashboard from "../pages/admin-dashboard"
+import EncargadoDashboard from "../pages/encargado-dashboard"
+import { GlobalProvider } from "../context/GlobalContext"
+import VisitadorDashboard from "../pages/visitador-dashboard"
+
+import type { Usuario } from "../types"
+import { mockUsuarios, credencialesPrueba } from "../data/mockUsers"
+*/
+
+export default function Page() {
+  const handleLogin = (usuario: string, contrasena: string) => {
+    console.log("Usuario:", usuario, "Contraseña:", contrasena)
+    return true
+  }
+
   return (
-    <main style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1>Bienvenido a mi página principal</h1>
-      <p>Esta es mi primera página con Next.js</p>
-    </main>
+    <div className="flex items-center justify-center">
+      <LoginForm onLogin={handleLogin} />
+    </div>
   )
 }

@@ -1,15 +1,16 @@
-/*
-import { object, string, minLength, type Output } from 'valibot'
+import { object, string, minLength, nonEmpty, pipe, type InferOutput } from 'valibot'
 
-// Definimos el esquema de validación para el formulario de login.
 export const loginSchema = object({
-  usuario: string('El nombre de usuario es obligatorio.'),
-  contrasena: string([
-    minLength(1, 'La contraseña es obligatoria.'),
-    minLength(6, 'La contraseña debe tener al menos 6 caracteres.'),
-  ]),
+  usuario: pipe(
+    string(),
+    nonEmpty('El campo Usuario es obligatorio'),
+    minLength(3, 'El usuario debe tener al menos 3 caracteres')
+  ),
+  contrasena: pipe(
+    string(),
+    nonEmpty('El campo Contraseña es obligatorio'),
+    minLength(6, 'La contraseña debe tener al menos 6 caracteres')
+  ),
 })
 
-// Exportamos el tipo inferido del esquema para usarlo en nuestro componente.
-export type LoginFormData = Output<typeof loginSchema>
-*/
+export type LoginFormData = InferOutput<typeof loginSchema>
