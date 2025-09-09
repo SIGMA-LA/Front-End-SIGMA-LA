@@ -15,7 +15,7 @@ export default function DashboardSwitcher({ user, onLogout }: DashboardSwitcherP
   const renderDashboard = () => {
     switch (user.rol) {
         case "Encargado":
-            return <EncargadoDashboard />
+            return <EncargadoDashboard user={user} onLogout={onLogout} />
         case "Visitador":
             return <VisitadorDashboard user={user} onLogout={onLogout} />
         case "Administrador":

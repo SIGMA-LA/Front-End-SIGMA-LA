@@ -20,8 +20,8 @@ export default function Page() {
       setUser({ id: 1, nombre: "Carlchen", apellido: "Gugliermino", rol: "Visitador" })
       return true
     }
-    if (lowerUsername === "franco") {
-      setUser({ id: 2, nombre: "Franco", apellido: "Zariaga", rol: "Encargado" })
+    if (lowerUsername === "diego") {
+      setUser({ id: 2, nombre: "Diego", apellido: "Lezcano", rol: "Encargado" })
       return true
     }
     

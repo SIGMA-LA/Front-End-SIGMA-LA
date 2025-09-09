@@ -37,3 +37,17 @@ export interface User {
   apellido: string
   rol: "Administrador" | "Coordinación" | "Encargado" | "Visitador"
 }
+
+export interface Entrega {
+  id: number
+  obra: Obra
+  fecha: string
+  hora: string
+  estado: "programada" | "en_transito" | "entregada" | "cancelada"
+  encargadoAsignado: string
+  productos: string[]
+  direccionEntrega: string
+  observaciones: string
+  vehiculo?: string
+  documentos?: Documento[]
+}

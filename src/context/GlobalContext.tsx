@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, ReactNode } from "react"
-import type { Visita } from "../types"
+import type { Visita, Entrega } from "../types"
 
 const hardcodedVisitas: Visita[] = [
   {
@@ -101,20 +101,59 @@ const hardcodedVisitas: Visita[] = [
     hora: "16:00",
     tipo: "seguimiento",
     estado: "programada",
-    visitadorAsignado: "Diego Lezcano",
+    visitadorAsignado: "Franco Zariaga",
     observaciones: "Esta visita no debería ser visible para el usuario Juan Pérez.",
   },
+]
+
+const hardcodedEntregas: Entrega[] = [
+  {
+    id: 1,
+    obra: { id: 301, cliente: { id: 401, nombre: "Empresa Constructora SRL", apellido: "", telefono: "221-555-8888", email: "compras@constructora.com" }, ubicacion: "Parque Industrial La Plata" },
+    fecha: "2025-09-18",
+    hora: "09:00",
+    estado: "programada",
+    encargadoAsignado: "Diego Lezcano",
+    productos: ["200 bolsas de cemento", "50 varillas de acero 10mm", "10 rollos de membrana"],
+    direccionEntrega: "Parque Industrial La Plata, Lote 24",
+    observaciones: "Coordinar con el jefe de obra, Sr. Ramírez. Se requiere montacargas para la descarga.",
+    vehiculo: "Camión Iveco (Patente AE456FG)"
+  },
+  {
+    id: 2,
+    obra: { id: 302, cliente: { id: 402, nombre: "Edificio Central", apellido: "", telefono: "221-555-9999", email: "admin@edificiocentral.com" }, ubicacion: "La Plata, Calle 10 n° 567" },
+    fecha: "2025-09-19",
+    hora: "11:00",
+    estado: "programada",
+    encargadoAsignado: "Diego Lezcano",
+    productos: ["50 cajas de cerámicos", "10 bolsas de pegamento Klaukol"],
+    direccionEntrega: "La Plata, Calle 10 n° 567 (Entrada de servicio)",
+    observaciones: "Entregar en horario, el ascensor de carga está reservado.",
+  },
+  {
+    id: 3,
+    obra: { id: 303, cliente: { id: 403, nombre: "Barrio Privado Los Robles", apellido: "", telefono: "221-555-0000", email: "seguridad@losrobles.com" }, ubicacion: "Ruta 2, km 45" },
+    fecha: "2025-09-12",
+    hora: "14:30",
+    estado: "entregada",
+    encargadoAsignado: "Diego Lezcano",
+    productos: ["100m² de césped en panes"],
+    direccionEntrega: "Ruta 2, km 45 (Portería principal)",
+    observaciones: "Entrega realizada y firmada por el intendente del barrio. Sin problemas.",
+  }
 ]
 
 interface GlobalContextType {
   visitas: Visita[]
   finalizarVisita: (visitaId: number, observaciones: string) => void
+  entregas: Entrega[]
+  finalizarEntrega: (entregaId: number, observaciones: string) => void
 }
-
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
 
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [visitas, setVisitas] = useState<Visita[]>(hardcodedVisitas)
+  const [entregas, setEntregas] = useState<Entrega[]>(hardcodedEntregas)
 
   const finalizarVisita = (visitaId: number, observacionesFinales: string) => {
     setVisitas((prevVisitas) =>
@@ -130,8 +169,22 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     )
   }
 
+  const finalizarEntrega = (entregaId: number, observacionesFinales: string) => {
+    setEntregas((prevEntregas) =>
+      prevEntregas.map((entrega) =>
+        entrega.id === entregaId
+          ? {
+              ...entrega,
+              estado: "entregada",
+              observaciones: `${entrega.observaciones}\n\nObservación final: ${observacionesFinales}`,
+            }
+          : entrega
+      )
+    )
+  }
+
   return (
-    <GlobalContext.Provider value={{ visitas, finalizarVisita }}>
+    <GlobalContext.Provider value={{ visitas, finalizarVisita, entregas, finalizarEntrega }}>
       {children}
     </GlobalContext.Provider>
   )
