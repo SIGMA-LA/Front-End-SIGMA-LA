@@ -1,8 +1,11 @@
-export default function AdminDashboard() {
+export default function EncargadoDashboard() {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-      <p>Welcome to the Admin Dashboard!</p>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-800">Dashboard del Encargado</h1>
+      <p className="mt-2 text-gray-600">
+        Bienvenido al panel. Aquí encontrarás las herramientas para gestionar tus tareas.
+      </p>
+      {/* Marcadores de posición para futuros widgets o componentes */}
     </div>
   )
 }

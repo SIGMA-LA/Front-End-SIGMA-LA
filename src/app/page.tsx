@@ -2,28 +2,46 @@
 
 import { useState } from "react"
 import LoginForm from "../components/LoginForm"
-import './globals.css'
-
-/*
-import Dashboard from "../dashboard"
-import AdminDashboard from "../pages/admin-dashboard"
-import EncargadoDashboard from "../pages/encargado-dashboard"
+import DashboardSwitcher from "../components/DashboardSwitcher"
 import { GlobalProvider } from "../context/GlobalContext"
-import VisitadorDashboard from "../pages/visitador-dashboard"
-
-import type { Usuario } from "../types"
-import { mockUsuarios, credencialesPrueba } from "../data/mockUsers"
-*/
+// No importamos más mockUsers
+import type { User } from "../types"
+import "./globals.css"
 
 export default function Page() {
-  const handleLogin = (usuario: string, contrasena: string) => {
-    console.log("Usuario:", usuario, "Contraseña:", contrasena)
-    return true
+  const [user, setUser] = useState<User | null>(null)
+
+  // La lógica de login ahora es autónoma
+  const handleLogin = (username: string): boolean => {
+    const lowerUsername = username.toLowerCase()
+
+    // Definimos los usuarios válidos directamente aquí
+    if (lowerUsername === "carlchen") {
+      setUser({ id: 1, nombre: "Carlchen", apellido: "Gugliermino", rol: "Visitador" })
+      return true
+    }
+    if (lowerUsername === "franco") {
+      setUser({ id: 2, nombre: "Franco", apellido: "Zariaga", rol: "Encargado" })
+      return true
+    }
+    
+    // Si el usuario no coincide, el login falla
+    return false
+  }
+
+  const handleLogout = () => {
+    setUser(null)
   }
 
   return (
-    <div className="min-h-screen w-full">
-      <LoginForm onLogin={handleLogin} />
-    </div>
+    <GlobalProvider>
+      <div className="min-h-screen w-full bg-gray-50">
+        {user ? (
+          <DashboardSwitcher user={user} onLogout={handleLogout} />
+        ) : (
+          <LoginForm onLogin={handleLogin} />
+        )}
+      </div>
+    </GlobalProvider>
   )
 }

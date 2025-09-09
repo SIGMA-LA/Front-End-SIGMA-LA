@@ -11,7 +11,7 @@ import { LoginFormData, loginSchema } from "@/schemas/loginSchemas"
 import { safeParse } from "valibot"
 
 interface LoginFormProps {
-  onLogin: (usuario: string, contrasena: string) => boolean
+  onLogin: (usuario: string) => boolean
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
@@ -75,29 +75,22 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     setIsLoading(true)
     setErrors((prev) => ({ ...prev, general: "" }))
 
-    try {
-      // Simular llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      const loginSuccessful = onLogin(formData.usuario, formData.contrasena)
+    const loginSuccessful = onLogin(formData.usuario)
 
-      if (!loginSuccessful) {
-        throw new Error("Credenciales incorrectas")
-      }
-
-      // Éxito - el estado del usuario se maneja en app/page.tsx
-    } catch (error) {
+    if (loginSuccessful) {
+    } else {
       setErrors((prev) => ({
         ...prev,
         general: "Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.",
       }))
-    } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md bg-white shadow-sm border border-gray-20 max-w-sm sm:max-w-md">
         <CardHeader className="text-center pt-12">
           <div className="flex items-center justify-center space-x-3 mb-8">
