@@ -1,6 +1,10 @@
-
+import type { Metadata } from 'next'
 import './globals.css'
 
+export const metadata: Metadata = {
+  title: 'SIGMA-LA',
+  description: 'Sistema de Gestión y Monitoreo de Actividades',
+}
 
 export default function RootLayout({
   children,
@@ -8,8 +12,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="es">
+      <body>
+        {children}
+      </body>
     </html>
   )
 }
