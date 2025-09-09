@@ -3,6 +3,7 @@
 import { useState } from "react"
 import LoginForm from "../components/LoginForm"
 import './globals.css'
+import CoordDashboard from "../pages/coord-dashboard"
 
 /*
 import Dashboard from "../dashboard"
@@ -23,7 +24,8 @@ export default function Page() {
 
   return (
     <div className="min-h-screen w-full">
-      <LoginForm onLogin={handleLogin} />
+      {/*<LoginForm onLogin={handleLogin} />*/}
+      <CoordDashboard userName="Usuario de prueba" onLogout={() => { console.log("Logout"); }}></CoordDashboard>
     </div>
   )
 }

@@ -98,7 +98,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <Card className="w-full max-w-md bg-white shadow-sm border border-gray-20 max-w-sm sm:max-w-md">
+      <Card className="w-full max-w-md bg-white shadow-sm border border-gray-20 sm:max-w-md">
         <CardHeader className="text-center pt-12">
           <div className="flex items-center justify-center space-x-3 mb-8">
             <span className="text-2xl font-semibold text-blue-600">SIGMA - LA</span>
