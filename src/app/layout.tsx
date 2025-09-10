@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { GlobalProvider } from '@/context/GlobalContext'
 
 export const metadata: Metadata = {
   title: 'SIGMA-LA',
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        {children}
+        <GlobalProvider>{children}</GlobalProvider>
       </body>
     </html>
   )

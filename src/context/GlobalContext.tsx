@@ -11,6 +11,8 @@ interface GlobalContextType {
   addEmpleado: (empleado: Usuario) => void;
   updateEmpleado: (id: string, data: Partial<Omit<Usuario, 'id'>>) => void;
   deleteEmpleado: (id: string) => void;
+  currentSection: string;
+  setCurrentSection: (section: string) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -19,6 +21,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios);
   const [obras] = useState<Obra[]>(mockObras);
   const [clientes] = useState<Cliente[]>(mockClientes);
+  const [currentSection, setCurrentSection] = useState("dashboard");
 
   const addEmpleado = (empleado: Usuario) => {
     setUsuarios(prev => [...prev, empleado]);
@@ -34,7 +37,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <GlobalContext.Provider
-      value={{ usuarios, obras, clientes, addEmpleado, updateEmpleado, deleteEmpleado }}
+      value={{ usuarios, obras, clientes, addEmpleado, updateEmpleado, deleteEmpleado, currentSection, setCurrentSection }}
     >
       {children}
     </GlobalContext.Provider>
