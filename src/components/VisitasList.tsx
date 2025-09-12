@@ -1,0 +1,136 @@
+"use client"
+
+import { Calendar, Clock, User, Eye, Plus } from "lucide-react"
+
+// Mock data de visitas
+const mockVisitas = [
+  {
+    id: "1",
+    obra: { id: "1", direccion: "Rodriguez 200" },
+    fecha: "2024-03-15",
+    hora: "10:00",
+    tipo: "medicion",
+    encargado: "Juan Pérez",
+    estado: "programada",
+    observaciones: "Primera medición para instalación de ventanas"
+  },
+  {
+    id: "2",
+    obra: { id: "2", direccion: "Córdoba 123" },
+    fecha: "2024-03-12",
+    hora: "14:30",
+    tipo: "inspeccion",
+    encargado: "María García",
+    estado: "completada",
+    observaciones: "Inspección final antes de la entrega"
+  },
+  {
+    id: "3",
+    obra: { id: "1", direccion: "Pampa 34" },
+    fecha: "2024-03-18",
+    hora: "09:00",
+    tipo: "seguimiento",
+    encargado: "Carlos López",
+    estado: "programada",
+    observaciones: "Control de avance de obra"
+  }
+]
+
+interface VisitasListProps {
+  onCreateClick: () => void;
+}
+
+export default function VisitasList({ onCreateClick }: VisitasListProps) {
+  const getStatusColor = (estado: string) => {
+    switch (estado) {
+      case "programada":
+        return "bg-yellow-500"
+      case "completada":
+        return "bg-green-500"
+      case "cancelada":
+        return "bg-red-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  const getTipoText = (tipo: string) => {
+    switch (tipo) {
+      case "inspeccion":
+        return "Inspección"
+      case "medicion":
+        return "Medición"
+      case "seguimiento":
+        return "Seguimiento"
+      case "entrega":
+        return "Entrega"
+      default:
+        return tipo
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("es-AR")
+  }
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Visitas</h1>
+          <button 
+            onClick={onCreateClick}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Nueva Visita
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          {mockVisitas.map((visita) => (
+            <div key={visita.id} className="flex items-center space-x-4">
+              {/* Status Indicator */}
+              <div className={`w-6 h-6 rounded-full ${getStatusColor(visita.estado)}`} />
+
+              {/* Visita Card */}
+              <div className="flex-1 bg-blue-50 border border-blue-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{visita.obra.direccion}</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(visita.fecha)}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4" />
+                        <span>{visita.hora}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4" />
+                        <span>{visita.encargado}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Tipo: {getTipoText(visita.tipo)}</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-500 mt-2">{visita.observaciones}</p>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="ml-4">
+                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 text-sm font-medium transition-colors">
+                      <Eye className="w-4 h-4" />
+                      <span>Ver<br />Detalles</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
