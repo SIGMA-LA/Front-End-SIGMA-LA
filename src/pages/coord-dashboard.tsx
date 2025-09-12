@@ -12,6 +12,7 @@ import VisitasList from "../components/VisitasList"
 import ObrasList from "../components/ObrasList"
 import ClientesList from "../components/ClientesList"
 import CrearVisita from "../components/CrearVisita"
+import CrearEntrega from "../components/CrearEntrega"
 
 interface DashboardProps {
   userName: string
@@ -41,14 +42,18 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
     switch (currentSection) {
       case "obras":
         return (
-          <ObrasList 
-            onCreateClick={() => setCurrentSection("crear-obra")}
-            onScheduleVisit={(obra) => {
-              setSelectedObra(obra)
-              setCurrentSection("crear-visita")
-            }}
-          />
-        )
+    <ObrasList 
+      onCreateClick={() => setCurrentSection("crear-obra")}
+      onScheduleVisit={(obra) => {
+        setSelectedObra(obra)
+        setCurrentSection("crear-visita")
+      }}
+      onScheduleEntrega={(obra) => {
+        setSelectedObra(obra)
+        setCurrentSection("crear-entrega")
+      }}
+    />
+  )
       
       case "clientes":
         return <ClientesList onCreateClick={() => setCurrentSection("crear-cliente")} />
@@ -57,34 +62,10 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
         return <VisitasList onCreateClick={() => setCurrentSection("crear-visita")} />
       
       case "entregas":
-        return <EntregasList onCreateClick={() => { /* TODO: implement create entrega logic */ }} />
+        return <EntregasList onCreateClick={() => { setCurrentSection("crear-entrega") }} />
       
       case "configuraciones":
         return <Configuraciones />
-
-      case "crear-obra":
-        return (
-          <CrearObra 
-            onCancel={() => setCurrentSection("obras")}
-            onSubmit={(obraData) => {
-              // Aquí puedes agregar lógica para guardar la obra
-              console.log("Obra creada:", obraData)
-              setCurrentSection("obras")
-            }}
-          />
-        )
-
-      case "crear-cliente":
-        return (
-          <CrearCliente 
-            onCancel={() => setCurrentSection("clientes")}
-            onSubmit={(clienteData) => {
-              // Aquí puedes agregar lógica para guardar el cliente
-              console.log("Cliente creado:", clienteData)
-              setCurrentSection("clientes")
-            }}
-          />
-        )
 
       case "crear-visita":
         return (
@@ -97,6 +78,23 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
               // Aquí puedes agregar lógica para guardar la visita
               console.log("Visita creada:", visitaData)
               setCurrentSection(selectedObra ? "obras" : "visitas")
+              setSelectedObra(null)
+            }}
+            preloadedObra={selectedObra}
+          />
+        )
+
+      case "crear-entrega":
+        return (
+          <CrearEntrega
+            onCancel={() => {
+              setCurrentSection(selectedObra ? "obras" : "entregas")
+              setSelectedObra(null)
+            }}
+            onSubmit={(entregaData) => {
+              // Aquí puedes agregar lógica para guardar la entrega
+              console.log("Entrega creada:", entregaData)
+              setCurrentSection(selectedObra ? "obras" : "entregas")
               setSelectedObra(null)
             }}
             preloadedObra={selectedObra}

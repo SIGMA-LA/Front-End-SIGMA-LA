@@ -10,9 +10,10 @@ const mockObras = [
 interface ObrasListProps {
   onCreateClick: () => void
   onScheduleVisit?: (obra: any) => void
+  onScheduleEntrega?: (obra: any) => void
 }
 
-export default function ObrasList({ onCreateClick, onScheduleVisit }: ObrasListProps) {
+export default function ObrasList({ onCreateClick, onScheduleVisit, onScheduleEntrega }: ObrasListProps) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -45,9 +46,6 @@ export default function ObrasList({ onCreateClick, onScheduleVisit }: ObrasListP
                     {obra.estado}
                   </span>
                   <div className="flex gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 font-medium">
-                      Ver detalles
-                    </button>
                     {onScheduleVisit && (
                       <button 
                         onClick={() => onScheduleVisit(obra)}
@@ -57,7 +55,21 @@ export default function ObrasList({ onCreateClick, onScheduleVisit }: ObrasListP
                         Agendar Visita
                       </button>
                     )}
+                    {onScheduleEntrega && (
+                      <button 
+                        onClick={() => onScheduleEntrega(obra)}
+                        className="flex items-center gap-1 text-red-600 hover:text-red-800 font-medium"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Agendar Entrega
+                      </button>
+                    )}
+                    <button className="text-blue-600 hover:text-blue-800 font-medium">
+                      Ver detalles
+                    </button>
+                    
                   </div>
+                  
                 </div>
               </div>
             </div>
