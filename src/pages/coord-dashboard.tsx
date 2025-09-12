@@ -9,19 +9,9 @@ import CrearObra from "../components/CrearObra"
 import Configuraciones from "../components/Configuraciones"
 import EntregasList from "../components/EntregasList"
 import VisitasList from "../components/VisitasList"
-
-// Mock data temporal
-const mockObras = [
-  { id: "1", nombre: "Casa Rodriguez", cliente: "Juan Rodriguez", estado: "En proceso", fechaInicio: "2024-01-15" },
-  { id: "2", nombre: "Oficinas Centro", cliente: "Empresa ABC", estado: "Planificación", fechaInicio: "2024-02-01" },
-  { id: "3", nombre: "Departamento Norte", cliente: "María García", estado: "Finalizada", fechaInicio: "2023-12-10" },
-]
-
-const mockClientes = [
-  { id: "1", nombre: "Juan Pérez", email: "juan@email.com", telefono: "123-456-7890" },
-  { id: "2", nombre: "María González", email: "maria@email.com", telefono: "098-765-4321" },
-  { id: "3", nombre: "Carlos Rodríguez", email: "carlos@email.com", telefono: "555-123-4567" },
-]
+import ObrasList from "../components/ObrasList"
+import ClientesList from "../components/ClientesList"
+import CrearVisita from "../components/CrearVisita"
 
 interface DashboardProps {
   userName: string
@@ -31,6 +21,7 @@ interface DashboardProps {
 export default function Dashboard({ userName, onLogout }: DashboardProps) {
   const [currentSection, setCurrentSection] = useState("dashboard")
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
@@ -50,84 +41,76 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
     switch (currentSection) {
       case "obras":
         return (
-          <div className="p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Obras</h1>
-                <button 
-                  onClick={() => setCurrentSection("crear-obra")}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Nueva Obra
-                </button>
-              </div>
-              
-              <div className="grid gap-4 sm:gap-6">
-                {mockObras.map((obra) => (
-                  <div key={obra.id} className="bg-blue-50 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{obra.nombre}</h3>
-                        <p className="text-gray-600">Cliente: {obra.cliente}</p>
-                        <p className="text-sm text-gray-500">Inicio: {obra.fechaInicio}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          obra.estado === 'En proceso' ? 'bg-yellow-100 text-yellow-800' :
-                          obra.estado === 'Planificación' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {obra.estado}
-                        </span>
-                        <button className="text-blue-600 hover:text-blue-800 font-medium">
-                          Ver detalles
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <ObrasList 
+            onCreateClick={() => setCurrentSection("crear-obra")}
+            onScheduleVisit={(obra) => {
+              setSelectedObra(obra)
+              setCurrentSection("crear-visita")
+            }}
+          />
         )
       
       case "clientes":
-        return (
-          <div className="p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Clientes</h1>
-                <button 
-                  onClick={() => setCurrentSection("crear-cliente")}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Nuevo Cliente
-                </button>
-              </div>
-              
-              <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {mockClientes.map((cliente) => (
-                  <div key={cliente.id} className="bg-blue-50 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{cliente.nombre}</h3>
-                    <p className="text-gray-600 mb-1">{cliente.email}</p>
-                    <p className="text-gray-600 mb-4">{cliente.telefono}</p>
-                    <button className="text-blue-600 hover:text-blue-800 font-medium">
-                      Ver detalles
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )
+        return <ClientesList onCreateClick={() => setCurrentSection("crear-cliente")} />
       
       case "visitas":
-        return <VisitasList />
+        return <VisitasList onCreateClick={() => setCurrentSection("crear-visita")} />
       
       case "entregas":
-        return <EntregasList />
+        return <EntregasList onCreateClick={() => { /* TODO: implement create entrega logic */ }} />
+      
+      case "configuraciones":
+        return <Configuraciones />
+
+      case "crear-obra":
+        return (
+          <CrearObra 
+            onCancel={() => setCurrentSection("obras")}
+            onSubmit={(obraData) => {
+              // Aquí puedes agregar lógica para guardar la obra
+              console.log("Obra creada:", obraData)
+              setCurrentSection("obras")
+            }}
+          />
+        )
+
+      case "crear-cliente":
+        return (
+          <CrearCliente 
+            onCancel={() => setCurrentSection("clientes")}
+            onSubmit={(clienteData) => {
+              // Aquí puedes agregar lógica para guardar el cliente
+              console.log("Cliente creado:", clienteData)
+              setCurrentSection("clientes")
+            }}
+          />
+        )
+
+      case "crear-visita":
+        return (
+          <CrearVisita 
+            onCancel={() => {
+              setCurrentSection(selectedObra ? "obras" : "visitas")
+              setSelectedObra(null)
+            }}
+            onSubmit={(visitaData) => {
+              // Aquí puedes agregar lógica para guardar la visita
+              console.log("Visita creada:", visitaData)
+              setCurrentSection(selectedObra ? "obras" : "visitas")
+              setSelectedObra(null)
+            }}
+            preloadedObra={selectedObra}
+          />
+        )
+      
+      case "clientes":
+        return <ClientesList onCreateClick={() => setCurrentSection("crear-cliente")} />
+      
+      case "visitas":
+        return <VisitasList onCreateClick={() => { /* TODO: implement create visita logic */ }} />
+      
+      case "entregas":
+        return <EntregasList onCreateClick={() => { /* TODO: implement create entrega logic */ }} />
       
       case "configuraciones":
         return <Configuraciones />
@@ -328,7 +311,8 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
             <h1 className="text-lg font-semibold text-gray-900">
               {menuItems.find(item => currentSection === item.id || 
                 (item.id === "obras" && currentSection.includes("obra")) ||
-                (item.id === "clientes" && currentSection.includes("cliente")))?.label || "Dashboard"}
+                (item.id === "clientes" && currentSection.includes("cliente")) ||
+                (item.id === "visitas" && currentSection.includes("visita")))?.label || "Dashboard"}
             </h1>
             <div></div> {/* Spacer */}
           </div>
