@@ -32,7 +32,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     const result = safeParse(loginSchema, formData)
 
     if (!result.success) {
-      // Mapear los errores de Valibot
       const fieldErrors: typeof errors = { usuario: "", contrasena: "", general: "" }
 
       for (const issue of result.issues) {
@@ -56,7 +55,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       [field]: value,
     }))
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
@@ -76,7 +74,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     setErrors((prev) => ({ ...prev, general: "" }))
 
     try {
-      // Simular llamada a API
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       const loginSuccessful = onLogin(formData.usuario, formData.contrasena)
@@ -85,7 +82,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         throw new Error("Credenciales incorrectas")
       }
 
-      // Éxito - el estado del usuario se maneja en app/page.tsx
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
@@ -113,14 +109,12 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
         <CardContent className="px-12 pb-12">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error general */}
             {errors.general && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
                 <p className="text-sm text-red-600">{errors.general}</p>
               </div>
             )}
 
-            {/* Usuario Field */}
             <div className="space-y-2">
               <Label htmlFor="usuario" className="text-sm font-medium text-gray-700">
                 Usuario
