@@ -32,7 +32,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     const result = safeParse(loginSchema, formData)
 
     if (!result.success) {
-      // Mapear los errores de Valibot
       const fieldErrors: typeof errors = { usuario: "", contrasena: "", general: "" }
 
       for (const issue of result.issues) {
@@ -56,7 +55,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       [field]: value,
     }))
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
@@ -76,7 +74,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     setErrors((prev) => ({ ...prev, general: "" }))
 
     try {
-      // Simular llamada a API
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       const loginSuccessful = onLogin(formData.usuario, formData.contrasena)
@@ -85,20 +82,18 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         throw new Error("Credenciales incorrectas")
       }
 
-      // Éxito - el estado del usuario se maneja en app/page.tsx
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
         general: "Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.",
       }))
-    } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <Card className="w-full max-w-md bg-white shadow-sm border border-gray-20 sm:max-w-md">
+    <div className="min-h-screen flex items-center justify-center">
+      <Card className="w-full max-w-md bg-white shadow-sm border border-gray-20 max-w-sm sm:max-w-md">
         <CardHeader className="text-center pt-12">
           <div className="flex items-center justify-center space-x-3 mb-8">
             <span className="text-2xl font-semibold text-blue-600">SIGMA - LA</span>
@@ -113,14 +108,12 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
         <CardContent className="px-12 pb-12">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error general */}
             {errors.general && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
                 <p className="text-sm text-red-600">{errors.general}</p>
               </div>
             )}
 
-            {/* Usuario Field */}
             <div className="space-y-2">
               <Label htmlFor="usuario" className="text-sm font-medium text-gray-700">
                 Usuario
