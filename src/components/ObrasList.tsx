@@ -2,9 +2,9 @@ import { Building2, Plus, Calendar } from "lucide-react"
 
 // Mock data para obras
 const mockObras = [
-  { id: "1", nombre: "Casa Rodriguez", cliente: "Juan Rodriguez", estado: "En proceso", fechaInicio: "2024-01-15" },
-  { id: "2", nombre: "Oficinas Centro", cliente: "Empresa ABC", estado: "Planificación", fechaInicio: "2024-02-01" },
-  { id: "3", nombre: "Departamento Norte", cliente: "María García", estado: "Finalizada", fechaInicio: "2023-12-10" },
+  { id: "1", direccion: "Rodriguez 3243", cliente: "Juan Rodriguez", estado: "En proceso", fechaInicio: "2024-01-15" },
+  { id: "2", direccion: "Cordoba 124", cliente: "Empresa ABC", estado: "Planificación", fechaInicio: "2024-02-01" },
+  { id: "3", direccion: "Av. Francia 1230", cliente: "María García", estado: "Finalizada", fechaInicio: "2023-12-10" },
 ]
 
 interface ObrasListProps {
@@ -32,7 +32,7 @@ export default function ObrasList({ onCreateClick, onScheduleVisit }: ObrasListP
             <div key={obra.id} className="bg-blue-50 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{obra.nombre}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{obra.direccion}</h3>
                   <p className="text-gray-600">Cliente: {obra.cliente}</p>
                   <p className="text-sm text-gray-500">Inicio: {obra.fechaInicio}</p>
                 </div>

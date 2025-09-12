@@ -13,22 +13,19 @@ export default function Configuraciones({ onBack, className = "" }: Configuracio
     notificaciones: {
       email: true,
       push: true,
-      recordatorios: true,
-      presupuestos: true,
+      visitas: true,
+      entregas: true,
       vencimientos: true,
     },
     perfil: {
       nombre: "Usuario",
       apellido: "Aberturas",
-      email: "usuario@aberturas.com",
-      telefono: "+54 11 1234-5678",
-      empresa: "Aberturas Premium",
+      cuil: "20-45678912-3",
     },
     negocio: {
-      mostrarPrecios: true,
-      calcularIVA: true,
-      descuentosAutomaticos: false,
-      stockMinimo: "10",
+      presupuesto: "10",
+      viaticos: "50.00",
+      checkboxEjemplo: true,
     }
   })
 
@@ -77,7 +74,7 @@ export default function Configuraciones({ onBack, className = "" }: Configuracio
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configuraciones del Sistema</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Configuraciones</h1>
             {onBack && (
               <button
                 onClick={onBack}
@@ -133,25 +130,25 @@ export default function Configuraciones({ onBack, className = "" }: Configuracio
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-gray-700">Recordatorios de citas</span>
+                  <span className="text-gray-700">Notificaciones de Visitas</span>
                   <input
                     type="checkbox"
-                    checked={configuraciones.notificaciones.recordatorios}
+                    checked={configuraciones.notificaciones.visitas}
                     onChange={(e) => handleConfigChange("notificaciones", "recordatorios", e.target.checked)}
                     className="text-blue-600 focus:ring-blue-500 rounded"
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-gray-700">Nuevos presupuestos</span>
+                  <span className="text-gray-700">Notificaciones de Entregas</span>
                   <input
                     type="checkbox"
-                    checked={configuraciones.notificaciones.presupuestos}
+                    checked={configuraciones.notificaciones.entregas}
                     onChange={(e) => handleConfigChange("notificaciones", "presupuestos", e.target.checked)}
                     className="text-blue-600 focus:ring-blue-500 rounded"
                   />
                 </label>
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-gray-700">Vencimientos de garantía</span>
+                  <span className="text-gray-700">Vencimientos de presupuestos</span>
                   <input
                     type="checkbox"
                     checked={configuraciones.notificaciones.vencimientos}
@@ -192,28 +189,10 @@ export default function Configuraciones({ onBack, className = "" }: Configuracio
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={configuraciones.perfil.email}
-                    onChange={(e) => handleConfigChange("perfil", "email", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                  <input
-                    type="tel"
-                    value={configuraciones.perfil.telefono}
-                    onChange={(e) => handleConfigChange("perfil", "telefono", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
                   <input
                     type="text"
-                    value={configuraciones.perfil.empresa}
+                    value={configuraciones.perfil.cuil}
                     onChange={(e) => handleConfigChange("perfil", "empresa", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -234,37 +213,30 @@ export default function Configuraciones({ onBack, className = "" }: Configuracio
               </div>
               <div className="p-6 space-y-4">
                 <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-gray-700">Mostrar precios a clientes</span>
+                  <span className="text-gray-700">Checkbox para algo</span>
                   <input
                     type="checkbox"
-                    checked={configuraciones.negocio.mostrarPrecios}
+                    checked={configuraciones.negocio.checkboxEjemplo}
                     onChange={(e) => handleConfigChange("negocio", "mostrarPrecios", e.target.checked)}
                     className="text-blue-600 focus:ring-blue-500 rounded"
                   />
                 </label>
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-gray-700">Calcular IVA automáticamente</span>
-                  <input
-                    type="checkbox"
-                    checked={configuraciones.negocio.calcularIVA}
-                    onChange={(e) => handleConfigChange("negocio", "calcularIVA", e.target.checked)}
-                    className="text-blue-600 focus:ring-blue-500 rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between cursor-pointer">
-                  <span className="text-gray-700">Descuentos automáticos</span>
-                  <input
-                    type="checkbox"
-                    checked={configuraciones.negocio.descuentosAutomaticos}
-                    onChange={(e) => handleConfigChange("negocio", "descuentosAutomaticos", e.target.checked)}
-                    className="text-blue-600 focus:ring-blue-500 rounded"
-                  />
-                </label>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock mínimo (unidades)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Días de vigencia del presupuesto</label>
                   <input
                     type="number"
-                    value={configuraciones.negocio.stockMinimo}
+                    placeholder={configuraciones.negocio.presupuesto}
+                    onChange={(e) => handleConfigChange("negocio", "stockMinimo", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Costo de Viático por día</label>
+                  <input
+                    type="number"
+                    step={"0.01"}
+                    placeholder={configuraciones.negocio.viaticos}
                     onChange={(e) => handleConfigChange("negocio", "stockMinimo", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="0"

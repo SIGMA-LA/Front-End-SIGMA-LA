@@ -105,7 +105,7 @@ export default function CrearVisita({ onCancel, onSubmit, preloadedObra }: Crear
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              {isFromObra ? `Agendar Visita - ${preloadedObra?.nombre}` : "Nueva Visita"}
+              {isFromObra ? `Agendar Visita` : "Nueva Visita"}
             </h1>
             {isFromObra && (
               <p className="text-gray-600 mt-1">
