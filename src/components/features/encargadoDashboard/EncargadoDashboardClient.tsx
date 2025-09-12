@@ -4,27 +4,28 @@ import { useState } from "react"
 import {
   Calendar, CheckCircle, Clock, ExternalLink, FileText, Mail, MapPin, Package, Phone, Truck,
 } from "lucide-react"
-import type { User, Entrega } from "../types"
-import { useGlobalContext } from "../context/GlobalContext"
-import { Button } from "../components/ui/Button"
-import { Card, CardContent } from "../components/ui/Card"
-import { Textarea } from "../components/ui/Textarea"
-import { Label } from "../components/ui/Label"
-import UnifiedHeader from "../components/UnifiedHeader"
+import type { Usuario, Entrega } from "@/types"
+import { useGlobalContext } from "@/context/GlobalContext"
+import { Button } from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
+import { Textarea } from "@/components/ui/Textarea"
+import { Label } from "@/components/ui/Label"
+import { useAuth } from "@/context/AuthContext"
 
-interface EncargadoDashboardProps {
-  user: User
-  onLogout: () => void
-}
 
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-export default function EncargadoDashboard({ user, onLogout }: EncargadoDashboardProps) {
+export default function EncargadoDashboardClient() {
+  const { usuario } = useAuth();
   const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState("")
 
   const { entregas, finalizarEntrega } = useGlobalContext()
+
+  if (!usuario) {
+    return <div>Cargando datos del usuario...</div>;
+  }
 
   const handleFinalizarEntrega = () => {
     if (selectedEntrega) {
@@ -35,14 +36,13 @@ export default function EncargadoDashboard({ user, onLogout }: EncargadoDashboar
     }
   }
 
-  // Ahora 'user.nombre' y 'user.apellido' funcionarán porque la prop se llama 'user'.
-  const entregasAsignadas = entregas.filter((e) => e.encargadoAsignado === `${user.nombre} ${user.apellido}`)
+  // Ahora 'usuario.nombre' y 'usuario.apellido' funcionarán porque la prop se llama 'usuario'.
+  const entregasAsignadas = entregas.filter((e) => e.encargadoAsignado === `${usuario.nombre} ${usuario.apellido}`)
   const entregasPendientes = entregasAsignadas.filter((e) => e.estado === "programada")
   const entregasRealizadas = entregasAsignadas.filter((e) => e.estado === "entregada")
 
   return (
     <div className="h-screen flex flex-col">
-      <UnifiedHeader user={user} onLogout={onLogout} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Barra Lateral de Entregas */}

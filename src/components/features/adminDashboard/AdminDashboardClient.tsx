@@ -9,13 +9,10 @@ import { Label } from "@/components/ui/Label"
 import type { Usuario } from "@/types"
 import { mockReportesVentas } from "@/data/mockData"
 import { useGlobalContext } from "@/context/GlobalContext"
+import { useAuth } from "@/context/AuthContext"
 
-interface AdminDashboardProps {
-  usuario: Usuario
-  onLogout: () => void
-}
-
-export default function AdminDashboardClient({ usuario, onLogout }: AdminDashboardProps) {
+export default function AdminDashboardClient() { 
+  const { usuario } = useAuth()
   const [showCreateEmpleado, setShowCreateEmpleado] = useState(false)
   const [editingEmpleado, setEditingEmpleado] = useState<Usuario | null>(null)
   const [viewingEmpleado, setViewingEmpleado] = useState<Usuario | null>(null)
@@ -26,7 +23,12 @@ export default function AdminDashboardClient({ usuario, onLogout }: AdminDashboa
     telefono: "",
     rol: "visitador" as Usuario["rol"],
     fechaIngreso: new Date().toISOString().split("T")[0],
+    contraseña: "",
   })
+
+  if (!usuario) {
+    return <div>Cargando datos del usuario...</div>;
+  }
 
   const { obras, clientes, usuarios, addEmpleado, updateEmpleado, deleteEmpleado, currentSection, setCurrentSection } = useGlobalContext()
 
@@ -53,15 +55,15 @@ export default function AdminDashboardClient({ usuario, onLogout }: AdminDashboa
   }
 
   const handleCreateEmpleado = () => {
-    const empleado: Usuario = { id: Date.now().toString(), ...newEmpleado, activo: true }
+    const empleado: Usuario = { id: Math.random(), ...newEmpleado, activo: true, contraseña: "123456" }
     addEmpleado(empleado)
-    setNewEmpleado({ nombre: "", apellido: "", email: "", telefono: "", rol: "visitador", fechaIngreso: new Date().toISOString().split("T")[0] })
+    setNewEmpleado({ nombre: "", apellido: "", email: "", telefono: "", rol: "visitador", fechaIngreso: new Date().toISOString().split("T")[0], contraseña: "" })
     setShowCreateEmpleado(false)
   }
 
   const handleEditEmpleado = (empleado: Usuario) => {
     setEditingEmpleado(empleado)
-    setNewEmpleado({ nombre: empleado.nombre, apellido: empleado.apellido, email: empleado.email, telefono: empleado.telefono || "", rol: empleado.rol, fechaIngreso: empleado.fechaIngreso || new Date().toISOString().split("T")[0] })
+    setNewEmpleado({ nombre: empleado.nombre, apellido: empleado.apellido, email: empleado.email, telefono: empleado.telefono || "", rol: empleado.rol, fechaIngreso: empleado.fechaIngreso || new Date().toISOString().split("T")[0], contraseña: "123456" })
     setShowCreateEmpleado(true)
   }
 
@@ -71,12 +73,12 @@ export default function AdminDashboardClient({ usuario, onLogout }: AdminDashboa
     if (editingEmpleado) {
       updateEmpleado(editingEmpleado.id, { ...newEmpleado })
       setEditingEmpleado(null)
-      setNewEmpleado({ nombre: "", apellido: "", email: "", telefono: "", rol: "visitador", fechaIngreso: new Date().toISOString().split("T")[0] })
+      setNewEmpleado({ nombre: "", apellido: "", email: "", telefono: "", rol: "visitador", fechaIngreso: new Date().toISOString().split("T")[0], contraseña: "123456" })
       setShowCreateEmpleado(false)
     }
   }
 
-  const handleDeleteEmpleado = (id: string) => {
+  const handleDeleteEmpleado = (id: number) => {
     if (window.confirm("¿Está seguro de que desea eliminar este empleado?")) {
       deleteEmpleado(id)
     }
@@ -126,7 +128,7 @@ export default function AdminDashboardClient({ usuario, onLogout }: AdminDashboa
         <Card><CardHeader className="pb-3"><CardTitle className="text-lg flex items-center"><Building className="w-5 h-5 mr-2 text-purple-600" />Visitadores y Encargados ({sections.visitadoresYEncargados.length})</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{sections.visitadoresYEncargados.map(renderEmpleadoCard)}</div></CardContent></Card>
         <Card><CardHeader className="pb-3"><CardTitle className="text-lg flex items-center"><Users className="w-5 h-5 mr-2 text-red-600" />Administradores ({sections.admin.length})</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{sections.admin.map(renderEmpleadoCard)}</div></CardContent></Card>
         {viewingEmpleado && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white rounded-lg p-6 max-w-md w-full mx-4"><h3 className="text-lg font-semibold mb-4">Detalles del Empleado</h3><div className="space-y-4"><div className="flex items-center space-x-3"><div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><Users className="w-6 h-6 text-blue-600" /></div><div><h4 className="font-semibold">{viewingEmpleado.nombre} {viewingEmpleado.apellido}</h4><p className="text-sm text-gray-600">{getRolDisplayName(viewingEmpleado.rol)}</p></div></div><div className="space-y-2 border-t pt-4 mt-4"><div className="flex items-center space-x-2"><Mail className="w-4 h-4 text-gray-500" /><span className="text-sm text-gray-600">{viewingEmpleado.email}</span></div>{viewingEmpleado.telefono && (<div className="flex items-center space-x-2"><Phone className="w-4 h-4 text-gray-500" /><span className="text-sm text-gray-600">{viewingEmpleado.telefono}</span></div>)}{viewingEmpleado.fechaIngreso && (<div className="flex items-center space-x-2"><Calendar className="w-4 h-4 text-gray-500" /><span className="text-sm text-gray-600">Ingreso: {new Date(viewingEmpleado.fechaIngreso).toLocaleDateString("es-AR")}</span></div>)}</div><div className="flex justify-center"><span className={`px-3 py-1 rounded-full text-sm ${viewingEmpleado.activo ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{viewingEmpleado.activo ? "Activo" : "Inactivo"}</span></div></div><div className="flex justify-end mt-6"><Button onClick={() => setViewingEmpleado(null)} variant="outline">Cerrar</Button></div></div></div>)}
-        {showCreateEmpleado && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"><h3 className="text-lg font-semibold mb-4">{editingEmpleado ? "Editar Empleado" : "Crear Nuevo Empleado"}</h3><div className="space-y-4"><div><Label htmlFor="nombre">Nombre</Label><Input id="nombre" value={newEmpleado.nombre} onChange={(e) => setNewEmpleado({ ...newEmpleado, nombre: e.target.value })} placeholder="Ingrese el nombre"/></div><div><Label htmlFor="apellido">Apellido</Label><Input id="apellido" value={newEmpleado.apellido} onChange={(e) => setNewEmpleado({ ...newEmpleado, apellido: e.target.value })} placeholder="Ingrese el apellido"/></div><div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={newEmpleado.email} onChange={(e) => setNewEmpleado({ ...newEmpleado, email: e.target.value })} placeholder="ejemplo@sigma-la.com"/></div><div><Label htmlFor="telefono">Teléfono</Label><Input id="telefono" value={newEmpleado.telefono} onChange={(e) => setNewEmpleado({ ...newEmpleado, telefono: e.target.value })} placeholder="+54 11 1234-5678"/></div><div><Label htmlFor="fechaIngreso">Fecha de Ingreso</Label><Input id="fechaIngreso" type="date" value={newEmpleado.fechaIngreso} onChange={(e) => setNewEmpleado({ ...newEmpleado, fechaIngreso: e.target.value })} /></div><div><Label htmlFor="rol">Rol</Label><select id="rol" value={newEmpleado.rol} onChange={(e) => setNewEmpleado({ ...newEmpleado, rol: e.target.value as Usuario["rol"] })} className="w-full h-10 px-3 border border-input rounded-md bg-background"><option value="coordinacion">Coordinación</option><option value="visitador">Visitador</option><option value="encargado">Encargado</option><option value="admin">Administrador</option></select></div></div><div className="flex space-x-4 mt-6"><Button onClick={() => { setShowCreateEmpleado(false); setEditingEmpleado(null); setNewEmpleado({ nombre: "", apellido: "", email: "", telefono: "", rol: "visitador", fechaIngreso: new Date().toISOString().split("T")[0] }); }} variant="outline" className="flex-1">Cancelar</Button><Button onClick={editingEmpleado ? handleUpdateEmpleado : handleCreateEmpleado} className="flex-1">{editingEmpleado ? "Actualizar" : "Crear"}</Button></div></div></div>)}
+        {showCreateEmpleado && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"><h3 className="text-lg font-semibold mb-4">{editingEmpleado ? "Editar Empleado" : "Crear Nuevo Empleado"}</h3><div className="space-y-4"><div><Label htmlFor="nombre">Nombre</Label><Input id="nombre" value={newEmpleado.nombre} onChange={(e) => setNewEmpleado({ ...newEmpleado, nombre: e.target.value })} placeholder="Ingrese el nombre"/></div><div><Label htmlFor="apellido">Apellido</Label><Input id="apellido" value={newEmpleado.apellido} onChange={(e) => setNewEmpleado({ ...newEmpleado, apellido: e.target.value })} placeholder="Ingrese el apellido"/></div><div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={newEmpleado.email} onChange={(e) => setNewEmpleado({ ...newEmpleado, email: e.target.value })} placeholder="ejemplo@sigma-la.com"/></div><div><Label htmlFor="telefono">Teléfono</Label><Input id="telefono" value={newEmpleado.telefono} onChange={(e) => setNewEmpleado({ ...newEmpleado, telefono: e.target.value })} placeholder="+54 11 1234-5678"/></div><div><Label htmlFor="fechaIngreso">Fecha de Ingreso</Label><Input id="fechaIngreso" type="date" value={newEmpleado.fechaIngreso} onChange={(e) => setNewEmpleado({ ...newEmpleado, fechaIngreso: e.target.value })} /></div><div><Label htmlFor="rol">Rol</Label><select id="rol" value={newEmpleado.rol} onChange={(e) => setNewEmpleado({ ...newEmpleado, rol: e.target.value as Usuario["rol"] })} className="w-full h-10 px-3 border border-input rounded-md bg-background"><option value="coordinacion">Coordinación</option><option value="visitador">Visitador</option><option value="encargado">Encargado</option><option value="admin">Administrador</option></select></div></div><div className="flex space-x-4 mt-6"><Button onClick={() => { setShowCreateEmpleado(false); setEditingEmpleado(null); setNewEmpleado({ nombre: "", apellido: "", email: "", telefono: "", rol: "visitador", fechaIngreso: new Date().toISOString().split("T")[0], contraseña: "123456" }); }} variant="outline" className="flex-1">Cancelar</Button><Button onClick={editingEmpleado ? handleUpdateEmpleado : handleCreateEmpleado} className="flex-1">{editingEmpleado ? "Actualizar" : "Crear"}</Button></div></div></div>)}
       </div>
     )
   }
