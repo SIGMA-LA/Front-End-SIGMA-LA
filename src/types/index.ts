@@ -6,12 +6,6 @@ export interface Cliente {
   email: string
 }
 
-export interface Obra {
-  id: number
-  cliente: Cliente
-  ubicacion: string
-}
-
 export interface Documento {
   id: number
   nombre: string
@@ -31,13 +25,6 @@ export interface Visita {
   documentos?: Documento[]
 }
 
-export interface User {
-  id: number
-  nombre: string
-  apellido: string
-  rol: "Administrador" | "Coordinación" | "Encargado" | "Visitador"
-}
-
 export interface Entrega {
   id: number
   obra: Obra
@@ -50,4 +37,43 @@ export interface Entrega {
   observaciones: string
   vehiculo?: string
   documentos?: Documento[]
+
+export interface Usuario {
+  id: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono?: string;
+  rol:
+    | "admin"
+    | "coordinacion"
+    | "encargado"
+    | "visitador"
+  fechaIngreso?: string;
+  activo: boolean;
 }
+
+export interface Obra {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  cliente: {
+    nombre: string;
+    apellido: string;
+  };
+  ubicacion: string;
+  presupuesto: number;
+  fechaInicio: string;
+  estado: "planificacion" | "en_progreso" | "finalizada" | "cancelada";
+}
+
+export interface ReporteVentas {
+  id: string;
+  mes: string;
+  año: number;
+  ventasTotales: number;
+  ingresosBrutos: number;
+  costosMateriales: number;
+  gananciaNeeta: number;
+  obrasCompletadas: number;
+  clientesNuevos: number;

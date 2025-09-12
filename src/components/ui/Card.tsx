@@ -1,39 +1,43 @@
 import * as React from "react"
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={`w-full max-w-md bg-white shadow-sm border border-gray-200 ${className || ''}`.trim()}
-    {...props}
-  />
-))
-Card.displayName = "Card"
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={`w-full rounded-lg border border-gray-200 shadow-sm flex flex-col ${className || ''}`.trim()}
+      {...props}
+    />
+  )
+);
+Card.displayName = "Card";
 
-const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={`text-center pb-8 pt-12 ${className || ''}`.trim()}
-    {...props}
-  />
-))
-CardHeader.displayName = "CardHeader"
+const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div 
+      ref={ref} 
+      className={`p-6 ${className || ''}`.trim()} 
+      {...props} 
+    />
+  )
+);
+CardHeader.displayName = "CardHeader";
 
-const CardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={`px-12 pb-12 ${className || ''}`.trim()}
-    {...props}
-  />
-))
-CardContent.displayName = "CardContent"
+const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h3
+      ref={ref}
+      className={`text-lg font-semibold leading-none tracking-tight text-gray-900 ${className || ''}`.trim()}
+      {...props}
+    />
+  )
+);
+CardTitle.displayName = "CardTitle";
 
-export { Card, CardHeader, CardContent }
+const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={`p-6 ${className || ''}`.trim()} {...props} />
+  )
+);
+CardContent.displayName = "CardContent";
+
+export { Card, CardHeader, CardContent, CardTitle };
