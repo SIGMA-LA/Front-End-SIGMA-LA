@@ -37,9 +37,10 @@ export interface Entrega {
   observaciones: string
   vehiculo?: string
   documentos?: Documento[]
+}
 
 export interface Usuario {
-  id: string;
+  id: number;
   nombre: string;
   apellido: string;
   email: string;
@@ -51,15 +52,19 @@ export interface Usuario {
     | "visitador"
   fechaIngreso?: string;
   activo: boolean;
+  contraseña?: string;
 }
 
 export interface Obra {
-  id: string;
+  id: number;
   nombre: string;
   descripcion: string;
   cliente: {
-    nombre: string;
-    apellido: string;
+    id: number
+    nombre: string
+    apellido: string
+    telefono: string
+    email: string
   };
   ubicacion: string;
   presupuesto: number;
@@ -68,7 +73,7 @@ export interface Obra {
 }
 
 export interface ReporteVentas {
-  id: string;
+  id: number;
   mes: string;
   año: number;
   ventasTotales: number;
@@ -77,3 +82,4 @@ export interface ReporteVentas {
   gananciaNeeta: number;
   obrasCompletadas: number;
   clientesNuevos: number;
+}

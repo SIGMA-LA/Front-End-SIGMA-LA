@@ -2,20 +2,15 @@
 
 import { useState } from "react"
 import {
-  Calendar, CheckCircle, Clock, Mail, MapPin, Phone, User as UserIcon,
+  Calendar, CheckCircle, Mail, MapPin, Phone, User as UserIcon,
 } from "lucide-react"
-import type { User, Visita } from "../types"
-import { useGlobalContext } from "../context/GlobalContext"
-import { Button } from "../components/ui/Button"
-import { Card, CardContent } from "../components/ui/Card"
-import { Textarea } from "../components/ui/Textarea"
-import { Label } from "../components/ui/Label"
-import UnifiedHeader from "../components/UnifiedHeader"
-
-interface VisitadorDashboardProps {
-  user: User
-  onLogout: () => void
-}
+import type { Usuario, Visita } from "@/types"
+import { useGlobalContext } from "@/context/GlobalContext"
+import { Button } from "@/components/ui/Button"
+import { Card, CardContent } from "@/components/ui/Card"
+import { Textarea } from "@/components/ui/Textarea"
+import { Label } from "@/components/ui/Label"
+import { useAuth } from "@/context/AuthContext"
 
 // Funciones de ayuda que podemos mantener aquí
 const getTipoText = (tipo: string) => ({
@@ -27,7 +22,8 @@ const getTipoText = (tipo: string) => ({
 
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-export default function VisitadorDashboard({ user, onLogout }: VisitadorDashboardProps) {
+export default function VisitadorDashboard() {
+  const { usuario } = useAuth()
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState("")
@@ -44,13 +40,16 @@ export default function VisitadorDashboard({ user, onLogout }: VisitadorDashboar
     }
   }
 
-  const visitasAsignadas = visitas.filter((v) => v.visitadorAsignado === `${user.nombre} ${user.apellido}`)
+  if (!usuario) {
+    return <div>Cargando datos del usuario...</div>;
+  }
+
+  const visitasAsignadas = visitas.filter((v) => v.visitadorAsignado === `${usuario.nombre} ${usuario.apellido}`)
   const visitasPendientes = visitasAsignadas.filter((v) => v.estado === "programada")
   const visitasRealizadas = visitasAsignadas.filter((v) => v.estado === "completada")
 
   return (
     <div className="h-screen flex flex-col">
-      <UnifiedHeader user={user} onLogout={onLogout} />
 
       <div className="flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 80px)" }}>
         <aside className="w-96 bg-white border-r border-gray-200 overflow-y-auto space-y-6 flex-shrink-0">

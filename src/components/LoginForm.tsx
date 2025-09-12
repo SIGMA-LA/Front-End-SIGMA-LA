@@ -11,7 +11,7 @@ import { LoginFormData, loginSchema } from "@/schemas/loginSchemas"
 import { safeParse } from "valibot"
 
 interface LoginFormProps {
-  onLogin: (usuario: string) => boolean
+  onLogin: (usuario: string, contrasena: string) => boolean
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
@@ -76,7 +76,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      const loginSuccessful = onLogin(formData.usuario)
+      const loginSuccessful = onLogin(formData.usuario, formData.contrasena)
 
       if (!loginSuccessful) {
         throw new Error("Credenciales incorrectas")
