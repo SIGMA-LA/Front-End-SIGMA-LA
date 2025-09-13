@@ -675,7 +675,7 @@ export default function AdminDashboardClient() {
   )
 
   return (
-    <div>
+    <div className="mx-auto max-w-7xl py-3">
       {currentSection === 'dashboard' && renderDashboard()}
       {currentSection === 'empleados' && renderEmpleados()}
       {currentSection === 'reportes' && renderReportes()}
