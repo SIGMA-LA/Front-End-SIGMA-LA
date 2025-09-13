@@ -2,19 +2,7 @@
 
 import { useState } from "react"
 import { Search, User, Upload } from "lucide-react"
-
-// Mock data
-const mockClientes = [
-  { id: "1", nombre: "Juan Pérez", email: "juan@email.com", telefono: "123-456-7890" },
-  { id: "2", nombre: "María González", email: "maria@email.com", telefono: "098-765-4321" },
-  { id: "3", nombre: "Carlos Rodríguez", email: "carlos@email.com", telefono: "555-123-4567" },
-]
-
-const mockArquitectos = [
-  { id: "1", nombre: "Aaron Bennett" },
-  { id: "2", nombre: "Abbey Christensen" },
-  { id: "3", nombre: "Alli Connors" },
-]
+import { mockArquitectos, mockClientes } from "@/data/mockData"
 
 interface CrearObraProps {
   onCancel: () => void

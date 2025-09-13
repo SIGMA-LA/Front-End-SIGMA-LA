@@ -1,12 +1,5 @@
 import { Users, Plus } from "lucide-react"
-
-// Mock data para clientes
-const mockClientes = [
-  { id: "1", nombre: "Juan Pérez", email: "juan@email.com", telefono: "123-456-7890" },
-  { id: "2", nombre: "María González", email: "maria@email.com", telefono: "098-765-4321" },
-  { id: "3", nombre: "Carlos Rodríguez", email: "carlos@email.com", telefono: "555-123-4567" },
-]
-
+import { mockClientes } from "@/data/mockData"
 interface ClientesListProps {
   onCreateClick: () => void
 }

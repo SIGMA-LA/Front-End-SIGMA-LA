@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import { ArrowLeft, Moon, Sun, Bell, User, Globe, Shield, Save, Building, DollarSign } from "lucide-react"
-
-interface ConfiguracionesProps {
-  onBack?: () => void
-  className?: string
-}
+import { ConfiguracionesProps } from "@/types"
 
 export default function Configuraciones({ onBack, className = "" }: ConfiguracionesProps) {
   const [configuraciones, setConfiguraciones] = useState({

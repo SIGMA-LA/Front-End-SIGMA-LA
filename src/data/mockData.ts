@@ -1,4 +1,4 @@
-import type { Usuario, Obra, Cliente, ReporteVentas, Entrega, Visita } from "@/types";
+import type { Usuario, Obra, Cliente, ReporteVentas, Entrega, Visita, Vehiculo } from "@/types";
 
 export const mockUsuarios: Usuario[] = [
   { id: 1, nombre: "Juan", apellido: "Perez", email: "juan@test.com", rol: "coordinacion", activo: true, fechaIngreso: "2023-01-15", contraseña: "123456" },
@@ -101,4 +101,23 @@ export const mockVisitas: Visita[] = [
     visitadorAsignado: "Carlchen Gugliermino",
     observaciones: "Seguimiento del avance de la obra. Tomar fotografías del estado actual y comparar con el cronograma.",
   },
+]
+
+export const mockVehiculos: Vehiculo[] = [
+  { id: "camioneta_ford", descripcion: "Camioneta ford"},
+  { id: "camioneta_pick_up", descripcion: "Camioneta pick up"},
+  { id: "camion_chico", descripcion: "Camión chico"},
+  { id: "camion_grande", descripcion: "Camión grande"},
+]
+
+export const mockArquitectos = [
+  { id: "1", nombre: "Aaron Bennett" },
+  { id: "2", nombre: "Abbey Christensen" },
+  { id: "3", nombre: "Alli Connors" },
+]
+
+export const mockVisitadores = [
+  { id: "1", nombre: "Franco Zariaga" },
+  { id: "2", nombre: "Nicolás Pedemonte" },
+  { id: "3", nombre: "Carlos Gugliermino" },
 ]

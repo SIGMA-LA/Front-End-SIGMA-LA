@@ -1,17 +1,7 @@
 import { Building2, Plus, Calendar } from "lucide-react"
+import { ObrasListProps } from "@/types"
+import { mockObras } from "../data/mockData"
 
-// Mock data para obras
-const mockObras = [
-  { id: "1", direccion: "Rodriguez 3243", cliente: "Juan Rodriguez", estado: "En proceso", fechaInicio: "2024-01-15" },
-  { id: "2", direccion: "Cordoba 124", cliente: "Empresa ABC", estado: "Planificación", fechaInicio: "2024-02-01" },
-  { id: "3", direccion: "Av. Francia 1230", cliente: "María García", estado: "Finalizada", fechaInicio: "2023-12-10" },
-]
-
-interface ObrasListProps {
-  onCreateClick: () => void
-  onScheduleVisit?: (obra: any) => void
-  onScheduleEntrega?: (obra: any) => void
-}
 
 export default function ObrasList({ onCreateClick, onScheduleVisit, onScheduleEntrega }: ObrasListProps) {
   return (
@@ -33,14 +23,14 @@ export default function ObrasList({ onCreateClick, onScheduleVisit, onScheduleEn
             <div key={obra.id} className="bg-blue-50 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{obra.direccion}</h3>
-                  <p className="text-gray-600">Cliente: {obra.cliente}</p>
+                  <h3 className="text-lg font-semibold text-gray-900">{"obra.direccion"}</h3>
+                  <p className="text-gray-600">Cliente: {obra.cliente.nombre}</p>
                   <p className="text-sm text-gray-500">Inicio: {obra.fechaInicio}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    obra.estado === 'En proceso' ? 'bg-yellow-100 text-yellow-800' :
-                    obra.estado === 'Planificación' ? 'bg-blue-100 text-blue-800' :
+                    obra.estado === 'en_progreso' ? 'bg-yellow-100 text-yellow-800' :
+                    obra.estado === 'finalizada' ? 'bg-blue-100 text-blue-800' :
                     'bg-green-100 text-green-800'
                   }`}>
                     {obra.estado}

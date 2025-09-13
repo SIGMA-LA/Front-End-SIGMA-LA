@@ -4,31 +4,28 @@ import { useState } from "react"
 import { Building2, Users, Calendar, Package, Plus, Settings, Menu, X, Home } from "lucide-react"
 
 // Importar componentes
-import CrearCliente from "../components/CrearCliente"
-import CrearObra from "../components/CrearObra"
-import Configuraciones from "../components/Configuraciones"
-import EntregasList from "../components/EntregasList"
-import VisitasList from "../components/VisitasList"
-import ObrasList from "../components/ObrasList"
-import ClientesList from "../components/ClientesList"
-import CrearVisita from "../components/CrearVisita"
-import CrearEntrega from "../components/CrearEntrega"
+import CrearCliente from "@/components/CrearCliente"
+import CrearObra from "@/components/CrearObra"
+import Configuraciones from "@/components/Configuraciones"
+import EntregasList from "@/components/EntregasList"
+import VisitasList from "@/components/VisitasList"
+import ObrasList from "@/components/ObrasList"
+import ClientesList from "@/components/ClientesList"
+import CrearVisita from "@/components/CrearVisita"
+import CrearEntrega from "@/components/CrearEntrega"
+import { DashboardProps } from "@/types"
 
-interface DashboardProps {
-  userName: string
-  onLogout: () => void
-}
 
-export default function Dashboard({ userName, onLogout }: DashboardProps) {
-  const [currentSection, setCurrentSection] = useState("dashboard")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
-
-  const handleNavigation = (section: string) => {
-    setCurrentSection(section)
-    setSidebarOpen(false) // Cerrar sidebar en mobile después de navegar
-  }
-
+export default function CoordDashboard() {
+    const [currentSection, setCurrentSection] = useState("dashboard")
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
+    
+    const handleNavigation = (section: string) => {
+        setCurrentSection(section)
+        setSidebarOpen(false) // Cerrar sidebar en mobile después de navegar
+    }
+    
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "obras", label: "Obras", icon: Building2 },
@@ -144,7 +141,7 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
               <div className="bg-blue-100 border-2 border-blue-400 rounded-xl p-8 space-y-6">
                 <div className="border-b border-blue-300 pb-4">
                   <h1 className="text-2xl font-semibold text-gray-800">
-                    Bienvenido, <span className="text-blue-600">{userName || 'Emiliano Luhmann'}</span>!
+                    Bienvenido, <span className="text-blue-600">{'Emiliano Luhmann'}</span>!
                   </h1>
                 </div>
                 
@@ -191,10 +188,6 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className="flex flex-col w-64">
           <div className="flex flex-col flex-grow bg-white shadow-lg border-r border-gray-200">
-            {/* Logo */}
-            <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-200">
-              <h1 className="text-xl font-bold text-blue-600">SIGMA - LA</h1>
-            </div>
             
             {/* Navigation */}
             <nav className="flex-1 px-4 py-4 space-y-2">
@@ -224,15 +217,9 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
             {/* User section */}
             <div className="flex-shrink-0 border-t border-gray-200 p-4">
               <div className="mb-3">
-                <p className="text-sm font-medium text-gray-900">{userName || 'Emiliano Luhmann'}</p>
+                <p className="text-sm font-medium text-gray-900">{'Emiliano Luhmann'}</p>
                 <p className="text-xs text-gray-500">Coordinación</p>
               </div>
-              <button
-                onClick={onLogout}
-                className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Cerrar Sesión
-              </button>
             </div>
           </div>
         </div>
@@ -278,19 +265,6 @@ export default function Dashboard({ userName, onLogout }: DashboardProps) {
                 )
               })}
             </nav>
-          </div>
-          
-          <div className="flex-shrink-0 border-t border-gray-200 p-4">
-            <div className="mb-3">
-              <p className="text-sm font-medium text-gray-900">{userName || 'Emiliano Luhmann'}</p>
-              <p className="text-xs text-gray-500">Coordinación</p>
-            </div>
-            <button
-              onClick={onLogout}
-              className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Cerrar Sesión
-            </button>
           </div>
         </div>
       </div>

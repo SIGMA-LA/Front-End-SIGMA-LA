@@ -48,7 +48,7 @@ export default function EncargadoDashboardClient() {
         {/* Barra Lateral de Entregas */}
         <aside className="w-96 bg-white border-r border-gray-200 overflow-y-auto p-4 space-y-6 flex-shrink-0">
           <div>
-            <div className="flex items-center space-x-2 mb-3 px-1">
+            <div className="flex items-center space-x-2 mb-3 px-1 pt-2">
               <div className="w-2.5 h-2.5 bg-orange-500 rounded-full"></div>
               <h2 className="font-semibold text-gray-700 text-sm uppercase tracking-wider">Entregas Pendientes</h2>
             </div>
@@ -151,7 +151,7 @@ export default function EncargadoDashboardClient() {
       </div>
 
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Finalizar Entrega</h3>
             <div className="mb-4">
