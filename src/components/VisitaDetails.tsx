@@ -10,12 +10,7 @@ import type { Visita } from "../types"
 import { useGlobalContext } from "../context/GlobalContext"
 import { Label } from "./ui/Label"
 import { Textarea } from "./ui/Textarea"
-
-
-interface VisitaDetailProps {
-  visita: Visita;
-  onClose: () => void;
-}
+import { VisitaDetailProps } from "@/types"
 
 export default function VisitaDetail({ visita }: VisitaDetailProps) {
     const [showConfirmModal, setShowConfirmModal] = useState(false)

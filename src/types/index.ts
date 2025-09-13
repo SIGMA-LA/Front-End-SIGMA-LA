@@ -83,3 +83,63 @@ export interface ReporteVentas {
   obrasCompletadas: number;
   clientesNuevos: number;
 }
+
+export interface ConfiguracionesProps {
+  onBack?: () => void
+  className?: string
+}
+
+export interface CrearClienteProps {
+  onCancel: () => void
+  onSubmit?: (clienteData: any) => void
+}
+
+export interface Vehiculo {
+  id: string
+  descripcion: string
+}
+
+export interface VisitasListProps {
+  onCreateClick: () => void;
+}
+
+export interface VisitaDetailProps {
+  visita: Visita;
+  onClose: () => void;
+}
+
+export interface ObrasListProps {
+  onCreateClick: () => void
+  onScheduleVisit?: (obra: any) => void
+  onScheduleEntrega?: (obra: any) => void
+}
+
+export interface LoginFormProps {
+  onLogin: (usuario: string, contrasena: string) => boolean
+}
+
+export interface DashboardSwitcherProps {
+  user: Usuario
+  onLogout: () => void
+}
+
+export interface CrearVisitaProps {
+  onCancel: () => void
+  onSubmit: (visitaData: any) => void
+  preloadedObra?: {
+    id: string
+    nombre: string
+    cliente: string
+    direccion: string
+    contacto: string
+  }
+}
+
+export interface EntregasListProps {
+  onCreateClick: () => void;
+}
+
+export interface DashboardProps {
+  userName: string
+  onLogout: () => void
+}

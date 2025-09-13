@@ -1,7 +1,6 @@
 "use client"
 
-import { Users, BarChart3, Building, LogOut, Home } from "lucide-react";
-import { mockUsuarios } from "@/data/mockData";
+import { Users, BarChart3, Building, LogOut, Home, Sigma } from "lucide-react";
 import { Button } from "../ui/Button";
 import { useGlobalContext } from "@/context/GlobalContext";
 import { useAuth } from "@/context/AuthContext";
@@ -29,10 +28,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
-              <Building className="w-8 h-8 text-white" />
+              <Sigma className="w-8 h-8 text-white" />
               <div>
                 <h1 className="text-xl font-bold">SIGMA - LA</h1>
-                <p className="text-sm text-gray-300">Panel Administrativo</p>
               </div>
             </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Calendar, Clock, User, Search, X, MapPin, Phone, Package, Truck } from "lucide-react"
+import { mockVehiculos } from "@/data/mockData"
 
 // Mock data de obras para el buscador
 const mockObras = [
@@ -16,14 +17,6 @@ const mockEmpleados = [
   { id: "2", nombre: "Nicolás Piedimonte" },
   { id: "3", nombre: "Carlos Gugliermino" },
   { id: "4", nombre: "Luca Torricevelli" },
-]
-
-// Tipos de vehículos/maquinaria
-const tiposVehiculo = [
-  { id: "camioneta_ford", label: "Camioneta ford", icon: "🚐" },
-  { id: "camioneta_pick_up", label: "Camioneta pick up", icon: "🛻" },
-  { id: "camion_chico", label: "Camión chico", icon: "🚚" },
-  { id: "camion_grande", label: "Camión grande", icon: "🚛" },
 ]
 
 interface CrearEntregaProps {
@@ -357,7 +350,7 @@ export default function CrearEntrega({ onCancel, onSubmit, preloadedObra }: Crea
                   Vehículo: Maquinaria especial
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {tiposVehiculo.map(vehiculo => (
+                  {mockVehiculos.map(vehiculo => (
                     <label
                       key={vehiculo.id}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
@@ -372,8 +365,7 @@ export default function CrearEntrega({ onCancel, onSubmit, preloadedObra }: Crea
                         onChange={() => handleVehiculoToggle(vehiculo.id)}
                         className="mr-2"
                       />
-                      <span className="text-lg mr-2">{vehiculo.icon}</span>
-                      <span className="text-sm">{vehiculo.label}</span>
+                      <span className="text-sm">{vehiculo.descripcion}</span>
                     </label>
                   ))}
                 </div>

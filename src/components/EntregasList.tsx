@@ -1,41 +1,9 @@
 "use client"
 
 import { Calendar, Clock, User, Package, Eye, Plus } from "lucide-react"
+import { mockEntregas } from "@/data/mockData"
+import { EntregasListProps } from "@/types"
 
-// Mock data de entregas
-const mockEntregas = [
-  {
-    id: "1",
-    obra: { id: "1", direccion: "Rodriguez 267" },
-    fecha: "2024-03-20",
-    hora: "11:00",
-    encargado: "Pedro Martínez",
-    estado: "programada",
-    observaciones: "Primera entrega de aberturas principales"
-  },
-  {
-    id: "2",
-    obra: { id: "2", direccion: "Cordoba 124" },
-    fecha: "2024-03-14",
-    hora: "15:00",
-    encargado: "Ana Rodríguez",
-    estado: "entregada",
-    observaciones: "Entrega completada sin observaciones"
-  },
-  {
-    id: "3",
-    obra: { id: "3", direccion: "Bv. Rondeau 2554" },
-    fecha: "2024-03-22",
-    hora: "10:30",
-    encargado: "Luis García",
-    estado: "en_transito",
-    observaciones: "En camino al destino"
-  }
-]
-
-interface EntregasListProps {
-  onCreateClick: () => void;
-}
 
 export default function EntregasList({ onCreateClick }: EntregasListProps) {
   const getStatusColor = (estado: string) => {
@@ -96,7 +64,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
               <div className="flex-1 bg-blue-50 border border-blue-200 rounded-xl p-6 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-center">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{entrega.obra.direccion}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{"entrega.obra.direccion"}</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4" />
@@ -108,7 +76,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4" />
-                        <span>{entrega.encargado}</span>
+                        <span>{entrega.encargadoAsignado}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Package className="w-4 h-4" />

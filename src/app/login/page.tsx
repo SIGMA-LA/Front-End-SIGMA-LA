@@ -21,6 +21,11 @@ export default function LoginPage() {
         case 'visitador':
           router.push('/visitadorDashboard');
           break;
+
+          case 'coordinacion':
+            router.push('/coordinacionDashboard');
+          break;
+
         default:
           console.error('Rol de usuario desconocido:', usuario.rol);
           break;

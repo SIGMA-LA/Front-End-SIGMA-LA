@@ -2,32 +2,13 @@
 
 import { useState } from "react"
 import { Calendar, Clock, User, Search, X, MapPin, Phone } from "lucide-react"
+import { mockObras } from "@/data/mockData"
+import { CrearVisitaProps } from "@/types"
+import { mockVisitadores } from "@/data/mockData"
 
-// Mock data de obras para el buscador
-const mockObras = [
-  { id: "1", nombre: "Casa Rodriguez", cliente: "Juan Rodriguez", direccion: "Rodriguez 200", contacto: "341-5555-0001" },
-  { id: "2", nombre: "Oficinas Centro", cliente: "Empresa ABC", direccion: "Córdoba 123", contacto: "341-5555-0002" },
-  { id: "3", nombre: "Departamento Norte", cliente: "María García", direccion: "Pampa 34", contacto: "341-5555-0003" },
-]
 
-// Mock data de visitadores
-const mockVisitadores = [
-  { id: "1", nombre: "Franco Zariaga" },
-  { id: "2", nombre: "Nicolás Pedemonte" },
-  { id: "3", nombre: "Carlos Gugliermino" },
-]
 
-interface CrearVisitaProps {
-  onCancel: () => void
-  onSubmit: (visitaData: any) => void
-  preloadedObra?: {
-    id: string
-    nombre: string
-    cliente: string
-    direccion: string
-    contacto: string
-  }
-}
+
 
 export default function CrearVisita({ onCancel, onSubmit, preloadedObra }: CrearVisitaProps) {
   const [formData, setFormData] = useState({
@@ -54,8 +35,8 @@ export default function CrearVisita({ onCancel, onSubmit, preloadedObra }: Crear
 
   const filteredObras = mockObras.filter(obra =>
     obra.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    obra.direccion.toLowerCase().includes(searchTerm.toLowerCase())
+    obra.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    obra.nombre.toLowerCase().includes(searchTerm.toLowerCase()) //Cambiar a direccion si se agrega ese campo
   )
 
   const handleVisitadorToggle = (visitadorId: string) => {
@@ -150,7 +131,7 @@ export default function CrearVisita({ onCancel, onSubmit, preloadedObra }: Crear
                               className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded-md border border-gray-200 bg-white"
                             >
                               <div className="font-medium">{obra.nombre}</div>
-                              <div className="text-sm text-gray-600">{obra.cliente} - {obra.direccion}</div>
+                              <div className="text-sm text-gray-600">{obra.cliente.nombre} - {obra.nombre}</div> {/*Cambiar a direccion si se agrega ese campo*/}
                             </button>
                           ))}
                         </div>

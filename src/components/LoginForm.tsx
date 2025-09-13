@@ -9,10 +9,8 @@ import { Label } from "./ui/Label"
 import { ChevronRight } from "lucide-react"
 import { LoginFormData, loginSchema } from "@/schemas/loginSchemas"
 import { safeParse } from "valibot"
+import { LoginFormProps } from "@/types/index"
 
-interface LoginFormProps {
-  onLogin: (usuario: string, contrasena: string) => boolean
-}
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
   const [formData, setFormData] = useState<LoginFormData>({

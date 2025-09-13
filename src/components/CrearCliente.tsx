@@ -1,11 +1,8 @@
 "use client"
 
 import { User, Plus } from "lucide-react"
+import { CrearClienteProps } from "@/types"
 
-interface CrearClienteProps {
-  onCancel: () => void
-  onSubmit?: (clienteData: any) => void
-}
 
 export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) {
   const handleSubmit = (e: React.FormEvent) => {

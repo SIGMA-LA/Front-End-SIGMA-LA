@@ -1,44 +1,9 @@
 "use client"
 
 import { Calendar, Clock, User, Eye, Plus } from "lucide-react"
+import { mockVisitas } from "@/data/mockData"
+import { VisitasListProps } from "@/types"
 
-// Mock data de visitas
-const mockVisitas = [
-  {
-    id: "1",
-    obra: { id: "1", direccion: "Rodriguez 200" },
-    fecha: "2024-03-15",
-    hora: "10:00",
-    tipo: "medicion",
-    encargado: "Juan Pérez",
-    estado: "programada",
-    observaciones: "Primera medición para instalación de ventanas"
-  },
-  {
-    id: "2",
-    obra: { id: "2", direccion: "Córdoba 123" },
-    fecha: "2024-03-12",
-    hora: "14:30",
-    tipo: "inspeccion",
-    encargado: "María García",
-    estado: "completada",
-    observaciones: "Inspección final antes de la entrega"
-  },
-  {
-    id: "3",
-    obra: { id: "1", direccion: "Pampa 34" },
-    fecha: "2024-03-18",
-    hora: "09:00",
-    tipo: "seguimiento",
-    encargado: "Carlos López",
-    estado: "programada",
-    observaciones: "Control de avance de obra"
-  }
-]
-
-interface VisitasListProps {
-  onCreateClick: () => void;
-}
 
 export default function VisitasList({ onCreateClick }: VisitasListProps) {
   const getStatusColor = (estado: string) => {
@@ -97,7 +62,7 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
               <div className="flex-1 bg-blue-50 border border-blue-200 rounded-xl p-6 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-center">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{visita.obra.direccion}</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{"visita.obra.direccion"}</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4" />
@@ -109,7 +74,7 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4" />
-                        <span>{visita.encargado}</span>
+                        <span>{visita.visitadorAsignado}</span>
                       </div>
                       <div>
                         <span className="font-medium">Tipo: {getTipoText(visita.tipo)}</span>
