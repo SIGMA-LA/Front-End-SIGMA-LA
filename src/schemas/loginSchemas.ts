@@ -1,4 +1,11 @@
-import { object, string, minLength, nonEmpty, pipe, type InferOutput } from 'valibot'
+import {
+  object,
+  string,
+  minLength,
+  nonEmpty,
+  pipe,
+  type InferOutput,
+} from 'valibot'
 
 export const loginSchema = object({
   usuario: pipe(

@@ -1,11 +1,10 @@
-import * as React from "react"
+import * as React from 'react'
 
 export const Label = React.forwardRef<
   HTMLLabelElement,
   React.LabelHTMLAttributes<HTMLLabelElement>
 >(({ className, ...props }, ref) => {
-  const defaultClasses =
-    "text-sm font-medium text-gray-700"
+  const defaultClasses = 'text-sm font-medium text-gray-700'
   return (
     <label
       ref={ref}
@@ -14,4 +13,4 @@ export const Label = React.forwardRef<
     />
   )
 })
-Label.displayName = "Label"
+Label.displayName = 'Label'

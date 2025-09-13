@@ -17,8 +17,8 @@ export interface Visita {
   obra: Obra
   fecha: string
   hora: string
-  tipo: "inspeccion" | "medicion" | "seguimiento" | "entrega"
-  estado: "programada" | "completada" | "cancelada"
+  tipo: 'inspeccion' | 'medicion' | 'seguimiento' | 'entrega'
+  estado: 'programada' | 'completada' | 'cancelada'
   visitadorAsignado: string
   observaciones: string
   vehiculo?: string
@@ -30,7 +30,7 @@ export interface Entrega {
   obra: Obra
   fecha: string
   hora: string
-  estado: "programada" | "en_transito" | "entregada" | "cancelada"
+  estado: 'programada' | 'en_transito' | 'entregada' | 'cancelada'
   encargadoAsignado: string
   productos: string[]
   direccionEntrega: string
@@ -40,48 +40,44 @@ export interface Entrega {
 }
 
 export interface Usuario {
-  id: number;
-  nombre: string;
-  apellido: string;
-  email: string;
-  telefono?: string;
-  rol:
-    | "admin"
-    | "coordinacion"
-    | "encargado"
-    | "visitador"
-  fechaIngreso?: string;
-  activo: boolean;
-  contraseña?: string;
+  id: number
+  nombre: string
+  apellido: string
+  email: string
+  telefono?: string
+  rol: 'admin' | 'coordinacion' | 'encargado' | 'visitador'
+  fechaIngreso?: string
+  activo: boolean
+  contraseña?: string
 }
 
 export interface Obra {
-  id: number;
-  nombre: string;
-  descripcion: string;
+  id: number
+  nombre: string
+  descripcion: string
   cliente: {
     id: number
     nombre: string
     apellido: string
     telefono: string
     email: string
-  };
-  ubicacion: string;
-  presupuesto: number;
-  fechaInicio: string;
-  estado: "planificacion" | "en_progreso" | "finalizada" | "cancelada";
+  }
+  ubicacion: string
+  presupuesto: number
+  fechaInicio: string
+  estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada'
 }
 
 export interface ReporteVentas {
-  id: number;
-  mes: string;
-  año: number;
-  ventasTotales: number;
-  ingresosBrutos: number;
-  costosMateriales: number;
-  gananciaNeeta: number;
-  obrasCompletadas: number;
-  clientesNuevos: number;
+  id: number
+  mes: string
+  año: number
+  ventasTotales: number
+  ingresosBrutos: number
+  costosMateriales: number
+  gananciaNeeta: number
+  obrasCompletadas: number
+  clientesNuevos: number
 }
 
 export interface ConfiguracionesProps {
@@ -100,12 +96,12 @@ export interface Vehiculo {
 }
 
 export interface VisitasListProps {
-  onCreateClick: () => void;
+  onCreateClick: () => void
 }
 
 export interface VisitaDetailProps {
-  visita: Visita;
-  onClose: () => void;
+  visita: Visita
+  onClose: () => void
 }
 
 export interface ObrasListProps {
@@ -136,7 +132,7 @@ export interface CrearVisitaProps {
 }
 
 export interface EntregasListProps {
-  onCreateClick: () => void;
+  onCreateClick: () => void
 }
 
 export interface DashboardProps {
