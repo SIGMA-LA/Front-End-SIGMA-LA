@@ -94,7 +94,7 @@ export const mockUsuarios: Usuario[] = [
 export const mockObras: Obra[] = [
   {
     id: 1,
-    nombre: 'Residencia Palmeras',
+    direccion: 'Rondeau 1234, Rosario',
     cliente: {
       id: 1,
       nombre: 'Lucia',
@@ -106,11 +106,10 @@ export const mockObras: Obra[] = [
     estado: 'en_progreso',
     fechaInicio: '2024-03-15',
     presupuesto: 15000000,
-    ubicacion: 'Nordelta',
   },
   {
     id: 2,
-    nombre: 'Oficinas Central Corp',
+    direccion: 'Pampa 56, San Lorenzo',
     cliente: {
       id: 2,
       nombre: 'Marcos',
@@ -122,11 +121,10 @@ export const mockObras: Obra[] = [
     estado: 'en_progreso',
     fechaInicio: '2024-04-01',
     presupuesto: 8500000,
-    ubicacion: 'Puerto Madero',
   },
   {
     id: 3,
-    nombre: 'Proyecto Z',
+    direccion: 'Calle 1 345, G. Baigorria',
     cliente: {
       id: 3,
       nombre: 'Test',
@@ -138,7 +136,6 @@ export const mockObras: Obra[] = [
     estado: 'finalizada',
     fechaInicio: '2024-01-01',
     presupuesto: 1000,
-    ubicacion: 'Test',
   },
 ]
 
@@ -247,7 +244,7 @@ export const mockEntregas: Entrega[] = [
     id: 1,
     obra: {
       id: 2,
-      nombre: 'Oficinas Central Corp',
+      direccion: 'Rondeau 1234, Rosario',
       cliente: {
         id: 2,
         nombre: 'Marcos',
@@ -259,7 +256,6 @@ export const mockEntregas: Entrega[] = [
       estado: 'en_progreso',
       fechaInicio: '2024-04-01',
       presupuesto: 8500000,
-      ubicacion: 'Puerto Madero',
     },
     fecha: '2025-09-18',
     hora: '09:00',
@@ -279,7 +275,7 @@ export const mockEntregas: Entrega[] = [
     id: 2,
     obra: {
       id: 1,
-      nombre: 'Residencia Palmeras',
+      direccion: 'Pampa 56, San Lorenzo',
       cliente: {
         id: 1,
         nombre: 'Lucia',
@@ -291,7 +287,6 @@ export const mockEntregas: Entrega[] = [
       estado: 'en_progreso',
       fechaInicio: '2024-03-15',
       presupuesto: 15000000,
-      ubicacion: 'Nordelta',
     },
     fecha: '2025-09-19',
     hora: '11:00',
@@ -305,7 +300,7 @@ export const mockEntregas: Entrega[] = [
     id: 3,
     obra: {
       id: 3,
-      nombre: 'Proyecto Z',
+      direccion: 'Calle 1 345, G. Baigorria',
       cliente: {
         id: 3,
         nombre: 'Test',
@@ -317,7 +312,6 @@ export const mockEntregas: Entrega[] = [
       estado: 'finalizada',
       fechaInicio: '2024-01-01',
       presupuesto: 1000,
-      ubicacion: 'Test',
     },
     fecha: '2025-09-12',
     hora: '14:30',
@@ -335,7 +329,7 @@ export const mockVisitas: Visita[] = [
     id: 1,
     obra: {
       id: 3,
-      nombre: 'Proyecto Z',
+      direccion: 'Calle 1 345, G. Baigorria',
       cliente: {
         id: 3,
         nombre: 'Test',
@@ -347,7 +341,6 @@ export const mockVisitas: Visita[] = [
       estado: 'finalizada',
       fechaInicio: '2024-01-01',
       presupuesto: 1000,
-      ubicacion: 'Test',
     },
     fecha: '2025-09-15',
     hora: '09:00',
@@ -362,7 +355,7 @@ export const mockVisitas: Visita[] = [
     id: 2,
     obra: {
       id: 1,
-      nombre: 'Residencia Palmeras',
+      direccion: 'Colon 1278, Rosario',
       cliente: {
         id: 1,
         nombre: 'Lucia',
@@ -374,7 +367,6 @@ export const mockVisitas: Visita[] = [
       estado: 'en_progreso',
       fechaInicio: '2024-03-15',
       presupuesto: 15000000,
-      ubicacion: 'Nordelta',
     },
     fecha: '2025-09-15',
     hora: '11:30',
@@ -388,7 +380,7 @@ export const mockVisitas: Visita[] = [
     id: 3,
     obra: {
       id: 2,
-      nombre: 'Oficinas Central Corp',
+      direccion: 'Alberdi 456, San Lorenzo',
       cliente: {
         id: 2,
         nombre: 'Marcos',
@@ -400,7 +392,6 @@ export const mockVisitas: Visita[] = [
       estado: 'en_progreso',
       fechaInicio: '2024-04-01',
       presupuesto: 8500000,
-      ubicacion: 'Puerto Madero',
     },
     fecha: '2025-09-16',
     hora: '14:00',

@@ -259,16 +259,6 @@ export default function CoordDashboard() {
                 )
               })}
             </nav>
-
-            {/* User section */}
-            <div className="flex-shrink-0 border-t border-gray-200 p-4">
-              <div className="mb-3">
-                <p className="text-sm font-medium text-gray-900">
-                  {'Emiliano Luhmann'}
-                </p>
-                <p className="text-xs text-gray-500">Coordinación</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

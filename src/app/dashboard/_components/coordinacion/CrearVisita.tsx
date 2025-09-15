@@ -19,11 +19,10 @@ export default function CrearVisita({
     observaciones: '',
     // Campos específicos para visita inicial
     direccion: preloadedObra?.direccion || '',
-    contacto: preloadedObra?.contacto || '',
+    contacto: preloadedObra?.cliente?.telefono || '',
     // Obra seleccionada (si aplica)
     obraId: preloadedObra?.id || '',
-    obraNombre: preloadedObra?.nombre || '',
-    obraCliente: preloadedObra?.cliente || '',
+    obraCliente: preloadedObra?.cliente ? `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}` : '',
   })
 
   const [isVisitaInicial, setIsVisitaInicial] = useState(!preloadedObra)
@@ -35,9 +34,8 @@ export default function CrearVisita({
 
   const filteredObras = mockObras.filter(
     (obra) =>
-      obra.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.nombre.toLowerCase().includes(searchTerm.toLowerCase()) //Cambiar a direccion si se agrega ese campo
+      obra.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleVisitadorToggle = (visitadorId: string) => {
@@ -52,8 +50,7 @@ export default function CrearVisita({
     setFormData((prev) => ({
       ...prev,
       obraId: obra.id,
-      obraNombre: obra.nombre,
-      obraCliente: obra.cliente,
+      obraCliente: obra.cliente.nombre,
       direccion: obra.direccion,
       contacto: obra.contacto,
     }))
@@ -91,7 +88,7 @@ export default function CrearVisita({
             </h1>
             {isFromObra && (
               <p className="mt-1 text-gray-600">
-                Cliente: {preloadedObra?.cliente} | Dirección:{' '}
+                Cliente: {preloadedObra?.cliente ? `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}` : ''} | Dirección:{' '}
                 {preloadedObra?.direccion}
               </p>
             )}
@@ -112,7 +109,7 @@ export default function CrearVisita({
                       className="flex w-full items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50"
                     >
                       <Search className="h-4 w-4" />
-                      {formData.obraNombre || 'Buscar obra existente...'}
+                      {formData.direccion || 'Buscar obra existente...'}
                     </button>
 
                     {showObraSearch && (
@@ -132,9 +129,9 @@ export default function CrearVisita({
                               onClick={() => handleObraSelect(obra)}
                               className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:bg-blue-50"
                             >
-                              <div className="font-medium">{obra.nombre}</div>
+                              <div className="font-medium">{obra.direccion}</div>
                               <div className="text-sm text-gray-600">
-                                {obra.cliente.nombre} - {obra.nombre}
+                                {obra.cliente.nombre} - {obra.direccion}
                               </div>{' '}
                               {/*Cambiar a direccion si se agrega ese campo*/}
                             </button>

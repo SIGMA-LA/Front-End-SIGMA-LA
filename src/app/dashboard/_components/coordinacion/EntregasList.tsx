@@ -68,7 +68,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="mb-2 text-lg font-semibold text-gray-800">
-                      {'entrega.obra.direccion'}
+                      {entrega.obra.direccion}
                     </h3>
                     <div className="mb-3 grid grid-cols-2 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">

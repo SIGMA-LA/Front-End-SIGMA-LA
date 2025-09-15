@@ -641,15 +641,12 @@ export default function AdminDashboardClient() {
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="mb-2 text-lg font-semibold">{obra.nombre}</h3>
+                  <h3 className="mb-2 text-lg font-semibold">{obra.direccion}</h3>
                   <p className="mb-2 text-gray-600">{obra.descripcion}</p>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                     <div>
                       <strong>Cliente:</strong> {obra.cliente.nombre}{' '}
                       {obra.cliente.apellido}
-                    </div>
-                    <div>
-                      <strong>Ubicación:</strong> {obra.ubicacion}
                     </div>
                     <div>
                       <strong>Presupuesto:</strong>{' '}

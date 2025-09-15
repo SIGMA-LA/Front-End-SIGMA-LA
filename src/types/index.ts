@@ -53,16 +53,9 @@ export interface Usuario {
 
 export interface Obra {
   id: number
-  nombre: string
+  direccion: string
   descripcion: string
-  cliente: {
-    id: number
-    nombre: string
-    apellido: string
-    telefono: string
-    email: string
-  }
-  ubicacion: string
+  cliente: Cliente
   presupuesto: number
   fechaInicio: string
   estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada'
@@ -87,7 +80,7 @@ export interface ConfiguracionesProps {
 
 export interface CrearClienteProps {
   onCancel: () => void
-  onSubmit?: (clienteData: any) => void
+  onSubmit?: (clienteData: Cliente) => void
 }
 
 export interface Vehiculo {
@@ -106,8 +99,8 @@ export interface VisitaDetailProps {
 
 export interface ObrasListProps {
   onCreateClick: () => void
-  onScheduleVisit?: (obra: any) => void
-  onScheduleEntrega?: (obra: any) => void
+  onScheduleVisit?: (obra: Obra) => void
+  onScheduleEntrega?: (obra: Obra) => void
 }
 
 export interface LoginFormProps {
@@ -122,13 +115,7 @@ export interface DashboardSwitcherProps {
 export interface CrearVisitaProps {
   onCancel: () => void
   onSubmit: (visitaData: any) => void
-  preloadedObra?: {
-    id: string
-    nombre: string
-    cliente: string
-    direccion: string
-    contacto: string
-  }
+  preloadedObra?: Obra | null
 }
 
 export interface EntregasListProps {
@@ -138,4 +125,18 @@ export interface EntregasListProps {
 export interface DashboardProps {
   userName: string
   onLogout: () => void
+}
+
+export interface CrearEntregaProps {
+  onCancel: () => void
+  onSubmit: (entregaData: Entrega) => void
+  preloadedObra?: Obra | null
+}
+
+export interface ModalEncargadoProps {
+  isOpen: boolean
+  empleados: Usuario[]
+  selectedEmpleados: string[]
+  onSelectEncargado: (encargadoId: string) => void
+  onCancel: () => void
 }
