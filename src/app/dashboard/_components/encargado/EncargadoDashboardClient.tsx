@@ -87,7 +87,7 @@ export default function EncargadoDashboardClient() {
                     <div className="flex-grow text-sm">
                       <p className="font-semibold text-gray-800">
                         {formatDate(entrega.fecha)} - {entrega.hora}hs -{' '}
-                        {entrega.obra.ubicacion.split(',')[0]}
+                        {entrega.obra.direccion.split(',')[0]}
                       </p>
                     </div>
                     <span className="rounded-md bg-orange-500 px-3 py-1 text-xs text-white">
@@ -120,7 +120,7 @@ export default function EncargadoDashboardClient() {
                     <div className="flex-grow text-sm">
                       <p className="font-semibold text-gray-800">
                         {formatDate(entrega.fecha)} - {entrega.hora}hs -{' '}
-                        {entrega.obra.ubicacion.split(',')[0]}
+                        {entrega.obra.direccion.split(',')[0]}
                       </p>
                     </div>
                     <span className="rounded-md bg-gray-500 px-3 py-1 text-xs text-white">

@@ -32,10 +32,10 @@ export default function ObrasList({
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {'obra.direccion'}
+                    {obra.direccion}
                   </h3>
                   <p className="text-gray-600">
-                    Cliente: {obra.cliente.nombre}
+                    Cliente: {`${obra.cliente.nombre} ${obra.cliente.apellido}`}
                   </p>
                   <p className="text-sm text-gray-500">
                     Inicio: {obra.fechaInicio}

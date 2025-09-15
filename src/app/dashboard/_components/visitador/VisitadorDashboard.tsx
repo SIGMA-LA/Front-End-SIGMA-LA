@@ -94,7 +94,7 @@ export default function VisitadorDashboard() {
                     <div className="flex-grow text-sm">
                       <p className="font-semibold text-gray-800">
                         {formatDate(visita.fecha)} - {visita.hora}hs -{' '}
-                        {visita.obra.ubicacion.split(',')[0]}
+                        {visita.obra.direccion.split(',')[0]}
                       </p>
                       <p className="mt-1 text-xs text-gray-500">
                         {getTipoText(visita.tipo)}
@@ -130,7 +130,7 @@ export default function VisitadorDashboard() {
                     <div className="flex-grow text-sm">
                       <p className="font-semibold text-gray-800">
                         {formatDate(visita.fecha)} - {visita.hora}hs -{' '}
-                        {visita.obra.ubicacion.split(',')[0]}
+                        {visita.obra.direccion.split(',')[0]}
                       </p>
                       <p className="mt-1 text-xs text-gray-500">
                         {getTipoText(visita.tipo)}
@@ -174,7 +174,7 @@ export default function VisitadorDashboard() {
                   </div>
                   <div className="col-span-2 flex items-center space-x-3">
                     <MapPin className="h-5 w-5 text-gray-400" />{' '}
-                    <span>{selectedVisita.obra.ubicacion}</span>
+                    <span>{selectedVisita.obra.direccion}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Calendar className="h-5 w-5 text-gray-400" />{' '}

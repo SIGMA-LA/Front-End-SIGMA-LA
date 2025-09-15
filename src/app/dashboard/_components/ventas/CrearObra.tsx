@@ -137,7 +137,7 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Nombre de la obra
+                    Ubicación de la obra
                   </label>
                   <input
                     type="text"
@@ -157,16 +157,6 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                       <option>Rosario</option>
                       <option>Santa Fe</option>
                     </select>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Dirección
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Dirección completa"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
                   </div>
                 </div>
 

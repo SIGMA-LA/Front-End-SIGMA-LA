@@ -13,59 +13,46 @@ import {
   Truck,
 } from 'lucide-react'
 import { mockVehiculos } from '@/data/mockData'
+import { mockObras } from '@/data/mockData'
+import { CrearEntregaProps } from '@/types'
+import { ModalEncargadoProps } from '@/types'
+import { Usuario } from '@/types'
 
-// Mock data de obras para el buscador
-const mockObras = [
-  {
-    id: '1',
-    nombre: 'Casa Rodriguez',
-    cliente: 'Juan Rodriguez',
-    direccion: 'Rodriguez 200',
-    contacto: '341-5555-0001',
+// Mock data de visitadores/empleados - Corregido para coincidir con la interfaz Usuario
+const mockEmpleados: Usuario[] = [
+  { 
+    id: 1, 
+    nombre: 'Franco', 
+    apellido: 'Zantigui', 
+    email: 'franco@test.com', 
+    rol: 'visitador', 
+    activo: true 
   },
-  {
-    id: '2',
-    nombre: 'Oficinas Centro',
-    cliente: 'Empresa ABC',
-    direccion: 'Córdoba 123',
-    contacto: '341-5555-0002',
+  { 
+    id: 2, 
+    nombre: 'Nicolás', 
+    apellido: 'Piedimonte', 
+    email: 'nicolas@test.com', 
+    rol: 'visitador', 
+    activo: true 
   },
-  {
-    id: '3',
-    nombre: 'Departamento Norte',
-    cliente: 'María García',
-    direccion: 'Pampa 34',
-    contacto: '341-5555-0003',
+  { 
+    id: 3, 
+    nombre: 'Carlos', 
+    apellido: 'Gugliermino', 
+    email: 'carlos@test.com', 
+    rol: 'visitador', 
+    activo: true 
+  },
+  { 
+    id: 4, 
+    nombre: 'Luca', 
+    apellido: 'Torricevelli', 
+    email: 'luca@test.com', 
+    rol: 'visitador', 
+    activo: true 
   },
 ]
-
-// Mock data de visitadores/empleados
-const mockEmpleados = [
-  { id: '1', nombre: 'Franco Zantigui' },
-  { id: '2', nombre: 'Nicolás Piedimonte' },
-  { id: '3', nombre: 'Carlos Gugliermino' },
-  { id: '4', nombre: 'Luca Torricevelli' },
-]
-
-interface CrearEntregaProps {
-  onCancel: () => void
-  onSubmit: (entregaData: any) => void
-  preloadedObra?: {
-    id: string
-    nombre: string
-    cliente: string
-    direccion: string
-    contacto: string
-  }
-}
-
-interface ModalEncargadoProps {
-  isOpen: boolean
-  empleados: typeof mockEmpleados
-  selectedEmpleados: string[]
-  onSelectEncargado: (encargadoId: string) => void
-  onCancel: () => void
-}
 
 function ModalEncargado({
   isOpen,
@@ -79,7 +66,7 @@ function ModalEncargado({
   if (!isOpen) return null
 
   const empleadosAsignados = empleados.filter((emp) =>
-    selectedEmpleados.includes(emp.id)
+    selectedEmpleados.includes(emp.id.toString())
   )
 
   const handleConfirmar = () => {
@@ -100,7 +87,7 @@ function ModalEncargado({
             <label
               key={empleado.id}
               className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                encargadoSeleccionado === empleado.id
+                encargadoSeleccionado === empleado.id.toString()
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-300 hover:bg-gray-50'
               }`}
@@ -109,18 +96,18 @@ function ModalEncargado({
                 type="radio"
                 name="encargado"
                 value={empleado.id}
-                checked={encargadoSeleccionado === empleado.id}
+                checked={encargadoSeleccionado === empleado.id.toString()}
                 onChange={(e) => setEncargadoSeleccionado(e.target.value)}
                 className="mr-3"
               />
               <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-green-500 text-sm font-medium text-white">
-                {empleado.nombre
+                {`${empleado.nombre} ${empleado.apellido}`
                   .split(' ')
                   .map((n) => n[0])
                   .join('')
                   .slice(0, 2)}
               </div>
-              <span className="text-sm font-medium">{empleado.nombre}</span>
+              <span className="text-sm font-medium">{empleado.nombre} {empleado.apellido}</span>
             </label>
           ))}
         </div>
@@ -158,11 +145,9 @@ export default function CrearEntrega({
     observaciones: '',
     // Campos específicos para la obra
     direccion: preloadedObra?.direccion || '',
-    contacto: preloadedObra?.contacto || '',
     // Obra seleccionada (si aplica)
     obraId: preloadedObra?.id || '',
-    obraNombre: preloadedObra?.nombre || '',
-    obraCliente: preloadedObra?.cliente || '',
+    obraCliente: preloadedObra?.cliente ? `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}` : '',
   })
 
   const [showObraSearch, setShowObraSearch] = useState(false)
@@ -175,9 +160,8 @@ export default function CrearEntrega({
 
   const filteredObras = mockObras.filter(
     (obra) =>
-      obra.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.direccion.toLowerCase().includes(searchTerm.toLowerCase())
+      obra.direccion.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      obra.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) 
   )
 
   const handleEmpleadoToggle = (empleadoId: string) => {
@@ -200,10 +184,8 @@ export default function CrearEntrega({
     setFormData((prev) => ({
       ...prev,
       obraId: obra.id,
-      obraNombre: obra.nombre,
-      obraCliente: obra.cliente,
+      obraCliente: `${obra.cliente.nombre} ${obra.cliente.apellido}`,
       direccion: obra.direccion,
-      contacto: obra.contacto,
     }))
     setShowObraSearch(false)
     setSearchTerm('')
@@ -220,10 +202,16 @@ export default function CrearEntrega({
     if (selectedEmpleados.length === 1) {
       // Si solo hay un empleado seleccionado, directamente lo asignamos como encargado
       const entregaData = {
-        ...formData,
-        visitadores: selectedEmpleados,
-        vehiculos: selectedVehiculos,
-        encargado: selectedEmpleados[0],
+        id: Date.now(), // ID temporal
+        obra: preloadedObra || mockObras.find(o => o.id.toString() === formData.obraId.toString())!,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        estado: 'programada' as const,
+        encargadoAsignado: mockEmpleados.find(e => e.id.toString() === selectedEmpleados[0])?.nombre + ' ' + mockEmpleados.find(e => e.id.toString() === selectedEmpleados[0])?.apellido || '',
+        productos: [formData.descripcionUso],
+        direccionEntrega: formData.direccion,
+        observaciones: formData.observaciones,
+        vehiculo: selectedVehiculos.length > 0 ? mockVehiculos.find(v => v.id === selectedVehiculos[0])?.descripcion : undefined,
       }
       onSubmit(entregaData)
     } else {
@@ -233,11 +221,18 @@ export default function CrearEntrega({
   }
 
   const handleSelectEncargado = (encargadoId: string) => {
+    const encargado = mockEmpleados.find(e => e.id.toString() === encargadoId)
     const entregaData = {
-      ...formData,
-      visitadores: selectedEmpleados,
-      vehiculos: selectedVehiculos,
-      encargado: encargadoId,
+      id: Date.now(), // ID temporal
+      obra: preloadedObra || mockObras.find(o => o.id.toString() === formData.obraId.toString())!,
+      fecha: formData.fecha,
+      hora: formData.hora,
+      estado: 'programada' as const,
+      encargadoAsignado: encargado ? `${encargado.nombre} ${encargado.apellido}` : '',
+      productos: [formData.descripcionUso],
+      direccionEntrega: formData.direccion,
+      observaciones: formData.observaciones,
+      vehiculo: selectedVehiculos.length > 0 ? mockVehiculos.find(v => v.id === selectedVehiculos[0])?.descripcion : undefined,
     }
 
     setShowModalEncargado(false)
@@ -252,13 +247,12 @@ export default function CrearEntrega({
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900">
                 {isFromObra
-                  ? `Detalles entrega - ${preloadedObra?.nombre}`
+                  ? `Detalles entrega - ${preloadedObra?.direccion}`
                   : 'Detalles entrega'}
               </h1>
-              {isFromObra && (
+              {isFromObra && preloadedObra && (
                 <p className="mt-1 text-gray-600">
-                  Cliente: {preloadedObra?.cliente} | Dirección:{' '}
-                  {preloadedObra?.direccion}
+                  Cliente: {`${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
                 </p>
               )}
             </div>
@@ -276,7 +270,7 @@ export default function CrearEntrega({
                     className="flex w-full items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50"
                   >
                     <Search className="h-4 w-4" />
-                    {formData.obraNombre || 'Buscar obra...'}
+                    {formData.direccion || 'Buscar obra...'}
                   </button>
 
                   {showObraSearch && (
@@ -296,9 +290,9 @@ export default function CrearEntrega({
                             onClick={() => handleObraSelect(obra)}
                             className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:bg-blue-50"
                           >
-                            <div className="font-medium">{obra.nombre}</div>
+                            <div className="font-medium">{obra.direccion}</div>
                             <div className="text-sm text-gray-600">
-                              {obra.cliente} - {obra.direccion}
+                              {obra.cliente.nombre} - {obra.direccion}
                             </div>
                           </button>
                         ))}
@@ -343,42 +337,42 @@ export default function CrearEntrega({
                 </div>
               </div>
 
-              {/* Visitados */}
+              {/* Visitadores */}
               <div>
                 <label className="mb-3 block text-sm font-medium text-gray-700">
                   <User className="mr-1 inline h-4 w-4" />
-                  Visitados
+                  Visitadores
                 </label>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
                   {mockEmpleados.map((empleado) => (
                     <label
                       key={empleado.id}
                       className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                        selectedEmpleados.includes(empleado.id)
+                        selectedEmpleados.includes(empleado.id.toString())
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       <input
                         type="checkbox"
-                        checked={selectedEmpleados.includes(empleado.id)}
-                        onChange={() => handleEmpleadoToggle(empleado.id)}
+                        checked={selectedEmpleados.includes(empleado.id.toString())}
+                        onChange={() => handleEmpleadoToggle(empleado.id.toString())}
                         className="mr-2"
                       />
                       <div className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-400 text-sm font-medium text-white">
-                        {empleado.nombre
+                        {`${empleado.nombre} ${empleado.apellido}`
                           .split(' ')
                           .map((n) => n[0])
                           .join('')
                           .slice(0, 2)}
                       </div>
-                      <span className="text-sm">{empleado.nombre}</span>
+                      <span className="text-sm">{empleado.nombre} {empleado.apellido}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              {/* Descripción uso y Valor visitados */}
+              {/* Descripción uso y Valor viáticos */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -400,7 +394,7 @@ export default function CrearEntrega({
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Valor viaticos (opcional):
+                    Valor viáticos (opcional):
                   </label>
                   <input
                     type="text"
@@ -408,7 +402,7 @@ export default function CrearEntrega({
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        valorVisitados: e.target.value,
+                        valorViaticos: e.target.value,
                       }))
                     }
                     placeholder="$50,00"

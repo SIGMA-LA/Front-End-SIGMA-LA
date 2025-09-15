@@ -18,6 +18,10 @@ const VisitadorDashboardClient = dynamic(
   () => import('@/app/dashboard/_components/visitador/VisitadorDashboard')
 )
 
+const VentasDashboardClient = dynamic(
+  () => import('@/app/dashboard/_components/ventas/VentasDashboard')
+)
+
 const LoadingSpinner = () => (
   <div className="flex h-screen items-center justify-center">
     <div className="h-32 w-32 animate-spin rounded-full border-t-2 border-b-2 border-blue-600"></div>
@@ -51,6 +55,8 @@ export default function DashboardPage() {
       return <EncargadoDashboardClient />
     case 'visitador':
       return <VisitadorDashboardClient />
+    case 'ventas':
+      return <VentasDashboardClient />
     default:
       console.error('Rol de usuario desconocido:', usuario.rol)
       router.push('/login')

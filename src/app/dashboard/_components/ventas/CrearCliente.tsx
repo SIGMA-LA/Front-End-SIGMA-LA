@@ -11,7 +11,13 @@ export default function CrearCliente({
     e.preventDefault()
     // Aquí puedes agregar la lógica para procesar el formulario
     if (onSubmit) {
-      onSubmit({})
+      onSubmit({
+        id: 0, // El backend generará un ID único
+        nombre: (e.target as any)[0].value,
+        apellido: (e.target as any)[1].value,
+        email: (e.target as any)[2].value,
+        telefono: (e.target as any)[8].value,
+      })
     }
   }
 

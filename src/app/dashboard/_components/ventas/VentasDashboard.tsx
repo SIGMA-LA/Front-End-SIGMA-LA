@@ -14,15 +14,15 @@ import {
 } from 'lucide-react'
 
 // Importar componentes
-import Configuraciones from './Configuraciones'
-import EntregasList from '../shared/EntregasList'
-import VisitasList from '../shared/VisitasList'
-import ObrasList from '../shared/ObrasList'
-import ClientesList from '../shared/ClientesList'
-import CrearVisita from './CrearVisita'
-import CrearEntrega from './CrearEntrega'
+import CrearCliente from './CrearCliente' // Ventas
+import CrearObra from './CrearObra' // Coordinacion
+import Configuraciones from './Configuraciones' // Hacer uno para cada rol
+import EntregasList from '../shared/EntregasList' // Shared
+import VisitasList from '../shared/VisitasList' // Shared
+import ObrasList from '../shared/ObrasList' // Shared
+import ClientesList from '../shared/ClientesList' // Shared
 
-export default function CoordDashboard() {
+export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
@@ -68,55 +68,19 @@ export default function CoordDashboard() {
       case 'visitas':
         return (
           <VisitasList
-            onCreateClick={() => setCurrentSection('crear-visita')}
+          onCreateClick={() => {}}
           />
         )
 
       case 'entregas':
         return (
           <EntregasList
-            onCreateClick={() => {
-              setCurrentSection('crear-entrega')
-            }}
+          onCreateClick={() => {}}
           />
         )
 
       case 'configuraciones':
         return <Configuraciones />
-
-      case 'crear-visita':
-        return (
-          <CrearVisita
-            onCancel={() => {
-              setCurrentSection(selectedObra ? 'obras' : 'visitas')
-              setSelectedObra(null)
-            }}
-            onSubmit={(visitaData) => {
-              // Aquí puedes agregar lógica para guardar la visita
-              console.log('Visita creada:', visitaData)
-              setCurrentSection(selectedObra ? 'obras' : 'visitas')
-              setSelectedObra(null)
-            }}
-            preloadedObra={selectedObra}
-          />
-        )
-
-      case 'crear-entrega':
-        return (
-          <CrearEntrega
-            onCancel={() => {
-              setCurrentSection(selectedObra ? 'obras' : 'entregas')
-              setSelectedObra(null)
-            }}
-            onSubmit={(entregaData) => {
-              // Aquí puedes agregar lógica para guardar la entrega
-              console.log('Entrega creada:', entregaData)
-              setCurrentSection(selectedObra ? 'obras' : 'entregas')
-              setSelectedObra(null)
-            }}
-            preloadedObra={selectedObra}
-          />
-        )
 
       case 'clientes':
         return (
@@ -145,6 +109,30 @@ export default function CoordDashboard() {
 
       case 'configuraciones':
         return <Configuraciones />
+
+      case 'crear-obra':
+        return (
+          <CrearObra
+            onCancel={() => setCurrentSection('obras')}
+            onSubmit={(obraData) => {
+              // Aquí puedes agregar lógica para guardar la obra
+              console.log('Obra creada:', obraData)
+              setCurrentSection('obras')
+            }}
+          />
+        )
+
+      case 'crear-cliente':
+        return (
+          <CrearCliente
+            onCancel={() => setCurrentSection('clientes')}
+            onSubmit={(clienteData) => {
+              // Aquí puedes agregar lógica para guardar el cliente
+              console.log('Cliente creado:', clienteData)
+              setCurrentSection('clientes')
+            }}
+          />
+        )
 
       default:
         return (
@@ -175,11 +163,26 @@ export default function CoordDashboard() {
                   <p className="leading-relaxed text-gray-700">
                     Actualmente te encuentras en la sección de{' '}
                     <span className="font-semibold text-blue-600">
-                      Coordinación
+                      Ventas
                     </span>
+                    . ¡Descubre que puedes hacer!
                   </p>
                 </div>
-               
+
+                <div className="flex flex-col gap-4 pt-4 sm:flex-row">
+                  <button
+                    onClick={() => setCurrentSection('crear-obra')}
+                    className="rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+                  >
+                    Crear Nueva Obra
+                  </button>
+                  <button
+                    onClick={() => setCurrentSection('crear-cliente')}
+                    className="rounded-md bg-green-600 px-6 py-3 font-medium text-white transition-colors hover:bg-green-700"
+                  >
+                    Crear Nuevo Cliente
+                  </button>
+                </div>
               </div>
             </div>
           </div>
