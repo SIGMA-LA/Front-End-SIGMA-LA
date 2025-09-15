@@ -68,6 +68,7 @@ export default function AdminDashboardClient() {
       coordinacion: 'Coordinación',
       encargado: 'Encargado',
       visitador: 'Visitador',
+      ventas: 'Ventas',
     }
     return rolNames[rol] || rol
   }

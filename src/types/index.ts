@@ -45,7 +45,7 @@ export interface Usuario {
   apellido: string
   email: string
   telefono?: string
-  rol: 'admin' | 'coordinacion' | 'encargado' | 'visitador'
+  rol: 'admin' | 'coordinacion' | 'encargado' | 'visitador' | 'ventas'
   fechaIngreso?: string
   activo: boolean
   contraseña?: string
