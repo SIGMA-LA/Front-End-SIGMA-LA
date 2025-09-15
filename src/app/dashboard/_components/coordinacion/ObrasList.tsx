@@ -1,6 +1,6 @@
 import { Building2, Plus, Calendar } from 'lucide-react'
 import { ObrasListProps } from '@/types'
-import { mockObras } from '../../../../data/mockData'
+import { mockObras } from '@/data/mockData'
 
 export default function ObrasList({
   onCreateClick,

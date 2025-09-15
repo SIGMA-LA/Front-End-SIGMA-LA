@@ -447,7 +447,7 @@ export default function AdminDashboardClient() {
           </div>
         )}
         {showCreateEmpleado && (
-          <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+          <div className="backdrop-blur fixed inset-0 z-50 flex items-center justify-center">
             <div className="mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6">
               <h3 className="mb-4 text-lg font-semibold">
                 {editingEmpleado ? 'Editar Empleado' : 'Crear Nuevo Empleado'}

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { cn } from '@/lib/utils'
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -8,7 +9,7 @@ export interface InputProps
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, icon, ...props }, ref) => {
     const defaultInputClasses =
-      'w-full h-11 border focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 px-3'
+      'h-11 border focus:border-blue-500 focus:ring-blue-500 placeholder:text-gray-400 px-3'
 
     if (icon) {
       return (
@@ -24,7 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </div>
           <input
             type={type}
-            className={`${defaultInputClasses} ps-10 ${className || ''}`.trim()}
+            className={cn(defaultInputClasses, 'ps-10', className)}
             ref={ref}
             {...props}
           />
@@ -35,7 +36,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <input
         type={type}
-        className={`${defaultInputClasses} ${className || ''}`.trim()}
+        className={cn(defaultInputClasses, className)}
         ref={ref}
         {...props}
       />
