@@ -15,17 +15,16 @@ export default function LoginPage() {
     }
   }, [usuario, router])
 
-  const handleLoginAttempt = (email: string, contrasena: string): boolean => {
-    console.log(`Intentando login con: ${email}`)
-    const loginSuccessful = login(email, contrasena)
-
-    if (loginSuccessful) {
-      console.log('Login exitoso a través del contexto!')
-    } else {
-      console.log('Login fallido a través del contexto.')
+  const handleLoginAttempt = async (
+    cuil: number,
+    contrasenia: string
+  ): Promise<void> => {
+    try {
+      await login(cuil, contrasenia)
+    } catch (error) {
+      console.error('Fallo el intento de login:', error)
+      throw false
     }
-
-    return loginSuccessful
   }
 
   return <LoginForm onLogin={handleLoginAttempt} />

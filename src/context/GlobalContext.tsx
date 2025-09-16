@@ -1,24 +1,25 @@
 'use client'
 
 import React, { createContext, useContext, useState, ReactNode } from 'react'
+import api from '@/services/api/api'
 import {
-  mockUsuarios,
+  //mockUsuarios,
   mockObras,
   mockClientes,
   mockEntregas,
   mockVisitas,
 } from '@/data/mockData'
-import type { Usuario, Obra, Cliente, Entrega, Visita } from '@/types'
+import type { Empleado, Obra, Cliente, Entrega, Visita } from '@/types'
 
 interface GlobalContextType {
-  usuarios: Usuario[]
+  empleados: Empleado[]
   obras: Obra[]
   clientes: Cliente[]
   entregas: Entrega[]
   visitas: Visita[]
-  addEmpleado: (empleado: Usuario) => void
-  updateEmpleado: (id: number, data: Partial<Omit<Usuario, 'id'>>) => void
-  deleteEmpleado: (id: number) => void
+  addEmpleado: (empleado: Empleado) => void
+  updateEmpleado: (cuil: number, data: Partial<Omit<Empleado, 'cuil'>>) => void
+  deleteEmpleado: (cuil: number) => void
   currentSection: string
   setCurrentSection: (section: string) => void
   finalizarEntrega: (id: number, observaciones: string) => void
@@ -28,25 +29,25 @@ interface GlobalContextType {
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
 
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios)
+  const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras] = useState<Obra[]>(mockObras)
   const [clientes] = useState<Cliente[]>(mockClientes)
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [entregas] = useState<Entrega[]>(mockEntregas)
   const [visitas] = useState<Visita[]>(mockVisitas)
 
-  const addEmpleado = (empleado: Usuario) => {
-    setUsuarios((prev) => [...prev, empleado])
+  const addEmpleado = (empleado: Empleado) => {
+    setEmpleados((prev) => [...prev, empleado])
   }
 
-  const updateEmpleado = (id: number, data: Partial<Omit<Usuario, 'id'>>) => {
-    setUsuarios((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, ...data } : u))
+  const updateEmpleado = (id: number, data: Partial<Omit<Empleado, 'cuil'>>) => {
+    setEmpleados((prev) =>
+      prev.map((u) => (u.cuil === id ? { ...u, ...data } : u))
     )
   }
 
   const deleteEmpleado = (id: number) => {
-    setUsuarios((prev) => prev.filter((u) => u.id !== id))
+    setEmpleados((prev) => prev.filter((u) => u.cuil !== id))
   }
 
   const finalizarEntrega = (id: number, observaciones: string) => {
@@ -60,7 +61,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   return (
     <GlobalContext.Provider
       value={{
-        usuarios,
+        empleados,
         obras,
         clientes,
         entregas,

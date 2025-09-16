@@ -46,19 +46,19 @@ export default function DashboardPage() {
     return null
   }
 
-  switch (usuario.rol) {
-    case 'admin':
+  switch (usuario.rol_actual) {
+    case 'ADMIN':
       return <AdminDashboardClient />
-    case 'coordinacion':
+    case 'COORDINACION':
       return <CoordDashboardClient />
-    case 'encargado':
+    case 'ENCARGADO':
       return <EncargadoDashboardClient />
-    case 'visitador':
+    case 'VISITADOR':
       return <VisitadorDashboardClient />
-    case 'ventas':
+    case 'VENTAS':
       return <VentasDashboardClient />
     default:
-      console.error('Rol de usuario desconocido:', usuario.rol)
+      console.error('Rol de usuario desconocido:', usuario.rol_actual)
       router.push('/login')
       return null
   }
