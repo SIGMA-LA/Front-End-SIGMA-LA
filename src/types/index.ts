@@ -103,6 +103,17 @@ export interface ObrasListProps {
   onScheduleEntrega?: (obra: Obra) => void
 }
 
+export interface PedidosListProps {
+  onCreateClick: () => void
+  onSchedulePedido?: (obra: Obra) => void
+}
+
+export interface RegistrarPedidoProps {
+  onCancel: () => void
+  onSubmit: (pedidoData: any) => void
+  preloadedObra?: Obra | null
+}
+
 export interface LoginFormProps {
   onLogin: (usuario: string, contrasena: string) => boolean
 }
@@ -139,4 +150,14 @@ export interface ModalEncargadoProps {
   selectedEmpleados: string[]
   onSelectEncargado: (encargadoId: string) => void
   onCancel: () => void
+}
+
+export interface Maquinaria {
+  id: string
+  descripcion: string
+  estado: 'disponible' | 'inhabilitada'
+}
+
+export interface MaquinariaListProps {
+  onCreateClick: () => void
 }

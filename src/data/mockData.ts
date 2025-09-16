@@ -6,6 +6,7 @@ import type {
   Entrega,
   Visita,
   Vehiculo,
+  Maquinaria
 } from '@/types'
 
 export const mockUsuarios: Usuario[] = [
@@ -420,4 +421,9 @@ export const mockVisitadores = [
   { id: '1', nombre: 'Franco Zariaga' },
   { id: '2', nombre: 'Nicolás Pedemonte' },
   { id: '3', nombre: 'Carlos Gugliermino' },
+]
+
+export const mockMaquinarias: Maquinaria[] = [
+  { id: '1', descripcion: 'Mezcladora de cemento', estado: 'disponible' },
+  { id: '2', descripcion: 'Andamio tubular', estado: 'inhabilitada' },
 ]

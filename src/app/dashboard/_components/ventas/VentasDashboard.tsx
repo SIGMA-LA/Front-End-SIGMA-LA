@@ -49,11 +49,9 @@ export default function VentasDashboard() {
             onCreateClick={() => setCurrentSection('crear-obra')}
             onScheduleVisit={(obra) => {
               setSelectedObra(obra)
-              setCurrentSection('crear-visita')
             }}
             onScheduleEntrega={(obra) => {
               setSelectedObra(obra)
-              setCurrentSection('crear-entrega')
             }}
           />
         )
