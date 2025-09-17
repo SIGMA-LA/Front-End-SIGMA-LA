@@ -172,11 +172,11 @@ export default function CrearEntrega({
     )
   }
 
-  const handleVehiculoToggle = (vehiculoId: string) => {
+  const handleVehiculoToggle = (vehiculoPatente: string) => {
     setSelectedVehiculos((prev) =>
-      prev.includes(vehiculoId)
-        ? prev.filter((id) => id !== vehiculoId)
-        : [...prev, vehiculoId]
+      prev.includes(vehiculoPatente)
+        ? prev.filter((patente) => patente !== vehiculoPatente)
+        : [...prev, vehiculoPatente]
     )
   }
 
@@ -201,18 +201,22 @@ export default function CrearEntrega({
 
     if (selectedEmpleados.length === 1) {
       // Si solo hay un empleado seleccionado, directamente lo asignamos como encargado
-      const entregaData = {
-        id: Date.now(), // ID temporal
-        obra: preloadedObra || mockObras.find(o => o.id.toString() === formData.obraId.toString())!,
-        fecha: formData.fecha,
-        hora: formData.hora,
-        estado: 'programada' as const,
-        encargadoAsignado: mockEmpleados.find(e => e.id.toString() === selectedEmpleados[0])?.nombre + ' ' + mockEmpleados.find(e => e.id.toString() === selectedEmpleados[0])?.apellido || '',
-        productos: [formData.descripcionUso],
-        direccionEntrega: formData.direccion,
-        observaciones: formData.observaciones,
-        vehiculo: selectedVehiculos.length > 0 ? mockVehiculos.find(v => v.id === selectedVehiculos[0])?.descripcion : undefined,
-      }
+      const vehiculoSeleccionado = selectedVehiculos.length > 0 
+    ? mockVehiculos.find(v => v.patente === selectedVehiculos[0])
+    : null
+
+    const entregaData = {
+      id: Date.now(), // ID temporal
+      obra: preloadedObra || mockObras.find(o => o.id.toString() === formData.obraId.toString())!,
+      fecha: formData.fecha,
+      hora: formData.hora,
+      estado: 'programada' as const,
+      encargadoAsignado: mockEmpleados.find(e => e.id.toString() === selectedEmpleados[0])?.nombre + ' ' + mockEmpleados.find(e => e.id.toString() === selectedEmpleados[0])?.apellido || '',
+      productos: [formData.descripcionUso],
+      direccionEntrega: formData.direccion,
+      observaciones: formData.observaciones,
+      vehiculo: vehiculoSeleccionado ? `${vehiculoSeleccionado.marca} ${vehiculoSeleccionado.modelo} (${vehiculoSeleccionado.anio})` : undefined,
+    }
       onSubmit(entregaData)
     } else {
       // Si hay múltiples empleados, mostrar modal para seleccionar encargado
@@ -232,7 +236,10 @@ export default function CrearEntrega({
       productos: [formData.descripcionUso],
       direccionEntrega: formData.direccion,
       observaciones: formData.observaciones,
-      vehiculo: selectedVehiculos.length > 0 ? mockVehiculos.find(v => v.id === selectedVehiculos[0])?.descripcion : undefined,
+      vehiculo: selectedVehiculos.length > 0 ? (() => {
+        const vehiculo = mockVehiculos.find(v => v.patente === selectedVehiculos[0])
+        return vehiculo ? `${vehiculo.marca} ${vehiculo.modelo} (${vehiculo.anio})` : undefined
+      })() : undefined,
     }
 
     setShowModalEncargado(false)
@@ -420,20 +427,20 @@ export default function CrearEntrega({
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   {mockVehiculos.map((vehiculo) => (
                     <label
-                      key={vehiculo.id}
+                      key={vehiculo.patente}
                       className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                        selectedVehiculos.includes(vehiculo.id)
+                        selectedVehiculos.includes(vehiculo.patente)
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       <input
                         type="checkbox"
-                        checked={selectedVehiculos.includes(vehiculo.id)}
-                        onChange={() => handleVehiculoToggle(vehiculo.id)}
+                        checked={selectedVehiculos.includes(vehiculo.patente)}
+                        onChange={() => handleVehiculoToggle(vehiculo.patente)}
                         className="mr-2"
                       />
-                      <span className="text-sm">{vehiculo.descripcion}</span>
+                      <span className="text-sm">{vehiculo.marca} {vehiculo.modelo} {vehiculo.anio}</span>
                     </label>
                   ))}
                 </div>

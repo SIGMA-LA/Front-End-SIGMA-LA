@@ -84,8 +84,12 @@ export interface CrearClienteProps {
 }
 
 export interface Vehiculo {
-  id: string
-  descripcion: string
+  tipoVehiculo: string
+  marca: string
+  modelo: string
+  anio: number
+  patente: string
+  estado: 'disponible' | 'en-uso' | 'reparacion' 
 }
 
 export interface VisitasListProps {

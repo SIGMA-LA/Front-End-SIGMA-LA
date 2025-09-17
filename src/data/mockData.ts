@@ -405,13 +405,6 @@ export const mockVisitas: Visita[] = [
 ]
 
 export const mockVehiculos: Vehiculo[] = [
-  { id: 'camioneta_ford', descripcion: 'Camioneta ford' },
-  { id: 'camioneta_pick_up', descripcion: 'Camioneta pick up' },
-  { id: 'camion_chico', descripcion: 'Camión chico' },
-  { id: 'camion_grande', descripcion: 'Camión grande' },
-]
-
-export const mockVehiculosList = [
   {
     tipoVehiculo: 'Camión',
     marca: 'Iveco',

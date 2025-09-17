@@ -1,10 +1,9 @@
 import { Car, Plus, CheckCircle, AlertTriangle, Clock, XCircle } from 'lucide-react'
-import { mockVehiculosList } from '@/data/mockData'
+import { mockVehiculos } from '@/data/mockData'
 import { VehiculosListProps } from '@/types'
 
 
 // Mock data de vehículos
-const mockVehiculos = mockVehiculosList
 
 export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
   const vehiculos = mockVehiculos
