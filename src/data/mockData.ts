@@ -6,6 +6,7 @@ import type {
   Entrega,
   Visita,
   Vehiculo,
+  Maquinaria
 } from '@/types'
 
 export const mockUsuarios: Usuario[] = [
@@ -404,10 +405,38 @@ export const mockVisitas: Visita[] = [
 ]
 
 export const mockVehiculos: Vehiculo[] = [
-  { id: 'camioneta_ford', descripcion: 'Camioneta ford' },
-  { id: 'camioneta_pick_up', descripcion: 'Camioneta pick up' },
-  { id: 'camion_chico', descripcion: 'Camión chico' },
-  { id: 'camion_grande', descripcion: 'Camión grande' },
+  {
+    tipoVehiculo: 'Camión',
+    marca: 'Iveco',
+    modelo: 'Stralis',
+    anio: 2018,
+    patente: 'AB123AS',
+    estado: 'disponible'
+  },
+  {
+    tipoVehiculo: 'Auto',
+    marca: 'Toyota',
+    modelo: 'Corolla',
+    anio: 2016,
+    patente: 'OEF456',
+    estado: 'en-uso'
+  },
+  {
+    tipoVehiculo: 'Camioneta',
+    marca: 'Ford',
+    modelo: 'Ranger',
+    anio: 2008,
+    patente: 'GHI789',
+    estado: 'reparacion'
+  },
+  {
+    tipoVehiculo: 'Furgón',
+    marca: 'Renault',
+    modelo: 'Kangoo',
+    anio: 2010,
+    patente: 'JKL012',
+    estado: 'disponible'
+  }
 ]
 
 export const mockArquitectos = [
@@ -420,4 +449,9 @@ export const mockVisitadores = [
   { id: '1', nombre: 'Franco Zariaga' },
   { id: '2', nombre: 'Nicolás Pedemonte' },
   { id: '3', nombre: 'Carlos Gugliermino' },
+]
+
+export const mockMaquinarias: Maquinaria[] = [
+  { id: '1', descripcion: 'Mezcladora de cemento', estado: 'disponible' },
+  { id: '2', descripcion: 'Andamio tubular', estado: 'inhabilitada' },
 ]

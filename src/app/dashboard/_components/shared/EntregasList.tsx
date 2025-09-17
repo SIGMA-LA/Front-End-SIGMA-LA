@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, Clock, User, Package, Eye, Plus } from 'lucide-react'
+import { Calendar, Clock, User, PackageOpen, Eye, Plus } from 'lucide-react'
 import { mockEntregas } from '@/data/mockData'
 import { EntregasListProps } from '@/types'
 
@@ -43,9 +43,19 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            Entregas
-          </h1>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+              <PackageOpen className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                Entregas
+              </h1>
+              <p className="text-sm text-gray-600">
+                Gestión de entregas de aberturas y materiales
+              </p>
+            </div>
+          </div>
           <button
             onClick={onCreateClick}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
@@ -84,7 +94,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
                         <span>{entrega.encargadoAsignado}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Package className="h-4 w-4" />
+                        <PackageOpen className="h-4 w-4" />
                         <span className="font-medium">
                           {getStatusText(entrega.estado)}
                         </span>

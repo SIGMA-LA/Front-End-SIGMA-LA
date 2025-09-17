@@ -84,8 +84,12 @@ export interface CrearClienteProps {
 }
 
 export interface Vehiculo {
-  id: string
-  descripcion: string
+  tipoVehiculo: string
+  marca: string
+  modelo: string
+  anio: number
+  patente: string
+  estado: 'disponible' | 'en-uso' | 'reparacion' 
 }
 
 export interface VisitasListProps {
@@ -101,6 +105,17 @@ export interface ObrasListProps {
   onCreateClick: () => void
   onScheduleVisit?: (obra: Obra) => void
   onScheduleEntrega?: (obra: Obra) => void
+}
+
+export interface PedidosListProps {
+  onCreateClick: () => void
+  onSchedulePedido?: (obra: Obra) => void
+}
+
+export interface RegistrarPedidoProps {
+  onCancel: () => void
+  onSubmit: (pedidoData: any) => void
+  preloadedObra?: Obra | null
 }
 
 export interface LoginFormProps {
@@ -139,4 +154,18 @@ export interface ModalEncargadoProps {
   selectedEmpleados: string[]
   onSelectEncargado: (encargadoId: string) => void
   onCancel: () => void
+}
+
+export interface Maquinaria {
+  id: string
+  descripcion: string
+  estado: 'disponible' | 'inhabilitada'
+}
+
+export interface MaquinariaListProps {
+  onCreateClick: () => void
+}
+
+export interface VehiculosListProps {
+  onCreateClick: () => void
 }

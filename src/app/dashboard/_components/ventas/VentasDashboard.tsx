@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Home,
+  PackageOpen,
 } from 'lucide-react'
 
 // Importar componentes
@@ -37,7 +38,7 @@ export default function VentasDashboard() {
     { id: 'obras', label: 'Obras', icon: Building2 },
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
-    { id: 'entregas', label: 'Entregas', icon: Package },
+    { id: 'entregas', label: 'Entregas', icon: PackageOpen },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
   ]
 
@@ -49,11 +50,9 @@ export default function VentasDashboard() {
             onCreateClick={() => setCurrentSection('crear-obra')}
             onScheduleVisit={(obra) => {
               setSelectedObra(obra)
-              setCurrentSection('crear-visita')
             }}
             onScheduleEntrega={(obra) => {
               setSelectedObra(obra)
-              setCurrentSection('crear-entrega')
             }}
           />
         )

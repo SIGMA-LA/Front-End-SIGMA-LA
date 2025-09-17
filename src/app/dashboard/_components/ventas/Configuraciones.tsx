@@ -12,6 +12,7 @@ import {
   Save,
   Building,
   DollarSign,
+  Settings,
 } from 'lucide-react'
 import { ConfiguracionesProps } from '@/types'
 
@@ -84,9 +85,21 @@ export default function Configuraciones({
         <div className="mx-auto max-w-6xl">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-              Configuraciones
-            </h1>
+            <div className="mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+              <Settings className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                Configuraciones
+              </h1>
+              <p className="text-sm text-gray-600">
+                Edita los ajustes de tu cuenta y preferencias del negocio
+              </p>
+            </div>
+          </div>
+          </div>
             {onBack && (
               <button
                 onClick={onBack}
