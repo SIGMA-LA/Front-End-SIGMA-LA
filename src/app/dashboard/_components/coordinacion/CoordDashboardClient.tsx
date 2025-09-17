@@ -12,7 +12,8 @@ import {
   X,
   Home,
   Wrench,
-  Car
+  Car,
+  PackageOpen
 } from 'lucide-react'
 
 // Importar componentes
@@ -31,6 +32,8 @@ import MaquinariaList from './MaquinariaList'
 import CrearMaquinaria from './CrearMaquinaria'
 
 import VehículosList from './VehiculosList'
+import CrearVehiculo from './CrearVehiculo'
+import { on } from 'events'
 
 export default function CoordDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
@@ -41,24 +44,6 @@ export default function CoordDashboard() {
   const [nuevasMaquinas, setNuevasMaquinas] = useState<any[]>([])
 
   // Función para manejar la creación de nueva máquina
-  const handleMaquinaSubmit = (maquinaData: { descripcion: string }) => {
-    // Generar código único
-    const timestamp = Date.now().toString().slice(-6)
-    const codigo = `MAQ-${timestamp}`
-    
-    const nuevaMaquina = {
-      id: codigo,
-      descripcion: maquinaData.descripcion,
-      estado: 'disponible' as const,
-      fechaCreacion: new Date().toISOString().split('T')[0]
-    }
-    
-    setNuevasMaquinas(prev => [...prev, nuevaMaquina])
-    setCurrentSection('maquinarias') // Volver al listado
-    
-    // Aquí puedes agregar la llamada al backend:
-    // await crearMaquina(nuevaMaquina)
-  }
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
@@ -70,7 +55,7 @@ export default function CoordDashboard() {
     { id: 'obras', label: 'Obras', icon: Building2 },
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
-    { id: 'entregas', label: 'Entregas', icon: Package },
+    { id: 'entregas', label: 'Entregas', icon: PackageOpen },
     { id: 'pedidos', label: 'Pedidos', icon: Package },
     { id: 'maquinarias', label: 'Maquinarias', icon: Wrench },
     {id: 'vehiculos', label: 'Vehículos', icon: Car},
@@ -187,11 +172,18 @@ export default function CoordDashboard() {
       case 'crear-maquinaria':
         return <CrearMaquinaria
           onCancel={() => setCurrentSection('maquinarias')}
-          onSubmit={handleMaquinaSubmit}
+          onSubmit={() => setCurrentSection('maquinarias')}
         />
           
       case 'vehiculos':
-        return <VehículosList />
+        return <VehículosList
+        onCreateClick={() => setCurrentSection("crear-vehiculo")} />
+
+      case "crear-vehiculo":
+        return <CrearVehiculo
+        onCancel={() => setCurrentSection("vehiculos")}
+        onSubmit={() => setCurrentSection('vehiculos')}
+        />
 
       case 'configuraciones':
         return <Configuraciones />

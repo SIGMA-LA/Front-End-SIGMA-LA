@@ -1,4 +1,4 @@
-import { Building2, Plus, Calendar } from 'lucide-react'
+import { Building2, Plus, Calendar, Package } from 'lucide-react'
 import { PedidosListProps } from '@/types'
 import { mockObras } from '@/data/mockData'
 
@@ -8,14 +8,19 @@ export default function PedidosList({
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            Pedidos de stock
-          </h1>
-          <p className="text-lg font-semibold text-gray-600">
-            Se requiere registrar pedidos de stock para obras grandes antes de producirlas.
-          </p>
-        </div>
+        <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+              <Package className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                Pedidos de stock
+              </h1>
+              <p className="text-sm text-gray-600">
+                Gestión de pedidos de stock para obras grandes
+              </p>
+            </div>
+          </div>
 
         <div className="grid gap-4 sm:gap-6">
           {mockObras.map((obra) => (

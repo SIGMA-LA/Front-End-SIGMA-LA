@@ -411,6 +411,41 @@ export const mockVehiculos: Vehiculo[] = [
   { id: 'camion_grande', descripcion: 'Camión grande' },
 ]
 
+export const mockVehiculosList = [
+  {
+    tipoVehiculo: 'Camión',
+    marca: 'Iveco',
+    modelo: 'Stralis',
+    anio: 2018,
+    patente: 'AB123AS',
+    estado: 'disponible'
+  },
+  {
+    tipoVehiculo: 'Auto',
+    marca: 'Toyota',
+    modelo: 'Corolla',
+    anio: 2016,
+    patente: 'OEF456',
+    estado: 'en-uso'
+  },
+  {
+    tipoVehiculo: 'Camioneta',
+    marca: 'Ford',
+    modelo: 'Ranger',
+    anio: 2008,
+    patente: 'GHI789',
+    estado: 'reparacion'
+  },
+  {
+    tipoVehiculo: 'Furgón',
+    marca: 'Renault',
+    modelo: 'Kangoo',
+    anio: 2010,
+    patente: 'JKL012',
+    estado: 'disponible'
+  }
+]
+
 export const mockArquitectos = [
   { id: '1', nombre: 'Aaron Bennett' },
   { id: '2', nombre: 'Abbey Christensen' },

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Wrench, CheckCircle, X, ArrowLeft } from 'lucide-react'
+import { Wrench, CheckCircle, X } from 'lucide-react'
 
 interface CrearMaquinaProps {
   onCancel: () => void
@@ -137,16 +137,7 @@ export default function CrearMaquinaria({ onCancel, onSubmit }: CrearMaquinaProp
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <div className="mb-4 flex items-center gap-3">
-                <button
-                  onClick={onCancel}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </button>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-                    <Wrench className="h-6 w-6 text-orange-600" />
-                  </div>
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">
                       Registrar Nueva Máquina
@@ -177,7 +168,7 @@ export default function CrearMaquinaria({ onCancel, onSubmit }: CrearMaquinaProp
                   className={`w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 ${
                     errors.descripcion
                       ? 'border-red-300 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-orange-500'
+                      : 'border-gray-300 focus:ring-blue-500'
                   }`}
                 />
                 {errors.descripcion && (
@@ -214,7 +205,7 @@ export default function CrearMaquinaria({ onCancel, onSubmit }: CrearMaquinaProp
                 <button
                   type="submit"
                   disabled={!descripcion.trim()}
-                  className="rounded-lg bg-orange-600 px-6 py-2 font-medium text-white transition-colors hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Registrar Máquina
                 </button>

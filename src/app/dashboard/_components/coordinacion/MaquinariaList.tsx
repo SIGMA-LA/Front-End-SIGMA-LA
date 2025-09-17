@@ -37,8 +37,8 @@ export default function MaquinariaList({ onCreateClick }: MaquinariaListProps) {
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
-              <Wrench className="h-6 w-6 text-orange-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+              <Wrench className="h-6 w-6 text-blue-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
@@ -51,7 +51,7 @@ export default function MaquinariaList({ onCreateClick }: MaquinariaListProps) {
           </div>
           <button
             onClick={onCreateClick}
-            className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-700"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
           >
             <Plus className="h-5 w-5" />
             Nueva Máquina

@@ -161,3 +161,7 @@ export interface Maquinaria {
 export interface MaquinariaListProps {
   onCreateClick: () => void
 }
+
+export interface VehiculosListProps {
+  onCreateClick: () => void
+}
