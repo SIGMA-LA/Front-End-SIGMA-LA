@@ -40,7 +40,7 @@ export interface Entrega {
 }
 
 export interface Empleado {
-  cuil: number
+  cuil: string
   nombre: string
   apellido: string
   rol_actual: 'VENTAS' | 'ADMIN' | 'ENCARGADO' | 'COORDINACION' | 'VISITADOR'
@@ -101,7 +101,7 @@ export interface ObrasListProps {
 }
 
 export interface LoginFormProps {
-  onLogin: (cuil: number, contrasenia: string) => Promise<void>
+  onLogin: (cuil: string, contrasenia: string) => Promise<void>
 }
 
 export interface DashboardSwitcherProps {

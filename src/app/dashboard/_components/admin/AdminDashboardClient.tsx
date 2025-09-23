@@ -33,7 +33,7 @@ export default function AdminDashboardClient() {
   const [newEmpleado, setNewEmpleado] = useState({
     nombre: '',
     apellido: '',
-    cuil: 0,
+    cuil: '',
     rol_actual: 'VISITADOR' as Empleado['rol_actual'],
     area_trabajo: '',
     contrasenia: '',
@@ -93,7 +93,7 @@ export default function AdminDashboardClient() {
       setNewEmpleado({
         nombre: '',
         apellido: '',
-        cuil: 0,
+        cuil: '',
         rol_actual: 'VISITADOR',
         area_trabajo: '',
         contrasenia: '',
@@ -133,7 +133,7 @@ export default function AdminDashboardClient() {
     }
   }
 
-  const handleDeleteEmpleado = async (cuil: number) => {
+  const handleDeleteEmpleado = async (cuil: string) => {
   if (window.confirm('¿Seguro?')) {
     try {
       await deleteEmpleado(cuil);
@@ -429,7 +429,7 @@ export default function AdminDashboardClient() {
                     type="cuil"
                     value={newEmpleado.cuil}
                     onChange={(e) =>
-                      setNewEmpleado({ ...newEmpleado, cuil: Number(e.target.value) })
+                      setNewEmpleado({ ...newEmpleado, cuil: String(e.target.value) })
                     }
                     placeholder="Ingrese el cuil"
                   />
@@ -460,7 +460,7 @@ export default function AdminDashboardClient() {
                     setShowCreateEmpleado(false)
                     setEditingEmpleado(null)
                     setNewEmpleado({
-                      cuil: 0,
+                      cuil: '',
                       nombre: '',
                       apellido: '',
                       area_trabajo: '',

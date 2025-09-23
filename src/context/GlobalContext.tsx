@@ -1,9 +1,14 @@
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react'
 import api from '@/services/api/api'
 import {
-  //mockUsuarios,
   mockObras,
   mockClientes,
   mockEntregas,
@@ -17,9 +22,12 @@ interface GlobalContextType {
   clientes: Cliente[]
   entregas: Entrega[]
   visitas: Visita[]
-  addEmpleado: (empleado: Empleado) => void
-  updateEmpleado: (cuil: number, data: Partial<Omit<Empleado, 'cuil'>>) => void
-  deleteEmpleado: (cuil: number) => void
+  addEmpleado: (empleado: Omit<Empleado, 'cuil'>) => Promise<void>
+  updateEmpleado: (
+    cuil: string,
+    data: Partial<Omit<Empleado, 'cuil'>>,
+  ) => Promise<void>
+  deleteEmpleado: (cuil: string) => Promise<void>
   currentSection: string
   setCurrentSection: (section: string) => void
   finalizarEntrega: (id: number, observaciones: string) => void
@@ -36,26 +44,68 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [entregas] = useState<Entrega[]>(mockEntregas)
   const [visitas] = useState<Visita[]>(mockVisitas)
 
-  const addEmpleado = (empleado: Empleado) => {
-    setEmpleados((prev) => [...prev, empleado])
+  // Cargar empleados desde la API al iniciar el contexto
+  useEffect(() => {
+    const fetchEmpleados = async () => {
+      try {
+        const { data } = await api.get('/api/empleados')
+        setEmpleados(data)
+      } catch (error) {
+        console.error('Error al cargar empleados:', error)
+      }
+    }
+    fetchEmpleados()
+  }, [])
+
+  const addEmpleado = async (empleadoData: Omit<Empleado, 'cuil'>) => {
+    try {
+      const { data: nuevoEmpleado } = await api.post<Empleado>(
+        '/api/empleados',
+        empleadoData,
+      )
+      setEmpleados(prev => [...prev, nuevoEmpleado])
+    } catch (error) {
+      console.error('Error al crear empleado:', error)
+      throw error // Re-lanzamos el error para que el componente lo maneje
+    }
   }
 
-  const updateEmpleado = (id: number, data: Partial<Omit<Empleado, 'cuil'>>) => {
-    setEmpleados((prev) =>
-      prev.map((u) => (u.cuil === id ? { ...u, ...data } : u))
-    )
+  const updateEmpleado = async (
+    cuil: string,
+    empleadoData: Partial<Omit<Empleado, 'cuil'>>,
+  ) => {
+    try {
+      const { data: empleadoActualizado } = await api.put<Empleado>(
+        `/api/empleados/${cuil}`,
+        empleadoData,
+      )
+      setEmpleados(prev =>
+        prev.map(u => (u.cuil === cuil ? empleadoActualizado : u)),
+      )
+    } catch (error) {
+      console.error('Error al actualizar empleado:', error)
+      throw error
+    }
   }
 
-  const deleteEmpleado = (id: number) => {
-    setEmpleados((prev) => prev.filter((u) => u.cuil !== id))
+  const deleteEmpleado = async (cuil: string) => {
+    try {
+      await api.delete(`/api/empleados/${cuil}`)
+      setEmpleados(prev => prev.filter(u => u.cuil !== cuil))
+    } catch (error) {
+      console.error('Error al eliminar empleado:', error)
+      throw error
+    }
   }
 
   const finalizarEntrega = (id: number, observaciones: string) => {
-    const entregaIndex = entregas.findIndex((e) => e.id === id)
+    // Lógica para finalizar entrega (posiblemente una llamada a la API en el futuro)
+    console.log(`Finalizando entrega ${id} con observaciones: ${observaciones}`)
   }
 
   const finalizarVisita = (id: number, observaciones: string) => {
-    const visitaIndex = visitas.findIndex((v) => v.id === id)
+    // Lógica para finalizar visita (posiblemente una llamada a la API en el futuro)
+    console.log(`Finalizando visita ${id} con observaciones: ${observaciones}`)
   }
 
   return (
@@ -84,7 +134,7 @@ export const useGlobalContext = () => {
   const context = useContext(GlobalContext)
   if (context === undefined) {
     throw new Error(
-      'useGlobalContext debe ser usado dentro de un GlobalProvider'
+      'useGlobalContext debe ser usado dentro de un GlobalProvider',
     )
   }
   return context

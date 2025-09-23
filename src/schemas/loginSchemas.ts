@@ -11,8 +11,9 @@ import {
 
 export const loginSchema = object({
   cuil: pipe(
-    number('El CUIL debe ser un número'),
-    minValue(1, 'El campo CUIL es obligatorio')
+    string(),
+    nonEmpty('El campo CUIL es obligatorio'),
+    minLength(10, 'El CUIL debe tener al menos 10 caracteres')
   ),
   contrasenia: pipe(
     string(),

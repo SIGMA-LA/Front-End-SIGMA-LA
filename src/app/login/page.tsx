@@ -16,7 +16,7 @@ export default function LoginPage() {
   }, [usuario, router])
 
   const handleLoginAttempt = async (
-    cuil: number,
+    cuil: string,
     contrasenia: string
   ): Promise<void> => {
     try {

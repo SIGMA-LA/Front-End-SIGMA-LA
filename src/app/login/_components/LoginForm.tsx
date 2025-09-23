@@ -29,7 +29,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
     const dataToValidate = {
       ...formData,
-      cuil: formData.cuil ? parseInt(formData.cuil, 10) : 0,
+      cuil: formData.cuil,
     };
 
     const result = safeParse(loginSchema, dataToValidate)
@@ -81,7 +81,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     setErrors((prev) => ({ ...prev, general: '' }))
 
     try {
-      await onLogin(parseInt(formData.cuil), formData.contrasenia)
+      await onLogin(formData.cuil, formData.contrasenia)
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
