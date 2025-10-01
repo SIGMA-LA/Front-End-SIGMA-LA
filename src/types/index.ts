@@ -1,7 +1,8 @@
+import { number } from "valibot"
+
 export interface Cliente {
   id: number
-  nombre: string
-  apellido: string
+  razon_social: string
   telefono: string
   email: string
 }
@@ -51,11 +52,11 @@ export interface Empleado {
 export interface Obra {
   id: number
   direccion: string
-  descripcion: string
   cliente: Cliente
-  presupuesto: number
+  nota_fabrica: string
   fechaInicio: string
   estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada'
+  localidad?: Localidad
 }
 
 export interface ReporteVentas {
@@ -102,6 +103,7 @@ export interface ObrasListProps {
   onCreateClick: () => void
   onScheduleVisit?: (obra: Obra) => void
   onScheduleEntrega?: (obra: Obra) => void
+  onEditClick: (obra: Obra) => void
 }
 
 export interface PedidosListProps {
@@ -165,4 +167,9 @@ export interface MaquinariaListProps {
 
 export interface VehiculosListProps {
   onCreateClick: () => void
+}
+
+export interface Localidad {
+  cod_postal: number
+  nombre_localidad: string
 }

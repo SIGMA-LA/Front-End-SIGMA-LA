@@ -14,6 +14,9 @@ import {
   PackageOpen,
 } from 'lucide-react'
 
+import { useGlobalContext } from '@/context/GlobalContext'
+import type { Obra } from '@/types'
+
 // Importar componentes
 import CrearCliente from './CrearCliente' // Ventas
 import CrearObra from './CrearObra' // Coordinacion
@@ -27,6 +30,10 @@ export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
+
+  const [obraParaEditar, setObraParaEditar] = useState<Obra | null>(null)
+
+  const { createObra, updateObra } = useGlobalContext()
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
@@ -47,12 +54,61 @@ export default function VentasDashboard() {
       case 'obras':
         return (
           <ObrasList
-            onCreateClick={() => setCurrentSection('crear-obra')}
+            onCreateClick={() => {
+              setObraParaEditar(null)
+              setCurrentSection('crear-obra')
+            }}
+            onEditClick={(obra) => {
+              setObraParaEditar(obra)
+              setCurrentSection('editar-obra')
+            }}
             onScheduleVisit={(obra) => {
               setSelectedObra(obra)
+              setCurrentSection('crear-visita')
             }}
             onScheduleEntrega={(obra) => {
               setSelectedObra(obra)
+              setCurrentSection('crear-entrega')
+            }}
+          />
+        )
+      
+      case 'crear-obra':
+        return (
+          <CrearObra
+            onCancel={() => setCurrentSection('obras')}
+            onSubmit={async (obraData) => {
+              try {
+                await createObra(obraData as Omit<Obra, 'id'>)
+                alert('¡Obra creada con éxito!')
+                setCurrentSection('obras')
+              } catch (error) {
+                console.error('Error al crear la obra:', error)
+                alert('Hubo un error al crear la obra. Por favor, inténtelo de nuevo.')
+              }
+            }}
+          />
+        )
+      
+      case 'editar-obra':
+        return (
+          <CrearObra
+            obraExistente={obraParaEditar}
+            onCancel={() => {
+              setCurrentSection('obras')
+              setObraParaEditar(null)
+            }}
+            onSubmit={async (obraData) => {
+              if (!obraParaEditar) return
+              try {
+                await updateObra(obraParaEditar.id, obraData)
+                alert('¡Obra actualizada con éxito!')
+                setCurrentSection('obras')
+                setObraParaEditar(null)
+              } catch (error) {
+                console.error('Error al actualizar la obra:', error)
+                alert('Hubo un error al actualizar la obra. Por favor, inténtelo de nuevo.')
+              }
             }}
           />
         )

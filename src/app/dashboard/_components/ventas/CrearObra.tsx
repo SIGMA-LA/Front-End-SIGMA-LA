@@ -1,30 +1,75 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, User, Upload } from 'lucide-react'
 import { mockArquitectos, mockClientes } from '@/data/mockData'
+import { useGlobalContext } from '@/context/GlobalContext'
+import type { Obra } from '@/types'
 
 interface CrearObraProps {
   onCancel: () => void
-  onSubmit?: (obraData: any) => void
+  onSubmit: (obraData: Omit<Obra, 'id' | 'cliente'>) => void
+  obraExistente?: Obra | null
 }
 
-export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
+const initialState = {
+  direccion: '',
+  cod_postal: 0,
+  nota_fabrica: '',
+  fechaInicio: '',
+  fechaFinEstimativo: '',
+  estado: 'planificacion' as 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada',
+}
+
+export default function CrearObra({ onCancel, onSubmit, obraExistente  }: CrearObraProps) {
+  const { localidades, fetchLocalidades } = useGlobalContext()
+  const [formData, setFormData] = useState(initialState)
   const [arquitectoEnabled, setArquitectoEnabled] = useState(true)
+  const esModoEdicion = !!obraExistente
+
+  useEffect(() => {
+    fetchLocalidades()
+  }, [fetchLocalidades])
+
+  useEffect(() => {
+    if (esModoEdicion && obraExistente) {
+      setFormData({
+        direccion: obraExistente.direccion,
+        nota_fabrica: obraExistente.nota_fabrica,
+        fechaInicio: obraExistente.fechaInicio ? new Date(obraExistente.fechaInicio).toISOString().split('T')[0] : '',
+        estado: obraExistente.estado,
+        cod_postal: obraExistente.localidad?.cod_postal || 0,
+        fechaFinEstimativo: '',
+      })
+    } else {
+      setFormData(initialState)
+    }
+  }, [obraExistente, esModoEdicion])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseFloat(value) || 0 : value,
+    }))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Aquí puedes agregar la lógica para procesar el formulario
-    if (onSubmit) {
-      onSubmit({})
+    const payload = {
+      ...formData,
+      cod_postal: formData.cod_postal,
     }
+    onSubmit(payload)
   }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-6xl">
         <div className="rounded-xl bg-white p-6 shadow-lg sm:p-8">
-          <h1 className="mb-8 text-2xl font-bold text-gray-900">Crear obra</h1>
+          <h1 className="mb-8 text-2xl font-bold text-gray-900">
+            {esModoEdicion ? `Editando Obra: ${obraExistente?.direccion}` : 'Crear Nueva Obra'}
+          </h1>
 
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -49,7 +94,7 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                       <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
                         <User className="h-4 w-4 text-gray-600" />
                       </div>
-                      <span className="text-gray-900">{cliente.nombre}</span>
+                      <span className="text-gray-900">{cliente.razon_social}</span>
                     </div>
                   ))}
                 </div>
@@ -137,12 +182,15 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Ubicación de la obra
+                    Dirección de la obra
                   </label>
                   <input
+                    name="direccion"
                     type="text"
-                    placeholder="Ingrese el nombre de la obra"
+                    placeholder="Ingrese la dirección"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={formData.direccion}
+                    onChange={handleChange}
                     required
                   />
                 </div>
@@ -152,10 +200,19 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       Localidad
                     </label>
-                    <select className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                      <option>San Lorenzo</option>
-                      <option>Rosario</option>
-                      <option>Santa Fe</option>
+                    <select
+                      name="cod_postal"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      value={formData.cod_postal}
+                      onChange={handleChange}
+                      required
+                      >
+                        <option value="" disabled>Seleccione una localidad...</option>
+                      {localidades.map((loc) => (
+                        <option key={loc.cod_postal} value={loc.cod_postal}>
+                          {loc.nombre_localidad}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -166,8 +223,11 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                       Fecha Inicio
                     </label>
                     <input
+                      name="fechaInicio"
                       type="date"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      value={formData.fechaInicio}
+                      onChange={handleChange}
                     />
                   </div>
                   <div>
@@ -175,42 +235,18 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                       Fecha fin estimativo
                     </label>
                     <input
+                      name="fechaFinEstimativo"
                       type="date"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      value={formData.fechaFinEstimativo}
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Descripción
-                  </label>
-                  <textarea
-                    rows={4}
-                    placeholder="Descripción de la obra..."
-                    className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Presupuesto
-                  </label>
-                  <div className="relative">
-                    <span className="absolute top-2.5 left-3 text-gray-500">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-8 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Adjuntar Presupuesto
+                    Adjuntar Nota de Fabrica
                   </label>
                   <div className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400">
                     <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
@@ -234,7 +270,7 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                 type="submit"
                 className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
               >
-                Crear Obra
+                {esModoEdicion ? 'Guardar Cambios' : 'Crear Obra'}
               </button>
             </div>
           </form>
