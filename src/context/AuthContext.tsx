@@ -8,7 +8,6 @@ import {
   useEffect,
 } from 'react'
 import api from '@/services/api/api'
-//import { mockUsuarios } from '@/data/mockData'
 import { Empleado } from '@/types'
 
 interface AuthContextType {
@@ -29,12 +28,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = localStorage.getItem('token_sigma')
       if (token) {
         try {
-          const { data } = await api.get('/api/empleados')
+          const { data } = await api.get('/api/auth/profile')
           setUsuario(data)
         } catch (error) {
           console.error('La sesión ha expirado o el token no es válido', error)
           localStorage.removeItem('token_sigma')
-          localStorage.removeItem('usuario_sigma')
+          setUsuario(null)
         }
       }
       setCargando(false)
@@ -50,12 +49,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         contrasenia: contrasenia,
       })
 
-      //CAMBIAR, LA RESPUESTA DEL BACKEND DEBE SER SOLO EL TOKEN
       const { token, empleado } = data
 
       if (token && empleado) {
         setUsuario(empleado)
-        localStorage.setItem('usuario_sigma', JSON.stringify(empleado))
         localStorage.setItem('token_sigma', token)
         return true
       }
@@ -68,7 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUsuario(null)
-    localStorage.removeItem('usuario_sigma')
     localStorage.removeItem('token_sigma')
   }
 
@@ -82,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider')
   }
   return context
 }

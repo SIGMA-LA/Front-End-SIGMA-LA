@@ -59,7 +59,6 @@ export default function DashboardPage() {
       return <VentasDashboardClient />
     default:
       console.error('Rol de usuario desconocido:', usuario.rol_actual)
-      router.push('/login')
       return null
   }
 }

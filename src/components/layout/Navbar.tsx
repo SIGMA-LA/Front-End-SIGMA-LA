@@ -11,7 +11,6 @@ export default function Navbar() {
 
   const onLogout = () => {
     logout()
-    alert('Cerrando sesión...')
     window.location.href = '/login'
   }
 
