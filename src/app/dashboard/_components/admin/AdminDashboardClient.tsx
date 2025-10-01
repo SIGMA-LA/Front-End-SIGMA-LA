@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
-import type { Usuario } from '@/types'
+import type { Empleado } from '@/types'
 import { mockReportesVentas } from '@/data/mockData'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
@@ -28,16 +28,15 @@ import { useAuth } from '@/context/AuthContext'
 export default function AdminDashboardClient() {
   const { usuario } = useAuth()
   const [showCreateEmpleado, setShowCreateEmpleado] = useState(false)
-  const [editingEmpleado, setEditingEmpleado] = useState<Usuario | null>(null)
-  const [viewingEmpleado, setViewingEmpleado] = useState<Usuario | null>(null)
+  const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null)
+  const [viewingEmpleado, setViewingEmpleado] = useState<Empleado | null>(null)
   const [newEmpleado, setNewEmpleado] = useState({
     nombre: '',
     apellido: '',
-    email: '',
-    telefono: '',
-    rol: 'visitador' as Usuario['rol'],
-    fechaIngreso: new Date().toISOString().split('T')[0],
-    contraseña: '',
+    cuil: '',
+    rol_actual: 'VISITADOR' as Empleado['rol_actual'],
+    area_trabajo: '',
+    contrasenia: '',
   })
 
   if (!usuario) {
@@ -47,7 +46,7 @@ export default function AdminDashboardClient() {
   const {
     obras,
     clientes,
-    usuarios,
+    empleados,
     addEmpleado,
     updateEmpleado,
     deleteEmpleado,
@@ -62,105 +61,91 @@ export default function AdminDashboardClient() {
     }).format(amount)
   }
 
-  const getRolDisplayName = (rol: Usuario['rol']) => {
-    const rolNames: Record<Usuario['rol'], string> = {
-      admin: 'Administrador',
-      coordinacion: 'Coordinación',
-      encargado: 'Encargado',
-      visitador: 'Visitador',
-      ventas: 'Ventas',
+  const getRolDisplayName = (rol: Empleado['rol_actual']) => {
+    const rolNames: Record<Empleado['rol_actual'], string> = {
+      ADMIN: 'Administrador',
+      COORDINACION: 'Coordinación',
+      ENCARGADO: 'Encargado',
+      VISITADOR: 'Visitador',
+      VENTAS: 'Ventas',
     }
     return rolNames[rol] || rol
   }
 
   const getEmpleadosBySection = () => {
     return {
-      coordinacion: usuarios.filter((u) => u.rol === 'coordinacion'),
-      visitadoresYEncargados: usuarios.filter(
-        (u) => u.rol === 'visitador' || u.rol === 'encargado'
+      coordinacion: empleados.filter((u) => u.rol_actual === 'COORDINACION'),
+      visitadoresYEncargados: empleados.filter(
+        (u) => u.rol_actual === 'VISITADOR' || u.rol_actual === 'ENCARGADO'
       ),
-      admin: usuarios.filter((u) => u.rol === 'admin'),
+      admin: empleados.filter((u) => u.rol_actual === 'ADMIN'),
     }
   }
 
   const handleCreateEmpleado = () => {
-    const empleado: Usuario = {
-      id: Math.random(),
+    const empleadoData = {
       ...newEmpleado,
-      activo: true,
-      contraseña: '123456',
+      contrasenia: '123456',
     }
-    addEmpleado(empleado)
-    setNewEmpleado({
-      nombre: '',
-      apellido: '',
-      email: '',
-      telefono: '',
-      rol: 'visitador',
-      fechaIngreso: new Date().toISOString().split('T')[0],
-      contraseña: '',
-    })
-    setShowCreateEmpleado(false)
+
+    try {
+      addEmpleado(empleadoData)
+      setNewEmpleado({
+        nombre: '',
+        apellido: '',
+        cuil: '',
+        rol_actual: 'VISITADOR',
+        area_trabajo: '',
+        contrasenia: '',
+      })
+      setShowCreateEmpleado(false)
+    } catch (error) {
+      console.error('Error al crear empleado:', error)
+    }
   }
 
-  const handleEditEmpleado = (empleado: Usuario) => {
+  const handleEditEmpleado = (empleado: Empleado) => {
     setEditingEmpleado(empleado)
     setNewEmpleado({
+      cuil: empleado.cuil,
       nombre: empleado.nombre,
       apellido: empleado.apellido,
-      email: empleado.email,
-      telefono: empleado.telefono || '',
-      rol: empleado.rol,
-      fechaIngreso:
-        empleado.fechaIngreso || new Date().toISOString().split('T')[0],
-      contraseña: '123456',
+      area_trabajo: '',
+      rol_actual: 'VISITADOR',
+      contrasenia: '123456',
     })
     setShowCreateEmpleado(true)
   }
 
-  const handleViewEmpleado = (empleado: Usuario) => {
+  const handleViewEmpleado = (empleado: Empleado) => {
     setViewingEmpleado(empleado)
   }
 
-  const handleUpdateEmpleado = () => {
+  const handleUpdateEmpleado = async () => {
     if (editingEmpleado) {
-      updateEmpleado(editingEmpleado.id, { ...newEmpleado })
-      setEditingEmpleado(null)
-      setNewEmpleado({
-        nombre: '',
-        apellido: '',
-        email: '',
-        telefono: '',
-        rol: 'visitador',
-        fechaIngreso: new Date().toISOString().split('T')[0],
-        contraseña: '123456',
-      })
-      setShowCreateEmpleado(false)
+      try {
+        await updateEmpleado(editingEmpleado.cuil, { ...newEmpleado });
+        setEditingEmpleado(null);
+        setShowCreateEmpleado(false);
+      } catch (error) {
+        console.error("No se pudo actualizar el empleado", error);
+      }
     }
   }
 
-  const handleDeleteEmpleado = (id: number) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este empleado?')) {
-      deleteEmpleado(id)
+  const handleDeleteEmpleado = async (cuil: string) => {
+  if (window.confirm('¿Seguro?')) {
+    try {
+      await deleteEmpleado(cuil);
+    } catch (error) {
+      console.error("Error desde el componente al borrar empleado:", error);
+      }
     }
   }
 
   const renderDashboard = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="self-start bg-blue-600 text-white">
-          <CardContent className="flex items-center justify-between">
-            <div className="flex w-full items-center justify-between">
-              <div>
-                <p className="text-blue-100">Empleados Activos</p>
-                <p className="text-3xl font-bold">
-                  {usuarios.filter((e) => e.activo).length}
-                </p>
-              </div>
-              <Users className="h-12 w-12 text-blue-200" />
-            </div>
-          </CardContent>
-        </Card>
         <Card className="bg-green-600 text-white">
           <CardContent className="flex flex-col justify-center p-6">
             <div className="flex items-center justify-between">
@@ -277,8 +262,8 @@ export default function AdminDashboardClient() {
     </div>
   )
 
-  const renderEmpleadoCard = (empleado: Usuario) => (
-    <Card key={empleado.id}>
+  const renderEmpleadoCard = (empleado: Empleado) => (
+    <Card key={empleado.cuil}>
       <CardContent className="flex flex-col justify-between p-4">
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -303,7 +288,7 @@ export default function AdminDashboardClient() {
                 <Edit className="h-4 w-4" />
               </Button>
               <Button
-                onClick={() => handleDeleteEmpleado(empleado.id)}
+                onClick={() => handleDeleteEmpleado(empleado.cuil)}
                 variant="destructive"
                 size="icon"
                 title="Eliminar"
@@ -315,14 +300,6 @@ export default function AdminDashboardClient() {
           <h4 className="mb-1 text-sm font-semibold">
             {empleado.nombre} {empleado.apellido}
           </h4>
-          <p className="mb-2 text-xs text-gray-500">{empleado.email}</p>
-        </div>
-        <div className="flex items-center justify-between">
-          <span
-            className={`rounded px-2 py-1 text-xs ${empleado.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-          >
-            {empleado.activo ? 'Activo' : 'Inactivo'}
-          </span>
         </div>
       </CardContent>
     </Card>
@@ -397,43 +374,9 @@ export default function AdminDashboardClient() {
                       {viewingEmpleado.nombre} {viewingEmpleado.apellido}
                     </h4>
                     <p className="text-sm text-gray-600">
-                      {getRolDisplayName(viewingEmpleado.rol)}
+                      {getRolDisplayName(viewingEmpleado.rol_actual)}
                     </p>
                   </div>
-                </div>
-                <div className="mt-4 space-y-2 border-t pt-4">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">
-                      {viewingEmpleado.email}
-                    </span>
-                  </div>
-                  {viewingEmpleado.telefono && (
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">
-                        {viewingEmpleado.telefono}
-                      </span>
-                    </div>
-                  )}
-                  {viewingEmpleado.fechaIngreso && (
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">
-                        Ingreso:{' '}
-                        {new Date(
-                          viewingEmpleado.fechaIngreso
-                        ).toLocaleDateString('es-AR')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-center">
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm ${viewingEmpleado.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                  >
-                    {viewingEmpleado.activo ? 'Activo' : 'Inactivo'}
-                  </span>
                 </div>
               </div>
               <div className="mt-6 flex justify-end">
@@ -480,54 +423,26 @@ export default function AdminDashboardClient() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="cuil">Cuil</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={newEmpleado.email}
+                    id="cuil"
+                    type="cuil"
+                    value={newEmpleado.cuil}
                     onChange={(e) =>
-                      setNewEmpleado({ ...newEmpleado, email: e.target.value })
+                      setNewEmpleado({ ...newEmpleado, cuil: String(e.target.value) })
                     }
-                    placeholder="ejemplo@sigma-la.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="telefono">Teléfono</Label>
-                  <Input
-                    id="telefono"
-                    value={newEmpleado.telefono}
-                    onChange={(e) =>
-                      setNewEmpleado({
-                        ...newEmpleado,
-                        telefono: e.target.value,
-                      })
-                    }
-                    placeholder="+54 11 1234-5678"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="fechaIngreso">Fecha de Ingreso</Label>
-                  <Input
-                    id="fechaIngreso"
-                    type="date"
-                    value={newEmpleado.fechaIngreso}
-                    onChange={(e) =>
-                      setNewEmpleado({
-                        ...newEmpleado,
-                        fechaIngreso: e.target.value,
-                      })
-                    }
+                    placeholder="Ingrese el cuil"
                   />
                 </div>
                 <div>
                   <Label htmlFor="rol">Rol</Label>
                   <select
                     id="rol"
-                    value={newEmpleado.rol}
+                    value={newEmpleado.rol_actual}
                     onChange={(e) =>
                       setNewEmpleado({
                         ...newEmpleado,
-                        rol: e.target.value as Usuario['rol'],
+                        rol_actual: e.target.value as Empleado['rol_actual'],
                       })
                     }
                     className="border-input bg-background h-10 w-full rounded-md border px-3"
@@ -545,13 +460,12 @@ export default function AdminDashboardClient() {
                     setShowCreateEmpleado(false)
                     setEditingEmpleado(null)
                     setNewEmpleado({
+                      cuil: '',
                       nombre: '',
                       apellido: '',
-                      email: '',
-                      telefono: '',
-                      rol: 'visitador',
-                      fechaIngreso: new Date().toISOString().split('T')[0],
-                      contraseña: '123456',
+                      area_trabajo: '',
+                      rol_actual: 'VISITADOR',
+                      contrasenia: '123456',
                     })
                   }}
                   variant="outline"

@@ -11,7 +11,6 @@ export default function Navbar() {
 
   const onLogout = () => {
     logout()
-    alert('Cerrando sesión...')
     window.location.href = '/login'
   }
 
@@ -34,7 +33,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {usuario.rol === 'admin' && (
+          {usuario.rol_actual === 'ADMIN' && (
             <nav className="hidden space-x-2 md:flex">
               <button
                 onClick={() => setCurrentSection('dashboard')}
@@ -73,7 +72,7 @@ export default function Navbar() {
             <p className="text-sm font-medium">
               {usuario.nombre} {usuario.apellido}
             </p>
-            <p className="text-xs text-gray-300 capitalize">{usuario.rol}</p>
+            <p className="text-xs text-gray-300 capitalize">{usuario.rol_actual}</p>
           </div>
           <Button onClick={onLogout} variant="destructive" size="sm">
             <LogOut className="mr-2 h-4 w-4" />

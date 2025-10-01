@@ -5,19 +5,21 @@ import {
   nonEmpty,
   pipe,
   type InferOutput,
+  number,
+  minValue,
 } from 'valibot'
 
 export const loginSchema = object({
-  usuario: pipe(
+  cuil: pipe(
     string(),
-    nonEmpty('El campo Usuario es obligatorio'),
-    minLength(3, 'El usuario debe tener al menos 3 caracteres')
+    nonEmpty('El campo CUIL es obligatorio'),
+    minLength(10, 'El CUIL debe tener al menos 10 caracteres')
   ),
-  contrasena: pipe(
+  contrasenia: pipe(
     string(),
     nonEmpty('El campo Contraseña es obligatorio'),
     minLength(6, 'La contraseña debe tener al menos 6 caracteres')
   ),
-})
+});
 
 export type LoginFormData = InferOutput<typeof loginSchema>

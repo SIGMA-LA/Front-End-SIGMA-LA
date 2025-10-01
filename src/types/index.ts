@@ -39,16 +39,13 @@ export interface Entrega {
   documentos?: Documento[]
 }
 
-export interface Usuario {
-  id: number
+export interface Empleado {
+  cuil: string
   nombre: string
   apellido: string
-  email: string
-  telefono?: string
-  rol: 'admin' | 'coordinacion' | 'encargado' | 'visitador' | 'ventas'
-  fechaIngreso?: string
-  activo: boolean
-  contraseña?: string
+  rol_actual: 'VENTAS' | 'ADMIN' | 'ENCARGADO' | 'COORDINACION' | 'VISITADOR'
+  area_trabajo: string
+  contrasenia?: string
 }
 
 export interface Obra {
@@ -119,11 +116,11 @@ export interface RegistrarPedidoProps {
 }
 
 export interface LoginFormProps {
-  onLogin: (usuario: string, contrasena: string) => boolean
+  onLogin: (cuil: string, contrasenia: string) => Promise<void>
 }
 
 export interface DashboardSwitcherProps {
-  user: Usuario
+  user: Empleado
   onLogout: () => void
 }
 
@@ -150,7 +147,7 @@ export interface CrearEntregaProps {
 
 export interface ModalEncargadoProps {
   isOpen: boolean
-  empleados: Usuario[]
+  empleados: Empleado[]
   selectedEmpleados: string[]
   onSelectEncargado: (encargadoId: string) => void
   onCancel: () => void

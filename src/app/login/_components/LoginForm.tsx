@@ -8,30 +8,36 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { ChevronRight } from 'lucide-react'
 import { LoginFormData, loginSchema } from '@/schemas/loginSchemas'
-import { safeParse } from 'valibot'
+import { safeParse, number} from 'valibot'
 import { LoginFormProps } from '@/types/index'
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
-  const [formData, setFormData] = useState<LoginFormData>({
-    usuario: '',
-    contrasena: '',
-  })
+  const [formData, setFormData] = useState({
+    cuil: '',
+    contrasenia: '',
+  });
 
   const [errors, setErrors] = useState({
-    usuario: '',
-    contrasena: '',
+    cuil: '',
+    contrasenia: '',
     general: '',
   })
 
   const [isLoading, setIsLoading] = useState(false)
 
   const validateForm = () => {
-    const result = safeParse(loginSchema, formData)
+
+    const dataToValidate = {
+      ...formData,
+      cuil: formData.cuil,
+    };
+
+    const result = safeParse(loginSchema, dataToValidate)
 
     if (!result.success) {
       const fieldErrors: typeof errors = {
-        usuario: '',
-        contrasena: '',
+        cuil: '',
+        contrasenia: '',
         general: '',
       }
 
@@ -46,7 +52,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       return false
     }
 
-    setErrors({ usuario: '', contrasena: '', general: '' })
+    setErrors({ cuil: '', contrasenia: '', general: '' })
     return true
   }
 
@@ -75,19 +81,14 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     setErrors((prev) => ({ ...prev, general: '' }))
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      const loginSuccessful = onLogin(formData.usuario, formData.contrasena)
-
-      if (!loginSuccessful) {
-        throw new Error('Credenciales incorrectas')
-      }
+      await onLogin(formData.cuil, formData.contrasenia)
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
         general:
-          'Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.',
+          'CUIL o contraseña incorrectos. Por favor, inténtalo de nuevo.',
       }))
+    } finally {
       setIsLoading(false)
     }
   }
@@ -130,46 +131,46 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 <Input
                   id="usuario"
                   type="text"
-                  value={formData.usuario}
-                  onChange={(e) => handleInputChange('usuario', e.target.value)}
-                  placeholder="Ingresa tu usuario"
+                  value={formData.cuil}
+                  onChange={(e) => handleInputChange('cuil', e.target.value)}
+                  placeholder="Ingresa tu cuil"
                   className={`h-10 w-full placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:h-11 lg:h-12 ${
-                    errors.usuario
+                    errors.cuil
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                       : 'border-gray-300'
                   }`}
                 />
-                {errors.usuario && (
-                  <p className="mt-1 text-sm text-red-600">{errors.usuario}</p>
+                {errors.cuil && (
+                  <p className="mt-1 text-sm text-red-600">{errors.cuil}</p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label
-                htmlFor="contrasena"
+                htmlFor="contrasenia"
                 className="text-sm font-medium text-gray-700"
               >
                 Contraseña
               </Label>
               <div className="pt-1">
                 <Input
-                  id="contrasena"
+                  id="contrasenia"
                   type="password"
-                  value={formData.contrasena}
+                  value={formData.contrasenia}
                   onChange={(e) =>
-                    handleInputChange('contrasena', e.target.value)
+                    handleInputChange('contrasenia', e.target.value)
                   }
                   placeholder="Ingresa tu contraseña"
                   className={`h-10 w-full placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:h-11 lg:h-12 ${
-                    errors.contrasena
+                    errors.contrasenia
                       ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                       : 'border-gray-300'
                   }`}
                 />
               </div>
-              {errors.contrasena && (
-                <p className="mt-1 text-sm text-red-600">{errors.contrasena}</p>
+              {errors.contrasenia && (
+                <p className="mt-1 text-sm text-red-600">{errors.contrasenia}</p>
               )}
             </div>
 
