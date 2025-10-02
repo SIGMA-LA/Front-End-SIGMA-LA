@@ -8,49 +8,15 @@ import React, {
   useEffect,
 } from 'react'
 import api from '@/services/api/api'
+import * as obraService from '@/services/obra.service'
+import clienteService from '@/services/cliente.service'
+import { ObraFormData } from '@/services/obra.service'
 import {
   mockClientes,
   mockEntregas,
   mockVisitas,
 } from '@/data/mockData'
 import type { Empleado, Obra, Cliente, Entrega, Visita, Localidad } from '@/types'
-
-interface BackendObra {
-  cod_obra: number;
-  direccion: string;
-  descripcion: string;
-  cliente: {
-    cuil: string;
-    razon_social: string;
-    telefono: string;
-    mail: string;
-  };
-  nota_fabrica: string;
-  fecha_ini: string;
-  estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada';
-}
-
-const mapObraToFrontend = (obra: BackendObra): Obra => ({
-  id: obra.cod_obra,
-  direccion: obra.direccion,
-  cliente: {
-    id: 0,
-    razon_social: obra.cliente.razon_social,
-    telefono: obra.cliente.telefono,
-    email: obra.cliente.mail,
-  },
-  nota_fabrica: obra.nota_fabrica,
-  fechaInicio: obra.fecha_ini,
-  estado: obra.estado,
-});
-
-const mapObraToBackend = (obraData: any): any => ({
-  direccion: obraData.direccion,
-  descripcion: obraData.descripcion,
-  presupuesto: parseFloat(obraData.presupuesto) || 0,
-  fecha_ini: obraData.fechaInicio,
-  estado: obraData.estado,
-});
 
 interface GlobalContextType {
   empleados: Empleado[]
@@ -69,10 +35,11 @@ interface GlobalContextType {
   setCurrentSection: (section: string) => void
   finalizarEntrega: (id: number, observaciones: string) => void
   finalizarVisita: (id: number, observaciones: string) => void
+  fetchClientes: () => Promise<void>
   fetchLocalidades: () => Promise<void>
   fetchObras: () => Promise<void>
-  createObra: (obraData: Omit<Obra, 'id'>) => Promise<void>
-  updateObra: (id: number, obraData: Partial<Omit<Obra, 'id'>>) => Promise<void>
+  createObra: (obraData: ObraFormData) => Promise<void>
+  updateObra: (id: number, obraData: ObraFormData) => Promise<void>
   deleteObra: (id: number) => Promise<void>
 }
 
@@ -82,16 +49,19 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras, setObras] = useState<Obra[]>([])
   const [localidades, setLocalidades] = useState<Localidad[]>([])
-  const [clientes] = useState<Cliente[]>(mockClientes)
+  const [clientes, setClientes] = useState<Cliente[]>([])
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [entregas] = useState<Entrega[]>(mockEntregas)
   const [visitas] = useState<Visita[]>(mockVisitas)
 
-  // Cargar empleados desde la API al iniciar el contexto
+  useEffect(() => {
+    fetchClientes()
+  }, [])
+
   useEffect(() => {
     const fetchEmpleados = async () => {
       try {
-        const { data } = await api.get('/api/empleados')
+        const { data } = await api.get('/empleados')
         setEmpleados(data)
       } catch (error) {
         console.error('Error al cargar empleados:', error)
@@ -100,10 +70,19 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     fetchEmpleados()
   }, [])
 
+  const fetchClientes = async () => {
+    try {
+      const clientesData = await clienteService.getAllClientes()
+      setClientes(clientesData)
+    } catch (error) {
+      console.error('Error al cargar clientes:', error)
+    }
+  }
+
   const fetchLocalidades = async () => {
     if (localidades.length > 0) return;
     try {
-      const { data } = await api.get<Localidad[]>('/api/localidades')
+      const { data } = await api.get<Localidad[]>('/localidades')
       setLocalidades(data)
     } catch (error) {
       console.error('Error al cargar localidades:', error)
@@ -112,50 +91,42 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchObras = async () => {
     try {
-      const { data: backendObras } = await api.get<BackendObra[]>('/api/obras')
-      const frontendObras = backendObras.map(mapObraToFrontend)
-      setObras(frontendObras)
+      const obrasData = await obraService.getObras()
+      setObras(obrasData)
     } catch (error) {
-      console.error('Error al cargar obras:', error)
+      console.error('Error al cargar obras desde el contexto:', error)
       throw error
     }
   }
 
-  const createObra = async (obraData: Omit<Obra, 'id' | 'cliente'>) => {
+  const createObra = async (obraData: ObraFormData) => {
     try {
-      const payload = mapObraToBackend(obraData) 
-      const { data: nuevaObraBackend } = await api.post<BackendObra>('/api/obras', payload)
-      const nuevaObraFrontend = mapObraToFrontend(nuevaObraBackend)
-      setObras(prev => [nuevaObraFrontend, ...prev])
+      const nuevaObra = await obraService.createObra(obraData)
+      setObras(prev => [nuevaObra, ...prev])
     } catch (error) {
-      console.error('Error al crear obra:', error)
+      console.error('Error al crear obra desde el contexto:', error)
       throw error
     }
   }
 
-  const updateObra = async (id: number, obraData: Partial<Omit<Obra, 'id'>>) => {
+  const updateObra = async (id: number, obraData: ObraFormData) => {
     try {
-      const payload = mapObraToBackend(obraData) 
-      const { data: obraActualizadaBackend } = await api.put<BackendObra>(
-        `/api/obras/${id}`,
-        payload,
-      )
-      const obraActualizadaFrontend = mapObraToFrontend(obraActualizadaBackend)
+      const obraActualizada = await obraService.updateObra(id, obraData)
       setObras(prev =>
-        prev.map(o => (o.id === id ? obraActualizadaFrontend : o)),
+        prev.map(o => (o.id === id ? obraActualizada : o)),
       )
     } catch (error) {
-      console.error('Error al actualizar obra:', error)
+      console.error('Error al actualizar obra desde el contexto:', error)
       throw error
     }
   }
   
   const deleteObra = async (id: number) => {
     try {
-      await api.delete(`/api/obras/${id}`)
+      await obraService.deleteObra(id)
       setObras(prev => prev.filter(o => o.id !== id))
     } catch (error) {
-      console.error('Error al eliminar obra:', error)
+      console.error('Error al eliminar obra desde el contexto:', error)
       throw error
     }
   }
@@ -163,7 +134,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const addEmpleado = async (empleadoData: Omit<Empleado, 'cuil'>) => {
     try {
       const { data: nuevoEmpleado } = await api.post<Empleado>(
-        '/api/empleados',
+        '/empleados',
         empleadoData,
       )
       setEmpleados(prev => [...prev, nuevoEmpleado])
@@ -179,7 +150,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   ) => {
     try {
       const { data: empleadoActualizado } = await api.put<Empleado>(
-        `/api/empleados/${cuil}`,
+        `/empleados/${cuil}`,
         empleadoData,
       )
       setEmpleados(prev =>
@@ -193,7 +164,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteEmpleado = async (cuil: string) => {
     try {
-      await api.delete(`/api/empleados/${cuil}`)
+      await api.delete(`/empleados/${cuil}`)
       setEmpleados(prev => prev.filter(u => u.cuil !== cuil))
     } catch (error) {
       console.error('Error al eliminar empleado:', error)
@@ -230,6 +201,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         createObra,
         updateObra,
         deleteObra,
+        fetchClientes,
       }}
     >
       {children}

@@ -1,41 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Save, AlertCircle, Loader2 } from 'lucide-react'
-import clienteService, { CreateClienteDTO } from '@/services/cliente.service'
-import type { CrearClienteProps } from '@/types'
+import clienteService, { UpdateClienteDTO } from '@/services/cliente.service'
+import type { Cliente } from '@/types'
 
-export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) {
-  const [formData, setFormData] = useState<CreateClienteDTO>({
-    cuil: '',
-    razon_social: '',
-    telefono: '',
-    mail: '',
+interface EditarClienteProps {
+  cliente: Cliente
+  onCancel: () => void
+  onSuccess?: (clienteActualizado: Cliente) => void
+}
+
+export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarClienteProps) {
+  const [formData, setFormData] = useState<UpdateClienteDTO>({
+    razon_social: cliente.razon_social,
+    telefono: cliente.telefono,
+    mail: cliente.mail,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateClienteDTO, string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<keyof UpdateClienteDTO, string>>>({})
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof CreateClienteDTO, string>> = {}
+    const newErrors: Partial<Record<keyof UpdateClienteDTO, string>> = {}
 
-    if (!formData.cuil.trim()) {
-      newErrors.cuil = 'El CUIL es obligatorio'
-    } else if (!/^\d{11}$/.test(formData.cuil.replace(/-/g, ''))) {
-      newErrors.cuil = 'El CUIL debe tener 11 dígitos'
-    }
-
-    if (!formData.razon_social.trim()) {
+    if (!formData.razon_social?.trim()) {
       newErrors.razon_social = 'La razón social es obligatoria'
     } else if (formData.razon_social.length > 50) {
       newErrors.razon_social = 'La razón social no puede exceder 50 caracteres'
     }
 
-    if (!formData.telefono.trim()) {
+    if (!formData.telefono?.trim()) {
       newErrors.telefono = 'El teléfono es obligatorio'
     } else if (formData.telefono.length > 20) {
       newErrors.telefono = 'El teléfono no puede exceder 20 caracteres'
     }
 
-    if (!formData.mail.trim()) {
+    if (!formData.mail?.trim()) {
       newErrors.mail = 'El email es obligatorio'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.mail)) {
       newErrors.mail = 'El email no es válido'
@@ -58,46 +57,52 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
       setLoading(true)
       setError(null)
 
-      const clienteCreado = await clienteService.createCliente({
-        ...formData,
-        cuil: formData.cuil.replace(/-/g, ''), // Remover guiones si los hay
-      })
+      const clienteActualizado = await clienteService.updateCliente(
+        cliente.cuil,
+        formData
+      )
 
-      if (onSubmit) {
-        onSubmit(clienteCreado as any)
+      if (onSuccess) {
+        onSuccess(clienteActualizado)
       }
       
       onCancel()
     } catch (err: any) {
-      console.error('Error al crear cliente:', err)
+      console.error('Error al actualizar cliente:', err)
       setError(
         err.response?.data?.message || 
-        'Error al crear el cliente. Por favor, intenta nuevamente.'
+        'Error al actualizar el cliente. Por favor, intenta nuevamente.'
       )
     } finally {
       setLoading(false)
     }
   }
 
-  const handleChange = (field: keyof CreateClienteDTO, value: string) => {
+  const handleChange = (field: keyof UpdateClienteDTO, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }))
     }
   }
 
-  const formatCUIL = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    if (numbers.length <= 2) return numbers
-    if (numbers.length <= 10) return `${numbers.slice(0, 2)}-${numbers.slice(2)}`
-    return `${numbers.slice(0, 2)}-${numbers.slice(2, 10)}-${numbers.slice(10, 11)}`
+  const hasChanges = () => {
+    return (
+      formData.razon_social !== cliente.razon_social ||
+      formData.telefono !== cliente.telefono ||
+      formData.mail !== cliente.mail
+    )
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-gray-900">Nuevo Cliente</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Editar Cliente</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              CUIL: <span className="font-semibold">{cliente.cuil}</span>
+            </p>
+          </div>
           <button
             onClick={onCancel}
             disabled={loading}
@@ -118,28 +123,6 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
           )}
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                CUIL <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formatCUIL(formData.cuil)}
-                onChange={(e) => handleChange('cuil', e.target.value.replace(/\D/g, ''))}
-                placeholder="20-12345678-9"
-                maxLength={13}
-                disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
-                  errors.cuil
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                }`}
-              />
-              {errors.cuil && (
-                <p className="mt-1 text-sm text-red-600">{errors.cuil}</p>
-              )}
-            </div>
-
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Razón Social <span className="text-red-500">*</span>
@@ -205,6 +188,14 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
                 <p className="mt-1 text-sm text-red-600">{errors.mail}</p>
               )}
             </div>
+
+            {/* Información no editable */}
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Nota:</span> El CUIL no puede ser modificado. 
+                Si necesitas cambiar el CUIL, deberás crear un nuevo cliente.
+              </p>
+            </div>
           </div>
 
           <div className="mt-6 flex gap-3">
@@ -218,8 +209,8 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              disabled={loading || !hasChanges()}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -229,11 +220,17 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
               ) : (
                 <>
                   <Save className="h-5 w-5" />
-                  Guardar Cliente
+                  Guardar Cambios
                 </>
               )}
             </button>
           </div>
+
+          {!hasChanges() && !loading && (
+            <p className="mt-2 text-center text-sm text-gray-500">
+              No hay cambios para guardar
+            </p>
+          )}
         </form>
       </div>
     </div>

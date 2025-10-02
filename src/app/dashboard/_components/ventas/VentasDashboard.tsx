@@ -25,6 +25,7 @@ import EntregasList from '../shared/EntregasList' // Shared
 import VisitasList from '../shared/VisitasList' // Shared
 import ObrasList from '../shared/ObrasList' // Shared
 import ClientesList from '../shared/ClientesList' // Shared
+import { ObraFormData } from '@/services/obra.service.js'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
@@ -77,9 +78,9 @@ export default function VentasDashboard() {
         return (
           <CrearObra
             onCancel={() => setCurrentSection('obras')}
-            onSubmit={async (obraData) => {
+            onSubmit={async (obraData: ObraFormData) => {
               try {
-                await createObra(obraData as Omit<Obra, 'id'>)
+                await createObra(obraData)
                 alert('¡Obra creada con éxito!')
                 setCurrentSection('obras')
               } catch (error) {
@@ -98,7 +99,7 @@ export default function VentasDashboard() {
               setCurrentSection('obras')
               setObraParaEditar(null)
             }}
-            onSubmit={async (obraData) => {
+            onSubmit={async (obraData: ObraFormData) => {
               if (!obraParaEditar) return
               try {
                 await updateObra(obraParaEditar.id, obraData)

@@ -13,7 +13,7 @@ import {
   Phone,
   Truck,
 } from 'lucide-react'
-import type { Usuario, Entrega } from '@/types'
+import type { Entrega } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -144,7 +144,7 @@ export default function EncargadoDashboardClient() {
                       Detalles de la Entrega
                     </h3>
                     <p className="text-gray-500">
-                      Cliente: {selectedEntrega.obra.cliente.nombre}
+                      Cliente: {selectedEntrega.obra.cliente.razon_social}
                     </p>
                   </div>
                   <Truck className="h-12 w-12 text-gray-300" />
@@ -156,7 +156,7 @@ export default function EncargadoDashboardClient() {
                   </div>
                   <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-gray-400" />{' '}
-                    <span>{selectedEntrega.obra.cliente.email}</span>
+                    <span>{selectedEntrega.obra.cliente.mail}</span>
                   </div>
                   <div className="col-span-2 flex items-center space-x-3">
                     <MapPin className="h-5 w-5 text-gray-400" />{' '}

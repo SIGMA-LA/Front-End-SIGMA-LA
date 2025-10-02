@@ -8,32 +8,30 @@ import type {
   Maquinaria
 } from '@/types'
 
-
-
 export const mockClientes: Cliente[] = [
   {
-    id: 1,
+    cuil: '1',
     razon_social: 'Lucia Fernandez',
     telefono: '221-555-1234',
-    email: 'lucia@test.com',
+    mail: 'lucia@test.com',
   },
   {
-    id: 2,
+    cuil: '2',
     razon_social: 'Marcos',
     telefono: '221-555-5678',
-    email: 'marcos@test.com',
+    mail: 'marcos@test.com',
   },
   {
-    id: 3,
+    cuil: '3',
     razon_social: 'Empresa ABC',
     telefono: '221-555-9876',
-    email: 'empresa@abc.com',
+    mail: 'empresa@abc.com',
   },
   {
-    id: 4,
+    cuil: '4',
     razon_social: 'Estudio de Arquitectura Moderno',
     telefono: '221-555-6543',
-    email: 'estudio@arquitectura.com',
+    mail: 'estudio@arquitectura.com',
   },
 ]
 
@@ -113,13 +111,14 @@ export const mockEntregas: Entrega[] = [
       id: 2,
       direccion: 'Rondeau 1234, Rosario',
       cliente: {
-        id: 2,
+        cuil: '2',
         razon_social: 'Marcos Gimenez',
         telefono: '221-555-5678',
-        email: 'marcos@test.com',
+        mail: 'marcos@test.com',
       },
       estado: 'en_progreso',
       fechaInicio: '2024-04-01',
+      fechaFin: null,
       nota_fabrica: 'Nota 1'
     },
     fecha: '2025-09-18',
@@ -142,13 +141,14 @@ export const mockEntregas: Entrega[] = [
       id: 1,
       direccion: 'Pampa 56, San Lorenzo',
       cliente: {
-        id: 1,
+        cuil: '1',
         razon_social: 'Lucia',
         telefono: '221-555-1234',
-        email: 'lucia@test.com',
+        mail: 'lucia@test.com',
       },
       estado: 'en_progreso',
       fechaInicio: '2024-03-15',
+      fechaFin: null,
       nota_fabrica: 'Nota 2'
     },
     fecha: '2025-09-19',
@@ -165,13 +165,14 @@ export const mockEntregas: Entrega[] = [
       id: 3,
       direccion: 'Calle 1 345, G. Baigorria',
       cliente: {
-        id: 3,
+        cuil: '3',
         razon_social: 'Test',
         telefono: '221-555-9876',
-        email: 'test@test.com',
+        mail: 'test@test.com',
       },
       estado: 'finalizada',
       fechaInicio: '2024-01-01',
+      fechaFin: '2024-12-31',
       nota_fabrica: 'Nota 3'
     },
     fecha: '2025-09-12',
@@ -192,13 +193,14 @@ export const mockVisitas: Visita[] = [
       id: 3,
       direccion: 'Calle 1 345, G. Baigorria',
       cliente: {
-        id: 3,
+        cuil: '3',
         razon_social: 'Test',
         telefono: '221-555-9876',
-        email: 'test@test.com',
+        mail: 'test@test.com',
       },
       estado: 'finalizada',
       fechaInicio: '2024-01-01',
+      fechaFin: '2024-12-31',
       nota_fabrica: '',
     },
     fecha: '2025-09-15',
@@ -216,13 +218,14 @@ export const mockVisitas: Visita[] = [
       id: 1,
       direccion: 'Colon 1278, Rosario',
       cliente: {
-        id: 1,
+        cuil: '1',
         razon_social: 'Lucia Fernandez',
         telefono: '221-555-1234',
-        email: 'lucia@test.com',
+        mail: 'lucia@test.com',
       },
       estado: 'en_progreso',
       fechaInicio: '2024-03-15',
+      fechaFin: null,
       nota_fabrica: 'Nota 5'
     },
     fecha: '2025-09-15',
@@ -239,13 +242,14 @@ export const mockVisitas: Visita[] = [
       id: 2,
       direccion: 'Alberdi 456, San Lorenzo',
       cliente: {
-        id: 2,
+        cuil: '2',
         razon_social: 'Marcos Gimenez',
         telefono: '221-555-5678',
-        email: 'marcos@test.com',
+        mail: 'marcos@test.com',
       },
       estado: 'en_progreso',
       fechaInicio: '2024-04-01',
+      fechaFin: null,
       nota_fabrica: '',
     },
     fecha: '2025-09-16',
@@ -294,9 +298,9 @@ export const mockVehiculos: Vehiculo[] = [
 ]
 
 export const mockArquitectos = [
-  { id: '1', nombre: 'Aaron Bennett' },
-  { id: '2', nombre: 'Abbey Christensen' },
-  { id: '3', nombre: 'Alli Connors' },
+  { cuil: '1', nombre: 'Aaron Bennett' },
+  { cuil: '2', nombre: 'Abbey Christensen' },
+  { cuil: '3', nombre: 'Alli Connors' },
 ]
 
 export const mockVisitadores = [

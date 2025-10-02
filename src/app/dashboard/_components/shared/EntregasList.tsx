@@ -3,8 +3,13 @@
 import { Calendar, Clock, User, PackageOpen, Eye, Plus } from 'lucide-react'
 import { mockEntregas } from '@/data/mockData'
 import { EntregasListProps } from '@/types'
+import { useAuth } from '@/context/AuthContext'
+
 
 export default function EntregasList({ onCreateClick }: EntregasListProps) {
+  const { usuario } = useAuth()
+
+
   const getStatusColor = (estado: string) => {
     switch (estado) {
       case 'programada':
@@ -56,6 +61,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
               </p>
             </div>
           </div>
+          {usuario?.rol_actual === 'COORDINACION' && (
           <button
             onClick={onCreateClick}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
@@ -63,6 +69,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
             <Plus className="h-5 w-5" />
             Nueva Entrega
           </button>
+          )}
         </div>
 
         <div className="space-y-4">

@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = localStorage.getItem('token_sigma')
       if (token) {
         try {
-          const { data } = await api.get('/api/auth/profile')
+          const { data } = await api.get('/auth/profile')
           setUsuario(data)
         } catch (error) {
           console.error('La sesión ha expirado o el token no es válido', error)
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (cuil: string, contrasenia: string): Promise<boolean> => {
     try {
-      const { data } = await api.post('/api/auth/login', {
+      const { data } = await api.post('/auth/login', {
         cuil: cuil,
         contrasenia: contrasenia,
       })

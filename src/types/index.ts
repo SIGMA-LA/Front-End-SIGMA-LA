@@ -1,10 +1,10 @@
 import { number } from "valibot"
 
 export interface Cliente {
-  id: number
+  cuil: string
   razon_social: string
   telefono: string
-  email: string
+  mail: string
 }
 
 export interface Documento {
@@ -55,6 +55,7 @@ export interface Obra {
   cliente: Cliente
   nota_fabrica: string
   fechaInicio: string
+  fechaFin: string | null
   estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada'
   localidad?: Localidad
 }
