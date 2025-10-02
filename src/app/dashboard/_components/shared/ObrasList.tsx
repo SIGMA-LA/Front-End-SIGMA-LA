@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { Building2, Plus, Calendar, Edit, Trash2 } from 'lucide-react'
 import type { ObrasListProps } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
+import { useAuth } from '@/context/AuthContext'
+
+const { usuario } = useAuth()
 
 export default function ObrasList({
   onCreateClick,
@@ -54,6 +57,7 @@ export default function ObrasList({
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Obras</h1>
+          {usuario?.rol_actual === 'VENTAS' && (
           <button
             onClick={onCreateClick}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
@@ -61,6 +65,7 @@ export default function ObrasList({
             <Plus className="h-5 w-5" />
             Nueva Obra
           </button>
+          )}
         </div>
 
         <div className="grid gap-4 sm:gap-6">
