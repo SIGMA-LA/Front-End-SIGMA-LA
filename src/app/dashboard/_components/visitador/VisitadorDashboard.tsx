@@ -4,112 +4,85 @@ import { useState, useEffect } from 'react'
 import type { Visita, EntregaEmpleado } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
-import { entregasService } from '@/services/entregas.service'
+import entregasService from '@/services/entregas.service'
+import { User as UserIcon, Package } from 'lucide-react'
 
-// Componentes
+// Componentes existentes
 import TabNavigation from './TabNavigation'
 import SidebarVisitas from './SidebarVisitas'
 import SidebarEntregas from './SidebarEntregas'
 import VisitaDetails from './VisitaDetails'
 import EntregaDetails from './EntregaDetails'
-import EmptyState from './EmptyState'
 import ConfirmModal from './ConfirmModal'
 
 export default function VisitadorDashboard() {
   const { usuario } = useAuth()
-  const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
-  const [selectedEntrega, setSelectedEntrega] =
-    useState<EntregaEmpleado | null>(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [observacionesFinal, setObservacionesFinal] = useState('')
-  const [activeTab, setActiveTab] = useState<'visitas' | 'entregas'>('visitas')
-
-  // Estados para entregas cargadas desde la API - CAMBIADO A EntregaEmpleado[]
-  const [entregasPendientesAPI, setEntregasPendientesAPI] = useState<
-    EntregaEmpleado[]
-  >([])
-  const [entregasEntregadasAPI, setEntregasEntregadasAPI] = useState<
-    EntregaEmpleado[]
-  >([])
-  const [loadingEntregas, setLoadingEntregas] = useState(false)
-  const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
-
   const { visitas, finalizarVisita } = useGlobalContext()
 
-  // Función para cargar entregas desde la API
-  const cargarEntregasDesdeAPI = async () => {
-    if (!usuario?.cuil) return
+  // Tab activa
+  const [activeTab, setActiveTab] = useState<'visitas' | 'entregas'>('visitas')
 
-    setLoadingEntregas(true)
-    setErrorEntregas(null)
+  // Estados para Visitas
+  const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
+  const [showVisitaModal, setShowVisitaModal] = useState(false)
+  const [observacionesVisita, setObservacionesVisita] = useState('')
 
-    try {
-      const [pendientes, entregadas] = await Promise.all([
-        entregasService.getEntregasPendientes(usuario.cuil),
-        entregasService.getEntregasEntregadas(usuario.cuil),
-      ])
+  // Estados para Entregas (solo lectura)
+  const [selectedEntrega, setSelectedEntrega] = useState<EntregaEmpleado | null>(null)
+  const [entregasPendientes, setEntregasPendientes] = useState<EntregaEmpleado[]>([])
+  const [entregasRealizadas, setEntregasRealizadas] = useState<EntregaEmpleado[]>([])
+  const [loadingEntregas, setLoadingEntregas] = useState(true)
+  const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
 
-      setEntregasPendientesAPI(pendientes)
-      setEntregasEntregadasAPI(entregadas)
-    } catch (error) {
-      console.error('Error al cargar entregas desde la API:', error)
-      setErrorEntregas('Error al cargar las entregas')
-    } finally {
-      setLoadingEntregas(false)
-    }
-  }
-
+  // Cargar entregas desde la API
   useEffect(() => {
-    if (usuario?.cuil) {
-      cargarEntregasDesdeAPI()
+    const loadEntregas = async () => {
+      if (!usuario?.cuil) {
+        return
+      }
+      try {
+        setLoadingEntregas(true)
+        setErrorEntregas(null)
+
+        const [pendientes, entregadas] = await Promise.all([
+          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE'),
+          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'ENTREGADO'),
+        ])
+
+        setEntregasPendientes(pendientes)
+        setEntregasRealizadas(entregadas)
+      } catch (err) {
+        console.error('Error al cargar entregas:', err)
+        setErrorEntregas('Error al cargar las entregas')
+      } finally {
+        setLoadingEntregas(false)
+      }
     }
+
+    loadEntregas()
   }, [usuario?.cuil])
 
+  // Handlers
   const handleTabChange = (tab: 'visitas' | 'entregas') => {
     setActiveTab(tab)
     setSelectedVisita(null)
     setSelectedEntrega(null)
   }
 
-  const handleFinalizarVisita = () => {
-    if (selectedVisita) {
-      finalizarVisita(selectedVisita.cod_visita, observacionesFinal)
-      setShowConfirmModal(false)
-      setSelectedVisita({ ...selectedVisita, estado: 'COMPLETADA' })
-      setObservacionesFinal('')
-    }
+  const handleSelectVisita = (visita: Visita) => {
+    setSelectedVisita(visita)
   }
 
-  const handleFinalizarEntrega = async () => {
-    if (selectedEntrega && usuario?.cuil) {
-      try {
-        // Actualizar la entrega localmente
-        const entregaActualizada = {
-          ...selectedEntrega,
-          entrega: {
-            ...selectedEntrega.entrega,
-            estado: 'ENTREGADO' as const,
-            observaciones:
-              observacionesFinal || selectedEntrega.entrega.observaciones,
-          },
-        }
+  const handleSelectEntrega = (entrega: EntregaEmpleado) => {
+    setSelectedEntrega(entrega)
+  }
 
-        setSelectedEntrega(entregaActualizada)
-
-        // Mover de pendientes a entregadas
-        setEntregasPendientesAPI((prev) =>
-          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
-        )
-        setEntregasEntregadasAPI((prev) => [...prev, entregaActualizada])
-
-        setShowConfirmModal(false)
-        setObservacionesFinal('')
-
-        // TODO: Implementar llamada al backend para actualizar el estado
-      } catch (error) {
-        console.error('Error al finalizar entrega:', error)
-        setErrorEntregas('Error al finalizar la entrega')
-      }
+  const handleFinalizarVisita = () => {
+    if (selectedVisita) {
+      finalizarVisita(selectedVisita.cod_visita, observacionesVisita)
+      setShowVisitaModal(false)
+      setSelectedVisita({ ...selectedVisita, estado: 'COMPLETADA' })
+      setObservacionesVisita('')
     }
   }
 
@@ -123,7 +96,7 @@ export default function VisitadorDashboard() {
 
   // Filtrar visitas asignadas al usuario
   const visitasAsignadas = visitas.filter((v) =>
-    v.empleados_asignados.some((emp) => emp.cuil === usuario.cuil)
+    v.empleados_asignados?.some((emp) => emp.cuil === usuario.cuil)
   )
 
   const visitasPendientes = visitasAsignadas.filter(
@@ -135,7 +108,7 @@ export default function VisitadorDashboard() {
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header con información del usuario */}
+      {/* Header */}
       <div className="border-b bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -151,7 +124,7 @@ export default function VisitadorDashboard() {
               <div className="font-semibold text-blue-600">
                 {activeTab === 'visitas'
                   ? visitasPendientes.length
-                  : entregasPendientesAPI.length}
+                  : entregasPendientes.length}
               </div>
               <div className="text-gray-500">Pendientes</div>
             </div>
@@ -159,7 +132,7 @@ export default function VisitadorDashboard() {
               <div className="font-semibold text-green-600">
                 {activeTab === 'visitas'
                   ? visitasRealizadas.length
-                  : entregasEntregadasAPI.length}
+                  : entregasRealizadas.length}
               </div>
               <div className="text-gray-500">
                 {activeTab === 'visitas' ? 'Realizadas' : 'Entregadas'}
@@ -169,10 +142,9 @@ export default function VisitadorDashboard() {
         </div>
       </div>
 
-      <div
-        className="flex flex-1 overflow-hidden"
-        style={{ height: 'calc(100vh - 80px)' }}
-      >
+      {/* Contenido Principal */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
         <aside className="w-96 flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
           <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -182,50 +154,113 @@ export default function VisitadorDashboard() {
                 visitasPendientes={visitasPendientes}
                 visitasRealizadas={visitasRealizadas}
                 selectedVisita={selectedVisita}
-                onSelectVisita={setSelectedVisita}
+                onSelectVisita={handleSelectVisita}
               />
             ) : (
               <SidebarEntregas
-                entregasPendientes={entregasPendientesAPI}
-                entregasRealizadas={entregasEntregadasAPI}
+                entregasPendientes={entregasPendientes}
+                entregasRealizadas={entregasRealizadas}
                 selectedEntrega={selectedEntrega}
-                onSelectEntrega={setSelectedEntrega}
+                onSelectEntrega={handleSelectEntrega}
                 loadingEntregas={loadingEntregas}
                 errorEntregas={errorEntregas}
-                onRetry={cargarEntregasDesdeAPI}
+                onRetry={() => {}}
               />
             )}
           </div>
         </aside>
 
+        {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
-          {selectedVisita ? (
-            <VisitaDetails
-              visita={selectedVisita}
-              onFinalizarVisita={() => setShowConfirmModal(true)}
-            />
+          {activeTab === 'visitas' ? (
+            selectedVisita ? (
+              <VisitaDetails
+                visita={selectedVisita}
+                onFinalizarVisita={() => setShowVisitaModal(true)}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-center">
+                <div>
+                  <UserIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                  <p className="mb-4 text-lg text-gray-500">
+                    Selecciona una visita para ver los detalles
+                  </p>
+                  <div className="flex justify-center gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="font-semibold text-blue-600">
+                        {visitasPendientes.length}
+                      </div>
+                      <div className="text-gray-500">Pendientes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-green-600">
+                        {visitasRealizadas.length}
+                      </div>
+                      <div className="text-gray-500">Realizadas</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
           ) : selectedEntrega ? (
-            <EntregaDetails
-              entrega={selectedEntrega}
-              onFinalizarEntrega={() => setShowConfirmModal(true)}
-            />
+            <div className="space-y-4">
+              {/* Banner informativo para entregas */}
+              <div className="rounded-lg bg-blue-50 p-4">
+                <div className="flex items-start gap-3">
+                  <Package className="mt-0.5 h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-900">Solo lectura</p>
+                    <p className="text-sm text-blue-700">
+                      Como visitador, puedes ver las entregas pero no finalizarlas.
+                      Las entregas solo pueden ser finalizadas por el personal de planta.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Usar EntregaDetails existente pero sin el onFinalizarEntrega */}
+              <EntregaDetails
+                entrega={selectedEntrega}
+                onFinalizarEntrega={() => {}}
+              />
+            </div>
           ) : (
-            <EmptyState type={activeTab} />
+            <div className="flex h-full items-center justify-center text-center">
+              <div>
+                <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                <p className="mb-4 text-lg text-gray-500">
+                  Selecciona una entrega para ver los detalles
+                </p>
+                <div className="flex justify-center gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="font-semibold text-blue-600">
+                      {entregasPendientes.length}
+                    </div>
+                    <div className="text-gray-500">Pendientes</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-green-600">
+                      {entregasRealizadas.length}
+                    </div>
+                    <div className="text-gray-500">Entregadas</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </main>
       </div>
 
+      {/* Modal solo para visitas */}
       <ConfirmModal
-        isOpen={showConfirmModal}
-        title={selectedVisita ? 'Finalizar Visita' : 'Finalizar Entrega'}
-        observaciones={observacionesFinal}
-        onObservacionesChange={setObservacionesFinal}
-        onConfirm={
-          selectedVisita ? handleFinalizarVisita : handleFinalizarEntrega
-        }
+        isOpen={showVisitaModal}
+        title="Finalizar Visita"
+        observaciones={observacionesVisita}
+        onObservacionesChange={setObservacionesVisita}
+        onConfirm={handleFinalizarVisita}
         onCancel={() => {
-          setShowConfirmModal(false)
-          setObservacionesFinal('')
+          setShowVisitaModal(false)
+          setObservacionesVisita('')
         }}
       />
     </div>

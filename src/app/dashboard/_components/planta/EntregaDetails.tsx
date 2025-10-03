@@ -1,5 +1,3 @@
-'use client'
-
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Truck, Phone, Mail, MapPin, Calendar } from 'lucide-react'
@@ -31,6 +29,8 @@ export default function EntregaDetails({
   onFinalizarEntrega,
 }: EntregaDetailsProps) {
   const isEntregaPendiente = entrega.entrega.estado === 'PENDIENTE'
+  
+  const isEncargado = entrega.rol_entrega === 'ENCARGADO'
 
   return (
     <Card className="mx-auto max-w-3xl border-gray-200 bg-white shadow-lg">
@@ -109,7 +109,8 @@ export default function EntregaDetails({
             <MapPin className="mr-2 h-4 w-4" /> Ruta de Entrega
           </Button>
 
-          {isEntregaPendiente && (
+          {/* 3. Usar la condición combinada */}
+          {isEntregaPendiente && isEncargado && (
             <Button
               onClick={onFinalizarEntrega}
               className="flex-1 bg-green-600 text-white hover:bg-green-700"
