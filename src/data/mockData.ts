@@ -1,15 +1,14 @@
 import type {
-  Usuario,
   Obra,
   Cliente,
   ReporteVentas,
   Entrega,
   Visita,
   Vehiculo,
-  Maquinaria
+  Maquinaria,
 } from '@/types'
 
-export const mockUsuarios: Usuario[] = [
+/*export const mockUsuarios: Usuario[] = [
   {
     id: 1,
     nombre: 'Juan',
@@ -91,7 +90,7 @@ export const mockUsuarios: Usuario[] = [
     contraseña: '123456',
   },
 ]
-
+*/
 export const mockObras: Obra[] = [
   {
     id: 1,
@@ -260,7 +259,7 @@ export const mockEntregas: Entrega[] = [
     },
     fecha: '2025-09-18',
     hora: '09:00',
-    estado: 'programada',
+    estado: 'PENDIENTE',
     encargadoAsignado: 'Diego Lezcano',
     productos: [
       '200 bolsas de cemento',
@@ -291,7 +290,7 @@ export const mockEntregas: Entrega[] = [
     },
     fecha: '2025-09-19',
     hora: '11:00',
-    estado: 'programada',
+    estado: 'PENDIENTE',
     encargadoAsignado: 'Diego Lezcano',
     productos: ['50 cajas de cerámicos', '10 bolsas de pegamento Klaukol'],
     direccionEntrega: 'La Plata, Calle 10 n° 567 (Entrada de servicio)',
@@ -316,7 +315,7 @@ export const mockEntregas: Entrega[] = [
     },
     fecha: '2025-09-12',
     hora: '14:30',
-    estado: 'entregada',
+    estado: 'ENTREGADA',
     encargadoAsignado: 'Diego Lezcano',
     productos: ['100m² de césped en panes'],
     direccionEntrega: 'Ruta 2, km 45 (Portería principal)',
@@ -411,7 +410,7 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Stralis',
     anio: 2018,
     patente: 'AB123AS',
-    estado: 'disponible'
+    estado: 'disponible',
   },
   {
     tipoVehiculo: 'Auto',
@@ -419,7 +418,7 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Corolla',
     anio: 2016,
     patente: 'OEF456',
-    estado: 'en-uso'
+    estado: 'en-uso',
   },
   {
     tipoVehiculo: 'Camioneta',
@@ -427,7 +426,7 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Ranger',
     anio: 2008,
     patente: 'GHI789',
-    estado: 'reparacion'
+    estado: 'reparacion',
   },
   {
     tipoVehiculo: 'Furgón',
@@ -435,8 +434,8 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Kangoo',
     anio: 2010,
     patente: 'JKL012',
-    estado: 'disponible'
-  }
+    estado: 'disponible',
+  },
 ]
 
 export const mockArquitectos = [

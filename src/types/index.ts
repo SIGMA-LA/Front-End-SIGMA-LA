@@ -30,7 +30,7 @@ export interface Entrega {
   obra: Obra
   fecha: string
   hora: string
-  estado: 'programada' | 'en_transito' | 'entregada' | 'cancelada'
+  estado: 'ENTREGADA' | 'EN CURSO' | 'CANCELADA' | 'PENDIENTE'
   encargadoAsignado: string
   productos: string[]
   direccionEntrega: string
@@ -43,7 +43,7 @@ export interface Empleado {
   cuil: string
   nombre: string
   apellido: string
-  rol_actual: 'VENTAS' | 'ADMIN' | 'ENCARGADO' | 'COORDINACION' | 'VISITADOR'
+  rol_actual: 'VENTAS' | 'ADMIN' | 'PLANTA' | 'COORDINACION' | 'VISITADOR'
   area_trabajo: string
   contrasenia?: string
 }
@@ -86,7 +86,7 @@ export interface Vehiculo {
   modelo: string
   anio: number
   patente: string
-  estado: 'disponible' | 'en-uso' | 'reparacion' 
+  estado: 'disponible' | 'en-uso' | 'reparacion'
 }
 
 export interface VisitasListProps {

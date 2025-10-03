@@ -1,20 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Calendar,
   CheckCircle,
-  Clock,
-  ExternalLink,
-  FileText,
   Mail,
   MapPin,
   Package,
   Phone,
   Truck,
 } from 'lucide-react'
-import type { Usuario, Entrega } from '@/types'
-import { useGlobalContext } from '@/context/GlobalContext'
+import type { Empleado, Entrega } from '@/types'
+import { entregasService } from '@/services/entregas.service'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Textarea } from '@/components/ui/Textarea'
@@ -28,37 +25,86 @@ const formatDate = (dateString: string) =>
     year: 'numeric',
   })
 
-export default function EncargadoDashboardClient() {
+export default function PlantaDashboardClient() {
   const { usuario } = useAuth()
   const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
+  const [entregasPendientes, setEntregasPendientes] = useState<Entrega[]>([])
+  const [entregasRealizadas, setEntregasRealizadas] = useState<Entrega[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const { entregas, finalizarEntrega } = useGlobalContext()
+  // Cargar entregas cuando el componente se monta
+  useEffect(() => {
+    const loadEntregas = async () => {
+      if (!usuario?.cuil) {
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Obtener entregas pendientes y entregadas del encargado
+        const [pendientes, entregadas] = await Promise.all([
+          entregasService.getEntregasPendientes(usuario.cuil),
+          entregasService.getEntregasEntregadas(usuario.cuil),
+        ])
+
+        setEntregasPendientes(pendientes)
+        setEntregasRealizadas(entregadas)
+      } catch (err) {
+        console.error('Error al cargar entregas:', err)
+        setError('Error al cargar las entregas')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadEntregas()
+  }, [usuario?.cuil])
+
+  const handleFinalizarEntrega = async () => {
+    if (selectedEntrega) {
+      try {
+        await entregasService.finalizarEntrega(
+          selectedEntrega.id,
+          observacionesFinal
+        )
+
+        // Actualizar estado local
+        setSelectedEntrega({ ...selectedEntrega, estado: 'ENTREGADA' })
+
+        // Mover la entrega de pendientes a realizadas
+        setEntregasPendientes((prev) =>
+          prev.filter((e) => e.id !== selectedEntrega.id)
+        )
+        setEntregasRealizadas((prev) => [
+          ...prev,
+          { ...selectedEntrega, estado: 'ENTREGADA' },
+        ])
+
+        setShowConfirmModal(false)
+        setObservacionesFinal('')
+      } catch (error) {
+        console.error('Error al finalizar entrega:', error)
+        alert('Error al finalizar la entrega')
+      }
+    }
+  }
 
   if (!usuario) {
     return <div>Cargando datos del usuario...</div>
   }
 
-  const handleFinalizarEntrega = () => {
-    if (selectedEntrega) {
-      finalizarEntrega(selectedEntrega.id, observacionesFinal)
-      setShowConfirmModal(false)
-      setSelectedEntrega({ ...selectedEntrega, estado: 'entregada' })
-      setObservacionesFinal('')
-    }
+  if (loading) {
+    return <div>Cargando entregas...</div>
   }
 
-  // Ahora 'usuario.nombre' y 'usuario.apellido' funcionarán porque la prop se llama 'usuario'.
-  const entregasAsignadas = entregas.filter(
-    (e) => e.encargadoAsignado === `${usuario.nombre} ${usuario.apellido}`
-  )
-  const entregasPendientes = entregasAsignadas.filter(
-    (e) => e.estado === 'programada'
-  )
-  const entregasRealizadas = entregasAsignadas.filter(
-    (e) => e.estado === 'entregada'
-  )
+  if (error) {
+    return <div>Error: {error}</div>
+  }
 
   return (
     <div className="flex h-screen flex-col">
@@ -190,7 +236,8 @@ export default function EncargadoDashboardClient() {
                   <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
                     <MapPin className="mr-2 h-4 w-4" /> Ruta de Entrega
                   </Button>
-                  {selectedEntrega.estado === 'programada' && (
+                  {(selectedEntrega.estado === 'PENDIENTE' ||
+                    selectedEntrega.estado === 'EN CURSO') && (
                     <Button
                       onClick={() => setShowConfirmModal(true)}
                       className="flex-1 bg-green-600 text-white hover:bg-green-700"

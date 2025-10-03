@@ -8,6 +8,7 @@ import React, {
   useEffect,
 } from 'react'
 import api from '@/services/api/api'
+import { finalizarEntrega } from '@/services/entregas.service'
 import {
   mockObras,
   mockClientes,
@@ -25,7 +26,7 @@ interface GlobalContextType {
   addEmpleado: (empleado: Omit<Empleado, 'cuil'>) => Promise<void>
   updateEmpleado: (
     cuil: string,
-    data: Partial<Omit<Empleado, 'cuil'>>,
+    data: Partial<Omit<Empleado, 'cuil'>>
   ) => Promise<void>
   deleteEmpleado: (cuil: string) => Promise<void>
   currentSection: string
@@ -48,7 +49,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchEmpleados = async () => {
       try {
-        const { data } = await api.get('/api/empleados')
+        const { data } = await api.get('/empleados')
         setEmpleados(data)
       } catch (error) {
         console.error('Error al cargar empleados:', error)
@@ -60,10 +61,10 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const addEmpleado = async (empleadoData: Omit<Empleado, 'cuil'>) => {
     try {
       const { data: nuevoEmpleado } = await api.post<Empleado>(
-        '/api/empleados',
-        empleadoData,
+        '/empleados',
+        empleadoData
       )
-      setEmpleados(prev => [...prev, nuevoEmpleado])
+      setEmpleados((prev) => [...prev, nuevoEmpleado])
     } catch (error) {
       console.error('Error al crear empleado:', error)
       throw error // Re-lanzamos el error para que el componente lo maneje
@@ -72,15 +73,15 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const updateEmpleado = async (
     cuil: string,
-    empleadoData: Partial<Omit<Empleado, 'cuil'>>,
+    empleadoData: Partial<Omit<Empleado, 'cuil'>>
   ) => {
     try {
       const { data: empleadoActualizado } = await api.put<Empleado>(
-        `/api/empleados/${cuil}`,
-        empleadoData,
+        `/empleados/${cuil}`,
+        empleadoData
       )
-      setEmpleados(prev =>
-        prev.map(u => (u.cuil === cuil ? empleadoActualizado : u)),
+      setEmpleados((prev) =>
+        prev.map((u) => (u.cuil === cuil ? empleadoActualizado : u))
       )
     } catch (error) {
       console.error('Error al actualizar empleado:', error)
@@ -90,22 +91,16 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteEmpleado = async (cuil: string) => {
     try {
-      await api.delete(`/api/empleados/${cuil}`)
-      setEmpleados(prev => prev.filter(u => u.cuil !== cuil))
+      await api.delete(`/empleados/${cuil}`)
+      setEmpleados((prev) => prev.filter((u) => u.cuil !== cuil))
     } catch (error) {
       console.error('Error al eliminar empleado:', error)
       throw error
     }
   }
 
-  const finalizarEntrega = (id: number, observaciones: string) => {
-    // Lógica para finalizar entrega (posiblemente una llamada a la API en el futuro)
-    console.log(`Finalizando entrega ${id} con observaciones: ${observaciones}`)
-  }
-
   const finalizarVisita = (id: number, observaciones: string) => {
     // Lógica para finalizar visita (posiblemente una llamada a la API en el futuro)
-    console.log(`Finalizando visita ${id} con observaciones: ${observaciones}`)
   }
 
   return (
@@ -134,7 +129,7 @@ export const useGlobalContext = () => {
   const context = useContext(GlobalContext)
   if (context === undefined) {
     throw new Error(
-      'useGlobalContext debe ser usado dentro de un GlobalProvider',
+      'useGlobalContext debe ser usado dentro de un GlobalProvider'
     )
   }
   return context
