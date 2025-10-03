@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { Visita, Entrega } from '@/types'
+import type { Visita, EntregaEmpleado } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import { entregasService } from '@/services/entregas.service'
@@ -18,23 +18,23 @@ import ConfirmModal from './ConfirmModal'
 export default function VisitadorDashboard() {
   const { usuario } = useAuth()
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
-  const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null)
+  const [selectedEntrega, setSelectedEntrega] =
+    useState<EntregaEmpleado | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
   const [activeTab, setActiveTab] = useState<'visitas' | 'entregas'>('visitas')
 
-  // Estados para entregas cargadas desde la API
-  const [entregasPendientesAPI, setEntregasPendientesAPI] = useState<Entrega[]>(
-    []
-  )
-  const [entregasEntregadasAPI, setEntregasEntregadasAPI] = useState<Entrega[]>(
-    []
-  )
+  // Estados para entregas cargadas desde la API - CAMBIADO A EntregaEmpleado[]
+  const [entregasPendientesAPI, setEntregasPendientesAPI] = useState<
+    EntregaEmpleado[]
+  >([])
+  const [entregasEntregadasAPI, setEntregasEntregadasAPI] = useState<
+    EntregaEmpleado[]
+  >([])
   const [loadingEntregas, setLoadingEntregas] = useState(false)
   const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
 
-  const { visitas, entregas, finalizarVisita, finalizarEntrega } =
-    useGlobalContext()
+  const { visitas, finalizarVisita } = useGlobalContext()
 
   // Función para cargar entregas desde la API
   const cargarEntregasDesdeAPI = async () => {
@@ -73,32 +73,39 @@ export default function VisitadorDashboard() {
 
   const handleFinalizarVisita = () => {
     if (selectedVisita) {
-      finalizarVisita(selectedVisita.id, observacionesFinal)
+      finalizarVisita(selectedVisita.cod_visita, observacionesFinal)
       setShowConfirmModal(false)
-      setSelectedVisita({ ...selectedVisita, estado: 'completada' })
+      setSelectedVisita({ ...selectedVisita, estado: 'COMPLETADA' })
       setObservacionesFinal('')
     }
   }
 
   const handleFinalizarEntrega = async () => {
-    if (selectedEntrega) {
+    if (selectedEntrega && usuario?.cuil) {
       try {
-        await entregasService.finalizarEntrega(
-          selectedEntrega.id,
-          observacionesFinal
-        )
-        finalizarEntrega(selectedEntrega.id, observacionesFinal)
-
-        const entregaFinalizada = {
+        // Actualizar la entrega localmente
+        const entregaActualizada = {
           ...selectedEntrega,
-          estado: 'ENTREGADA' as const,
+          entrega: {
+            ...selectedEntrega.entrega,
+            estado: 'ENTREGADO' as const,
+            observaciones:
+              observacionesFinal || selectedEntrega.entrega.observaciones,
+          },
         }
-        setSelectedEntrega(entregaFinalizada)
 
-        await cargarEntregasDesdeAPI()
+        setSelectedEntrega(entregaActualizada)
+
+        // Mover de pendientes a entregadas
+        setEntregasPendientesAPI((prev) =>
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+        )
+        setEntregasEntregadasAPI((prev) => [...prev, entregaActualizada])
 
         setShowConfirmModal(false)
         setObservacionesFinal('')
+
+        // TODO: Implementar llamada al backend para actualizar el estado
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
         setErrorEntregas('Error al finalizar la entrega')
@@ -107,40 +114,61 @@ export default function VisitadorDashboard() {
   }
 
   if (!usuario) {
-    return <div>Cargando datos del usuario...</div>
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Cargando datos del usuario...</div>
+      </div>
+    )
   }
 
-  const visitasAsignadas = visitas.filter(
-    (v) => v.visitadorAsignado === `${usuario.nombre} ${usuario.apellido}`
+  // Filtrar visitas asignadas al usuario
+  const visitasAsignadas = visitas.filter((v) =>
+    v.empleados_asignados.some((emp) => emp.cuil === usuario.cuil)
   )
+
   const visitasPendientes = visitasAsignadas.filter(
-    (v) => v.estado === 'programada'
+    (v) => v.estado === 'PROGRAMADA'
   )
   const visitasRealizadas = visitasAsignadas.filter(
-    (v) => v.estado === 'completada'
+    (v) => v.estado === 'COMPLETADA'
   )
-
-  const entregasAsignadas =
-    entregasPendientesAPI.length > 0 || entregasEntregadasAPI.length > 0
-      ? [...entregasPendientesAPI, ...entregasEntregadasAPI]
-      : entregas.filter(
-          (e) => e.encargadoAsignado === `${usuario.nombre} ${usuario.apellido}`
-        )
-
-  const entregasPendientes =
-    entregasPendientesAPI.length > 0
-      ? entregasPendientesAPI
-      : entregasAsignadas.filter(
-          (e) => e.estado === 'PENDIENTE' || e.estado === 'EN CURSO'
-        )
-
-  const entregasRealizadas =
-    entregasEntregadasAPI.length > 0
-      ? entregasEntregadasAPI
-      : entregasAsignadas.filter((e) => e.estado === 'ENTREGADA')
 
   return (
     <div className="flex h-screen flex-col">
+      {/* Header con información del usuario */}
+      <div className="border-b bg-white px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Dashboard del Visitador
+            </h1>
+            <p className="text-sm text-gray-600">
+              {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
+            </p>
+          </div>
+          <div className="flex space-x-4 text-sm">
+            <div className="text-center">
+              <div className="font-semibold text-blue-600">
+                {activeTab === 'visitas'
+                  ? visitasPendientes.length
+                  : entregasPendientesAPI.length}
+              </div>
+              <div className="text-gray-500">Pendientes</div>
+            </div>
+            <div className="text-center">
+              <div className="font-semibold text-green-600">
+                {activeTab === 'visitas'
+                  ? visitasRealizadas.length
+                  : entregasEntregadasAPI.length}
+              </div>
+              <div className="text-gray-500">
+                {activeTab === 'visitas' ? 'Realizadas' : 'Entregadas'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div
         className="flex flex-1 overflow-hidden"
         style={{ height: 'calc(100vh - 80px)' }}
@@ -158,8 +186,8 @@ export default function VisitadorDashboard() {
               />
             ) : (
               <SidebarEntregas
-                entregasPendientes={entregasPendientes}
-                entregasRealizadas={entregasRealizadas}
+                entregasPendientes={entregasPendientesAPI}
+                entregasRealizadas={entregasEntregadasAPI}
                 selectedEntrega={selectedEntrega}
                 onSelectEntrega={setSelectedEntrega}
                 loadingEntregas={loadingEntregas}
@@ -170,7 +198,7 @@ export default function VisitadorDashboard() {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
           {selectedVisita ? (
             <VisitaDetails
               visita={selectedVisita}
@@ -195,7 +223,10 @@ export default function VisitadorDashboard() {
         onConfirm={
           selectedVisita ? handleFinalizarVisita : handleFinalizarEntrega
         }
-        onCancel={() => setShowConfirmModal(false)}
+        onCancel={() => {
+          setShowConfirmModal(false)
+          setObservacionesFinal('')
+        }}
       />
     </div>
   )

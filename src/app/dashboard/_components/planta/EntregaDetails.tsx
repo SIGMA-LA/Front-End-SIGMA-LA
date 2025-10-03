@@ -1,22 +1,21 @@
 'use client'
 
-import {
-  Calendar,
-  CheckCircle,
-  Mail,
-  MapPin,
-  Phone,
-  Package,
-  Truck,
-} from 'lucide-react'
-import type { EntregaEmpleado } from '@/types'
-import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Truck, Phone, Mail, MapPin, Calendar } from 'lucide-react'
+import type { EntregaEmpleado } from '@/types'
 
 interface EntregaDetailsProps {
   entrega: EntregaEmpleado
   onFinalizarEntrega: () => void
 }
+
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 
 const formatDateTime = (dateString: string) =>
   new Date(dateString).toLocaleString('es-AR', {
@@ -31,20 +30,18 @@ export default function EntregaDetails({
   entrega,
   onFinalizarEntrega,
 }: EntregaDetailsProps) {
-  const isEntregaPendiente =
-    entrega.entrega.estado === 'PENDIENTE' ||
-    entrega.entrega.estado === 'EN CURSO'
+  const isEntregaPendiente = entrega.entrega.estado === 'PENDIENTE'
 
   return (
     <Card className="mx-auto max-w-3xl border-gray-200 bg-white shadow-lg">
       <CardContent className="space-y-6 p-8">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-gray-900">
               Entrega #{entrega.entrega.cod_entrega}
-            </h3>
-            <p className="text-gray-500">
-              Cliente: {entrega.obra.cliente?.razon_social}
+            </h2>
+            <p className="text-lg text-gray-600">
+              {entrega.obra.cliente?.razon_social || 'Cliente no especificado'}
             </p>
             <div className="mt-2 flex items-center space-x-2">
               <span
@@ -65,7 +62,7 @@ export default function EntregaDetails({
               </span>
             </div>
           </div>
-          <Package className="h-12 w-12 text-gray-300" />
+          <Truck className="h-12 w-12 text-gray-300" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 border-t pt-6 text-sm md:grid-cols-2">
@@ -109,14 +106,15 @@ export default function EntregaDetails({
 
         <div className="flex space-x-4 border-t pt-6">
           <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
-            <MapPin className="mr-2 h-4 w-4" /> Cómo llegar
+            <MapPin className="mr-2 h-4 w-4" /> Ruta de Entrega
           </Button>
+
           {isEntregaPendiente && (
             <Button
               onClick={onFinalizarEntrega}
               className="flex-1 bg-green-600 text-white hover:bg-green-700"
             >
-              <CheckCircle className="mr-2 h-4 w-4" /> Finalizar entrega
+              Finalizar Entrega
             </Button>
           )}
         </div>

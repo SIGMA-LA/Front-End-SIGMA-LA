@@ -26,9 +26,9 @@ export default function SidebarVisitas({
         <div className="space-y-2">
           {visitasPendientes.map((visita) => (
             <VisitaCard
-              key={visita.id}
+              key={visita.cod_visita}
               visita={visita}
-              isSelected={selectedVisita?.id === visita.id}
+              isSelected={selectedVisita?.cod_visita === visita.cod_visita}
               onClick={() => onSelectVisita(visita)}
               isPendiente={true}
             />
@@ -45,9 +45,9 @@ export default function SidebarVisitas({
         <div className="space-y-2">
           {visitasRealizadas.map((visita) => (
             <VisitaCard
-              key={visita.id}
+              key={visita.cod_visita}
               visita={visita}
-              isSelected={selectedVisita?.id === visita.id}
+              isSelected={selectedVisita?.cod_visita === visita.cod_visita}
               onClick={() => onSelectVisita(visita)}
               isPendiente={false}
             />

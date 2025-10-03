@@ -40,11 +40,10 @@ export default function VisitaCard({
       <div className="flex items-center justify-between">
         <div className="flex-grow text-sm">
           <p className="font-semibold text-gray-800">
-            {formatDate(visita.fecha)} - {visita.hora}hs -{' '}
-            {visita.obra.direccion.split(',')[0]}
+            {formatDate(visita.fecha_hora_visita)}
           </p>
           <p className="mt-1 text-xs text-gray-500">
-            {getTipoText(visita.tipo)}
+            {getTipoText(visita.motivo_visita)}
           </p>
         </div>
         <span

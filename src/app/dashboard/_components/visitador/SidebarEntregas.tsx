@@ -1,11 +1,11 @@
-import type { Entrega } from '@/types'
+import type { EntregaEmpleado } from '@/types'
 import EntregaCard from './EntregaCard'
 
 interface SidebarEntregasProps {
-  entregasPendientes: Entrega[]
-  entregasRealizadas: Entrega[]
-  selectedEntrega: Entrega | null
-  onSelectEntrega: (entrega: Entrega) => void
+  entregasPendientes: EntregaEmpleado[]
+  entregasRealizadas: EntregaEmpleado[]
+  selectedEntrega: EntregaEmpleado | null
+  onSelectEntrega: (entrega: EntregaEmpleado) => void
   loadingEntregas: boolean
   errorEntregas: string | null
   onRetry: () => void
@@ -55,12 +55,14 @@ export default function SidebarEntregas({
               No hay entregas pendientes
             </div>
           ) : (
-            entregasPendientes.map((entrega) => (
+            entregasPendientes.map((entregaEmpleado) => (
               <EntregaCard
-                key={entrega.id}
-                entrega={entrega}
-                isSelected={selectedEntrega?.id === entrega.id}
-                onClick={() => onSelectEntrega(entrega)}
+                key={entregaEmpleado.cod_entrega}
+                entrega={entregaEmpleado}
+                isSelected={
+                  selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega
+                }
+                onClick={() => onSelectEntrega(entregaEmpleado)}
                 isPendiente={true}
               />
             ))
@@ -80,12 +82,14 @@ export default function SidebarEntregas({
               No hay entregas realizadas
             </div>
           ) : (
-            entregasRealizadas.map((entrega) => (
+            entregasRealizadas.map((entregaEmpleado) => (
               <EntregaCard
-                key={entrega.id}
-                entrega={entrega}
-                isSelected={selectedEntrega?.id === entrega.id}
-                onClick={() => onSelectEntrega(entrega)}
+                key={entregaEmpleado.cod_entrega}
+                entrega={entregaEmpleado}
+                isSelected={
+                  selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega
+                }
+                onClick={() => onSelectEntrega(entregaEmpleado)}
                 isPendiente={false}
               />
             ))

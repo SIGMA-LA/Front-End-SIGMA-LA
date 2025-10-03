@@ -1,265 +1,279 @@
 import api from './api/api'
-import { Entrega } from '../types'
+import { EntregaEmpleado, Empleado, Obra, Cliente, Localidad } from '@/types'
 
-interface BackendEntrega {
-  id: number
+interface BackendEntregaEmpleado {
+  cuil: string
   cod_obra: number
-  cuil_empleado: string
-  fecha_entrega: string
-  hora_entrega?: string
-  estado: 'PENDIENTE' | 'ENTREGADA' | 'EN CURSO' | 'CANCELADA'
-  observaciones?: string
-  direccion_entrega: string
-  productos: string[]
-  vehiculo?: string
+  cod_entrega: number
+  rol_entrega: string
+  entrega: {
+    cod_entrega: number
+    cod_obra: number
+    fecha_hora_entrega: string
+    estado: 'PENDIENTE' | 'ENTREGADO' | 'EN CURSO' | 'CANCELADO'
+    observaciones?: string
+    detalle: string
+    obra: {
+      cod_obra: number
+      cod_postal: number
+      cuil: string
+      fecha_ini: string
+      estado:
+        | 'ACTIVA'
+        | 'EN PRODUCCION'
+        | 'FINALIZADA'
+        | 'ENTREGADA'
+        | 'EN ESPERA DE STOCK'
+      fecha_cancelacion?: string
+      direccion: string
+      nota_fabrica: string
+      cliente: {
+        cuil: string
+        razon_social: string
+        telefono: string
+        mail: string
+      }
+      localidad?: {
+        cod_postal: number
+        nombre_localidad: string
+      }
+    }
+  }
   obra: {
     cod_obra: number
+    cod_postal: number
+    cuil: string
+    fecha_ini: string
+    estado:
+      | 'ACTIVA'
+      | 'EN PRODUCCION'
+      | 'FINALIZADA'
+      | 'ENTREGADA'
+      | 'EN ESPERA DE STOCK'
+    fecha_cancelacion?: string
     direccion: string
+    nota_fabrica: string
     cliente: {
       cuil: string
       razon_social: string
       telefono: string
       mail: string
     }
-    nota_fabrica: string
-    fecha_ini: string
-    estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada'
   }
   empleado: {
     cuil: string
     nombre: string
     apellido: string
+    rol_actual: string
+    area_trabajo: string
+    contrasenia?: string
   }
 }
 
-export interface CreateEntregaDTO {
+export interface CreateEntregaEmpleadoDTO {
+  cuil: string
+  cod_entrega: number
   cod_obra: number
-  cuil_empleado: string
-  fecha_entrega: string
-  hora_entrega: string
-  direccion_entrega: string
-  productos: string[]
-  vehiculo?: string
-  observaciones?: string
+  rol_entrega: string
 }
 
-export interface UpdateEntregaDTO {
-  fecha_entrega?: string
-  hora_entrega?: string
-  estado?: 'PENDIENTE' | 'ENTREGADA' | 'EN CURSO' | 'CANCELADA'
-  observaciones?: string
-  direccion_entrega?: string
-  productos?: string[]
-  vehiculo?: string
+export interface UpdateEntregaEmpleadoDTO {
+  rol_entrega?: string
 }
 
 // Función para mapear datos del backend al frontend
-const mapToFrontend = (backendEntrega: BackendEntrega): Entrega => {
+const mapToFrontend = (
+  backendEntregaEmpleado: BackendEntregaEmpleado
+): EntregaEmpleado => {
   return {
-    id: backendEntrega.id,
+    cuil: backendEntregaEmpleado.cuil,
+    cod_obra: backendEntregaEmpleado.cod_obra,
+    cod_entrega: backendEntregaEmpleado.cod_entrega,
+    rol_entrega: backendEntregaEmpleado.rol_entrega,
     obra: {
-      id: backendEntrega.obra.cod_obra,
-      direccion: backendEntrega.obra.direccion,
+      cod_obra: backendEntregaEmpleado.obra.cod_obra,
+      cod_postal: backendEntregaEmpleado.obra.cod_postal,
+      cuil_cliente: backendEntregaEmpleado.obra.cuil,
+      fecha_ini: backendEntregaEmpleado.obra.fecha_ini,
+      estado: backendEntregaEmpleado.obra.estado,
+      fecha_cancelacion: backendEntregaEmpleado.obra.fecha_cancelacion,
+      direccion: backendEntregaEmpleado.obra.direccion,
+      nota_fabrica: backendEntregaEmpleado.obra.nota_fabrica,
       cliente: {
-        id: 0,
-        nombre:
-          backendEntrega.obra.cliente.razon_social.split(' ')[0] || 'Cliente',
-        apellido:
-          backendEntrega.obra.cliente.razon_social
-            .split(' ')
-            .slice(1)
-            .join(' ') || '',
-        telefono: backendEntrega.obra.cliente.telefono,
-        email: backendEntrega.obra.cliente.mail,
+        cuil: backendEntregaEmpleado.obra.cliente.cuil,
+        razon_social: backendEntregaEmpleado.obra.cliente.razon_social,
+        telefono: backendEntregaEmpleado.obra.cliente.telefono,
+        mail: backendEntregaEmpleado.obra.cliente.mail,
       },
-      descripcion: backendEntrega.obra.nota_fabrica,
-      presupuesto: 0, // No disponible en backend
-      fechaInicio: backendEntrega.obra.fecha_ini,
-      estado: backendEntrega.obra.estado,
     },
-    fecha: backendEntrega.fecha_entrega,
-    hora: backendEntrega.hora_entrega || '09:00',
-    estado: backendEntrega.estado,
-    encargadoAsignado: `${backendEntrega.empleado.nombre} ${backendEntrega.empleado.apellido}`,
-    productos: backendEntrega.productos,
-    direccionEntrega: backendEntrega.direccion_entrega,
-    observaciones: backendEntrega.observaciones || 'Sin observaciones',
-    vehiculo: backendEntrega.vehiculo,
-    documentos: [], // No disponible en backend por ahora
+    empleado: {
+      cuil: backendEntregaEmpleado.empleado.cuil,
+      nombre: backendEntregaEmpleado.empleado.nombre,
+      apellido: backendEntregaEmpleado.empleado.apellido,
+      rol_actual: backendEntregaEmpleado.empleado.rol_actual,
+      area_trabajo: backendEntregaEmpleado.empleado.area_trabajo,
+      contrasenia: backendEntregaEmpleado.empleado.contrasenia,
+    },
+    entrega: {
+      cod_entrega: backendEntregaEmpleado.entrega.cod_entrega,
+      cod_obra: backendEntregaEmpleado.entrega.cod_obra,
+      obra: {
+        cod_obra: backendEntregaEmpleado.entrega.obra.cod_obra,
+        cod_postal: backendEntregaEmpleado.entrega.obra.cod_postal,
+        cuil_cliente: backendEntregaEmpleado.entrega.obra.cuil,
+        fecha_ini: backendEntregaEmpleado.entrega.obra.fecha_ini,
+        estado: backendEntregaEmpleado.entrega.obra.estado,
+        fecha_cancelacion:
+          backendEntregaEmpleado.entrega.obra.fecha_cancelacion,
+        direccion: backendEntregaEmpleado.entrega.obra.direccion,
+        nota_fabrica: backendEntregaEmpleado.entrega.obra.nota_fabrica,
+        cliente: {
+          cuil: backendEntregaEmpleado.entrega.obra.cliente.cuil,
+          razon_social:
+            backendEntregaEmpleado.entrega.obra.cliente.razon_social,
+          telefono: backendEntregaEmpleado.entrega.obra.cliente.telefono,
+          mail: backendEntregaEmpleado.entrega.obra.cliente.mail,
+        },
+      },
+      fecha_hora_entrega: backendEntregaEmpleado.entrega.fecha_hora_entrega,
+      estado: backendEntregaEmpleado.entrega.estado,
+      observaciones: backendEntregaEmpleado.entrega.observaciones,
+      detalle: backendEntregaEmpleado.entrega.detalle,
+      empleados_asignados: [],
+    },
   }
 }
 
-const mapCreateToBackend = (entregaData: CreateEntregaDTO) => ({
-  cod_obra: entregaData.cod_obra,
-  cuil_empleado: entregaData.cuil_empleado,
-  fecha_entrega: entregaData.fecha_entrega,
-  hora_entrega: entregaData.hora_entrega,
-  direccion_entrega: entregaData.direccion_entrega,
-  productos: entregaData.productos,
-  vehiculo: entregaData.vehiculo,
-  observaciones: entregaData.observaciones,
-})
-
-const mapUpdateToBackend = (entregaData: UpdateEntregaDTO) => ({
-  fecha_entrega: entregaData.fecha_entrega,
-  hora_entrega: entregaData.hora_entrega,
-  estado: entregaData.estado,
-  observaciones: entregaData.observaciones,
-  direccion_entrega: entregaData.direccion_entrega,
-  productos: entregaData.productos,
-  vehiculo: entregaData.vehiculo,
-})
-
 class EntregasService {
-  private baseURL = '/entregas'
+  private baseURL = '/entregaEmpleado'
 
-  /**
-   * Método privado para obtener entregas por estado de un empleado específico.
-   * @param cuilEmpleado - CUIL del empleado
-   * @param estado - Estado de las entregas a obtener
-   * @returns Lista de entregas formateadas para el frontend
-   */
-  private async getEntregasByEstado(
-    cuilEmpleado: string,
-    estado: 'PENDIENTE' | 'ENTREGADA' | 'EN CURSO' | 'CANCELADA'
-  ): Promise<Entrega[]> {
+  async getEntregasByEmpleado(cuil: string): Promise<EntregaEmpleado[]> {
     try {
-      const response = await api.get<BackendEntrega[]>(
-        `${this.baseURL}/empleado/${cuilEmpleado}`,
-        {
-          params: { estado },
-        }
+      const response = await api.get<BackendEntregaEmpleado[]>(
+        `${this.baseURL}/${cuil}`
       )
+      return response.data.map(mapToFrontend)
+    } catch (error) {
+      console.error(`Error al obtener entregas para empleado ${cuil}:`, error)
+      throw error
+    }
+  }
 
+  async getEntregasByEmpleadoAndEstado(
+    cuil: string,
+    estado: 'PENDIENTE' | 'ENTREGADO' | 'EN CURSO' | 'CANCELADO'
+  ): Promise<EntregaEmpleado[]> {
+    try {
+      const response = await api.get<BackendEntregaEmpleado[]>(
+        `${this.baseURL}/${cuil}/${estado}`
+      )
       return response.data.map(mapToFrontend)
     } catch (error) {
       console.error(
-        `Error al obtener entregas ${estado} para empleado ${cuilEmpleado}:`,
+        `Error al obtener entregas ${estado} para empleado ${cuil}:`,
         error
       )
       throw error
     }
   }
 
-  /**
-   * Obtiene todas las entregas del backend.
-   * @returns Lista de entregas formateadas para el frontend
-   */
-  async getAllEntregas(): Promise<Entrega[]> {
-    const { data } = await api.get<BackendEntrega[]>(this.baseURL)
-    return data.map(mapToFrontend)
-  }
-
-  /**
-   * Obtiene una entrega específica por su ID.
-   * @param id - ID de la entrega
-   * @returns Entrega formateada para el frontend
-   */
-  async getEntregaById(id: number): Promise<Entrega> {
-    const { data } = await api.get<BackendEntrega>(`${this.baseURL}/${id}`)
-    return mapToFrontend(data)
-  }
-
-  /**
-   * Obtiene entregas pendientes de un empleado.
-   * @param cuilEmpleado - CUIL del empleado
-   * @returns Lista de entregas pendientes
-   */
-  async getEntregasPendientes(cuilEmpleado: string): Promise<Entrega[]> {
-    return this.getEntregasByEstado(cuilEmpleado, 'PENDIENTE')
-  }
-
-  /**
-   * Obtiene entregas entregadas de un empleado.
-   * @param cuilEmpleado - CUIL del empleado
-   * @returns Lista de entregas entregadas
-   */
-  async getEntregasEntregadas(cuilEmpleado: string): Promise<Entrega[]> {
-    return this.getEntregasByEstado(cuilEmpleado, 'ENTREGADA')
-  }
-
-  /**
-   * Obtiene entregas en curso de un empleado.
-   * @param cuilEmpleado - CUIL del empleado
-   * @returns Lista de entregas en curso
-   */
-  async getEntregasEnCurso(cuilEmpleado: string): Promise<Entrega[]> {
-    return this.getEntregasByEstado(cuilEmpleado, 'EN CURSO')
-  }
-
-  /**
-   * Obtiene entregas canceladas de un empleado.
-   * @param cuilEmpleado - CUIL del empleado
-   * @returns Lista de entregas canceladas
-   */
-  async getEntregasCanceladas(cuilEmpleado: string): Promise<Entrega[]> {
-    return this.getEntregasByEstado(cuilEmpleado, 'CANCELADA')
-  }
-
-  /**
-   * Crea una nueva entrega.
-   * @param entregaData - Datos de la entrega en formato frontend
-   * @returns La nueva entrega creada, formateada para el frontend
-   */
-  async createEntrega(entregaData: CreateEntregaDTO): Promise<Entrega> {
-    const payload = mapCreateToBackend(entregaData)
-    const { data } = await api.post<BackendEntrega>(this.baseURL, payload)
-    return mapToFrontend(data)
-  }
-
-  /**
-   * Actualiza una entrega existente.
-   * @param id - ID de la entrega a actualizar
-   * @param entregaData - Datos a actualizar en formato frontend
-   * @returns La entrega actualizada, formateada para el frontend
-   */
-  async updateEntrega(
-    id: number,
-    entregaData: UpdateEntregaDTO
-  ): Promise<Entrega> {
-    const payload = mapUpdateToBackend(entregaData)
-    const { data } = await api.put<BackendEntrega>(
-      `${this.baseURL}/${id}`,
-      payload
-    )
-    return mapToFrontend(data)
-  }
-
-  /**
-   * Finaliza una entrega cambiando su estado y agregando observaciones.
-   * @param id - ID de la entrega a finalizar
-   * @param observaciones - Observaciones finales
-   */
-  async finalizarEntrega(id: number, observaciones: string): Promise<void> {
+  async getEntregaByEmpleadoAndId(
+    cuil: string,
+    codEntrega: number
+  ): Promise<EntregaEmpleado> {
     try {
-      await api.post(`${this.baseURL}/${id}/finalizar`, { observaciones })
+      const response = await api.get<BackendEntregaEmpleado>(
+        `${this.baseURL}/${cuil}/${codEntrega}`
+      )
+      return mapToFrontend(response.data)
     } catch (error) {
-      console.error(`Error al finalizar entrega ${id}:`, error)
+      console.error(
+        `Error al obtener entrega ${codEntrega} para empleado ${cuil}:`,
+        error
+      )
       throw error
     }
   }
 
-  /**
-   * Elimina una entrega por su ID.
-   * @param id - ID de la entrega a eliminar
-   */
-  async deleteEntrega(id: number): Promise<void> {
-    await api.delete(`${this.baseURL}/${id}`)
+  async getEntregasPendientes(cuil: string): Promise<EntregaEmpleado[]> {
+    return this.getEntregasByEmpleadoAndEstado(cuil, 'PENDIENTE')
+  }
+
+  async getEntregasEntregadas(cuil: string): Promise<EntregaEmpleado[]> {
+    return this.getEntregasByEmpleadoAndEstado(cuil, 'ENTREGADO')
+  }
+
+  async getEntregasEnCurso(cuil: string): Promise<EntregaEmpleado[]> {
+    return this.getEntregasByEmpleadoAndEstado(cuil, 'EN CURSO')
+  }
+
+  async getEntregasCanceladas(cuil: string): Promise<EntregaEmpleado[]> {
+    return this.getEntregasByEmpleadoAndEstado(cuil, 'CANCELADO')
+  }
+
+  async asignarEmpleadoAEntrega(data: CreateEntregaEmpleadoDTO): Promise<void> {
+    try {
+      await api.post(this.baseURL, data)
+    } catch (error) {
+      console.error('Error al asignar empleado a entrega:', error)
+      throw error
+    }
+  }
+
+  async updateRolEnEntrega(
+    cuil: string,
+    codEntrega: number,
+    data: UpdateEntregaEmpleadoDTO
+  ): Promise<void> {
+    try {
+      await api.put(`${this.baseURL}/${cuil}/${codEntrega}`, data)
+    } catch (error) {
+      console.error('Error al actualizar rol en entrega:', error)
+      throw error
+    }
+  }
+
+  async removerEmpleadoDeEntrega(
+    cuil: string,
+    codEntrega: number
+  ): Promise<void> {
+    try {
+      await api.delete(`${this.baseURL}/${cuil}/${codEntrega}`)
+    } catch (error) {
+      console.error('Error al remover empleado de entrega:', error)
+      throw error
+    }
+  }
+
+  async getEstadisticasEmpleado(cuil: string): Promise<{
+    total: number
+    porRol: { [rol: string]: number }
+    porEstado: { [estado: string]: number }
+  }> {
+    try {
+      const entregas = await this.getEntregasByEmpleado(cuil)
+
+      const estadisticas = {
+        total: entregas.length,
+        porRol: {} as { [rol: string]: number },
+        porEstado: {} as { [estado: string]: number },
+      }
+
+      entregas.forEach((entrega) => {
+        const rol = entrega.rol_entrega || 'Sin rol'
+        estadisticas.porRol[rol] = (estadisticas.porRol[rol] || 0) + 1
+
+        estadisticas.porEstado[entrega.entrega.estado] =
+          (estadisticas.porEstado[entrega.entrega.estado] || 0) + 1
+      })
+
+      return estadisticas
+    } catch (error) {
+      console.error('Error al obtener estadísticas del empleado:', error)
+      throw error
+    }
   }
 }
 
 export const entregasService = new EntregasService()
-
-// Exportar también las funciones individuales para compatibilidad
-export const finalizarEntrega = (id: number, observaciones: string) =>
-  entregasService.finalizarEntrega(id, observaciones)
-
-export const obtenerEntregasDeEncargado = async (cuil: string) => {
-  const [pendientes, entregadas] = await Promise.all([
-    entregasService.getEntregasPendientes(cuil),
-    entregasService.getEntregasEntregadas(cuil),
-  ])
-  return { pendientes, entregadas }
-}
-
 export default entregasService

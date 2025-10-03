@@ -1,7 +1,9 @@
-import type { Entrega } from '@/types'
+'use client'
+
+import type { EntregaEmpleado } from '@/types'
 
 interface EntregaCardProps {
-  entrega: Entrega
+  entrega: EntregaEmpleado
   isSelected: boolean
   onClick: () => void
   isPendiente: boolean
@@ -9,9 +11,9 @@ interface EntregaCardProps {
 
 const getEstadoText = (estado: string) =>
   ({
-    ENTREGADA: 'Entregada',
+    ENTREGADO: 'Entregado',
     'EN CURSO': 'En Curso',
-    CANCELADA: 'Cancelada',
+    CANCELADO: 'Cancelado',
     PENDIENTE: 'Pendiente',
   })[estado] || estado
 
@@ -40,11 +42,11 @@ export default function EntregaCard({
       <div className="flex items-center justify-between">
         <div className="flex-grow text-sm">
           <p className="font-semibold text-gray-800">
-            {formatDate(entrega.fecha)} - {entrega.hora}hs -{' '}
-            {entrega.direccionEntrega.split(',')[0]}
+            {formatDate(entrega.entrega.fecha_hora_entrega)} -{' '}
+            {entrega.obra.direccion.split(',')[0]}
           </p>
           <p className="mt-1 text-xs text-gray-500">
-            {getEstadoText(entrega.estado)}
+            {getEstadoText(entrega.entrega.estado)} - Rol: {entrega.rol_entrega}
           </p>
         </div>
         <span

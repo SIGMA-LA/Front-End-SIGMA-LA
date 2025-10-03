@@ -35,8 +35,7 @@ export default function VisitaDetails({
               Detalles de la Visita
             </h3>
             <p className="text-gray-500">
-              Cliente: {visita.obra.cliente.nombre}{' '}
-              {visita.obra.cliente.apellido}
+              Cliente: {visita.obra?.cliente.razon_social}
             </p>
           </div>
           <UserIcon className="h-12 w-12 text-gray-300" />
@@ -44,21 +43,19 @@ export default function VisitaDetails({
         <div className="grid grid-cols-1 gap-4 border-t pt-6 text-sm md:grid-cols-2">
           <div className="flex items-center space-x-3">
             <Phone className="h-5 w-5 text-gray-400" />
-            <span>{visita.obra.cliente.telefono}</span>
+            <span>{visita.obra?.cliente.telefono}</span>
           </div>
           <div className="flex items-center space-x-3">
             <Mail className="h-5 w-5 text-gray-400" />
-            <span>{visita.obra.cliente.email}</span>
+            <span>{visita.obra?.cliente.mail}</span>
           </div>
           <div className="col-span-2 flex items-center space-x-3">
             <MapPin className="h-5 w-5 text-gray-400" />
-            <span>{visita.obra.direccion}</span>
+            <span>{visita.obra?.direccion}</span>
           </div>
           <div className="flex items-center space-x-3">
             <Calendar className="h-5 w-5 text-gray-400" />
-            <span>
-              {formatDate(visita.fecha)} a las {visita.hora}hs
-            </span>
+            <span>{formatDate(visita.fecha_hora_visita)}</span>
           </div>
         </div>
         <div>
@@ -71,7 +68,7 @@ export default function VisitaDetails({
           <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
             <MapPin className="mr-2 h-4 w-4" /> Cómo llegar
           </Button>
-          {visita.estado === 'programada' && (
+          {visita.estado === 'PROGRAMADA' && (
             <Button
               onClick={onFinalizarVisita}
               className="flex-1 bg-green-600 text-white hover:bg-green-700"

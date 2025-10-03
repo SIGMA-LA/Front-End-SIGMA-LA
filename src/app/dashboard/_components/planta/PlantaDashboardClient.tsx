@@ -1,52 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  Calendar,
-  CheckCircle,
-  Mail,
-  MapPin,
-  Package,
-  Phone,
-  Truck,
-} from 'lucide-react'
-import type { Empleado, Entrega } from '@/types'
+import type { EntregaEmpleado } from '@/types'
 import { entregasService } from '@/services/entregas.service'
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Textarea } from '@/components/ui/Textarea'
-import { Label } from '@/components/ui/Label'
 import { useAuth } from '@/context/AuthContext'
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+import EntregasSidebar from './EntregasSidebar'
+import EntregaDetails from './EntregaDetails'
+import FinalizarEntregaModal from './FinalizarEntregaModal'
+import EmptyState from './EmptyState'
 
 export default function PlantaDashboardClient() {
   const { usuario } = useAuth()
-  const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null)
+  const [selectedEntrega, setSelectedEntrega] =
+    useState<EntregaEmpleado | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
-  const [entregasPendientes, setEntregasPendientes] = useState<Entrega[]>([])
-  const [entregasRealizadas, setEntregasRealizadas] = useState<Entrega[]>([])
+  const [entregasPendientes, setEntregasPendientes] = useState<
+    EntregaEmpleado[]
+  >([])
+  const [entregasRealizadas, setEntregasRealizadas] = useState<
+    EntregaEmpleado[]
+  >([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Cargar entregas cuando el componente se monta
   useEffect(() => {
     const loadEntregas = async () => {
       if (!usuario?.cuil) {
         return
       }
-
       try {
         setLoading(true)
         setError(null)
 
-        // Obtener entregas pendientes y entregadas del encargado
         const [pendientes, entregadas] = await Promise.all([
           entregasService.getEntregasPendientes(usuario.cuil),
           entregasService.getEntregasEntregadas(usuario.cuil),
@@ -66,27 +52,29 @@ export default function PlantaDashboardClient() {
   }, [usuario?.cuil])
 
   const handleFinalizarEntrega = async () => {
-    if (selectedEntrega) {
+    if (selectedEntrega && usuario?.cuil) {
       try {
-        await entregasService.finalizarEntrega(
-          selectedEntrega.id,
-          observacionesFinal
-        )
+        const entregaActualizada = {
+          ...selectedEntrega,
+          entrega: {
+            ...selectedEntrega.entrega,
+            estado: 'ENTREGADO' as const,
+            observaciones:
+              observacionesFinal || selectedEntrega.entrega.observaciones,
+          },
+        }
 
-        // Actualizar estado local
-        setSelectedEntrega({ ...selectedEntrega, estado: 'ENTREGADA' })
+        setSelectedEntrega(entregaActualizada)
 
-        // Mover la entrega de pendientes a realizadas
         setEntregasPendientes((prev) =>
-          prev.filter((e) => e.id !== selectedEntrega.id)
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
         )
-        setEntregasRealizadas((prev) => [
-          ...prev,
-          { ...selectedEntrega, estado: 'ENTREGADA' },
-        ])
+        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
 
         setShowConfirmModal(false)
         setObservacionesFinal('')
+
+        // TODO: Implementar llamada al backend para actualizar el estado
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
         alert('Error al finalizar la entrega')
@@ -94,208 +82,98 @@ export default function PlantaDashboardClient() {
     }
   }
 
+  const handleSelectEntrega = (entrega: EntregaEmpleado) => {
+    setSelectedEntrega(entrega)
+  }
+
   if (!usuario) {
-    return <div>Cargando datos del usuario...</div>
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Cargando datos del usuario...</div>
+      </div>
+    )
   }
 
   if (loading) {
-    return <div>Cargando entregas...</div>
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg">Cargando entregas...</div>
+      </div>
+    )
   }
 
   if (error) {
-    return <div>Error: {error}</div>
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg text-red-600">Error: {error}</div>
+      </div>
+    )
   }
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="flex flex-1 overflow-hidden">
-        {/* Barra Lateral de Entregas */}
-        <aside className="w-96 flex-shrink-0 space-y-6 overflow-y-auto border-r border-gray-200 bg-white p-4">
-          <div className="px-3">
-            <div className="mb-3 flex items-center space-x-2 px-1 pt-2">
-              <div className="h-2.5 w-2.5 rounded-full bg-orange-500"></div>
-              <h2 className="text-sm font-semibold tracking-wider text-gray-700 uppercase">
-                Entregas Pendientes
-              </h2>
+      <div className="border-b bg-white px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Dashboard de Entregas
+            </h1>
+            <p className="text-sm text-gray-600">
+              {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
+            </p>
+          </div>
+          <div className="flex space-x-4 text-sm">
+            <div className="text-center">
+              <div className="font-semibold text-blue-600">
+                {entregasPendientes.length}
+              </div>
+              <div className="text-gray-500">Pendientes</div>
             </div>
-            <div className="space-y-2">
-              {entregasPendientes.map((entrega) => (
-                <button
-                  key={entrega.id}
-                  onClick={() => setSelectedEntrega(entrega)}
-                  className={`w-full rounded-lg border p-3 text-left shadow-sm transition-colors ${
-                    selectedEntrega?.id === entrega.id
-                      ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-300'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-grow text-sm">
-                      <p className="font-semibold text-gray-800">
-                        {formatDate(entrega.fecha)} - {entrega.hora}hs -{' '}
-                        {entrega.obra.direccion.split(',')[0]}
-                      </p>
-                    </div>
-                    <span className="rounded-md bg-orange-500 px-3 py-1 text-xs text-white">
-                      Info
-                    </span>
-                  </div>
-                </button>
-              ))}
+            <div className="text-center">
+              <div className="font-semibold text-green-600">
+                {entregasRealizadas.length}
+              </div>
+              <div className="text-gray-500">Entregadas</div>
             </div>
           </div>
-          <div className="px-3">
-            <div className="mb-3 flex items-center space-x-2 px-1">
-              <div className="h-2.5 w-2.5 rounded-full bg-green-500"></div>
-              <h2 className="text-sm font-semibold tracking-wider text-gray-700 uppercase">
-                Entregas Realizadas
-              </h2>
-            </div>
-            <div className="space-y-2">
-              {entregasRealizadas.map((entrega) => (
-                <button
-                  key={entrega.id}
-                  onClick={() => setSelectedEntrega(entrega)}
-                  className={`w-full rounded-lg border p-3 text-left shadow-sm transition-colors ${
-                    selectedEntrega?.id === entrega.id
-                      ? 'border-green-400 bg-green-50 ring-2 ring-green-300'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-grow text-sm">
-                      <p className="font-semibold text-gray-800">
-                        {formatDate(entrega.fecha)} - {entrega.hora}hs -{' '}
-                        {entrega.obra.direccion.split(',')[0]}
-                      </p>
-                    </div>
-                    <span className="rounded-md bg-gray-500 px-3 py-1 text-xs text-white">
-                      Info
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
+        </div>
+      </div>
 
-        {/* Contenido Principal */}
+      <div className="flex flex-1 overflow-hidden">
+        <EntregasSidebar
+          entregasPendientes={entregasPendientes}
+          entregasRealizadas={entregasRealizadas}
+          selectedEntrega={selectedEntrega}
+          onSelectEntrega={handleSelectEntrega}
+        />
+
         <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
           {selectedEntrega ? (
-            <Card className="mx-auto max-w-3xl border-gray-200 bg-white shadow-lg">
-              <CardContent className="space-y-6 p-8">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-800">
-                      Detalles de la Entrega
-                    </h3>
-                    <p className="text-gray-500">
-                      Cliente: {selectedEntrega.obra.cliente.nombre}
-                    </p>
-                  </div>
-                  <Truck className="h-12 w-12 text-gray-300" />
-                </div>
-                <div className="grid grid-cols-1 gap-4 border-t pt-6 text-sm md:grid-cols-2">
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-5 w-5 text-gray-400" />{' '}
-                    <span>{selectedEntrega.obra.cliente.telefono}</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Mail className="h-5 w-5 text-gray-400" />{' '}
-                    <span>{selectedEntrega.obra.cliente.email}</span>
-                  </div>
-                  <div className="col-span-2 flex items-center space-x-3">
-                    <MapPin className="h-5 w-5 text-gray-400" />{' '}
-                    <span>{selectedEntrega.direccionEntrega}</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="h-5 w-5 text-gray-400" />{' '}
-                    <span>
-                      {formatDate(selectedEntrega.fecha)} a las{' '}
-                      {selectedEntrega.hora}hs
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="mb-2 font-semibold text-gray-700">
-                    Productos
-                  </h4>
-                  <ul className="list-inside list-disc space-y-1 rounded-md border bg-gray-50 p-3 text-gray-600">
-                    {selectedEntrega.productos.map((producto, index) => (
-                      <li key={index}>{producto}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700">Observaciones</h4>
-                  <p className="mt-1 rounded-md border bg-gray-50 p-3 text-gray-600">
-                    {selectedEntrega.observaciones}
-                  </p>
-                </div>
-                <div className="flex space-x-4 border-t pt-6">
-                  <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
-                    <MapPin className="mr-2 h-4 w-4" /> Ruta de Entrega
-                  </Button>
-                  {(selectedEntrega.estado === 'PENDIENTE' ||
-                    selectedEntrega.estado === 'EN CURSO') && (
-                    <Button
-                      onClick={() => setShowConfirmModal(true)}
-                      className="flex-1 bg-green-600 text-white hover:bg-green-700"
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" /> Finalizar Entrega
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <EntregaDetails
+              entrega={selectedEntrega}
+              onFinalizarEntrega={() => setShowConfirmModal(true)}
+            />
           ) : (
-            <div className="flex h-full items-center justify-center text-center text-gray-500">
-              <div>
-                <Truck className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                <p className="text-lg">
-                  Selecciona una entrega para ver los detalles
-                </p>
-              </div>
-            </div>
+            <EmptyState
+              message="Selecciona una entrega del panel lateral para ver los detalles"
+              totalPendientes={entregasPendientes.length}
+              totalRealizadas={entregasRealizadas.length}
+            />
           )}
         </main>
       </div>
 
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/30 backdrop-blur">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-semibold text-gray-800">
-              Finalizar Entrega
-            </h3>
-            <div className="mb-4">
-              <Label htmlFor="observaciones-final">
-                Observaciones finales (opcional)
-              </Label>
-              <Textarea
-                id="observaciones-final"
-                placeholder="Añade cualquier observación relevante..."
-                value={observacionesFinal}
-                onChange={(e) => setObservacionesFinal(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div className="mt-6 flex space-x-4">
-              <Button
-                onClick={() => setShowConfirmModal(false)}
-                className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleFinalizarEntrega}
-                className="flex-1 bg-green-600 text-white hover:bg-green-700"
-              >
-                Confirmar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <FinalizarEntregaModal
+        isOpen={showConfirmModal}
+        observaciones={observacionesFinal}
+        onObservacionesChange={setObservacionesFinal}
+        onConfirm={handleFinalizarEntrega}
+        onCancel={() => {
+          setShowConfirmModal(false)
+          setObservacionesFinal('')
+        }}
+        entregaSeleccionada={selectedEntrega}
+      />
     </div>
   )
 }
