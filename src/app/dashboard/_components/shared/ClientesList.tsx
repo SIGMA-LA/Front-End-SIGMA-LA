@@ -5,8 +5,6 @@ import type { Cliente } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
 import { useAuth } from '@/context/AuthContext'
 
-const { usuario } = useAuth()
-
 interface ClientesListProps {
   onCreateClick: () => void
 }
@@ -17,6 +15,8 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedClienteCuil, setSelectedClienteCuil] = useState<string | null>(null)
+
+  const { usuario } = useAuth()
 
   useEffect(() => {
     loadClientes()
@@ -201,6 +201,7 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
         <VerDetallesCliente
           cuil={selectedClienteCuil}
           onClose={() => setSelectedClienteCuil(null)}
+          onEdit={handleEditCliente}
           onDelete={handleDeleteCliente}
         />
       )}

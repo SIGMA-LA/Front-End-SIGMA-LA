@@ -81,11 +81,10 @@ export default function VentasDashboard() {
             onSubmit={async (obraData: ObraFormData) => {
               try {
                 await createObra(obraData)
-                alert('¡Obra creada con éxito!')
                 setCurrentSection('obras')
               } catch (error) {
                 console.error('Error al crear la obra:', error)
-                alert('Hubo un error al crear la obra. Por favor, inténtelo de nuevo.')
+                alert('Hubo un error al crear la obra.')
               }
             }}
           />
@@ -95,20 +94,16 @@ export default function VentasDashboard() {
         return (
           <CrearObra
             obraExistente={obraParaEditar}
-            onCancel={() => {
-              setCurrentSection('obras')
-              setObraParaEditar(null)
-            }}
+            onCancel={() => { setCurrentSection('obras'); setObraParaEditar(null) }}
             onSubmit={async (obraData: ObraFormData) => {
               if (!obraParaEditar) return
               try {
                 await updateObra(obraParaEditar.id, obraData)
-                alert('¡Obra actualizada con éxito!')
                 setCurrentSection('obras')
                 setObraParaEditar(null)
               } catch (error) {
                 console.error('Error al actualizar la obra:', error)
-                alert('Hubo un error al actualizar la obra. Por favor, inténtelo de nuevo.')
+                alert('Hubo un error al actualizar la obra.')
               }
             }}
           />
@@ -171,7 +166,6 @@ export default function VentasDashboard() {
           <CrearObra
             onCancel={() => setCurrentSection('obras')}
             onSubmit={(obraData) => {
-              // Aquí puedes agregar lógica para guardar la obra
               console.log('Obra creada:', obraData)
               setCurrentSection('obras')
             }}
@@ -183,7 +177,6 @@ export default function VentasDashboard() {
           <CrearCliente
             onCancel={() => setCurrentSection('clientes')}
             onSubmit={(clienteData) => {
-              // Aquí puedes agregar lógica para guardar el cliente
               console.log('Cliente creado:', clienteData)
               setCurrentSection('clientes')
             }}

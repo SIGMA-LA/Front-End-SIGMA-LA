@@ -6,8 +6,6 @@ import type { ObrasListProps } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 
-const { usuario } = useAuth()
-
 export default function ObrasList({
   onCreateClick,
   onScheduleVisit,
@@ -17,6 +15,8 @@ export default function ObrasList({
   const { obras, fetchObras, deleteObra } = useGlobalContext()
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const { usuario } = useAuth()
 
   useEffect(() => {
     const cargarObras = async () => {

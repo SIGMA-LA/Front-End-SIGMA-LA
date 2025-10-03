@@ -8,6 +8,51 @@ import type {
   Maquinaria
 } from '@/types'
 
+export const mockObras: Obra[] = [
+  {
+    id: 1,
+    direccion: 'Calle 1 345, G. Baigorria',
+    cliente: {
+      cuil: '3',
+      razon_social: 'Test',
+      telefono: '221-555-9876',
+      mail: 'test@test.com',
+    },
+    estado: 'finalizada',
+    fechaInicio: '2024-01-01',
+    fechaFin: '2024-12-31',
+    nota_fabrica: 'asd',
+  },
+  {
+    id: 2,
+    direccion: 'Calle 2 345, G. Baigorria',
+    cliente: {
+      cuil: '3',
+      razon_social: 'Test',
+      telefono: '221-555-9876',
+      mail: 'test@test.com',
+    },
+    estado: 'finalizada',
+    fechaInicio: '2024-01-01',
+    fechaFin: '2024-12-31',
+    nota_fabrica: 'asd',
+  },
+  {
+    id: 3,
+    direccion: 'Calle 3 345, G. Baigorria',
+    cliente: {
+      cuil: '3',
+      razon_social: 'Test',
+      telefono: '221-555-9876',
+      mail: 'test@test.com',
+    },
+    estado: 'finalizada',
+    fechaInicio: '2024-01-01',
+    fechaFin: '2024-12-31',
+    nota_fabrica: 'asd',
+  },
+]
+
 export const mockClientes: Cliente[] = [
   {
     cuil: '1',

@@ -26,13 +26,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const verificarSesion = async () => {
       const token = localStorage.getItem('token_sigma')
-      if (token) {
+      const usuarioGuardado = localStorage.getItem('usuario_sigma')
+
+      if (token && usuarioGuardado) {
         try {
-          const { data } = await api.get('/auth/profile')
-          setUsuario(data)
+          const usuarioParsed = JSON.parse(usuarioGuardado)
+          setUsuario(usuarioParsed)
+          try {
+            await api.get('/auth/profile')
+          } catch (error) {
+            console.warn(
+              'Token podría estar expirado, manteniendo sesión local'
+            )
+          }
         } catch (error) {
-          console.error('La sesión ha expirado o el token no es válido', error)
+          console.error('Error al parsear usuario guardado:', error)
           localStorage.removeItem('token_sigma')
+          localStorage.removeItem('usuario_sigma')
           setUsuario(null)
         }
       }
@@ -54,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token && empleado) {
         setUsuario(empleado)
         localStorage.setItem('token_sigma', token)
+        localStorage.setItem('usuario_sigma', JSON.stringify(empleado))
         return true
       }
       return false
@@ -66,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUsuario(null)
     localStorage.removeItem('token_sigma')
+    localStorage.removeItem('usuario_sigma')
   }
 
   return (

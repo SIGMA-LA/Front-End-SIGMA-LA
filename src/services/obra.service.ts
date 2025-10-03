@@ -34,10 +34,10 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
   id: obra.cod_obra,
   direccion: obra.direccion,
   cliente: {
-    cuil: obra.cliente.cuil,
-    razon_social: obra.cliente.razon_social,
-    telefono: obra.cliente.telefono,
-    mail: obra.cliente.mail,
+    cuil: obra.cliente?.cuil ?? '',
+    razon_social: obra.cliente?.razon_social ?? 'No disponible',
+    telefono: obra.cliente?.telefono ?? '',
+    mail: obra.cliente?.mail ?? '',
   },
   nota_fabrica: obra.nota_fabrica,
   fechaInicio: obra.fecha_ini,
@@ -46,15 +46,25 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
   localidad: obra.localidad,
 });
 
-const mapToBackend = (obraData: ObraFormData): any => ({
-  direccion: obraData.direccion,
-  fecha_ini: obraData.fechaInicio,
-  fecha_cancelacion: obraData.fechaFin || null,
-  estado: obraData.estado,
-  cod_postal: obraData.cod_postal,
-  cuil: obraData.cuil_cliente,
-  nota_fabrica: obraData.nota_fabrica,
-});
+const mapToBackend = (obraData: ObraFormData): any => {
+  const payload: any = {
+    direccion: obraData.direccion,
+    estado: obraData.estado,
+    cod_postal: obraData.cod_postal,
+    cuil: obraData.cuil_cliente,
+    fecha_ini: obraData.fechaInicio,
+  };
+
+  if (obraData.nota_fabrica && obraData.nota_fabrica.trim() !== '') {
+    payload.nota_fabrica = obraData.nota_fabrica;
+  }
+
+  if (obraData.fechaFin) {
+    payload.fecha_cancelacion = obraData.fechaFin;
+  }
+
+  return payload;
+};
 
 /**
  * Obtiene todas las obras del backend y las formatea para el frontend.
@@ -70,10 +80,10 @@ export const getObras = async (): Promise<Obra[]> => {
  * @returns La nueva obra creada, formateada para el frontend.
  */
 export const createObra = async (obraData: ObraFormData): Promise<Obra> => {
-  const payload = mapToBackend(obraData)
-  const { data: nuevaObraBackend } = await api.post<BackendObra>('/obras', payload)
-  return mapToFrontend(nuevaObraBackend)
-}
+  const payload = mapToBackend(obraData);
+  const { data: nuevaObraBackend } = await api.post<BackendObra>('/obras', payload);
+  return mapToFrontend(nuevaObraBackend);
+};
 
 /**
  * Actualiza una obra existente.
@@ -82,10 +92,10 @@ export const createObra = async (obraData: ObraFormData): Promise<Obra> => {
  * @returns La obra actualizada, formateada para el frontend.
  */
 export const updateObra = async (id: number, obraData: ObraFormData): Promise<Obra> => {
-  const payload = mapToBackend(obraData)
-  const { data: obraActualizadaBackend } = await api.put<BackendObra>(`/obras/${id}`, payload)
-  return mapToFrontend(obraActualizadaBackend)
-}
+  const payload = mapToBackend(obraData);
+  const { data: obraActualizadaBackend } = await api.put<BackendObra>(`/obras/${id}`, payload);
+  return mapToFrontend(obraActualizadaBackend);
+};
 
 /**
  * Elimina una obra por su ID.

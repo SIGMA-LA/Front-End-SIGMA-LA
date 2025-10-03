@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, User, Upload } from 'lucide-react'
+import { Search, User } from 'lucide-react'
 import { mockArquitectos } from '@/data/mockData'
 import { useGlobalContext } from '@/context/GlobalContext'
 import type { Obra } from '@/types'
@@ -261,14 +261,17 @@ export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearOb
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Adjuntar Nota de Fábrica
+                    URL de Nota de Fábrica *
                   </label>
-                  <div className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400">
-                    <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-                    <p className="text-sm text-gray-500">
-                      Haga clic para subir archivos o arrástrelos aquí
-                    </p>
-                  </div>
+                  <input
+                    name="nota_fabrica"
+                    type="text"
+                    placeholder="https://ejemplo.com/nota.pdf"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={formData.nota_fabrica}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
             </div>

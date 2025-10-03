@@ -29,6 +29,9 @@ importers:
       react-toastify:
         specifier: ^11.0.5
         version: 11.0.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      sigma-la-schemas:
+        specifier: git+https://github.com/SIGMA-LA/sigma-la-schemas.git
+        version: git+https://github.com/SIGMA-LA/sigma-la-schemas.git#c7c42eecbbfac87734b33c9a7ced644b6558e199(typescript@5.9.2)
       valibot:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.2)
@@ -2779,6 +2782,10 @@ packages:
   side-channel@1.1.0:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
+
+  sigma-la-schemas@git+https://github.com/SIGMA-LA/sigma-la-schemas.git#c7c42eecbbfac87734b33c9a7ced644b6558e199:
+    resolution: {commit: c7c42eecbbfac87734b33c9a7ced644b6558e199, repo: https://github.com/SIGMA-LA/sigma-la-schemas.git, type: git}
+    version: 1.0.10
 
   signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
@@ -6285,6 +6292,12 @@ snapshots:
       side-channel-list: 1.0.0
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
+
+  sigma-la-schemas@git+https://github.com/SIGMA-LA/sigma-la-schemas.git#c7c42eecbbfac87734b33c9a7ced644b6558e199(typescript@5.9.2):
+    dependencies:
+      valibot: 1.1.0(typescript@5.9.2)
+    transitivePeerDependencies:
+      - typescript
 
   signal-exit@3.0.7: {}
 

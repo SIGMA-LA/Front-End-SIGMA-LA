@@ -3,6 +3,7 @@ import { X, User, Mail, Phone, Building2, Loader2, AlertCircle, Edit2, Trash2, A
 import clienteService from '@/services/cliente.service'
 import type { Cliente } from '@/types'
 import EditarCliente from '../ventas/EditarCliente'
+import { useAuth } from '@/context/AuthContext'
 
 interface VerDetallesClienteProps {
   cuil: string
@@ -18,6 +19,9 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const { usuario } = useAuth()
+  const canEdit = usuario?.rol_actual === 'VENTAS' && onEdit
+  const canDelete = usuario?.rol_actual === 'VENTAS' && onDelete
 
   useEffect(() => {
     loadCliente()
@@ -136,7 +140,8 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-2">
-            {onEdit && (
+            
+            {canEdit && (
               <button
                 onClick={handleEditClick}
                 className="flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 font-medium text-blue-600 hover:bg-blue-50"
@@ -145,7 +150,7 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
                 Editar
               </button>
             )}
-            {onDelete && (
+            {canDelete && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="flex items-center gap-2 rounded-lg border border-red-600 px-4 py-2 font-medium text-red-600 hover:bg-red-50"
