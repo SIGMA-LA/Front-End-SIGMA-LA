@@ -27,7 +27,7 @@ export default function VisitadorDashboard() {
   const [showVisitaModal, setShowVisitaModal] = useState(false)
   const [observacionesVisita, setObservacionesVisita] = useState('')
 
-  // Estados para Entregas (solo lectura)
+  // Estados para Entregas
   const [selectedEntrega, setSelectedEntrega] = useState<EntregaEmpleado | null>(null)
   const [entregasPendientes, setEntregasPendientes] = useState<EntregaEmpleado[]>([])
   const [entregasRealizadas, setEntregasRealizadas] = useState<EntregaEmpleado[]>([])
@@ -204,19 +204,6 @@ export default function VisitadorDashboard() {
             )
           ) : selectedEntrega ? (
             <div className="space-y-4">
-              {/* Banner informativo para entregas */}
-              <div className="rounded-lg bg-blue-50 p-4">
-                <div className="flex items-start gap-3">
-                  <Package className="mt-0.5 h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium text-blue-900">Solo lectura</p>
-                    <p className="text-sm text-blue-700">
-                      Como visitador, puedes ver las entregas pero no finalizarlas.
-                      Las entregas solo pueden ser finalizadas por el personal de planta.
-                    </p>
-                  </div>
-                </div>
-              </div>
               
               {/* Usar EntregaDetails existente pero sin el onFinalizarEntrega */}
               <EntregaDetails
