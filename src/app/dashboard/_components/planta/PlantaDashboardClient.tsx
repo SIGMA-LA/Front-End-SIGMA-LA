@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { EntregaEmpleado } from '@/types'
-import { entregasService } from '@/services/entregas.service'
+import entregasService from '@/services/entregas.service'
 import { useAuth } from '@/context/AuthContext'
 import EntregasSidebar from './EntregasSidebar'
 import EntregaDetails from './EntregaDetails'
@@ -34,8 +34,8 @@ export default function PlantaDashboardClient() {
         setError(null)
 
         const [pendientes, entregadas] = await Promise.all([
-          entregasService.getEntregasPendientes(usuario.cuil),
-          entregasService.getEntregasEntregadas(usuario.cuil),
+          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE'),
+          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'ENTREGADO'),
         ])
 
         setEntregasPendientes(pendientes)
