@@ -9,6 +9,7 @@ import {
 } from 'react'
 import api from '@/services/api/api'
 import { Empleado } from '@/types'
+import { set } from 'valibot'
 
 interface AuthContextType {
   usuario: Empleado | null
@@ -26,29 +27,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const verificarSesion = async () => {
       const token = localStorage.getItem('token_sigma')
-      const usuarioGuardado = localStorage.getItem('usuario_sigma')
 
-      if (token && usuarioGuardado) {
+      if (token) {
         try {
-          const usuarioParsed = JSON.parse(usuarioGuardado)
-          setUsuario(usuarioParsed)
-          try {
-            await api.get('/auth/profile')
-          } catch (error) {
-            console.warn(
-              'Token podría estar expirado, manteniendo sesión local'
-            )
-          }
+          const { data } = await api.get('/auth/profile')
+          setUsuario(data)
         } catch (error) {
-          console.error('Error al parsear usuario guardado:', error)
+          console.error('Error al verificar el perfil:', error)
           localStorage.removeItem('token_sigma')
-          localStorage.removeItem('usuario_sigma')
           setUsuario(null)
         }
       }
       setCargando(false)
     }
-
     verificarSesion()
   }, [])
 
@@ -64,7 +55,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token && empleado) {
         setUsuario(empleado)
         localStorage.setItem('token_sigma', token)
-        localStorage.setItem('usuario_sigma', JSON.stringify(empleado))
         return true
       }
       return false
@@ -77,7 +67,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUsuario(null)
     localStorage.removeItem('token_sigma')
-    localStorage.removeItem('usuario_sigma')
   }
 
   return (
