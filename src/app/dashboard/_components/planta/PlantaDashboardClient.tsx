@@ -34,8 +34,14 @@ export default function PlantaDashboardClient() {
         setError(null)
 
         const [pendientes, entregadas] = await Promise.all([
-          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE'),
-          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'ENTREGADO'),
+          entregasService.getEntregasByEmpleadoAndEstado(
+            usuario.cuil,
+            'PENDIENTE'
+          ),
+          entregasService.getEntregasByEmpleadoAndEstado(
+            usuario.cuil,
+            'ENTREGADO'
+          ),
         ])
 
         setEntregasPendientes(pendientes)
@@ -86,26 +92,38 @@ export default function PlantaDashboardClient() {
     setSelectedEntrega(entrega)
   }
 
+  const handleRetry = async () => {
+    if (!usuario?.cuil) return
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const [pendientes, entregadas] = await Promise.all([
+        entregasService.getEntregasByEmpleadoAndEstado(
+          usuario.cuil,
+          'PENDIENTE'
+        ),
+        entregasService.getEntregasByEmpleadoAndEstado(
+          usuario.cuil,
+          'ENTREGADO'
+        ),
+      ])
+
+      setEntregasPendientes(pendientes)
+      setEntregasRealizadas(entregadas)
+    } catch (err) {
+      console.error('Error al cargar entregas:', err)
+      setError('Error al cargar las entregas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!usuario) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-lg">Cargando datos del usuario...</div>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Cargando entregas...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-lg text-red-600">Error: {error}</div>
       </div>
     )
   }
@@ -145,6 +163,9 @@ export default function PlantaDashboardClient() {
           entregasRealizadas={entregasRealizadas}
           selectedEntrega={selectedEntrega}
           onSelectEntrega={handleSelectEntrega}
+          loadingEntregas={loading}
+          errorEntregas={error}
+          onRetry={handleRetry}
         />
 
         <main className="flex-1 overflow-y-auto bg-gray-100 p-6">

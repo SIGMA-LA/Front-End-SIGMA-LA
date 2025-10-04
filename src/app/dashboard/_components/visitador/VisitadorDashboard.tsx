@@ -10,10 +10,10 @@ import { User as UserIcon, Package } from 'lucide-react'
 // Componentes existentes
 import TabNavigation from './TabNavigation'
 import SidebarVisitas from './SidebarVisitas'
-import SidebarEntregas from './SidebarEntregas'
 import VisitaDetails from './VisitaDetails'
-import EntregaDetails from './EntregaDetails'
+import EntregaDetails from '../planta/EntregaDetails'
 import ConfirmModal from './ConfirmModal'
+import EntregasSidebar from '../planta/EntregasSidebar'
 
 export default function VisitadorDashboard() {
   const { usuario } = useAuth()
@@ -28,9 +28,14 @@ export default function VisitadorDashboard() {
   const [observacionesVisita, setObservacionesVisita] = useState('')
 
   // Estados para Entregas
-  const [selectedEntrega, setSelectedEntrega] = useState<EntregaEmpleado | null>(null)
-  const [entregasPendientes, setEntregasPendientes] = useState<EntregaEmpleado[]>([])
-  const [entregasRealizadas, setEntregasRealizadas] = useState<EntregaEmpleado[]>([])
+  const [selectedEntrega, setSelectedEntrega] =
+    useState<EntregaEmpleado | null>(null)
+  const [entregasPendientes, setEntregasPendientes] = useState<
+    EntregaEmpleado[]
+  >([])
+  const [entregasRealizadas, setEntregasRealizadas] = useState<
+    EntregaEmpleado[]
+  >([])
   const [loadingEntregas, setLoadingEntregas] = useState(true)
   const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
 
@@ -45,8 +50,14 @@ export default function VisitadorDashboard() {
         setErrorEntregas(null)
 
         const [pendientes, entregadas] = await Promise.all([
-          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE'),
-          entregasService.getEntregasByEmpleadoAndEstado(usuario.cuil, 'ENTREGADO'),
+          entregasService.getEntregasByEmpleadoAndEstado(
+            usuario.cuil,
+            'PENDIENTE'
+          ),
+          entregasService.getEntregasByEmpleadoAndEstado(
+            usuario.cuil,
+            'ENTREGADO'
+          ),
         ])
 
         setEntregasPendientes(pendientes)
@@ -157,7 +168,7 @@ export default function VisitadorDashboard() {
                 onSelectVisita={handleSelectVisita}
               />
             ) : (
-              <SidebarEntregas
+              <EntregasSidebar
                 entregasPendientes={entregasPendientes}
                 entregasRealizadas={entregasRealizadas}
                 selectedEntrega={selectedEntrega}
@@ -204,7 +215,6 @@ export default function VisitadorDashboard() {
             )
           ) : selectedEntrega ? (
             <div className="space-y-4">
-              
               {/* Usar EntregaDetails existente pero sin el onFinalizarEntrega */}
               <EntregaDetails
                 entrega={selectedEntrega}
