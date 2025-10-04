@@ -67,6 +67,10 @@ export default function CoordDashboard() {
       case 'obras':
         return (
           <ObrasList
+            onEditClick={(obra) => {
+              setSelectedObra(obra)
+              setCurrentSection('editar-obra')
+            }}
             onCreateClick={() => setCurrentSection('obras')}
             onScheduleVisit={(obra) => {
               setSelectedObra(obra)
