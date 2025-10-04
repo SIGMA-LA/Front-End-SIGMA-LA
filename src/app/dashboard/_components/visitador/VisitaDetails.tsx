@@ -97,7 +97,7 @@ export default function VisitaDetails({
               Detalles de la Visita
             </h2>
             <p className="mb-3 text-lg text-gray-600 lg:text-xl">
-              {visita.obra?.cuil_cliente || 'Visita sin obra asignada'}
+              {visita.obra?.cliente.razon_social || 'Visita sin obra asignada'}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span

@@ -64,14 +64,14 @@ const mapToFrontend = (backendVisita: BackendVisita): Visita => {
       ? {
           cod_obra: backendVisita.obra.cod_obra,
           cod_postal: backendVisita.cod_postal || 0,
-          cuil_cliente: '', // No viene del backend limitado
+          cuil_cliente: '',
           fecha_ini: '', // No viene del backend limitado
           estado: 'ACTIVA' as const, // No viene del backend limitado
           fecha_cancelacion: undefined,
           direccion: backendVisita.obra.direccion,
           nota_fabrica: '', // No viene del backend limitado
           cliente: {
-            cuil: '', // No viene del backend limitado
+            cuil: '',
             razon_social: backendVisita.obra.cliente.razon_social,
             telefono: backendVisita.obra.cliente.telefono,
             mail: backendVisita.obra.cliente.mail,
