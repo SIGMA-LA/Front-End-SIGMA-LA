@@ -306,33 +306,35 @@ class EntregasService {
       throw error
     }
   }
+  
   async finalizarEntrega(
-    cod_entrega: number,
-    observaciones?: string
-  ): Promise<any> {
-    try {
-      const updateData: {
-        estado: 'ENTREGADO'
-        observaciones?: string
-      } = {
-        estado: 'ENTREGADO',
-      }
-
-      if (observaciones) {
-        updateData.observaciones = observaciones
-      }
-
-      const response = await api.put(
-        `${this.baseURL}/${cod_entrega}`,
-        updateData
-      )
-      return response.data
-    } catch (error) {
-      console.error(`Error al finalizar entrega ${cod_entrega}: ${error}`)
-      throw new Error('No se pudo finalizar la entrega')
+  cod_entrega: number,
+  observaciones?: string
+): Promise<any> {
+  try {
+    const updateData: {
+      estado: 'ENTREGADO'
+      observaciones?: string
+    } = {
+      estado: 'ENTREGADO',
     }
+
+    if (observaciones) {
+      updateData.observaciones = observaciones
+    }
+
+    const response = await api.put(`
+      ${this.baseURL}/${cod_entrega},
+      updateData`
+    )
+    return response.data
+  } catch (error) {
+    console.error(`Error al finalizar entrega ${cod_entrega}:`, error)
+    throw new Error('No se pudo finalizar la entrega')
   }
+
+}
 }
 
 const entregasService = new EntregasService()
-export default entregasService
+export default entregasService;
