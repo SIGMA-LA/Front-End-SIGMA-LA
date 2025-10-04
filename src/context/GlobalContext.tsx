@@ -8,12 +8,11 @@ import React, {
   useEffect,
 } from 'react'
 import api from '@/services/api/api'
-import { finalizarEntrega } from '@/services/entregas.service'
+import entregasService from '@/services/entregas.service'
+import visitasService from '@/services/visitas.service'
 import {
   mockObras,
   mockClientes,
-  mockEntregas,
-  mockVisitas,
 } from '@/data/mockData'
 import type { Empleado, Obra, Cliente, Entrega, Visita } from '@/types'
 
@@ -23,6 +22,8 @@ interface GlobalContextType {
   clientes: Cliente[]
   entregas: Entrega[]
   visitas: Visita[]
+  loadingVisitas: boolean
+  errorVisitas: string | null
   addEmpleado: (empleado: Omit<Empleado, 'cuil'>) => Promise<void>
   updateEmpleado: (
     cuil: string,
@@ -31,8 +32,9 @@ interface GlobalContextType {
   deleteEmpleado: (cuil: string) => Promise<void>
   currentSection: string
   setCurrentSection: (section: string) => void
-  finalizarEntrega: (id: number, observaciones: string) => void
-  finalizarVisita: (id: number, observaciones: string) => void
+  finalizarEntrega: (id: number, observaciones: string) => Promise<void>
+  finalizarVisita: (id: number, observaciones: string) => Promise<void>
+  reloadVisitas: () => Promise<void>
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
@@ -42,10 +44,12 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [obras] = useState<Obra[]>(mockObras)
   const [clientes] = useState<Cliente[]>(mockClientes)
   const [currentSection, setCurrentSection] = useState('dashboard')
-  const [entregas] = useState<Entrega[]>(mockEntregas)
-  const [visitas] = useState<Visita[]>(mockVisitas)
+  const [entregas, setEntregas] = useState<Entrega[]>([])
+  const [visitas, setVisitas] = useState<Visita[]>([])
+  const [loadingVisitas, setLoadingVisitas] = useState(true)
+  const [errorVisitas, setErrorVisitas] = useState<string | null>(null)
 
-  // Cargar empleados desde la API al iniciar el contexto
+  // Cargar empleados desde la API
   useEffect(() => {
     const fetchEmpleados = async () => {
       try {
@@ -58,6 +62,29 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     fetchEmpleados()
   }, [])
 
+  // Cargar visitas desde la API
+  useEffect(() => {
+    loadVisitasData()
+  }, [])
+
+  const loadVisitasData = async () => {
+    try {
+      setLoadingVisitas(true)
+      setErrorVisitas(null)
+      const data = await visitasService.getAllVisitas()
+      setVisitas(data)
+    } catch (error) {
+      console.error('Error al cargar visitas:', error)
+      setErrorVisitas('Error al cargar las visitas')
+    } finally {
+      setLoadingVisitas(false)
+    }
+  }
+
+  const reloadVisitas = async () => {
+    await loadVisitasData()
+  }
+
   const addEmpleado = async (empleadoData: Omit<Empleado, 'cuil'>) => {
     try {
       const { data: nuevoEmpleado } = await api.post<Empleado>(
@@ -67,7 +94,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
       setEmpleados((prev) => [...prev, nuevoEmpleado])
     } catch (error) {
       console.error('Error al crear empleado:', error)
-      throw error // Re-lanzamos el error para que el componente lo maneje
+      throw error
     }
   }
 
@@ -99,8 +126,39 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const finalizarVisita = (id: number, observaciones: string) => {
-    // Lógica para finalizar visita (posiblemente una llamada a la API en el futuro)
+  const finalizarEntrega = async (id: number, observaciones: string) => {
+    try {
+      // Llamar al servicio de entregas
+      const entregaActualizada = await entregasService.finalizarEntrega(
+        id,
+        observaciones
+      )
+      
+      // Actualizar el estado local si lo estás usando
+      setEntregas((prev) =>
+        prev.map((e) => (e.cod_entrega === id ? entregaActualizada : e))
+      )
+    } catch (error) {
+      console.error('Error al finalizar entrega:', error)
+      throw error
+    }
+  }
+
+  const finalizarVisita = async (id: number, observaciones: string) => {
+    try {
+      const visitaFinalizada = await visitasService.finalizarVisita(
+        id,
+        observaciones
+      )
+      
+      // Actualizar el estado local
+      setVisitas((prev) =>
+        prev.map((v) => (v.cod_visita === id ? visitaFinalizada : v))
+      )
+    } catch (error) {
+      console.error('Error al finalizar visita:', error)
+      throw error
+    }
   }
 
   return (
@@ -111,6 +169,8 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         clientes,
         entregas,
         visitas,
+        loadingVisitas,
+        errorVisitas,
         addEmpleado,
         updateEmpleado,
         deleteEmpleado,
@@ -118,6 +178,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         setCurrentSection,
         finalizarEntrega,
         finalizarVisita,
+        reloadVisitas,
       }}
     >
       {children}
