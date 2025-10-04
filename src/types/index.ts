@@ -1,3 +1,5 @@
+import { number } from "valibot"
+
 export interface Cliente {
   cuil: string
   razon_social: string
@@ -70,18 +72,19 @@ export interface Obra {
   cod_obra: number
   cod_postal: number
   cuil_cliente: string
-  fecha_ini: string
   estado:
     | 'ACTIVA'
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
+    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
-  fecha_cancelacion?: string
   direccion: string
-  nota_fabrica: string
   cliente: Cliente
-  localidad: Localidad
+  nota_fabrica: string
+  fecha_ini: string
+  fecha_cancelacion: string | null
+  localidad?: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
   presupuestos?: Presupuesto[]
@@ -193,6 +196,7 @@ export interface ObrasListProps {
   onCreateClick: () => void
   onScheduleVisit?: (obra: Obra) => void
   onScheduleEntrega?: (obra: Obra) => void
+  onEditClick: (obra: Obra) => void
 }
 
 export interface PedidosListProps {
@@ -250,4 +254,9 @@ export interface MaquinariaListProps {
 
 export interface VehiculosListProps {
   onCreateClick: () => void
+}
+
+export interface Localidad {
+  cod_postal: number
+  nombre_localidad: string
 }

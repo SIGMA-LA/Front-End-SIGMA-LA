@@ -1,34 +1,96 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, User, Upload } from 'lucide-react'
-import { mockArquitectos, mockClientes } from '@/data/mockData'
+import { useState, useEffect } from 'react'
+import { Search, User } from 'lucide-react'
+import { mockArquitectos } from '@/data/mockData'
+import { useGlobalContext } from '@/context/GlobalContext'
+import type { Obra } from '@/types'
+import type { ObraFormData } from '@/services/obra.service'
 
 interface CrearObraProps {
   onCancel: () => void
-  onSubmit?: (obraData: any) => void
+  onSubmit: (obraData: ObraFormData) => void
+  obraExistente?: Obra | null
 }
 
-export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
-  const [arquitectoEnabled, setArquitectoEnabled] = useState(true)
+const initialState: ObraFormData = {
+  direccion: '',
+  cuil_cliente: '',
+  cod_postal: 0,
+  fecha_ini: '',
+  estado: 'ACTIVA',
+  nota_fabrica: '',
+  fecha_cancelacion: null,
+}
+
+export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearObraProps) {
+  const { clientes, localidades, fetchLocalidades } = useGlobalContext()
+  const [formData, setFormData] = useState<ObraFormData>(initialState)
+  const [arquitectoEnabled, setArquitectoEnabled] = useState(false)
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
+  const esModoEdicion = !!obraExistente
+
+  useEffect(() => {
+    fetchLocalidades()
+  }, [fetchLocalidades])
+
+  useEffect(() => {
+    if (esModoEdicion && obraExistente) {
+      const fecha_ini = obraExistente.fecha_ini 
+        ? new Date(obraExistente.fecha_ini).toISOString().split('T')[0] 
+        : ''
+      const fecha_cancelacion = obraExistente.fecha_cancelacion 
+        ? new Date(obraExistente.fecha_cancelacion).toISOString().split('T')[0] 
+        : null
+
+      setFormData({
+        direccion: obraExistente.direccion || '',
+        cuil_cliente: obraExistente.cliente?.cuil || '',
+        cod_postal: obraExistente.localidad?.cod_postal || 0,
+        fecha_ini,
+        nota_fabrica: obraExistente.nota_fabrica || '',
+        fecha_cancelacion,
+        estado: obraExistente.estado || 'ACTIVA',
+      })
+      setClienteSeleccionado(obraExistente.cliente?.cuil || '')
+    } else {
+      setFormData(initialState)
+      setClienteSeleccionado('')
+    }
+  }, [obraExistente, esModoEdicion])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: name === 'cod_postal' ? Number(value) : value 
+    }))
+  }
+
+  const handleClienteSelect = (cuil: string) => {
+    setClienteSeleccionado(cuil)
+    setFormData(prev => ({ ...prev, cuil_cliente: cuil }))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Aquí puedes agregar la lógica para procesar el formulario
-    if (onSubmit) {
-      onSubmit({})
+    if (!formData.cuil_cliente || !formData.cod_postal) {
+      alert('Por favor, seleccione un cliente y una localidad.')
+      return
     }
+    onSubmit(formData)
   }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-6xl">
         <div className="rounded-xl bg-white p-6 shadow-lg sm:p-8">
-          <h1 className="mb-8 text-2xl font-bold text-gray-900">Crear obra</h1>
-
+          <h1 className="mb-8 text-2xl font-bold text-gray-900">
+            {esModoEdicion ? 'Editar Obra' : 'Crear Nueva Obra'}
+          </h1>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              {/* Cliente */}
+              {/* Sección Cliente */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Cliente</h3>
                 <div className="relative">
@@ -36,80 +98,67 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                   <input
                     type="text"
                     placeholder="Buscar cliente..."
-                    className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 focus:border-blue-500"
                   />
                 </div>
-
                 <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200">
-                  {mockClientes.map((cliente) => (
-                    <div
-                      key={cliente.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-gray-50"
-                    >
-                      <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
-                        <User className="h-4 w-4 text-gray-600" />
+                  {clientes.length > 0 ? (
+                    clientes.map((cliente) => (
+                      <div
+                        key={cliente.cuil}
+                        className={`flex cursor-pointer items-center p-3 ${
+                          clienteSeleccionado === cliente.cuil 
+                            ? 'bg-blue-100' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleClienteSelect(cliente.cuil)}
+                      >
+                        <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                          <User className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <span className="text-gray-900">{cliente.razon_social}</span>
                       </div>
-                      <span className="text-gray-900">{cliente.nombre}</span>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      No hay clientes disponibles
                     </div>
-                  ))}
+                  )}
                 </div>
-
-                <button
-                  type="button"
-                  className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
-                >
+                <button type="button" className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700">
                   Nuevo Cliente
                 </button>
               </div>
 
-              {/* Arquitecto */}
+              {/* Sección Arquitecto */}
               <div className="space-y-4">
-                <div className="relative">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Arquitecto
-                    </h3>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        className="sr-only"
-                        checked={arquitectoEnabled}
-                        onChange={(e) => setArquitectoEnabled(e.target.checked)}
-                      />
-                      <div
-                        className={`relative h-6 w-11 cursor-pointer rounded-full transition-colors ${
-                          arquitectoEnabled ? 'bg-green-500' : 'bg-gray-300'
-                        }`}
-                        onClick={() => setArquitectoEnabled(!arquitectoEnabled)}
-                      >
-                        <div
-                          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-md transition-transform ${
-                            arquitectoEnabled ? 'right-1' : 'left-1'
-                          }`}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Arquitecto</h3>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={arquitectoEnabled}
+                      onChange={(e) => setArquitectoEnabled(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Habilitar</span>
+                  </label>
                 </div>
-
                 <div className="relative">
                   <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Buscar arquitecto..."
-                    className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 focus:border-blue-500"
                     disabled={!arquitectoEnabled}
                   />
                 </div>
-
                 <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200">
                   {mockArquitectos.map((arquitecto) => (
                     <div
-                      key={arquitecto.id}
+                      key={arquitecto.cuil}
                       className={`flex cursor-pointer items-center p-3 ${
-                        arquitectoEnabled
-                          ? 'hover:bg-gray-50'
-                          : 'cursor-not-allowed opacity-50'
+                        arquitectoEnabled ? 'hover:bg-gray-50' : 'cursor-not-allowed opacity-50'
                       }`}
                     >
                       <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
@@ -119,12 +168,7 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                     </div>
                   ))}
                 </div>
-
-                <button
-                  type="button"
-                  disabled={!arquitectoEnabled}
-                  className="w-full rounded-lg bg-gray-600 py-2.5 font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
+                <button type="button" disabled={!arquitectoEnabled} className="w-full rounded-lg bg-gray-600 py-2.5 font-medium text-white hover:bg-gray-700 disabled:opacity-50">
                   Nuevo Arquitecto
                 </button>
               </div>
@@ -132,92 +176,104 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
               {/* Datos obra */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Datos obra
+                  Datos de la Obra
                 </h3>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Ubicación de la obra
+                    Dirección de la obra *
                   </label>
                   <input
+                    name="direccion"
                     type="text"
-                    placeholder="Ingrese el nombre de la obra"
+                    placeholder="Ingrese la dirección"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={formData.direccion}
+                    onChange={handleChange}
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Localidad
-                    </label>
-                    <select className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                      <option>San Lorenzo</option>
-                      <option>Rosario</option>
-                      <option>Santa Fe</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Localidad *
+                  </label>
+                  <select
+                    name="cod_postal"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={formData.cod_postal || ''}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione una localidad...</option>
+                    {localidades.map((loc) => (
+                      <option key={loc.cod_postal} value={loc.cod_postal}>
+                        {loc.nombre_localidad}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Fecha Inicio
+                      Fecha Inicio *
                     </label>
                     <input
+                      name="fecha_ini"
                       type="date"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      value={formData.fecha_ini}
+                      onChange={handleChange}
+                      required
                     />
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Fecha fin estimativo
+                      Fecha Cancelación
                     </label>
                     <input
+                      name="fecha_cancelacion"
                       type="date"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      value={formData.fecha_cancelacion || ''}
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Descripción
+                    Estado
                   </label>
-                  <textarea
-                    rows={4}
-                    placeholder="Descripción de la obra..."
-                    className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  <select
+                    name="estado"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={formData.estado}
+                    onChange={handleChange}
+                  >
+                    <option value="ACTIVA">Activa</option>
+                    <option value="EN PRODUCCION">En producción</option>
+                    <option value="FINALIZADA">Finalizada</option>
+                    <option value="ENTREGADA">Entregada</option>
+                    <option value="CANCELADA">Cancelada</option>
+                    <option value="EN ESPERA DE STOCK">En espera de stock</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    URL de Nota de Fábrica *
+                  </label>
+                  <input
+                    name="nota_fabrica"
+                    type="text"
+                    placeholder="https://ejemplo.com/nota.pdf"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    value={formData.nota_fabrica}
+                    onChange={handleChange}
+                    required
                   />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Presupuesto
-                  </label>
-                  <div className="relative">
-                    <span className="absolute top-2.5 left-3 text-gray-500">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-8 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Adjuntar Presupuesto
-                  </label>
-                  <div className="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition-colors hover:border-gray-400">
-                    <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-                    <p className="text-sm text-gray-500">
-                      Haga clic para subir archivos o arrástrelos aquí
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -234,7 +290,7 @@ export default function CrearObra({ onCancel, onSubmit }: CrearObraProps) {
                 type="submit"
                 className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
               >
-                Crear Obra
+                {esModoEdicion ? 'Guardar Cambios' : 'Crear Obra'}
               </button>
             </div>
           </form>
