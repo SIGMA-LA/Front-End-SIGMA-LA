@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/Textarea'
-import { Label } from '@/components/ui/Label'
+'use client'
+
+import { X } from 'lucide-react'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -9,6 +9,7 @@ interface ConfirmModalProps {
   onObservacionesChange: (value: string) => void
   onConfirm: () => void
   onCancel: () => void
+  loading?: boolean
 }
 
 export default function ConfirmModal({
@@ -18,38 +19,78 @@ export default function ConfirmModal({
   onObservacionesChange,
   onConfirm,
   onCancel,
+  loading = false,
 }: ConfirmModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/30 backdrop-blur">
-      <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">{title}</h3>
-        <div className="mb-4">
-          <Label htmlFor="observaciones-final">
-            Observaciones finales (opcional)
-          </Label>
-          <Textarea
-            id="observaciones-final"
-            placeholder="Añade cualquier observación relevante..."
-            value={observaciones}
-            onChange={(e) => onObservacionesChange(e.target.value)}
-            className="mt-1"
-          />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div
+        className="bg-opacity-50 absolute inset-0 bg-black backdrop-blur-sm"
+        onClick={!loading ? onCancel : undefined}
+      />
+
+      {/* Modal responsivo */}
+      <div className="relative w-full max-w-md rounded-lg bg-white shadow-xl lg:max-w-lg">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b p-4 lg:p-6">
+          <h3 className="text-base font-semibold text-gray-800 lg:text-lg">
+            {title}
+          </h3>
+          <button
+            onClick={!loading ? onCancel : undefined}
+            disabled={loading}
+            className="text-gray-400 transition-colors hover:text-gray-600 disabled:cursor-not-allowed"
+          >
+            <X className="h-5 w-5 lg:h-6 lg:w-6" />
+          </button>
         </div>
-        <div className="mt-6 flex space-x-4">
-          <Button
+
+        {/* Content */}
+        <div className="space-y-4 p-4 lg:p-6">
+          <div className="space-y-2">
+            <label
+              htmlFor="observaciones"
+              className="block text-xs font-medium text-gray-700 lg:text-sm"
+            >
+              Observaciones finales (opcional)
+            </label>
+            <textarea
+              id="observaciones"
+              placeholder="Añade cualquier observación relevante..."
+              value={observaciones}
+              onChange={(e) => onObservacionesChange(e.target.value)}
+              rows={4}
+              disabled={loading}
+              className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-xs shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 lg:text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-col space-y-2 rounded-b-lg border-t bg-gray-50 p-4 sm:flex-row sm:space-y-0 sm:space-x-3 lg:p-6">
+          <button
             onClick={onCancel}
-            className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300"
+            disabled={loading}
+            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:text-sm"
           >
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={onConfirm}
-            className="flex-1 bg-green-600 text-white hover:bg-green-700"
+            disabled={loading}
+            className="flex-1 rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:text-sm"
           >
-            Confirmar
-          </Button>
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Finalizando...
+              </div>
+            ) : (
+              'Confirmar'
+            )}
+          </button>
         </div>
       </div>
     </div>

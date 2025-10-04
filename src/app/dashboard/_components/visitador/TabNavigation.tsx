@@ -12,28 +12,28 @@ export default function TabNavigation({
   onTabChange,
 }: TabNavigationProps) {
   return (
-    <div className="border-b border-gray-200 px-3 pt-4">
+    <div className="border-b border-gray-200 px-3 pt-3 lg:px-4 lg:pt-4">
       <div className="flex space-x-1">
         <button
           onClick={() => onTabChange('visitas')}
-          className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:text-sm ${
             activeTab === 'visitas'
               ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-500 hover:text-gray-700'
+              : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
           }`}
         >
-          <UserIcon className="h-4 w-4" />
+          <UserIcon className="h-3 w-3 lg:h-4 lg:w-4" />
           <span>Visitas</span>
         </button>
         <button
           onClick={() => onTabChange('entregas')}
-          className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center space-x-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:text-sm ${
             activeTab === 'entregas'
               ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-500 hover:text-gray-700'
+              : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
           }`}
         >
-          <Package className="h-4 w-4" />
+          <Package className="h-3 w-3 lg:h-4 lg:w-4" />
           <span>Entregas</span>
         </button>
       </div>

@@ -25,71 +25,15 @@ export default function PlantaDashboardClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [finalizandoEntrega, setFinalizandoEntrega] = useState(false)
 
   useEffect(() => {
-    const loadEntregas = async () => {
-      if (!usuario?.cuil) {
-        return
-      }
-      try {
-        setLoading(true)
-        setError(null)
-
-        const [pendientes, entregadas] = await Promise.all([
-          entregasService.getEntregasByEmpleadoAndEstado(
-            usuario.cuil,
-            'PENDIENTE'
-          ),
-          entregasService.getEntregasByEmpleadoAndEstado(
-            usuario.cuil,
-            'ENTREGADO'
-          ),
-        ])
-
-        setEntregasPendientes(pendientes)
-        setEntregasRealizadas(entregadas)
-      } catch (err) {
-        console.error('Error al cargar entregas:', err)
-        setError('Error al cargar las entregas')
-      } finally {
-        setLoading(false)
-      }
+    if (usuario?.cuil) {
+      loadEntregas()
     }
-
-    loadEntregas()
   }, [usuario?.cuil])
 
-  const handleFinalizarEntrega = async () => {
-    if (selectedEntrega && usuario?.cuil) {
-      try {
-        const entregaActualizada = {
-          ...selectedEntrega,
-          entrega: {
-            ...selectedEntrega.entrega,
-            estado: 'ENTREGADO' as const,
-            observaciones:
-              observacionesFinal || selectedEntrega.entrega.observaciones,
-          },
-        }
-
-        setSelectedEntrega(entregaActualizada)
-
-        setEntregasPendientes((prev) =>
-          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
-        )
-        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
-
-        setShowConfirmModal(false)
-        setObservacionesFinal('')
-
-        // TODO: Implementar llamada al backend para actualizar el estado
-      } catch (error) {
-        console.error('Error al finalizar entrega:', error)
-        alert('Error al finalizar la entrega')
-      }
-    }
-  }
-  const handleRetry = async () => {
+  const loadEntregas = async () => {
     if (!usuario?.cuil) return
 
     try {
@@ -117,9 +61,57 @@ export default function PlantaDashboardClient() {
     }
   }
 
+  const handleRetry = async () => {
+    await loadEntregas()
+  }
+
   const handleSelectEntrega = (entrega: EntregaEmpleado) => {
     setSelectedEntrega(entrega)
     setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
+  }
+
+  const handleFinalizarEntrega = async () => {
+    if (selectedEntrega && usuario?.cuil && !finalizandoEntrega) {
+      try {
+        setFinalizandoEntrega(true)
+
+        // Llamar al servicio para actualizar en la base de datos
+        await entregasService.finalizarEntrega(
+          selectedEntrega.cod_entrega,
+          observacionesFinal || undefined
+        )
+
+        // Actualizar el estado local después de la actualización exitosa
+        const entregaActualizada = {
+          ...selectedEntrega,
+          entrega: {
+            ...selectedEntrega.entrega,
+            estado: 'ENTREGADO' as const,
+            observaciones:
+              observacionesFinal || selectedEntrega.entrega.observaciones,
+          },
+        }
+
+        setSelectedEntrega(entregaActualizada)
+
+        // Mover de pendientes a realizadas
+        setEntregasPendientes((prev) =>
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+        )
+        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
+
+        // Cerrar modal
+        setShowConfirmModal(false)
+        setObservacionesFinal('')
+
+        console.log('Entrega finalizada exitosamente')
+      } catch (error) {
+        console.error('Error al finalizar entrega:', error)
+        alert('Error al finalizar la entrega. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoEntrega(false)
+      }
+    }
   }
 
   if (!usuario) {
@@ -192,7 +184,7 @@ export default function PlantaDashboardClient() {
         {/* Overlay para móvil */}
         {sidebarOpen && (
           <div
-            className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
+            className="bg-opacity-50 fixed inset-0 z-40 bg-black lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -220,10 +212,13 @@ export default function PlantaDashboardClient() {
         onObservacionesChange={setObservacionesFinal}
         onConfirm={handleFinalizarEntrega}
         onCancel={() => {
-          setShowConfirmModal(false)
-          setObservacionesFinal('')
+          if (!finalizandoEntrega) {
+            setShowConfirmModal(false)
+            setObservacionesFinal('')
+          }
         }}
         entregaSeleccionada={selectedEntrega}
+        loading={finalizandoEntrega}
       />
     </div>
   )

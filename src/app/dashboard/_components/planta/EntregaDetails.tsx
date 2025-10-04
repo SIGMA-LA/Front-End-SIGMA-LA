@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Truck, Phone, Mail, MapPin, Calendar } from 'lucide-react'
+import { Truck, Phone, Mail, MapPin, Calendar, CheckCircle } from 'lucide-react'
 import type { EntregaEmpleado } from '@/types'
 
 interface EntregaDetailsProps {
@@ -126,6 +126,7 @@ export default function EntregaDetails({
               onClick={onFinalizarEntrega}
               className="flex-1 bg-green-600 text-white hover:bg-green-700"
             >
+              <CheckCircle className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Finalizar Entrega</span>
               <span className="sm:hidden">Finalizar</span>
             </Button>

@@ -10,6 +10,7 @@ interface FinalizarEntregaModalProps {
   onConfirm: () => void
   onCancel: () => void
   entregaSeleccionada: EntregaEmpleado | null
+  loading?: boolean
 }
 
 export default function FinalizarEntregaModal({
@@ -19,6 +20,7 @@ export default function FinalizarEntregaModal({
   onConfirm,
   onCancel,
   entregaSeleccionada,
+  loading = false,
 }: FinalizarEntregaModalProps) {
   if (!isOpen || !entregaSeleccionada) return null
 
@@ -26,8 +28,8 @@ export default function FinalizarEntregaModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="bg-opacity-50 absolute inset-0 bg-transparent backdrop-blur-sm"
-        onClick={onCancel}
+        className="bg-opacity-50 absolute inset-0 bg-black backdrop-blur-sm"
+        onClick={!loading ? onCancel : undefined}
       />
 
       {/* Modal responsivo */}
@@ -38,8 +40,9 @@ export default function FinalizarEntregaModal({
             Finalizar Entrega
           </h2>
           <button
-            onClick={onCancel}
-            className="text-gray-400 transition-colors hover:text-gray-600"
+            onClick={!loading ? onCancel : undefined}
+            disabled={loading}
+            className="text-gray-400 transition-colors hover:text-gray-600 disabled:cursor-not-allowed"
           >
             <X className="h-5 w-5 lg:h-6 lg:w-6" />
           </button>
@@ -74,7 +77,8 @@ export default function FinalizarEntregaModal({
               value={observaciones}
               onChange={(e) => onObservacionesChange(e.target.value)}
               rows={4}
-              className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-xs shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none lg:text-sm"
+              disabled={loading}
+              className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-xs shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 lg:text-sm"
             />
           </div>
         </div>
@@ -83,15 +87,24 @@ export default function FinalizarEntregaModal({
         <div className="flex flex-col space-y-2 rounded-b-lg border-t bg-gray-50 p-4 sm:flex-row sm:space-y-0 sm:space-x-3 lg:p-6">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:outline-none lg:text-sm"
+            disabled={loading}
+            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:text-sm"
           >
             Cancelar
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none lg:text-sm"
+            disabled={loading}
+            className="flex-1 rounded-md border border-transparent bg-green-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:text-sm"
           >
-            Confirmar Entrega
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Finalizando...
+              </div>
+            ) : (
+              'Confirmar Entrega'
+            )}
           </button>
         </div>
       </div>
