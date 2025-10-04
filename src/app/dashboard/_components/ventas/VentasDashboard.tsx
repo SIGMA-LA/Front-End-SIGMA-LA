@@ -14,6 +14,9 @@ import {
   PackageOpen,
 } from 'lucide-react'
 
+import { useGlobalContext } from '@/context/GlobalContext'
+import type { Obra } from '@/types'
+
 // Importar componentes
 import CrearCliente from './CrearCliente' // Ventas
 import CrearObra from './CrearObra' // Coordinacion
@@ -22,11 +25,16 @@ import EntregasList from '../shared/EntregasList' // Shared
 import VisitasList from '../shared/VisitasList' // Shared
 import ObrasList from '../shared/ObrasList' // Shared
 import ClientesList from '../shared/ClientesList' // Shared
+import { ObraFormData } from '@/services/obra.service.js'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
+
+  const [obraParaEditar, setObraParaEditar] = useState<Obra | null>(null)
+
+  const { createObra, updateObra } = useGlobalContext()
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
@@ -47,31 +55,59 @@ export default function VentasDashboard() {
       case 'obras':
         return (
           <ObrasList
-            onCreateClick={() => setCurrentSection('crear-obra')}
+            onCreateClick={() => {
+              setObraParaEditar(null)
+              setCurrentSection('crear-obra')
+            }}
+            onEditClick={(obra) => {
+              setObraParaEditar(obra)
+              setCurrentSection('editar-obra')
+            }}
             onScheduleVisit={(obra) => {
               setSelectedObra(obra)
+              setCurrentSection('crear-visita')
             }}
             onScheduleEntrega={(obra) => {
               setSelectedObra(obra)
+              setCurrentSection('crear-entrega')
             }}
           />
         )
-
-      case 'clientes':
+      
+      case 'crear-obra':
         return (
-          <ClientesList
-            onCreateClick={() => setCurrentSection('crear-cliente')}
+          <CrearObra
+            onCancel={() => setCurrentSection('obras')}
+            onSubmit={async (obraData: ObraFormData) => {
+              try {
+                await createObra(obraData)
+                setCurrentSection('obras')
+              } catch (error) {
+                console.error('Error al crear la obra:', error)
+                alert('Hubo un error al crear la obra.')
+              }
+            }}
           />
         )
-
-      case 'visitas':
-        return <VisitasList onCreateClick={() => {}} />
-
-      case 'entregas':
-        return <EntregasList onCreateClick={() => {}} />
-
-      case 'configuraciones':
-        return <Configuraciones />
+      
+      case 'editar-obra':
+        return (
+          <CrearObra
+            obraExistente={obraParaEditar}
+            onCancel={() => { setCurrentSection('obras'); setObraParaEditar(null) }}
+            onSubmit={async (obraData: ObraFormData) => {
+              if (!obraParaEditar) return
+              try {
+                await updateObra(obraParaEditar.cod_obra, obraData)
+                setCurrentSection('obras')
+                setObraParaEditar(null)
+              } catch (error) {
+                console.error('Error al actualizar la obra:', error)
+                alert('Hubo un error al actualizar la obra.')
+              }
+            }}
+          />
+        )
 
       case 'clientes':
         return (
@@ -101,25 +137,12 @@ export default function VentasDashboard() {
       case 'configuraciones':
         return <Configuraciones />
 
-      case 'crear-obra':
-        return (
-          <CrearObra
-            onCancel={() => setCurrentSection('obras')}
-            onSubmit={(obraData) => {
-              // Aquí puedes agregar lógica para guardar la obra
-
-              setCurrentSection('obras')
-            }}
-          />
-        )
-
       case 'crear-cliente':
         return (
           <CrearCliente
             onCancel={() => setCurrentSection('clientes')}
             onSubmit={(clienteData) => {
-              // Aquí puedes agregar lógica para guardar el cliente
-
+              console.log('Cliente creado:', clienteData)
               setCurrentSection('clientes')
             }}
           />

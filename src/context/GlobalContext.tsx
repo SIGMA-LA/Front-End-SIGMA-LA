@@ -10,11 +10,10 @@ import React, {
 import api from '@/services/api/api'
 import entregasService from '@/services/entregas.service'
 import visitasService from '@/services/visitas.service'
-import {
-  mockObras,
-  mockClientes,
-} from '@/data/mockData'
-import type { Empleado, Obra, Cliente, Entrega, Visita } from '@/types'
+import * as obraService from '@/services/obra.service'
+import clienteService from '@/services/cliente.service'
+import { ObraFormData } from '@/services/obra.service'
+import type { Empleado, Obra, Cliente, Entrega, Visita, Localidad } from '@/types'
 
 interface GlobalContextType {
   empleados: Empleado[]
@@ -22,6 +21,7 @@ interface GlobalContextType {
   clientes: Cliente[]
   entregas: Entrega[]
   visitas: Visita[]
+  localidades: Localidad[]
   loadingVisitas: boolean
   errorVisitas: string | null
   addEmpleado: (empleado: Omit<Empleado, 'cuil'>) => Promise<void>
@@ -35,38 +35,43 @@ interface GlobalContextType {
   finalizarEntrega: (id: number, observaciones: string) => Promise<void>
   finalizarVisita: (id: number, observaciones: string) => Promise<void>
   reloadVisitas: () => Promise<void>
+  fetchClientes: () => Promise<void>
+  fetchLocalidades: () => Promise<void>
+  fetchObras: () => Promise<void>
+  createObra: (obraData: ObraFormData) => Promise<void>
+  updateObra: (id: number, obraData: ObraFormData) => Promise<void>
+  deleteObra: (id: number) => Promise<void>
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
 
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
+  const [obras, setObras] = useState<Obra[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  
   const [empleados, setEmpleados] = useState<Empleado[]>([])
-  const [obras] = useState<Obra[]>(mockObras)
-  const [clientes] = useState<Cliente[]>(mockClientes)
+  const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [entregas, setEntregas] = useState<Entrega[]>([])
   const [visitas, setVisitas] = useState<Visita[]>([])
   const [loadingVisitas, setLoadingVisitas] = useState(true)
   const [errorVisitas, setErrorVisitas] = useState<string | null>(null)
 
-  // Cargar empleados desde la API
   useEffect(() => {
-    const fetchEmpleados = async () => {
-      try {
-        const { data } = await api.get('/empleados')
-        setEmpleados(data)
-      } catch (error) {
-        console.error('Error al cargar empleados:', error)
-      }
-    }
+    fetchClientes()
     fetchEmpleados()
-  }, [])
-
-  // Cargar visitas desde la API
-  useEffect(() => {
     loadVisitasData()
   }, [])
 
+  const fetchEmpleados = async () => {
+    try {
+      const { data } = await api.get('/empleados')
+      setEmpleados(data)
+    } catch (error) {
+      console.error('Error al cargar empleados:', error)
+    }
+  }
+  
   const loadVisitasData = async () => {
     try {
       setLoadingVisitas(true)
@@ -83,6 +88,67 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const reloadVisitas = async () => {
     await loadVisitasData()
+  }
+
+  const fetchClientes = async () => {
+    try {
+      const clientesData = await clienteService.getAllClientes()
+      setClientes(clientesData)
+    } catch (error) {
+      console.error('Error al cargar clientes:', error)
+    }
+  }
+
+  const fetchLocalidades = async () => {
+    if (localidades.length > 0) return;
+    try {
+      const { data } = await api.get<Localidad[]>('/localidades')
+      setLocalidades(data)
+    } catch (error) {
+      console.error('Error al cargar localidades:', error)
+    }
+  }
+
+  const fetchObras = async () => {
+    try {
+      const obrasData = await obraService.getObras()
+      setObras(obrasData)
+    } catch (error) {
+      console.error('Error al cargar obras desde el contexto:', error)
+      throw error
+    }
+  }
+
+  const createObra = async (obraData: ObraFormData) => {
+    try {
+      const nuevaObra = await obraService.createObra(obraData)
+      setObras(prev => [nuevaObra, ...prev])
+    } catch (error) {
+      console.error('Error al crear obra desde el contexto:', error)
+      throw error
+    }
+  }
+
+  const updateObra = async (id: number, obraData: ObraFormData) => {
+    try {
+      const obraActualizada = await obraService.updateObra(id, obraData)
+      setObras(prev =>
+        prev.map(o => (o.cod_obra === id ? obraActualizada : o)),
+      )
+    } catch (error) {
+      console.error('Error al actualizar obra desde el contexto:', error)
+      throw error
+    }
+  }
+  
+  const deleteObra = async (id: number) => {
+    try {
+      await obraService.deleteObra(id)
+      setObras(prev => prev.filter(o => o.cod_obra !== id))
+    } catch (error) {
+      console.error('Error al eliminar obra desde el contexto:', error)
+      throw error
+    }
   }
 
   const addEmpleado = async (empleadoData: Omit<Empleado, 'cuil'>) => {
@@ -128,13 +194,10 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const finalizarEntrega = async (id: number, observaciones: string) => {
     try {
-      // Llamar al servicio de entregas
       const entregaActualizada = await entregasService.finalizarEntrega(
         id,
         observaciones
       )
-      
-      // Actualizar el estado local si lo estás usando
       setEntregas((prev) =>
         prev.map((e) => (e.cod_entrega === id ? entregaActualizada : e))
       )
@@ -150,8 +213,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         id,
         observaciones
       )
-      
-      // Actualizar el estado local
       setVisitas((prev) =>
         prev.map((v) => (v.cod_visita === id ? visitaFinalizada : v))
       )
@@ -171,14 +232,21 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         visitas,
         loadingVisitas,
         errorVisitas,
+        localidades,
         addEmpleado,
         updateEmpleado,
         deleteEmpleado,
         currentSection,
         setCurrentSection,
+        fetchLocalidades,
         finalizarEntrega,
         finalizarVisita,
         reloadVisitas,
+        fetchObras,
+        createObra,
+        updateObra,
+        deleteObra,
+        fetchClientes,
       }}
     >
       {children}

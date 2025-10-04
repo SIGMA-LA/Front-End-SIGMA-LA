@@ -24,6 +24,7 @@ import type { Empleado } from '@/types'
 import { mockReportesVentas } from '@/data/mockData'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
+import EstadoObraBadge from '../shared/EstadoObraBadge'
 
 export default function AdminDashboardClient() {
   const { usuario } = useAuth()
@@ -152,7 +153,7 @@ export default function AdminDashboardClient() {
               <div>
                 <p className="text-green-100">Obras Activas</p>
                 <p className="text-3xl font-bold">
-                  {obras.filter((o) => o.estado === 'en_progreso').length}
+                  {obras.filter((o) => o.estado === 'ACTIVA').length}
                 </p>
               </div>
               <Building className="h-12 w-12 text-green-200" />
@@ -580,22 +581,19 @@ export default function AdminDashboardClient() {
       <h2 className="text-2xl font-bold text-gray-800">Supervisión de Obras</h2>
       <div className="space-y-4">
         {obras.map((obra) => (
-          <Card key={obra.id}>
+          <Card key={obra.cod_obra}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="mb-2 text-lg font-semibold">
                     {obra.direccion}
                   </h3>
-                  <p className="mb-2 text-gray-600">{obra.descripcion}</p>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                     <div>
-                      <strong>Cliente:</strong> {obra.cliente.nombre}{' '}
-                      {obra.cliente.apellido}
+                      <strong>Cliente:</strong> {obra.cliente.razon_social}
                     </div>
                     <div>
-                      <strong>Presupuesto:</strong>{' '}
-                      {formatCurrency(obra.presupuesto)}
+                      <strong>Nota de Fabrica:</strong>{obra.nota_fabrica}
                     </div>
                     <div>
                       <strong>Fecha Inicio:</strong>{' '}
@@ -603,11 +601,7 @@ export default function AdminDashboardClient() {
                     </div>
                   </div>
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-sm font-medium ${obra.estado === 'en_progreso' ? 'bg-blue-100 text-blue-800' : obra.estado === 'finalizada' ? 'bg-green-100 text-green-800' : obra.estado === 'planificacion' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}
-                >
-                  {obra.estado.replace('_', ' ')}
-                </span>
+                <EstadoObraBadge estado={obra.estado} />
               </div>
             </CardContent>
           </Card>

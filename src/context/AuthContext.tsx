@@ -9,6 +9,7 @@ import {
 } from 'react'
 import api from '@/services/api/api'
 import { Empleado } from '@/types'
+import { set } from 'valibot'
 
 interface AuthContextType {
   usuario: Empleado | null
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             )
           }
         } catch (error) {
+          console.error('Error al verificar el perfil:', error)
           console.error('Error al parsear usuario guardado:', error)
           localStorage.removeItem('token_sigma')
           localStorage.removeItem('usuario_sigma')
@@ -48,7 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setCargando(false)
     }
-
     verificarSesion()
   }, [])
 

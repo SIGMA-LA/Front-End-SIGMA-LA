@@ -3,8 +3,11 @@
 import { Calendar, Clock, User, Eye, Plus } from 'lucide-react'
 import { mockVisitas } from '@/data/mockData'
 import { VisitasListProps } from '@/types'
+import { useAuth } from '@/context/AuthContext'
 
 export default function VisitasList({ onCreateClick }: VisitasListProps) {
+  const { usuario } = useAuth()
+
   const getStatusColor = (estado: string) => {
     switch (estado) {
       case 'programada':
@@ -54,6 +57,7 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
               </p>
             </div>
           </div>
+          {usuario?.rol_actual === 'COORDINACION' && (
           <button
             onClick={onCreateClick}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
@@ -61,6 +65,7 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
             <Plus className="h-5 w-5" />
             Nueva Visita
           </button>
+          )}
         </div>
 
         <div className="space-y-4">
