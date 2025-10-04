@@ -13,7 +13,14 @@ import visitasService from '@/services/visitas.service'
 import * as obraService from '@/services/obra.service'
 import clienteService from '@/services/cliente.service'
 import { ObraFormData } from '@/services/obra.service'
-import type { Empleado, Obra, Cliente, Entrega, Visita, Localidad } from '@/types'
+import type {
+  Empleado,
+  Obra,
+  Cliente,
+  Entrega,
+  Visita,
+  Localidad,
+} from '@/types'
 
 interface GlobalContextType {
   empleados: Empleado[]
@@ -29,7 +36,6 @@ interface GlobalContextType {
   setCurrentSection: (section: string) => void
   finalizarEntrega: (id: number, observaciones?: string) => Promise<void>
   finalizarVisita: (id: number, observaciones?: string) => Promise<void>
-  reloadVisitas: () => Promise<void>
   fetchClientes: () => Promise<void>
   fetchLocalidades: () => Promise<void>
   fetchObras: () => Promise<void>
@@ -43,7 +49,7 @@ const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [obras, setObras] = useState<Obra[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
-  
+
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [currentSection, setCurrentSection] = useState('dashboard')
@@ -51,7 +57,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchClientes()
     fetchEmpleados()
-    loadVisitasData()
   }, [])
 
   const fetchEmpleados = async () => {
@@ -61,24 +66,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Error al cargar empleados:', error)
     }
-  }
-  
-  const loadVisitasData = async () => {
-    try {
-      setLoadingVisitas(true)
-      setErrorVisitas(null)
-      const data = await visitasService.getAllVisitas()
-      setVisitas(data)
-    } catch (error) {
-      console.error('Error al cargar visitas:', error)
-      setErrorVisitas('Error al cargar las visitas')
-    } finally {
-      setLoadingVisitas(false)
-    }
-  }
-
-  const reloadVisitas = async () => {
-    await loadVisitasData()
   }
 
   const fetchClientes = async () => {
@@ -91,7 +78,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const fetchLocalidades = async () => {
-    if (localidades.length > 0) return;
+    if (localidades.length > 0) return
     try {
       const { data } = await api.get<Localidad[]>('/localidades')
       setLocalidades(data)
@@ -113,7 +100,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const createObra = async (obraData: ObraFormData) => {
     try {
       const nuevaObra = await obraService.createObra(obraData)
-      setObras(prev => [nuevaObra, ...prev])
+      setObras((prev) => [nuevaObra, ...prev])
     } catch (error) {
       console.error('Error al crear obra desde el contexto:', error)
       throw error
@@ -123,19 +110,19 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const updateObra = async (id: number, obraData: ObraFormData) => {
     try {
       const obraActualizada = await obraService.updateObra(id, obraData)
-      setObras(prev =>
-        prev.map(o => (o.cod_obra === id ? obraActualizada : o)),
+      setObras((prev) =>
+        prev.map((o) => (o.cod_obra === id ? obraActualizada : o))
       )
     } catch (error) {
       console.error('Error al actualizar obra desde el contexto:', error)
       throw error
     }
   }
-  
+
   const deleteObra = async (id: number) => {
     try {
       await obraService.deleteObra(id)
-      setObras(prev => prev.filter(o => o.cod_obra !== id))
+      setObras((prev) => prev.filter((o) => o.cod_obra !== id))
     } catch (error) {
       console.error('Error al eliminar obra desde el contexto:', error)
       throw error
@@ -209,7 +196,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         obras,
         clientes,
         addEmpleado,
-        localidades,
         updateEmpleado,
         deleteEmpleado,
         currentSection,
@@ -217,7 +203,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         fetchLocalidades,
         finalizarEntrega,
         finalizarVisita,
-        reloadVisitas,
         fetchObras,
         createObra,
         updateObra,
