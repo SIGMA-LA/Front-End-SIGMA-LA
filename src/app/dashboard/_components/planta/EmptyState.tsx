@@ -14,14 +14,24 @@ export default function EmptyState({
   totalRealizadas = 0,
 }: EmptyStateProps) {
   return (
-    <div className="flex h-full items-center justify-center text-center text-gray-500">
+    <div className="flex h-full items-center justify-center p-8 text-center text-gray-500">
       <div>
-        <Truck className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-        <p className="mb-2 text-lg">{message}</p>
+        <Truck className="mx-auto mb-6 h-24 w-24 text-gray-300 lg:h-32 lg:w-32" />
+        <p className="mb-4 text-xl font-medium lg:text-2xl">{message}</p>
         {(totalPendientes > 0 || totalRealizadas > 0) && (
-          <div className="text-sm text-gray-400">
-            <p>Entregas pendientes: {totalPendientes}</p>
-            <p>Entregas realizadas: {totalRealizadas}</p>
+          <div className="space-y-2 text-base text-gray-400 lg:text-lg">
+            <p>
+              Entregas pendientes:{' '}
+              <span className="font-semibold text-blue-600">
+                {totalPendientes}
+              </span>
+            </p>
+            <p>
+              Entregas realizadas:{' '}
+              <span className="font-semibold text-green-600">
+                {totalRealizadas}
+              </span>
+            </p>
           </div>
         )}
       </div>

@@ -6,7 +6,7 @@ import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import entregasService from '@/services/entregas.service'
 import visitasService from '@/services/visitas.service'
-import { User as UserIcon, Package } from 'lucide-react'
+import { User as UserIcon, Package, Menu, X } from 'lucide-react'
 
 // Componentes existentes
 import TabNavigation from './TabNavigation'
@@ -15,6 +15,7 @@ import VisitaDetails from './VisitaDetails'
 import EntregaDetails from '../planta/EntregaDetails'
 import ConfirmModal from './ConfirmModal'
 import EntregasSidebar from '../planta/EntregasSidebar'
+import FinalizarEntregaModal from '../planta/FinalizarEntregaModal'
 
 export default function VisitadorDashboard() {
   const { usuario } = useAuth()
@@ -22,6 +23,7 @@ export default function VisitadorDashboard() {
 
   // Tab activa
   const [activeTab, setActiveTab] = useState<'visitas' | 'entregas'>('visitas')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Estados para Visitas
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
@@ -31,10 +33,13 @@ export default function VisitadorDashboard() {
   const [visitasRealizadas, setVisitasRealizadas] = useState<Visita[]>([])
   const [loadingVisitas, setLoadingVisitas] = useState(true)
   const [errorVisitas, setErrorVisitas] = useState<string | null>(null)
+  const [finalizandoVisita, setFinalizandoVisita] = useState(false)
 
   // Estados para Entregas
   const [selectedEntrega, setSelectedEntrega] =
     useState<EntregaEmpleado | null>(null)
+  const [showEntregaModal, setShowEntregaModal] = useState(false)
+  const [observacionesEntrega, setObservacionesEntrega] = useState('')
   const [entregasPendientes, setEntregasPendientes] = useState<
     EntregaEmpleado[]
   >([])
@@ -43,220 +48,238 @@ export default function VisitadorDashboard() {
   >([])
   const [loadingEntregas, setLoadingEntregas] = useState(true)
   const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
+  const [finalizandoEntrega, setFinalizandoEntrega] = useState(false)
 
-  // Cargar visitas desde la API
+  // Cargar visitas al montar el componente
   useEffect(() => {
-    const loadVisitas = async () => {
-      if (!usuario?.cuil) {
-        return
-      }
-      try {
-        setLoadingVisitas(true)
-        setErrorVisitas(null)
-
-        // Cargar visitas programadas y en curso como pendientes
-        const [programadas, enCurso, realizadas] = await Promise.all([
-          visitasService.getVisitasByEmpleadoAndEstado(
-            usuario.cuil,
-            'PROGRAMADA'
-          ),
-          visitasService.getVisitasByEmpleadoAndEstado(
-            usuario.cuil,
-            'EN CURSO'
-          ),
-          visitasService.getVisitasByEmpleadoAndEstado(
-            usuario.cuil,
-            'COMPLETADA'
-          ),
-        ])
-
-        // Combinar programadas y en curso como pendientes
-        setVisitasPendientes([...programadas, ...enCurso])
-        setVisitasRealizadas(realizadas)
-      } catch (err) {
-        console.error('Error al cargar visitas:', err)
-        setErrorVisitas('Error al cargar las visitas')
-      } finally {
-        setLoadingVisitas(false)
-      }
+    if (usuario?.cuil && activeTab === 'visitas') {
+      loadVisitas()
     }
+  }, [usuario?.cuil, activeTab])
 
-    loadVisitas()
-  }, [usuario?.cuil])
-
-  // Cargar entregas desde la API
+  // Cargar entregas al cambiar a la tab de entregas
   useEffect(() => {
-    const loadEntregas = async () => {
-      if (!usuario?.cuil) {
-        return
-      }
-      try {
-        setLoadingEntregas(true)
-        setErrorEntregas(null)
-
-        const [pendientes, entregadas] = await Promise.all([
-          entregasService.getEntregasByEmpleadoAndEstado(
-            usuario.cuil,
-            'PENDIENTE'
-          ),
-          entregasService.getEntregasByEmpleadoAndEstado(
-            usuario.cuil,
-            'ENTREGADO'
-          ),
-        ])
-
-        setEntregasPendientes(pendientes)
-        setEntregasRealizadas(entregadas)
-      } catch (err) {
-        console.error('Error al cargar entregas:', err)
-        setErrorEntregas('Error al cargar las entregas')
-      } finally {
-        setLoadingEntregas(false)
-      }
+    if (usuario?.cuil && activeTab === 'entregas') {
+      loadEntregas()
     }
+  }, [usuario?.cuil, activeTab])
 
-    loadEntregas()
-  }, [usuario?.cuil])
+  const loadVisitas = async () => {
+    if (!usuario?.cuil) return
+
+    try {
+      setLoadingVisitas(true)
+      setErrorVisitas(null)
+
+      const [pendientes, completadas] = await Promise.all([
+        visitasService.getVisitasByEmpleadoAndEstado(
+          usuario.cuil,
+          'PROGRAMADA'
+        ),
+        visitasService.getVisitasByEmpleadoAndEstado(
+          usuario.cuil,
+          'COMPLETADA'
+        ),
+      ])
+
+      setVisitasPendientes(pendientes)
+      setVisitasRealizadas(completadas)
+    } catch (error) {
+      console.error('Error al cargar visitas:', error)
+      setErrorVisitas('Error al cargar las visitas')
+    } finally {
+      setLoadingVisitas(false)
+    }
+  }
+
+  const loadEntregas = async () => {
+    if (!usuario?.cuil) return
+
+    try {
+      setLoadingEntregas(true)
+      setErrorEntregas(null)
+
+      const [pendientes, entregadas] = await Promise.all([
+        entregasService.getEntregasByEmpleadoAndEstado(
+          usuario.cuil,
+          'PENDIENTE'
+        ),
+        entregasService.getEntregasByEmpleadoAndEstado(
+          usuario.cuil,
+          'ENTREGADO'
+        ),
+      ])
+
+      setEntregasPendientes(pendientes)
+      setEntregasRealizadas(entregadas)
+    } catch (error) {
+      console.error('Error al cargar entregas:', error)
+      setErrorEntregas('Error al cargar las entregas')
+    } finally {
+      setLoadingEntregas(false)
+    }
+  }
 
   // Handlers
   const handleTabChange = (tab: 'visitas' | 'entregas') => {
     setActiveTab(tab)
     setSelectedVisita(null)
     setSelectedEntrega(null)
+    // No cerrar sidebar al cambiar tab
   }
 
   const handleSelectVisita = (visita: Visita) => {
     setSelectedVisita(visita)
+    setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
   }
 
   const handleSelectEntrega = (entrega: EntregaEmpleado) => {
     setSelectedEntrega(entrega)
+    setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
+  }
+
+  const handleRetryVisitas = async () => {
+    await loadVisitas()
+  }
+
+  const handleRetryEntregas = async () => {
+    await loadEntregas()
   }
 
   const handleFinalizarVisita = async () => {
-    if (!selectedVisita) return
+    if (selectedVisita && usuario?.cuil && !finalizandoVisita) {
+      try {
+        setFinalizandoVisita(true)
 
-    try {
-      // Llamar al servicio para finalizar la visita
-      const visitaActualizada = await visitasService.finalizarVisita(
-        selectedVisita.cod_visita,
-        observacionesVisita
-      )
-
-      // Actualizar el estado local
-      setVisitasPendientes((prev) =>
-        prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
-      )
-      setVisitasRealizadas((prev) => [visitaActualizada, ...prev])
-
-      // Si existe el contexto global, también actualizarlo
-      if (finalizarVisitaContext) {
-        finalizarVisitaContext(
+        // Llamar al contexto global para finalizar la visita
+        await finalizarVisitaContext(
           selectedVisita.cod_visita,
           observacionesVisita
         )
+
+        // Actualizar el estado local
+        const visitaActualizada = {
+          ...selectedVisita,
+          estado: 'COMPLETADA' as const,
+          observaciones: observacionesVisita || selectedVisita.observaciones,
+        }
+
+        setSelectedVisita(visitaActualizada)
+
+        // Mover de pendientes a realizadas
+        setVisitasPendientes((prev) =>
+          prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
+        )
+        setVisitasRealizadas((prev) => [...prev, visitaActualizada])
+
+        // Cerrar modal
+        setShowVisitaModal(false)
+        setObservacionesVisita('')
+
+        console.log('Visita finalizada exitosamente')
+      } catch (error) {
+        console.error('Error al finalizar visita:', error)
+        alert('Error al finalizar la visita. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoVisita(false)
       }
-
-      // Actualizar la visita seleccionada
-      setSelectedVisita(visitaActualizada)
-
-      // Cerrar el modal y limpiar observaciones
-      setShowVisitaModal(false)
-      setObservacionesVisita('')
-    } catch (error) {
-      console.error('Error al finalizar visita:', error)
-      alert('Error al finalizar la visita. Por favor, intenta nuevamente.')
     }
   }
 
-  const handleRetryVisitas = () => {
-    // Recargar visitas
-    if (usuario?.cuil) {
-      setLoadingVisitas(true)
-      Promise.all([
-        visitasService.getVisitasByEmpleadoAndEstado(usuario.cuil, 'PROGRAMADA'),
-        visitasService.getVisitasByEmpleadoAndEstado(usuario.cuil, 'EN CURSO'),
-        visitasService.getVisitasByEmpleadoAndEstado(usuario.cuil, 'COMPLETADA'),
-      ])
-        .then(([programadas, enCurso, realizadas]) => {
-          setVisitasPendientes([...programadas, ...enCurso])
-          setVisitasRealizadas(realizadas)
-          setErrorVisitas(null)
-        })
-        .catch((err) => {
-          console.error('Error al recargar visitas:', err)
-          setErrorVisitas('Error al cargar las visitas')
-        })
-        .finally(() => {
-          setLoadingVisitas(false)
-        })
-    }
-  }
+  const handleFinalizarEntrega = async () => {
+    if (selectedEntrega && usuario?.cuil && !finalizandoEntrega) {
+      try {
+        setFinalizandoEntrega(true)
 
-  const handleRetryEntregas = () => {
-    // Recargar entregas
-    if (usuario?.cuil) {
-      setLoadingEntregas(true)
-      entregasService
-        .getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE')
-        .then((pendientes) => {
-          setEntregasPendientes(pendientes)
-          return entregasService.getEntregasByEmpleadoAndEstado(
-            usuario.cuil,
-            'ENTREGADO'
-          )
-        })
-        .then((entregadas) => {
-          setEntregasRealizadas(entregadas)
-          setErrorEntregas(null)
-        })
-        .catch((err) => {
-          console.error('Error al recargar entregas:', err)
-          setErrorEntregas('Error al cargar las entregas')
-        })
-        .finally(() => {
-          setLoadingEntregas(false)
-        })
+        // Llamar al servicio para actualizar en la base de datos
+        await entregasService.finalizarEntrega(
+          selectedEntrega.cod_entrega,
+          observacionesEntrega || undefined
+        )
+
+        // Actualizar el estado local después de la actualización exitosa
+        const entregaActualizada = {
+          ...selectedEntrega,
+          entrega: {
+            ...selectedEntrega.entrega,
+            estado: 'ENTREGADO' as const,
+            observaciones:
+              observacionesEntrega || selectedEntrega.entrega.observaciones,
+          },
+        }
+
+        setSelectedEntrega(entregaActualizada)
+
+        // Mover de pendientes a realizadas
+        setEntregasPendientes((prev) =>
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+        )
+        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
+
+        // Cerrar modal
+        setShowEntregaModal(false)
+        setObservacionesEntrega('')
+
+        console.log('Entrega finalizada exitosamente')
+      } catch (error) {
+        console.error('Error al finalizar entrega:', error)
+        alert('Error al finalizar la entrega. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoEntrega(false)
+      }
     }
   }
 
   if (!usuario) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Cargando datos del usuario...</div>
+        <div className="text-xl lg:text-2xl">Cargando datos del usuario...</div>
       </div>
     )
   }
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header */}
-      <div className="border-b bg-white px-6 py-4">
+      {/* Header mejorado para móvil */}
+      <div className="border-b bg-white px-5 py-5 lg:px-8 lg:py-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Dashboard del Visitador
-            </h1>
-            <p className="text-sm text-gray-600">
-              {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
-            </p>
+          <div className="flex items-center space-x-4">
+            {/* Botón hamburguesa para móvil */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+            >
+              {sidebarOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
+                Dashboard del Visitador
+              </h1>
+              <p className="mt-1 text-sm text-gray-600 lg:text-base">
+                {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
+              </p>
+            </div>
           </div>
-          <div className="flex space-x-4 text-sm">
-            <div className="text-center">
-              <div className="font-semibold text-blue-600">
+          <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
+            <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+              <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                 {activeTab === 'visitas'
                   ? visitasPendientes.length
                   : entregasPendientes.length}
               </div>
-              <div className="text-gray-500">Pendientes</div>
+              <div className="text-xs text-gray-600 lg:text-sm">Pendientes</div>
             </div>
-            <div className="text-center">
-              <div className="font-semibold text-green-600">
+            <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+              <div className="text-lg font-semibold text-green-600 lg:text-xl">
                 {activeTab === 'visitas'
                   ? visitasRealizadas.length
                   : entregasRealizadas.length}
               </div>
-              <div className="text-gray-500">
+              <div className="text-xs text-gray-600 lg:text-sm">
                 {activeTab === 'visitas' ? 'Realizadas' : 'Entregadas'}
               </div>
             </div>
@@ -264,85 +287,130 @@ export default function VisitadorDashboard() {
         </div>
       </div>
 
-      {/* Contenido Principal */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-96 flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
-          <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        {/* Sidebar responsivo */}
+        <div
+          className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
+        >
+          <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
+            <TabNavigation
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+            />
 
-          <div className="space-y-6 p-3">
-            {activeTab === 'visitas' ? (
-              loadingVisitas ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-sm text-gray-500">
-                    Cargando visitas...
+            <div className="space-y-4 p-3 lg:space-y-6">
+              {activeTab === 'visitas' ? (
+                loadingVisitas ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
+                      <p className="text-sm text-gray-500 lg:text-base">
+                        Cargando visitas...
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ) : errorVisitas ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                  <p className="mb-2 text-sm text-red-600">{errorVisitas}</p>
-                  <button
-                    onClick={handleRetryVisitas}
-                    className="text-sm font-medium text-red-700 hover:text-red-800"
-                  >
-                    Reintentar
-                  </button>
-                </div>
+                ) : errorVisitas ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <div className="px-4 text-center sm:px-6">
+                      <div className="mb-4 text-red-500">
+                        <svg
+                          className="mx-auto h-12 w-12 lg:h-16 lg:w-16"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
+                        </svg>
+                      </div>
+                      <p className="mb-3 text-base font-medium text-red-600 lg:text-lg">
+                        Error al cargar visitas
+                      </p>
+                      <p className="mb-6 text-sm text-gray-500 lg:text-base">
+                        {errorVisitas}
+                      </p>
+                      <button
+                        onClick={handleRetryVisitas}
+                        className="rounded-md bg-blue-600 px-4 py-3 text-sm text-white transition-colors hover:bg-blue-700 lg:px-6 lg:text-base"
+                      >
+                        Reintentar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <SidebarVisitas
+                    visitasPendientes={visitasPendientes}
+                    visitasRealizadas={visitasRealizadas}
+                    selectedVisita={selectedVisita}
+                    onSelectVisita={handleSelectVisita}
+                  />
+                )
               ) : (
-                <SidebarVisitas
-                  visitasPendientes={visitasPendientes}
-                  visitasRealizadas={visitasRealizadas}
-                  selectedVisita={selectedVisita}
-                  onSelectVisita={handleSelectVisita}
+                <EntregasSidebar
+                  entregasPendientes={entregasPendientes}
+                  entregasRealizadas={entregasRealizadas}
+                  selectedEntrega={selectedEntrega}
+                  onSelectEntrega={handleSelectEntrega}
+                  loadingEntregas={loadingEntregas}
+                  errorEntregas={errorEntregas}
+                  onRetry={handleRetryEntregas}
                 />
-              )
-            ) : (
-              <EntregasSidebar
-                entregasPendientes={entregasPendientes}
-                entregasRealizadas={entregasRealizadas}
-                selectedEntrega={selectedEntrega}
-                onSelectEntrega={handleSelectEntrega}
-                loadingEntregas={loadingEntregas}
-                errorEntregas={errorEntregas}
-                onRetry={handleRetryEntregas}
-              />
-            )}
-          </div>
-        </aside>
+              )}
+            </div>
+          </aside>
+        </div>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
+        {/* Overlay para móvil */}
+        {sidebarOpen && (
+          <div
+            className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Contenido principal */}
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
           {activeTab === 'visitas' ? (
             selectedVisita ? (
               <VisitaDetails
                 visita={selectedVisita}
                 onFinalizarVisita={() => {
-                  // Solo mostrar modal si la visita está PROGRAMADA o EN CURSO
-                  if (selectedVisita.estado === 'PROGRAMADA' || selectedVisita.estado === 'EN CURSO') {
+                  if (
+                    selectedVisita.estado === 'PROGRAMADA' ||
+                    selectedVisita.estado === 'EN CURSO'
+                  ) {
                     setShowVisitaModal(true)
                   }
                 }}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-center">
-                <div>
-                  <UserIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                  <p className="mb-4 text-lg text-gray-500">
+                <div className="px-4">
+                  <UserIcon className="mx-auto mb-4 h-12 w-12 text-gray-300 lg:h-16 lg:w-16" />
+                  <p className="mb-4 text-base text-gray-500 lg:text-lg">
                     Selecciona una visita para ver los detalles
                   </p>
                   {!loadingVisitas && (
-                    <div className="flex justify-center gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="font-semibold text-blue-600">
+                    <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
+                      <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+                        <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                           {visitasPendientes.length}
                         </div>
-                        <div className="text-gray-500">Pendientes</div>
+                        <div className="text-xs text-gray-600 lg:text-sm">
+                          Pendientes
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-green-600">
+                      <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+                        <div className="text-lg font-semibold text-green-600 lg:text-xl">
                           {visitasRealizadas.length}
                         </div>
-                        <div className="text-gray-500">Realizadas</div>
+                        <div className="text-xs text-gray-600 lg:text-sm">
+                          Realizadas
+                        </div>
                       </div>
                     </div>
                   )}
@@ -350,32 +418,41 @@ export default function VisitadorDashboard() {
               </div>
             )
           ) : selectedEntrega ? (
-            <div className="space-y-4">
-              <EntregaDetails
-                entrega={selectedEntrega}
-                onFinalizarEntrega={() => {}}
-              />
-            </div>
+            <EntregaDetails
+              entrega={selectedEntrega}
+              onFinalizarEntrega={() => {
+                if (
+                  selectedEntrega.entrega.estado === 'PENDIENTE' &&
+                  selectedEntrega.rol_entrega === 'ENCARGADO'
+                ) {
+                  setShowEntregaModal(true)
+                }
+              }}
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-center">
-              <div>
-                <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                <p className="mb-4 text-lg text-gray-500">
+              <div className="px-4">
+                <Package className="mx-auto mb-4 h-12 w-12 text-gray-300 lg:h-16 lg:w-16" />
+                <p className="mb-4 text-base text-gray-500 lg:text-lg">
                   Selecciona una entrega para ver los detalles
                 </p>
                 {!loadingEntregas && (
-                  <div className="flex justify-center gap-4 text-sm">
-                    <div className="text-center">
-                      <div className="font-semibold text-blue-600">
+                  <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
+                    <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+                      <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                         {entregasPendientes.length}
                       </div>
-                      <div className="text-gray-500">Pendientes</div>
+                      <div className="text-xs text-gray-600 lg:text-sm">
+                        Pendientes
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="font-semibold text-green-600">
+                    <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+                      <div className="text-lg font-semibold text-green-600 lg:text-xl">
                         {entregasRealizadas.length}
                       </div>
-                      <div className="text-gray-500">Entregadas</div>
+                      <div className="text-xs text-gray-600 lg:text-sm">
+                        Entregadas
+                      </div>
                     </div>
                   </div>
                 )}
@@ -385,7 +462,7 @@ export default function VisitadorDashboard() {
         </main>
       </div>
 
-      {/* Modal solo para visitas */}
+      {/* Modal para visitas */}
       <ConfirmModal
         isOpen={showVisitaModal}
         title="Finalizar Visita"
@@ -393,9 +470,28 @@ export default function VisitadorDashboard() {
         onObservacionesChange={setObservacionesVisita}
         onConfirm={handleFinalizarVisita}
         onCancel={() => {
-          setShowVisitaModal(false)
-          setObservacionesVisita('')
+          if (!finalizandoVisita) {
+            setShowVisitaModal(false)
+            setObservacionesVisita('')
+          }
         }}
+        loading={finalizandoVisita}
+      />
+
+      {/* Modal para entregas */}
+      <FinalizarEntregaModal
+        isOpen={showEntregaModal}
+        observaciones={observacionesEntrega}
+        onObservacionesChange={setObservacionesEntrega}
+        onConfirm={handleFinalizarEntrega}
+        onCancel={() => {
+          if (!finalizandoEntrega) {
+            setShowEntregaModal(false)
+            setObservacionesEntrega('')
+          }
+        }}
+        entregaSeleccionada={selectedEntrega}
+        loading={finalizandoEntrega}
       />
     </div>
   )
