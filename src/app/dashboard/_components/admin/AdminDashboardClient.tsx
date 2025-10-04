@@ -65,7 +65,7 @@ export default function AdminDashboardClient() {
     const rolNames: Record<Empleado['rol_actual'], string> = {
       ADMIN: 'Administrador',
       COORDINACION: 'Coordinación',
-      ENCARGADO: 'Encargado',
+      PLANTA: 'Planta',
       VISITADOR: 'Visitador',
       VENTAS: 'Ventas',
     }
@@ -75,9 +75,9 @@ export default function AdminDashboardClient() {
   const getEmpleadosBySection = () => {
     return {
       coordinacion: empleados.filter((u) => u.rol_actual === 'COORDINACION'),
-      visitadoresYEncargados: empleados.filter(
-        (u) => u.rol_actual === 'VISITADOR' || u.rol_actual === 'ENCARGADO'
-      ),
+      visitadores: empleados.filter((u) => u.rol_actual === 'VISITADOR'),
+      planta: empleados.filter((u) => u.rol_actual === 'PLANTA'),
+      ventas: empleados.filter((u) => u.rol_actual === 'VENTAS'),
       admin: empleados.filter((u) => u.rol_actual === 'ADMIN'),
     }
   }
@@ -124,21 +124,21 @@ export default function AdminDashboardClient() {
   const handleUpdateEmpleado = async () => {
     if (editingEmpleado) {
       try {
-        await updateEmpleado(editingEmpleado.cuil, { ...newEmpleado });
-        setEditingEmpleado(null);
-        setShowCreateEmpleado(false);
+        await updateEmpleado(editingEmpleado.cuil, { ...newEmpleado })
+        setEditingEmpleado(null)
+        setShowCreateEmpleado(false)
       } catch (error) {
-        console.error("No se pudo actualizar el empleado", error);
+        console.error('No se pudo actualizar el empleado', error)
       }
     }
   }
 
   const handleDeleteEmpleado = async (cuil: string) => {
-  if (window.confirm('¿Seguro?')) {
-    try {
-      await deleteEmpleado(cuil);
-    } catch (error) {
-      console.error("Error desde el componente al borrar empleado:", error);
+    if (window.confirm('¿Seguro?')) {
+      try {
+        await deleteEmpleado(cuil)
+      } catch (error) {
+        console.error('Error desde el componente al borrar empleado:', error)
       }
     }
   }
@@ -335,13 +335,38 @@ export default function AdminDashboardClient() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-lg">
               <Building className="mr-2 h-5 w-5 text-purple-600" />
-              Visitadores y Encargados ({sections.visitadoresYEncargados.length}
-              )
+              Visitadores ({sections.visitadores.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.visitadoresYEncargados.map(renderEmpleadoCard)}
+              {sections.visitadores.map(renderEmpleadoCard)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Building className="mr-2 h-5 w-5 text-green-600" />
+              Planta ({sections.planta.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sections.planta.map(renderEmpleadoCard)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Building className="mr-2 h-5 w-5 text-blue-600" />
+              Ventas ({sections.ventas.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sections.ventas.map(renderEmpleadoCard)}
             </div>
           </CardContent>
         </Card>
@@ -391,7 +416,7 @@ export default function AdminDashboardClient() {
           </div>
         )}
         {showCreateEmpleado && (
-          <div className="backdrop-blur fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur">
             <div className="mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6">
               <h3 className="mb-4 text-lg font-semibold">
                 {editingEmpleado ? 'Editar Empleado' : 'Crear Nuevo Empleado'}
@@ -429,7 +454,10 @@ export default function AdminDashboardClient() {
                     type="cuil"
                     value={newEmpleado.cuil}
                     onChange={(e) =>
-                      setNewEmpleado({ ...newEmpleado, cuil: String(e.target.value) })
+                      setNewEmpleado({
+                        ...newEmpleado,
+                        cuil: String(e.target.value),
+                      })
                     }
                     placeholder="Ingrese el cuil"
                   />
@@ -556,7 +584,9 @@ export default function AdminDashboardClient() {
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="mb-2 text-lg font-semibold">{obra.direccion}</h3>
+                  <h3 className="mb-2 text-lg font-semibold">
+                    {obra.direccion}
+                  </h3>
                   <p className="mb-2 text-gray-600">{obra.descripcion}</p>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                     <div>

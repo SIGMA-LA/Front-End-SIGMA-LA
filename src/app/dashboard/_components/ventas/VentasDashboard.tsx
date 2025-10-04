@@ -65,18 +65,10 @@ export default function VentasDashboard() {
         )
 
       case 'visitas':
-        return (
-          <VisitasList
-          onCreateClick={() => {}}
-          />
-        )
+        return <VisitasList onCreateClick={() => {}} />
 
       case 'entregas':
-        return (
-          <EntregasList
-          onCreateClick={() => {}}
-          />
-        )
+        return <EntregasList onCreateClick={() => {}} />
 
       case 'configuraciones':
         return <Configuraciones />
@@ -115,7 +107,7 @@ export default function VentasDashboard() {
             onCancel={() => setCurrentSection('obras')}
             onSubmit={(obraData) => {
               // Aquí puedes agregar lógica para guardar la obra
-              console.log('Obra creada:', obraData)
+
               setCurrentSection('obras')
             }}
           />
@@ -127,7 +119,7 @@ export default function VentasDashboard() {
             onCancel={() => setCurrentSection('clientes')}
             onSubmit={(clienteData) => {
               // Aquí puedes agregar lógica para guardar el cliente
-              console.log('Cliente creado:', clienteData)
+
               setCurrentSection('clientes')
             }}
           />
@@ -161,10 +153,8 @@ export default function VentasDashboard() {
                 <div>
                   <p className="leading-relaxed text-gray-700">
                     Actualmente te encuentras en la sección de{' '}
-                    <span className="font-semibold text-blue-600">
-                      Ventas
-                    </span>
-                    . ¡Descubre que puedes hacer!
+                    <span className="font-semibold text-blue-600">Ventas</span>.
+                    ¡Descubre que puedes hacer!
                   </p>
                 </div>
 

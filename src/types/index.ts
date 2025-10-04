@@ -1,9 +1,8 @@
 export interface Cliente {
-  id: number
-  nombre: string
-  apellido: string
+  cuil: string // Cambié de number a string según el schema
+  razon_social: string
   telefono: string
-  email: string
+  mail: string // Mapeo de email a mail
 }
 
 export interface Documento {
@@ -13,49 +12,127 @@ export interface Documento {
 }
 
 export interface Visita {
-  id: number
-  obra: Obra
-  fecha: string
-  hora: string
-  tipo: 'inspeccion' | 'medicion' | 'seguimiento' | 'entrega'
-  estado: 'programada' | 'completada' | 'cancelada'
-  visitadorAsignado: string
-  observaciones: string
-  vehiculo?: string
-  documentos?: Documento[]
+  cod_visita: number
+  obra?: Obra
+  fecha_hora_visita: string
+  motivo_visita:
+    | 'MEDICION'
+    | 'RE-MEDICION'
+    | 'REPARACION'
+    | 'ASESORAMIENTO'
+    | 'VISITA INICIAL'
+  estado:
+    | 'PROGRAMADA'
+    | 'EN CURSO'
+    | 'CANCELADA'
+    | 'REPROGRAMADA'
+    | 'COMPLETADA'
+  empleados_asignados: Empleado[]
+  observaciones?: string
+  direccion_visita?: string
+  vehiculos_usados?: UsoVehiculoVisita[]
+  fecha_cancelacion?: string
 }
 
 export interface Entrega {
-  id: number
+  cod_entrega: number
+  cod_obra: number
   obra: Obra
-  fecha: string
-  hora: string
-  estado: 'programada' | 'en_transito' | 'entregada' | 'cancelada'
-  encargadoAsignado: string
-  productos: string[]
-  direccionEntrega: string
-  observaciones: string
-  vehiculo?: string
-  documentos?: Documento[]
+  fecha_hora_entrega: string
+  estado: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+  observaciones?: string
+  detalle: string
+  empleados_asignados: EntregaEmpleado[]
+  maquinarias_usadas?: UsoMaquinaria[]
+  vehiculos_usados?: UsoVehiculoEntrega[]
+}
+
+export interface EntregaEmpleado {
+  cuil: string
+  cod_obra: number
+  cod_entrega: number
+  rol_entrega: string
+  empleado: Empleado
+  entrega: Entrega
+  obra: Obra
 }
 
 export interface Empleado {
   cuil: string
   nombre: string
   apellido: string
-  rol_actual: 'VENTAS' | 'ADMIN' | 'ENCARGADO' | 'COORDINACION' | 'VISITADOR'
+  rol_actual: string
   area_trabajo: string
   contrasenia?: string
 }
 
 export interface Obra {
-  id: number
+  cod_obra: number
+  cod_postal: number
+  cuil_cliente: string
+  fecha_ini: string
+  estado:
+    | 'ACTIVA'
+    | 'EN PRODUCCION'
+    | 'FINALIZADA'
+    | 'ENTREGADA'
+    | 'EN ESPERA DE STOCK'
+  fecha_cancelacion?: string
   direccion: string
-  descripcion: string
+  nota_fabrica: string
   cliente: Cliente
-  presupuesto: number
-  fechaInicio: string
-  estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada'
+  localidad?: Localidad
+  entregas?: Entrega[]
+  visitas?: Visita[]
+  presupuestos?: Presupuesto[]
+  pagos?: Pago[]
+}
+
+export interface Localidad {
+  cod_postal: number
+  nombre_localidad: string
+}
+
+export interface UsoMaquinaria {
+  cod_maquina: number
+  cod_entrega: number
+  fecha_hora_ini_uso: string
+  fecha_hora_fin_est: string
+  fecha_hora_fin_real?: string
+  estado: string
+}
+
+export interface UsoVehiculoEntrega {
+  patente: string
+  cod_entrega: number
+  fecha_hora_ini_uso: string
+  fecha_hora_ini_est: string
+  fecha_hora_fin_real?: string
+  estado: string
+}
+
+export interface UsoVehiculoVisita {
+  patente: string
+  cod_visita: number
+  fecha_hora_ini_uso: string
+  fecha_hora_ini_est: string
+  fecha_hora_fin_real?: string
+  estado: string
+}
+
+export interface Presupuesto {
+  nro_presupuesto: number
+  cod_obra: number
+  fecha_emision: string
+  fecha_aceptacion?: string
+  valor: number
+}
+
+export interface Pago {
+  cod_pago: number
+  cod_obra: number
+  fecha_pago: string
+  monto: number
 }
 
 export interface ReporteVentas {
@@ -81,12 +158,26 @@ export interface CrearClienteProps {
 }
 
 export interface Vehiculo {
-  tipoVehiculo: string
-  marca: string
-  modelo: string
-  anio: number
   patente: string
-  estado: 'disponible' | 'en-uso' | 'reparacion' 
+  tipo_vehiculo: string
+  estado:
+    | 'DISPONIBLE'
+    | 'EN USO'
+    | 'MANTENIMIENTO'
+    | 'REPARACION'
+    | 'FUERA DE SERVICIO'
+    | 'RESERVADO'
+}
+
+export interface Maquinaria {
+  cod_maquina: number
+  descripcion: string
+  estado:
+    | 'DISPONIBLE'
+    | 'EN_USO'
+    | 'MANTENIMIENTO'
+    | 'REPARACION'
+    | 'FUERA_DE_SERVICIO'
 }
 
 export interface VisitasListProps {
@@ -151,12 +242,6 @@ export interface ModalEncargadoProps {
   selectedEmpleados: string[]
   onSelectEncargado: (encargadoId: string) => void
   onCancel: () => void
-}
-
-export interface Maquinaria {
-  id: string
-  descripcion: string
-  estado: 'disponible' | 'inhabilitada'
 }
 
 export interface MaquinariaListProps {
