@@ -117,7 +117,7 @@ export default function PlantaDashboardClient() {
   if (!usuario) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Cargando datos del usuario...</div>
+        <div className="text-xl lg:text-2xl">Cargando datos del usuario...</div>
       </div>
     )
   }
@@ -125,13 +125,13 @@ export default function PlantaDashboardClient() {
   return (
     <div className="flex h-screen flex-col">
       {/* Header mejorado para móvil */}
-      <div className="border-b bg-white px-4 py-4 lg:px-6">
+      <div className="border-b bg-white px-5 py-5 lg:px-8 lg:py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             {/* Botón hamburguesa para móvil */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1 text-gray-600 hover:text-gray-900 lg:hidden"
+              className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
             >
               {sidebarOpen ? (
                 <X className="h-6 w-6" />
@@ -140,26 +140,26 @@ export default function PlantaDashboardClient() {
               )}
             </button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
+              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
                 Dashboard de Entregas
               </h1>
-              <p className="text-xs text-gray-600 lg:text-sm">
+              <p className="mt-1 text-sm text-gray-600 lg:text-base">
                 {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
               </p>
             </div>
           </div>
-          <div className="flex space-x-2 text-xs lg:space-x-4 lg:text-sm">
-            <div className="text-center">
-              <div className="font-semibold text-blue-600">
+          <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
+            <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+              <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                 {entregasPendientes.length}
               </div>
-              <div className="text-gray-500">Pendientes</div>
+              <div className="text-xs text-gray-600 lg:text-sm">Pendientes</div>
             </div>
-            <div className="text-center">
-              <div className="font-semibold text-green-600">
+            <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+              <div className="text-lg font-semibold text-green-600 lg:text-xl">
                 {entregasRealizadas.length}
               </div>
-              <div className="text-gray-500">Entregadas</div>
+              <div className="text-xs text-gray-600 lg:text-sm">Entregadas</div>
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function PlantaDashboardClient() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar responsivo */}
         <div
-          className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out lg:relative lg:w-96 lg:translate-x-0`}
+          className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
         >
           <EntregasSidebar
             entregasPendientes={entregasPendientes}
@@ -190,7 +190,7 @@ export default function PlantaDashboardClient() {
         )}
 
         {/* Contenido principal */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-3 lg:p-6">
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
           {selectedEntrega ? (
             <EntregaDetails
               entrega={selectedEntrega}

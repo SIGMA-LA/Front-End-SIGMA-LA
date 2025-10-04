@@ -1,5 +1,5 @@
 import type { Visita } from '@/types'
-import { Calendar, MapPin } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 
 interface VisitaCardProps {
   visita: Visita
@@ -41,15 +41,17 @@ export default function VisitaCard({
   const getEstadoColor = (estado: string) => {
     switch (estado) {
       case 'PROGRAMADA':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-blue-500'
       case 'EN CURSO':
-        return 'bg-yellow-100 text-yellow-700'
+        return 'bg-yellow-500'
       case 'COMPLETADA':
-        return 'bg-green-100 text-green-700'
+        return 'bg-green-500'
       case 'CANCELADA':
-        return 'bg-red-100 text-red-700'
+        return 'bg-red-500'
+      case 'REPROGRAMADA':
+        return 'bg-purple-500'
       default:
-        return 'bg-gray-100 text-gray-700'
+        return 'bg-gray-500'
     }
   }
 
@@ -57,57 +59,74 @@ export default function VisitaCard({
   const getCardStyle = () => {
     if (isSelected) {
       if (isPendiente) {
-        return 'border-blue-400 bg-blue-50 ring-2 ring-blue-300 ring-opacity-50'
+        return 'border-orange-400 bg-orange-50 ring-2 ring-orange-300'
       } else {
-        return 'border-green-400 bg-green-50 ring-2 ring-green-300 ring-opacity-50'
+        return 'border-green-400 bg-green-50 ring-2 ring-green-300'
       }
     }
-    return 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+    return 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+  }
+
+  const getVariantBadgeText = () => {
+    if (isPendiente) {
+      return visita.estado === 'PROGRAMADA' ? 'Pendiente' : visita.estado
+    } else {
+      return 'Completada'
+    }
+  }
+
+  const getVariantBadgeColor = () => {
+    if (isPendiente) {
+      return 'bg-orange-500'
+    } else {
+      return 'bg-green-500'
+    }
   }
 
   return (
     <button
       onClick={onClick}
-      className={`w-full rounded-lg border p-3 text-left shadow-sm transition-all duration-200 ${getCardStyle()}`}
+      className={`w-full rounded-lg border p-3 text-left shadow-sm transition-colors lg:p-4 ${getCardStyle()}`}
     >
-      <div className="space-y-2">
-        {/* Header con fecha y estado */}
-        <div className="flex items-start justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center space-x-1 text-xs text-gray-500 lg:text-sm">
-              <Calendar className="h-3 w-3 lg:h-4 lg:w-4" />
-              <span className="font-medium">
-                {formatDate(visita.fecha_hora_visita)}
-              </span>
-              <span>•</span>
-              <span>{formatTime(visita.fecha_hora_visita)}</span>
-            </div>
-          </div>
-          <span
-            className={`ml-2 inline-flex rounded-full px-2 py-1 text-xs font-medium ${getEstadoColor(visita.estado)}`}
-          >
-            {visita.estado}
-          </span>
-        </div>
+      <div className="flex items-start justify-between">
+        <div className="flex-grow space-y-1.5">
+          {/* Fecha principal */}
+          <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
+            {formatDate(visita.fecha_hora_visita)} -{' '}
+            {formatTime(visita.fecha_hora_visita)}
+          </p>
 
-        {/* Información principal */}
-        <div className="space-y-1">
-          <p className="text-xs font-semibold text-gray-900 lg:text-sm">
+          {/* Motivo */}
+          <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
             {getMotivoText(visita.motivo_visita)}
           </p>
-          <p className="text-xs text-gray-600 lg:text-sm">
-            {visita.obra?.cliente.razon_social || 'Sin obra asignada'}
+
+          {/* Cliente */}
+          <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
+            Cliente:{' '}
+            <span className="font-medium">
+              {visita.obra?.cliente.razon_social || 'Sin obra asignada'}
+            </span>
           </p>
+
+          {/* Dirección */}
+          <div className="flex items-start space-x-1">
+            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
+            <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
+              {visita.direccion_visita ||
+                visita.obra?.direccion ||
+                'Sin dirección'}
+            </p>
+          </div>
         </div>
 
-        {/* Dirección */}
-        <div className="flex items-start space-x-1">
-          <MapPin className="mt-0.5 h-3 w-3 flex-shrink-0 text-gray-400 lg:h-4 lg:w-4" />
-          <p className="line-clamp-2 text-xs text-gray-500 lg:text-sm">
-            {visita.direccion_visita ||
-              visita.obra?.direccion ||
-              'Sin dirección'}
-          </p>
+        {/* Badge arriba a la derecha */}
+        <div className="ml-3 flex flex-col items-end space-y-1">
+          <span
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${getVariantBadgeColor()}`}
+          >
+            {getVariantBadgeText()}
+          </span>
         </div>
       </div>
     </button>

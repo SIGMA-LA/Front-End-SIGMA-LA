@@ -233,21 +233,21 @@ export default function VisitadorDashboard() {
   if (!usuario) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Cargando datos del usuario...</div>
+        <div className="text-xl lg:text-2xl">Cargando datos del usuario...</div>
       </div>
     )
   }
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header responsivo */}
-      <div className="border-b bg-white px-4 py-4 lg:px-6">
+      {/* Header mejorado para móvil */}
+      <div className="border-b bg-white px-5 py-5 lg:px-8 lg:py-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             {/* Botón hamburguesa para móvil */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1 text-gray-600 hover:text-gray-900 lg:hidden"
+              className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
             >
               {sidebarOpen ? (
                 <X className="h-6 w-6" />
@@ -256,30 +256,30 @@ export default function VisitadorDashboard() {
               )}
             </button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
+              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
                 Dashboard del Visitador
               </h1>
-              <p className="text-xs text-gray-600 lg:text-sm">
+              <p className="mt-1 text-sm text-gray-600 lg:text-base">
                 {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
               </p>
             </div>
           </div>
-          <div className="flex space-x-2 text-xs lg:space-x-4 lg:text-sm">
-            <div className="text-center">
-              <div className="font-semibold text-blue-600">
+          <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
+            <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+              <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                 {activeTab === 'visitas'
                   ? visitasPendientes.length
                   : entregasPendientes.length}
               </div>
-              <div className="text-gray-500">Pendientes</div>
+              <div className="text-xs text-gray-600 lg:text-sm">Pendientes</div>
             </div>
-            <div className="text-center">
-              <div className="font-semibold text-green-600">
+            <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+              <div className="text-lg font-semibold text-green-600 lg:text-xl">
                 {activeTab === 'visitas'
                   ? visitasRealizadas.length
                   : entregasRealizadas.length}
               </div>
-              <div className="text-gray-500">
+              <div className="text-xs text-gray-600 lg:text-sm">
                 {activeTab === 'visitas' ? 'Realizadas' : 'Entregadas'}
               </div>
             </div>
@@ -290,7 +290,7 @@ export default function VisitadorDashboard() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar responsivo */}
         <div
-          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out lg:relative lg:w-96 lg:translate-x-0`}
+          className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
         >
           <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
             <TabNavigation
@@ -303,18 +303,18 @@ export default function VisitadorDashboard() {
                 loadingVisitas ? (
                   <div className="flex h-64 items-center justify-center">
                     <div className="text-center">
-                      <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600 lg:h-8 lg:w-8"></div>
-                      <p className="text-xs text-gray-500 lg:text-sm">
+                      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
+                      <p className="text-sm text-gray-500 lg:text-base">
                         Cargando visitas...
                       </p>
                     </div>
                   </div>
                 ) : errorVisitas ? (
                   <div className="flex h-64 items-center justify-center">
-                    <div className="px-4 text-center">
-                      <div className="mb-2 text-red-500">
+                    <div className="px-4 text-center sm:px-6">
+                      <div className="mb-4 text-red-500">
                         <svg
-                          className="mx-auto h-10 w-10 lg:h-12 lg:w-12"
+                          className="mx-auto h-12 w-12 lg:h-16 lg:w-16"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -327,15 +327,15 @@ export default function VisitadorDashboard() {
                           />
                         </svg>
                       </div>
-                      <p className="mb-2 text-sm font-medium text-red-600 lg:text-base">
+                      <p className="mb-3 text-base font-medium text-red-600 lg:text-lg">
                         Error al cargar visitas
                       </p>
-                      <p className="mb-4 text-xs text-gray-500 lg:text-sm">
+                      <p className="mb-6 text-sm text-gray-500 lg:text-base">
                         {errorVisitas}
                       </p>
                       <button
                         onClick={handleRetryVisitas}
-                        className="rounded-md bg-blue-600 px-3 py-2 text-xs text-white transition-colors hover:bg-blue-700 lg:px-4 lg:text-sm"
+                        className="rounded-md bg-blue-600 px-4 py-3 text-sm text-white transition-colors hover:bg-blue-700 lg:px-6 lg:text-base"
                       >
                         Reintentar
                       </button>
@@ -373,7 +373,7 @@ export default function VisitadorDashboard() {
         )}
 
         {/* Contenido principal */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-3 lg:p-6">
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
           {activeTab === 'visitas' ? (
             selectedVisita ? (
               <VisitaDetails
@@ -395,18 +395,22 @@ export default function VisitadorDashboard() {
                     Selecciona una visita para ver los detalles
                   </p>
                   {!loadingVisitas && (
-                    <div className="flex justify-center gap-3 text-xs lg:gap-4 lg:text-sm">
-                      <div className="text-center">
-                        <div className="font-semibold text-blue-600">
+                    <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
+                      <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+                        <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                           {visitasPendientes.length}
                         </div>
-                        <div className="text-gray-500">Pendientes</div>
+                        <div className="text-xs text-gray-600 lg:text-sm">
+                          Pendientes
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-green-600">
+                      <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+                        <div className="text-lg font-semibold text-green-600 lg:text-xl">
                           {visitasRealizadas.length}
                         </div>
-                        <div className="text-gray-500">Realizadas</div>
+                        <div className="text-xs text-gray-600 lg:text-sm">
+                          Realizadas
+                        </div>
                       </div>
                     </div>
                   )}
@@ -433,18 +437,22 @@ export default function VisitadorDashboard() {
                   Selecciona una entrega para ver los detalles
                 </p>
                 {!loadingEntregas && (
-                  <div className="flex justify-center gap-3 text-xs lg:gap-4 lg:text-sm">
-                    <div className="text-center">
-                      <div className="font-semibold text-blue-600">
+                  <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
+                    <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+                      <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                         {entregasPendientes.length}
                       </div>
-                      <div className="text-gray-500">Pendientes</div>
+                      <div className="text-xs text-gray-600 lg:text-sm">
+                        Pendientes
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="font-semibold text-green-600">
+                    <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+                      <div className="text-lg font-semibold text-green-600 lg:text-xl">
                         {entregasRealizadas.length}
                       </div>
-                      <div className="text-gray-500">Entregadas</div>
+                      <div className="text-xs text-gray-600 lg:text-sm">
+                        Entregadas
+                      </div>
                     </div>
                   </div>
                 )}

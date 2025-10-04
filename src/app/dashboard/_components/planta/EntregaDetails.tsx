@@ -66,20 +66,20 @@ export default function EntregaDetails({
   const tieneUbicacion = !!direccion
 
   return (
-    <Card className="mx-auto max-w-4xl border-gray-200 bg-white shadow-lg">
-      <CardContent className="space-y-4 p-4 lg:space-y-6 lg:p-8">
+    <Card className="mx-auto max-w-6xl border-gray-200 bg-white shadow-lg">
+      <CardContent className="space-y-6 p-6 lg:space-y-8 lg:p-12">
         {/* Header responsivo */}
-        <div className="flex flex-col items-start justify-between space-y-3 sm:flex-row sm:items-center sm:space-y-0">
+        <div className="flex items-start justify-between space-x-4">
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900 lg:text-2xl">
+            <h2 className="mb-2 text-2xl font-bold text-gray-900 lg:text-4xl">
               Entrega #{entrega.entrega.cod_entrega}
             </h2>
-            <p className="text-base text-gray-600 lg:text-lg">
+            <p className="mb-3 text-lg text-gray-600 lg:text-xl">
               {entrega.obra.cliente?.razon_social || 'Cliente no especificado'}
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               <span
-                className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold lg:px-3 ${
+                className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold lg:px-5 lg:text-base ${
                   entrega.entrega.estado === 'PENDIENTE'
                     ? 'bg-yellow-100 text-yellow-800'
                     : entrega.entrega.estado === 'ENTREGADO'
@@ -91,37 +91,39 @@ export default function EntregaDetails({
               >
                 {entrega.entrega.estado}
               </span>
-              <span className="text-xs text-gray-500 lg:text-sm">
-                Rol: {entrega.rol_entrega}
+              <span className="text-sm text-gray-500 lg:text-base">
+                Rol: <span className="font-medium">{entrega.rol_entrega}</span>
               </span>
             </div>
           </div>
-          <Truck className="h-10 w-10 text-gray-300 lg:h-12 lg:w-12" />
+          <div className="flex-shrink-0">
+            <Truck className="h-16 w-16 text-gray-300 sm:h-14 sm:w-14 lg:h-20 lg:w-20" />
+          </div>
         </div>
 
         {/* Información de contacto responsiva */}
-        <div className="grid grid-cols-1 gap-3 border-t pt-4 text-xs sm:grid-cols-2 lg:gap-4 lg:pt-6 lg:text-sm">
-          <div className="flex items-center space-x-2 lg:space-x-3">
-            <Phone className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
+        <div className="grid grid-cols-1 gap-4 border-t pt-6 text-sm sm:grid-cols-2 lg:gap-6 lg:pt-8 lg:text-base">
+          <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-3 lg:space-x-4">
+            <Phone className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
             <span className="break-all">
               {entrega.obra.cliente?.telefono || 'No disponible'}
             </span>
           </div>
-          <div className="flex items-center space-x-2 lg:space-x-3">
-            <Mail className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
+          <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-3 lg:space-x-4">
+            <Mail className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
             <span className="break-all">
               {entrega.obra.cliente?.mail || 'No disponible'}
             </span>
           </div>
-          <div className="col-span-1 flex items-center space-x-2 sm:col-span-2 lg:space-x-3">
-            <MapPin className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
+          <div className="col-span-1 flex items-center space-x-3 rounded-lg bg-gray-50 p-3 sm:col-span-2 lg:space-x-4">
+            <MapPin className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
             <span className="break-words">
               {direccion}
               {localidad && `, ${localidad}`}
             </span>
           </div>
-          <div className="col-span-1 flex items-center space-x-2 sm:col-span-2 lg:space-x-3">
-            <Calendar className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
+          <div className="col-span-1 flex items-center space-x-3 rounded-lg bg-gray-50 p-3 sm:col-span-2 lg:space-x-4">
+            <Calendar className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
             <span>
               Programada: {formatDateTime(entrega.entrega.fecha_hora_entrega)}
             </span>
@@ -130,10 +132,10 @@ export default function EntregaDetails({
 
         {/* Detalles de la entrega */}
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 lg:text-base">
+          <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
             Detalles de la entrega
           </h4>
-          <p className="mt-2 rounded-md border bg-gray-50 p-3 text-xs text-gray-600 lg:text-sm">
+          <p className="mt-4 rounded-md border bg-gray-50 p-3 text-base leading-relaxed text-gray-600 lg:p-5 lg:text-lg">
             {entrega.entrega.detalle || 'Sin detalles especificados'}
           </p>
         </div>
@@ -141,33 +143,33 @@ export default function EntregaDetails({
         {/* Observaciones */}
         {entrega.entrega.observaciones && (
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 lg:text-base">
+            <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
               Observaciones
             </h4>
-            <p className="mt-2 rounded-md border bg-gray-50 p-3 text-xs text-gray-600 lg:text-sm">
+            <p className="mt-4 rounded-md border bg-gray-50 p-3 text-base leading-relaxed text-gray-600 lg:p-5 lg:text-lg">
               {entrega.entrega.observaciones}
             </p>
           </div>
         )}
 
         {/* Botones responsivos */}
-        <div className="flex flex-col space-y-3 border-t pt-4 sm:flex-row sm:space-y-0 sm:space-x-2 lg:pt-6">
+        <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
           {/* Botones de navegación */}
           {tieneUbicacion && (
             <>
               <Button
                 onClick={handleVerEnMapa}
-                className="flex-1 border border-blue-300 bg-white text-blue-700 hover:bg-blue-50 sm:flex-initial"
+                className="flex-1 cursor-pointer border border-blue-300 bg-white py-4 text-base text-blue-700 hover:bg-blue-50 sm:flex-initial lg:py-5 lg:text-lg"
               >
-                <MapPin className="mr-2 h-4 w-4" />
+                <MapPin className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
                 <span className="hidden sm:inline">Ver en mapa</span>
                 <span className="sm:hidden">Mapa</span>
               </Button>
               <Button
                 onClick={handleNavegar}
-                className="flex-1 bg-blue-600 text-white hover:bg-blue-700 sm:flex-initial"
+                className="flex-1 cursor-pointer bg-blue-600 py-4 text-base text-white hover:bg-blue-700 sm:flex-initial lg:py-5 lg:text-lg"
               >
-                <Navigation className="mr-2 h-4 w-4" />
+                <Navigation className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
                 <span className="hidden sm:inline">Cómo llegar</span>
                 <span className="sm:hidden">Navegar</span>
               </Button>
@@ -178,9 +180,9 @@ export default function EntregaDetails({
           {isEntregaPendiente && isEncargado && (
             <Button
               onClick={onFinalizarEntrega}
-              className="flex-1 bg-green-600 text-white hover:bg-green-700"
+              className="flex-1 cursor-pointer bg-green-600 py-4 text-base text-white hover:bg-green-700 lg:py-5 lg:text-lg"
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
+              <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
               <span className="hidden sm:inline">Finalizar Entrega</span>
               <span className="sm:hidden">Finalizar</span>
             </Button>

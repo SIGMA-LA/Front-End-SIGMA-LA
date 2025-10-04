@@ -24,11 +24,11 @@ export default function EntregasSidebar({
 }: EntregasSidebarProps) {
   if (loadingEntregas) {
     return (
-      <aside className="h-full w-full flex-shrink-0 space-y-6 overflow-y-auto border-r border-gray-200 bg-white p-3 lg:p-4">
+      <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-6 lg:p-6">
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600 lg:h-8 lg:w-8"></div>
-            <p className="text-xs text-gray-500 lg:text-sm">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
+            <p className="text-sm text-gray-500 lg:text-base">
               Cargando entregas...
             </p>
           </div>
@@ -39,12 +39,12 @@ export default function EntregasSidebar({
 
   if (errorEntregas) {
     return (
-      <aside className="h-full w-full flex-shrink-0 space-y-6 overflow-y-auto border-r border-gray-200 bg-white p-3 lg:p-4">
+      <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-6 lg:p-6">
         <div className="flex h-64 items-center justify-center">
-          <div className="px-4 text-center">
-            <div className="mb-2 text-red-500">
+          <div className="px-4 text-center sm:px-6">
+            <div className="mb-4 text-red-500">
               <svg
-                className="mx-auto h-10 w-10 lg:h-12 lg:w-12"
+                className="mx-auto h-12 w-12 lg:h-16 lg:w-16"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -57,15 +57,15 @@ export default function EntregasSidebar({
                 />
               </svg>
             </div>
-            <p className="mb-2 text-sm font-medium text-red-600 lg:text-base">
+            <p className="mb-3 text-base font-medium text-red-600 lg:text-lg">
               Error al cargar entregas
             </p>
-            <p className="mb-4 text-xs text-gray-500 lg:text-sm">
+            <p className="mb-6 text-sm text-gray-500 lg:text-base">
               {errorEntregas}
             </p>
             <button
               onClick={onRetry}
-              className="rounded-md bg-blue-600 px-3 py-2 text-xs text-white transition-colors hover:bg-blue-700 lg:px-4 lg:text-sm"
+              className="rounded-md bg-blue-600 px-4 py-3 text-sm text-white transition-colors hover:bg-blue-700 lg:px-6 lg:text-base"
             >
               Reintentar
             </button>
@@ -76,21 +76,21 @@ export default function EntregasSidebar({
   }
 
   return (
-    <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-3 lg:space-y-6 lg:p-4">
+    <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-8 lg:p-6">
       {/* Entregas Pendientes */}
-      <div className="px-1 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 pt-2">
-          <div className="h-2 w-2 rounded-full bg-orange-500 lg:h-2.5 lg:w-2.5"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase lg:text-sm">
+      <div className="px-1 sm:px-2 lg:px-3">
+        <div className="mb-3 flex items-center space-x-2 px-1 pt-2 sm:mb-4 sm:space-x-3 sm:pt-3 lg:mb-5">
+          <div className="h-3 w-3 rounded-full bg-orange-500 lg:h-4 lg:w-4"></div>
+          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
             Entregas Pendientes ({entregasPendientes.length})
           </h2>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
           {entregasPendientes.length === 0 ? (
-            <div className="py-6 text-center lg:py-8">
-              <div className="mb-2 text-gray-400">
+            <div className="py-6 text-center sm:py-8 lg:py-12">
+              <div className="mb-3 text-gray-400 sm:mb-4">
                 <svg
-                  className="mx-auto h-6 w-6 lg:h-8 lg:w-8"
+                  className="mx-auto h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -103,7 +103,7 @@ export default function EntregasSidebar({
                   />
                 </svg>
               </div>
-              <p className="text-xs text-gray-500 lg:text-sm">
+              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
                 No hay entregas pendientes
               </p>
             </div>
@@ -124,19 +124,19 @@ export default function EntregasSidebar({
       </div>
 
       {/* Entregas Realizadas */}
-      <div className="px-1 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1">
-          <div className="h-2 w-2 rounded-full bg-green-500 lg:h-2.5 lg:w-2.5"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase lg:text-sm">
+      <div className="px-1 sm:px-2 lg:px-3">
+        <div className="mb-3 flex items-center space-x-2 px-1 sm:mb-4 sm:space-x-3 lg:mb-5">
+          <div className="h-3 w-3 rounded-full bg-green-500 lg:h-4 lg:w-4"></div>
+          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
             Entregas Realizadas ({entregasRealizadas.length})
           </h2>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
           {entregasRealizadas.length === 0 ? (
-            <div className="py-6 text-center lg:py-8">
-              <div className="mb-2 text-gray-400">
+            <div className="py-6 text-center sm:py-8 lg:py-12">
+              <div className="mb-3 text-gray-400 sm:mb-4">
                 <svg
-                  className="mx-auto h-6 w-6 lg:h-8 lg:w-8"
+                  className="mx-auto h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -149,7 +149,7 @@ export default function EntregasSidebar({
                   />
                 </svg>
               </div>
-              <p className="text-xs text-gray-500 lg:text-sm">
+              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
                 No hay entregas realizadas
               </p>
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import type { EntregaEmpleado } from '@/types'
+import { MapPin } from 'lucide-react'
 
 interface EntregaCardProps {
   entregaEmpleado: EntregaEmpleado
@@ -16,6 +17,18 @@ const formatDate = (dateString: string) =>
     year: 'numeric',
   })
 
+const getEstadoBadge = (estado: string) => {
+  const badges = {
+    PENDIENTE: 'bg-orange-500',
+    ENTREGADO: 'bg-green-500',
+    CANCELADO: 'bg-red-500',
+  }
+  return (
+    badges[estado as keyof typeof badges] ||
+    'bg-gradient-to-r from-gray-500 to-gray-600 shadow-gray-200'
+  )
+}
+
 export default function EntregaCard({
   entregaEmpleado,
   isSelected,
@@ -24,44 +37,68 @@ export default function EntregaCard({
 }: EntregaCardProps) {
   const styles = {
     pendiente: {
-      selected: 'border-orange-400 bg-orange-50 ring-2 ring-orange-300',
+      selected:
+        'border-orange-400 bg-orange-50 ring-2 ring-orange-300 shadow-lg',
       default:
-        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
-      badge: 'bg-orange-500',
+        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      badge: getEstadoBadge('PENDIENTE'),
     },
     realizada: {
-      selected: 'border-green-400 bg-green-50 ring-2 ring-green-300',
+      selected: 'border-green-400 bg-green-50 ring-2 ring-green-300 shadow-lg',
       default:
-        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
-      badge: 'bg-gray-500',
+        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      badge: getEstadoBadge('ENTREGADO'),
     },
   }
 
   return (
     <button
       onClick={onClick}
-      className={`w-full rounded-lg border p-3 text-left shadow-sm transition-colors ${
+      className={`w-full rounded-lg border p-3 text-left shadow-sm transition-all duration-200 lg:p-4 ${
         isSelected ? styles[variant].selected : styles[variant].default
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-grow text-sm">
-          <p className="font-semibold text-gray-800">
+      <div className="flex items-start justify-between">
+        <div className="flex-grow space-y-1.5">
+          {/* Fecha principal */}
+          <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
             {formatDate(entregaEmpleado.entrega.fecha_hora_entrega)}
           </p>
-          <p className="mt-1 text-xs text-gray-600">
-            {entregaEmpleado.obra.direccion.split(',')[0]},{' '}
-            {entregaEmpleado.obra.localidad.nombre_localidad}
-          </p>
-          <p className="text-xs text-gray-500">
-            Rol: {entregaEmpleado.rol_entrega}
+
+          {/* Dirección con icono */}
+          <div className="flex items-start space-x-1">
+            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
+            <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
+              {entregaEmpleado.obra.direccion.split(',')[0]},{' '}
+              {entregaEmpleado.obra.localidad.nombre_localidad}
+            </p>
+          </div>
+
+          {/* Cliente si está disponible */}
+          {entregaEmpleado.obra.cliente?.razon_social && (
+            <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
+              Cliente:{' '}
+              <span className="font-medium">
+                {entregaEmpleado.obra.cliente.razon_social}
+              </span>
+            </p>
+          )}
+
+          {/* Rol */}
+          <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
+            Rol:{' '}
+            <span className="font-medium">{entregaEmpleado.rol_entrega}</span>
           </p>
         </div>
-        <span
-          className={`rounded-md ${styles[variant].badge} px-3 py-1 text-xs text-white`}
-        >
-          Info
-        </span>
+
+        {/* Badge arriba a la derecha */}
+        <div className="ml-3 flex flex-col items-end space-y-1">
+          <span
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${styles[variant].badge}`}
+          >
+            {variant === 'pendiente' ? 'Pendiente' : 'Entregada'}
+          </span>
+        </div>
       </div>
     </button>
   )
