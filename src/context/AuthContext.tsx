@@ -9,7 +9,6 @@ import {
 } from 'react'
 import api from '@/services/api/api'
 import { Empleado } from '@/types'
-import { set } from 'valibot'
 
 interface AuthContextType {
   usuario: Empleado | null
@@ -19,6 +18,18 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Función para establecer cookies del lado del cliente
+function setCookie(name: string, value: string, days: number = 7) {
+  const expires = new Date()
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure;samesite=strict`
+}
+
+// Función para eliminar cookies
+function deleteCookie(name: string) {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [usuario, setUsuario] = useState<Empleado | null>(null)
@@ -33,6 +44,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const usuarioParsed = JSON.parse(usuarioGuardado)
           setUsuario(usuarioParsed)
+
+          // NUEVO: También establecer la cookie para Server Actions
+          setCookie('accessToken', token, 1) // 1 día de duración
+
           try {
             await api.get('/auth/profile')
           } catch (error) {
@@ -45,6 +60,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error('Error al parsear usuario guardado:', error)
           localStorage.removeItem('token_sigma')
           localStorage.removeItem('usuario_sigma')
+
+          // NUEVO: Limpiar cookies también
+          deleteCookie('accessToken')
+          deleteCookie('refreshToken')
+
           setUsuario(null)
         }
       }
@@ -60,12 +80,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         contrasenia: contrasenia,
       })
 
-      const { token, empleado } = data
+      const { token, empleado, refreshToken } = data
 
       if (token && empleado) {
         setUsuario(empleado)
+
+        // Guardar en localStorage (para compatibilidad con código existente)
         localStorage.setItem('token_sigma', token)
         localStorage.setItem('usuario_sigma', JSON.stringify(empleado))
+
+        // NUEVO: Guardar también en cookies (para Server Actions)
+        setCookie('accessToken', token, 1) // 1 día
+
+        // Si tu backend devuelve refreshToken, guardarlo también
+        if (refreshToken) {
+          setCookie('refreshToken', refreshToken, 7) // 7 días
+        }
+
         return true
       }
       return false
@@ -77,8 +108,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUsuario(null)
+
+    // Limpiar localStorage (código existente)
     localStorage.removeItem('token_sigma')
     localStorage.removeItem('usuario_sigma')
+
+    // NUEVO: Limpiar cookies también
+    deleteCookie('accessToken')
+    deleteCookie('refreshToken')
   }
 
   return (
