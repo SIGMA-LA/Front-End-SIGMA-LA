@@ -66,7 +66,7 @@ function ModalEncargado({
   if (!isOpen) return null
 
   const empleadosAsignados = empleados.filter((emp) =>
-    selectedEmpleados.includes(emp.id.toString())
+    selectedEmpleados.includes(emp.cuil.toString())
   )
 
   const handleConfirmar = () => {
@@ -85,9 +85,9 @@ function ModalEncargado({
         <div className="mb-6 space-y-3">
           {empleadosAsignados.map((empleado) => (
             <label
-              key={empleado.id}
+              key={empleado.cuil}
               className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                encargadoSeleccionado === empleado.id.toString()
+                encargadoSeleccionado === empleado.cuil.toString()
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-300 hover:bg-gray-50'
               }`}
@@ -95,8 +95,8 @@ function ModalEncargado({
               <input
                 type="radio"
                 name="encargado"
-                value={empleado.id}
-                checked={encargadoSeleccionado === empleado.id.toString()}
+                value={empleado.cuil}
+                checked={encargadoSeleccionado === empleado.cuil.toString()}
                 onChange={(e) => setEncargadoSeleccionado(e.target.value)}
                 className="mr-3"
               />
@@ -146,8 +146,8 @@ export default function CrearEntrega({
     // Campos específicos para la obra
     direccion: preloadedObra?.direccion || '',
     // Obra seleccionada (si aplica)
-    obraId: preloadedObra?.id || '',
-    obraCliente: preloadedObra?.cliente ? `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}` : '',
+    obraId: preloadedObra?.cod_obra || '',
+    obraCliente: preloadedObra?.cliente ? `${preloadedObra.cliente.razon_social}` : '',
   })
 
   const [showObraSearch, setShowObraSearch] = useState(false)
@@ -161,7 +161,7 @@ export default function CrearEntrega({
   const filteredObras = mockObras.filter(
     (obra) =>
       obra.direccion.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      obra.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) 
+      obra.cliente.razon_social.toLowerCase().includes(searchTerm.toLowerCase()) 
   )
 
   const handleEmpleadoToggle = (empleadoId: string) => {
@@ -207,7 +207,7 @@ export default function CrearEntrega({
 
     const entregaData = {
       id: Date.now(), // ID temporal
-      obra: preloadedObra || mockObras.find(o => o.id.toString() === formData.obraId.toString())!,
+      obra: preloadedObra || mockObras.find(o => o.cod_obra.toString() === formData.obraId.toString())!,
       fecha: formData.fecha,
       hora: formData.hora,
       estado: 'programada' as const,
@@ -228,7 +228,7 @@ export default function CrearEntrega({
     const encargado = mockEmpleados.find(e => e.id.toString() === encargadoId)
     const entregaData = {
       id: Date.now(), // ID temporal
-      obra: preloadedObra || mockObras.find(o => o.id.toString() === formData.obraId.toString())!,
+      obra: preloadedObra || mockObras.find(o => o.cod_obra.toString() === formData.obraId.toString())!,
       fecha: formData.fecha,
       hora: formData.hora,
       estado: 'programada' as const,
@@ -259,7 +259,7 @@ export default function CrearEntrega({
               </h1>
               {isFromObra && preloadedObra && (
                 <p className="mt-1 text-gray-600">
-                  Cliente: {`${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
+                  Cliente: {`${preloadedObra.cliente.razon_social}`}
                 </p>
               )}
             </div>
@@ -292,14 +292,14 @@ export default function CrearEntrega({
                       <div className="max-h-40 space-y-2 overflow-y-auto">
                         {filteredObras.map((obra) => (
                           <button
-                            key={obra.id}
+                            key={obra.cod_obra}
                             type="button"
                             onClick={() => handleObraSelect(obra)}
                             className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:bg-blue-50"
                           >
                             <div className="font-medium">{obra.direccion}</div>
                             <div className="text-sm text-gray-600">
-                              {obra.cliente.nombre} - {obra.direccion}
+                              {obra.cliente.razon_social} - {obra.direccion}
                             </div>
                           </button>
                         ))}

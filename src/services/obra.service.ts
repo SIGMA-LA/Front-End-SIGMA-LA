@@ -13,7 +13,13 @@ interface BackendObra {
   nota_fabrica: string;
   fecha_ini: string;
   fecha_cancelacion: string | null;
-  estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada';
+  estado:
+    | 'ACTIVA'
+    | 'EN PRODUCCION'
+    | 'FINALIZADA'
+    | 'ENTREGADA'
+    | 'CANCELADA'
+    | 'EN ESPERA DE STOCK';
   localidad?: {
     cod_postal: number;
     nombre_localidad: string;
@@ -25,13 +31,19 @@ export interface ObraFormData {
   nota_fabrica: string;
   fechaInicio: string;
   fechaFin: string | null;
-  estado: 'planificacion' | 'en_progreso' | 'finalizada' | 'cancelada';
+  estado:
+    | 'ACTIVA'
+    | 'EN PRODUCCION'
+    | 'FINALIZADA'
+    | 'ENTREGADA'
+    | 'CANCELADA'
+    | 'EN ESPERA DE STOCK'
   cuil_cliente: string;
   cod_postal: number;
 }
 
 const mapToFrontend = (obra: BackendObra): Obra => ({
-  id: obra.cod_obra,
+  cod_obra: obra.cod_obra,
   direccion: obra.direccion,
   cliente: {
     cuil: obra.cliente?.cuil ?? '',
@@ -44,6 +56,8 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
   fechaFin: obra.fecha_cancelacion,
   estado: obra.estado,
   localidad: obra.localidad,
+  cod_postal: obra.localidad?.cod_postal ?? 0,
+  cuil_cliente: obra.cliente?.cuil ?? '',
 });
 
 const mapToBackend = (obraData: ObraFormData): any => {

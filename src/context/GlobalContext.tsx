@@ -8,14 +8,11 @@ import React, {
   useEffect,
 } from 'react'
 import api from '@/services/api/api'
+import entregasService from '@/services/entregas.service'
+import visitasService from '@/services/visitas.service'
 import * as obraService from '@/services/obra.service'
 import clienteService from '@/services/cliente.service'
 import { ObraFormData } from '@/services/obra.service'
-import {
-  mockClientes,
-  mockEntregas,
-  mockVisitas,
-} from '@/data/mockData'
 import type { Empleado, Obra, Cliente, Entrega, Visita, Localidad } from '@/types'
 
 interface GlobalContextType {
@@ -25,16 +22,19 @@ interface GlobalContextType {
   entregas: Entrega[]
   visitas: Visita[]
   localidades: Localidad[]
+  loadingVisitas: boolean
+  errorVisitas: string | null
   addEmpleado: (empleado: Omit<Empleado, 'cuil'>) => Promise<void>
   updateEmpleado: (
     cuil: string,
-    data: Partial<Omit<Empleado, 'cuil'>>,
+    data: Partial<Omit<Empleado, 'cuil'>>
   ) => Promise<void>
   deleteEmpleado: (cuil: string) => Promise<void>
   currentSection: string
   setCurrentSection: (section: string) => void
-  finalizarEntrega: (id: number, observaciones: string) => void
-  finalizarVisita: (id: number, observaciones: string) => void
+  finalizarEntrega: (id: number, observaciones: string) => Promise<void>
+  finalizarVisita: (id: number, observaciones: string) => Promise<void>
+  reloadVisitas: () => Promise<void>
   fetchClientes: () => Promise<void>
   fetchLocalidades: () => Promise<void>
   fetchObras: () => Promise<void>
@@ -46,29 +46,49 @@ interface GlobalContextType {
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
 
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
-  const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras, setObras] = useState<Obra[]>([])
-  const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
+  
+  const [empleados, setEmpleados] = useState<Empleado[]>([])
+  const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [currentSection, setCurrentSection] = useState('dashboard')
-  const [entregas] = useState<Entrega[]>(mockEntregas)
-  const [visitas] = useState<Visita[]>(mockVisitas)
+  const [entregas, setEntregas] = useState<Entrega[]>([])
+  const [visitas, setVisitas] = useState<Visita[]>([])
+  const [loadingVisitas, setLoadingVisitas] = useState(true)
+  const [errorVisitas, setErrorVisitas] = useState<string | null>(null)
 
   useEffect(() => {
     fetchClientes()
+    fetchEmpleados()
+    loadVisitasData()
   }, [])
 
-  useEffect(() => {
-    const fetchEmpleados = async () => {
-      try {
-        const { data } = await api.get('/empleados')
-        setEmpleados(data)
-      } catch (error) {
-        console.error('Error al cargar empleados:', error)
-      }
+  const fetchEmpleados = async () => {
+    try {
+      const { data } = await api.get('/empleados')
+      setEmpleados(data)
+    } catch (error) {
+      console.error('Error al cargar empleados:', error)
     }
-    fetchEmpleados()
-  }, [])
+  }
+  
+  const loadVisitasData = async () => {
+    try {
+      setLoadingVisitas(true)
+      setErrorVisitas(null)
+      const data = await visitasService.getAllVisitas()
+      setVisitas(data)
+    } catch (error) {
+      console.error('Error al cargar visitas:', error)
+      setErrorVisitas('Error al cargar las visitas')
+    } finally {
+      setLoadingVisitas(false)
+    }
+  }
+
+  const reloadVisitas = async () => {
+    await loadVisitasData()
+  }
 
   const fetchClientes = async () => {
     try {
@@ -113,7 +133,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     try {
       const obraActualizada = await obraService.updateObra(id, obraData)
       setObras(prev =>
-        prev.map(o => (o.id === id ? obraActualizada : o)),
+        prev.map(o => (o.cod_obra === id ? obraActualizada : o)),
       )
     } catch (error) {
       console.error('Error al actualizar obra desde el contexto:', error)
@@ -124,7 +144,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const deleteObra = async (id: number) => {
     try {
       await obraService.deleteObra(id)
-      setObras(prev => prev.filter(o => o.id !== id))
+      setObras(prev => prev.filter(o => o.cod_obra !== id))
     } catch (error) {
       console.error('Error al eliminar obra desde el contexto:', error)
       throw error
@@ -135,9 +155,9 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data: nuevoEmpleado } = await api.post<Empleado>(
         '/empleados',
-        empleadoData,
+        empleadoData
       )
-      setEmpleados(prev => [...prev, nuevoEmpleado])
+      setEmpleados((prev) => [...prev, nuevoEmpleado])
     } catch (error) {
       console.error('Error al crear empleado:', error)
       throw error
@@ -146,15 +166,15 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const updateEmpleado = async (
     cuil: string,
-    empleadoData: Partial<Omit<Empleado, 'cuil'>>,
+    empleadoData: Partial<Omit<Empleado, 'cuil'>>
   ) => {
     try {
       const { data: empleadoActualizado } = await api.put<Empleado>(
         `/empleados/${cuil}`,
-        empleadoData,
+        empleadoData
       )
-      setEmpleados(prev =>
-        prev.map(u => (u.cuil === cuil ? empleadoActualizado : u)),
+      setEmpleados((prev) =>
+        prev.map((u) => (u.cuil === cuil ? empleadoActualizado : u))
       )
     } catch (error) {
       console.error('Error al actualizar empleado:', error)
@@ -165,19 +185,41 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const deleteEmpleado = async (cuil: string) => {
     try {
       await api.delete(`/empleados/${cuil}`)
-      setEmpleados(prev => prev.filter(u => u.cuil !== cuil))
+      setEmpleados((prev) => prev.filter((u) => u.cuil !== cuil))
     } catch (error) {
       console.error('Error al eliminar empleado:', error)
       throw error
     }
   }
 
-  const finalizarEntrega = (id: number, observaciones: string) => {
-    console.log(`Finalizando entrega ${id} con observaciones: ${observaciones}`)
+  const finalizarEntrega = async (id: number, observaciones: string) => {
+    try {
+      const entregaActualizada = await entregasService.finalizarEntrega(
+        id,
+        observaciones
+      )
+      setEntregas((prev) =>
+        prev.map((e) => (e.cod_entrega === id ? entregaActualizada : e))
+      )
+    } catch (error) {
+      console.error('Error al finalizar entrega:', error)
+      throw error
+    }
   }
 
-  const finalizarVisita = (id: number, observaciones: string) => {
-    console.log(`Finalizando visita ${id} con observaciones: ${observaciones}`)
+  const finalizarVisita = async (id: number, observaciones: string) => {
+    try {
+      const visitaFinalizada = await visitasService.finalizarVisita(
+        id,
+        observaciones
+      )
+      setVisitas((prev) =>
+        prev.map((v) => (v.cod_visita === id ? visitaFinalizada : v))
+      )
+    } catch (error) {
+      console.error('Error al finalizar visita:', error)
+      throw error
+    }
   }
 
   return (
@@ -188,6 +230,8 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         clientes,
         entregas,
         visitas,
+        loadingVisitas,
+        errorVisitas,
         localidades,
         addEmpleado,
         updateEmpleado,
@@ -197,6 +241,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         fetchLocalidades,
         finalizarEntrega,
         finalizarVisita,
+        reloadVisitas,
         fetchObras,
         createObra,
         updateObra,
@@ -213,7 +258,7 @@ export const useGlobalContext = () => {
   const context = useContext(GlobalContext)
   if (context === undefined) {
     throw new Error(
-      'useGlobalContext debe ser usado dentro de un GlobalProvider',
+      'useGlobalContext debe ser usado dentro de un GlobalProvider'
     )
   }
   return context

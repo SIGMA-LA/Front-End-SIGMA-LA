@@ -11,8 +11,8 @@ const AdminDashboardClient = dynamic(
 const CoordDashboardClient = dynamic(
   () => import('@/app/dashboard/_components/coordinacion/CoordDashboardClient')
 )
-const EncargadoDashboardClient = dynamic(
-  () => import('@/app/dashboard/_components/encargado/EncargadoDashboardClient')
+const PlantaDashboardClient = dynamic(
+  () => import('@/app/dashboard/_components/planta/PlantaDashboardClient')
 )
 const VisitadorDashboardClient = dynamic(
   () => import('@/app/dashboard/_components/visitador/VisitadorDashboard')
@@ -51,14 +51,26 @@ export default function DashboardPage() {
       return <AdminDashboardClient />
     case 'COORDINACION':
       return <CoordDashboardClient />
-    case 'ENCARGADO':
-      return <EncargadoDashboardClient />
+    case 'PLANTA':
+      return <PlantaDashboardClient />
     case 'VISITADOR':
       return <VisitadorDashboardClient />
     case 'VENTAS':
       return <VentasDashboardClient />
     default:
       console.error('Rol de usuario desconocido:', usuario.rol_actual)
-      return null
+      return (
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-red-600">
+              Rol no reconocido
+            </h2>
+            <p className="text-gray-600">Rol actual: {usuario.rol_actual}</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Revisa la consola para más detalles
+            </p>
+          </div>
+        </div>
+      )
   }
 }

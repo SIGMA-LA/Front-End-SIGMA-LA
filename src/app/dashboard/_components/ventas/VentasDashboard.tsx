@@ -98,7 +98,7 @@ export default function VentasDashboard() {
             onSubmit={async (obraData: ObraFormData) => {
               if (!obraParaEditar) return
               try {
-                await updateObra(obraParaEditar.id, obraData)
+                await updateObra(obraParaEditar.cod_obra, obraData)
                 setCurrentSection('obras')
                 setObraParaEditar(null)
               } catch (error) {
@@ -108,30 +108,6 @@ export default function VentasDashboard() {
             }}
           />
         )
-
-      case 'clientes':
-        return (
-          <ClientesList
-            onCreateClick={() => setCurrentSection('crear-cliente')}
-          />
-        )
-
-      case 'visitas':
-        return (
-          <VisitasList
-          onCreateClick={() => {}}
-          />
-        )
-
-      case 'entregas':
-        return (
-          <EntregasList
-          onCreateClick={() => {}}
-          />
-        )
-
-      case 'configuraciones':
-        return <Configuraciones />
 
       case 'clientes':
         return (
@@ -160,17 +136,6 @@ export default function VentasDashboard() {
 
       case 'configuraciones':
         return <Configuraciones />
-
-      case 'crear-obra':
-        return (
-          <CrearObra
-            onCancel={() => setCurrentSection('obras')}
-            onSubmit={(obraData) => {
-              console.log('Obra creada:', obraData)
-              setCurrentSection('obras')
-            }}
-          />
-        )
 
       case 'crear-cliente':
         return (
@@ -211,10 +176,8 @@ export default function VentasDashboard() {
                 <div>
                   <p className="leading-relaxed text-gray-700">
                     Actualmente te encuentras en la sección de{' '}
-                    <span className="font-semibold text-blue-600">
-                      Ventas
-                    </span>
-                    . ¡Descubre que puedes hacer!
+                    <span className="font-semibold text-blue-600">Ventas</span>.
+                    ¡Descubre que puedes hacer!
                   </p>
                 </div>
 

@@ -13,7 +13,7 @@ import {
   Home,
   Wrench,
   Car,
-  PackageOpen
+  PackageOpen,
 } from 'lucide-react'
 
 // Importar componentes
@@ -58,7 +58,7 @@ export default function CoordDashboard() {
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
     { id: 'pedidos', label: 'Pedidos', icon: Package },
     { id: 'maquinarias', label: 'Maquinarias', icon: Wrench },
-    {id: 'vehiculos', label: 'Vehículos', icon: Car},
+    { id: 'vehiculos', label: 'Vehículos', icon: Car },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
   ]
 
@@ -81,9 +81,7 @@ export default function CoordDashboard() {
 
       case 'clientes':
         return (
-          <ClientesList
-            onCreateClick={() => setCurrentSection('clientes')}
-          />
+          <ClientesList onCreateClick={() => setCurrentSection('clientes')} />
         )
 
       case 'visitas':
@@ -114,7 +112,7 @@ export default function CoordDashboard() {
             }}
             onSubmit={(visitaData) => {
               // Aquí puedes agregar lógica para guardar la visita
-              console.log('Visita creada:', visitaData)
+
               setCurrentSection(selectedObra ? 'obras' : 'visitas')
               setSelectedObra(null)
             }}
@@ -131,7 +129,7 @@ export default function CoordDashboard() {
             }}
             onSubmit={(entregaData) => {
               // Aquí puedes agregar lógica para guardar la entrega
-              console.log('Entrega creada:', entregaData)
+
               setCurrentSection(selectedObra ? 'obras' : 'entregas')
               setSelectedObra(null)
             }}
@@ -148,7 +146,7 @@ export default function CoordDashboard() {
             }}
             onSubmit={(pedidoData) => {
               // Aquí puedes agregar lógica para guardar la entrega
-              console.log('Pedido registrado:', pedidoData)
+
               setCurrentSection('pedidos')
               setSelectedObra(null)
             }}
@@ -157,33 +155,45 @@ export default function CoordDashboard() {
         )
 
       case 'pedidos':
-        return <PedidosList
-        onCreateClick={() => setCurrentSection('registrar-pedido')}
-        onSchedulePedido={(obra) => {
+        return (
+          <PedidosList
+            onCreateClick={() => setCurrentSection('registrar-pedido')}
+            onSchedulePedido={(obra) => {
               setSelectedObra(obra)
               setCurrentSection('registrar-pedido')
-            }}/>
+            }}
+          />
+        )
 
       case 'maquinarias':
-        return <MaquinariaList
-          onCreateClick={() => setCurrentSection('crear-maquinaria')}
-        />
+        return (
+          <MaquinariaList
+            onCreateClick={() => setCurrentSection('crear-maquinaria')}
+          />
+        )
 
       case 'crear-maquinaria':
-        return <CrearMaquinaria
-          onCancel={() => setCurrentSection('maquinarias')}
-          onSubmit={() => setCurrentSection('maquinarias')}
-        />
-          
-      case 'vehiculos':
-        return <VehículosList
-        onCreateClick={() => setCurrentSection("crear-vehiculo")} />
+        return (
+          <CrearMaquinaria
+            onCancel={() => setCurrentSection('maquinarias')}
+            onSubmit={() => setCurrentSection('maquinarias')}
+          />
+        )
 
-      case "crear-vehiculo":
-        return <CrearVehiculo
-        onCancel={() => setCurrentSection("vehiculos")}
-        onSubmit={() => setCurrentSection('vehiculos')}
-        />
+      case 'vehiculos':
+        return (
+          <VehículosList
+            onCreateClick={() => setCurrentSection('crear-vehiculo')}
+          />
+        )
+
+      case 'crear-vehiculo':
+        return (
+          <CrearVehiculo
+            onCancel={() => setCurrentSection('vehiculos')}
+            onSubmit={() => setCurrentSection('vehiculos')}
+          />
+        )
 
       case 'configuraciones':
         return <Configuraciones />
@@ -221,7 +231,6 @@ export default function CoordDashboard() {
                     </span>
                   </p>
                 </div>
-               
               </div>
             </div>
           </div>
@@ -242,8 +251,10 @@ export default function CoordDashboard() {
                 const isActive =
                   currentSection === item.id ||
                   (item.id === 'obras' && currentSection.includes('obra')) ||
-                  (item.id === 'clientes' && currentSection.includes('cliente')) ||
-                  (item.id === 'maquinarias' && currentSection.includes('maquinaria'))
+                  (item.id === 'clientes' &&
+                    currentSection.includes('cliente')) ||
+                  (item.id === 'maquinarias' &&
+                    currentSection.includes('maquinaria'))
 
                 return (
                   <button
@@ -293,8 +304,10 @@ export default function CoordDashboard() {
                 const isActive =
                   currentSection === item.id ||
                   (item.id === 'obras' && currentSection.includes('obra')) ||
-                  (item.id === 'clientes' && currentSection.includes('cliente')) ||
-                  (item.id === 'maquinarias' && currentSection.includes('maquinaria'))
+                  (item.id === 'clientes' &&
+                    currentSection.includes('cliente')) ||
+                  (item.id === 'maquinarias' &&
+                    currentSection.includes('maquinaria'))
 
                 return (
                   <button
@@ -334,8 +347,10 @@ export default function CoordDashboard() {
                   (item.id === 'obras' && currentSection.includes('obra')) ||
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
-                  (item.id === 'visitas' && currentSection.includes('visita')) ||
-                  (item.id === 'maquinarias' && currentSection.includes('maquinaria'))
+                  (item.id === 'visitas' &&
+                    currentSection.includes('visita')) ||
+                  (item.id === 'maquinarias' &&
+                    currentSection.includes('maquinaria'))
               )?.label || 'Dashboard'}
             </h1>
             <div></div> {/* Spacer */}

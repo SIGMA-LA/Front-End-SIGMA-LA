@@ -36,8 +36,7 @@ export default function VisitaDetail({ visita }: VisitaDetailProps) {
                 Detalles de la Visita
               </h3>
               <p className="text-gray-500">
-                Cliente: {visita.obra.cliente.nombre}{' '}
-                {visita.obra.cliente.apellido}
+                Cliente: {visita.obra.cliente.razon_social}
               </p>
             </div>
             <UserIcon className="h-12 w-12 text-gray-300" />

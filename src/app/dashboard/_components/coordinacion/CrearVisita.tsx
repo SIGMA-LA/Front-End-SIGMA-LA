@@ -21,8 +21,8 @@ export default function CrearVisita({
     direccion: preloadedObra?.direccion || '',
     contacto: preloadedObra?.cliente?.telefono || '',
     // Obra seleccionada (si aplica)
-    obraId: preloadedObra?.id || '',
-    obraCliente: preloadedObra?.cliente ? `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}` : '',
+    obraId: preloadedObra?.cod_obra || '',
+    obraCliente: preloadedObra?.cliente ? `${preloadedObra.cliente.razon_social}` : '',
   })
 
   const [isVisitaInicial, setIsVisitaInicial] = useState(!preloadedObra)
@@ -35,7 +35,7 @@ export default function CrearVisita({
   const filteredObras = mockObras.filter(
     (obra) =>
       obra.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      obra.cliente.razon_social.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleVisitadorToggle = (visitadorId: string) => {
@@ -88,7 +88,7 @@ export default function CrearVisita({
             </h1>
             {isFromObra && (
               <p className="mt-1 text-gray-600">
-                Cliente: {preloadedObra?.cliente ? `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}` : ''} | Dirección:{' '}
+                Cliente: {preloadedObra?.cliente ? `${preloadedObra.cliente.razon_social}` : ''} | Dirección:{' '}
                 {preloadedObra?.direccion}
               </p>
             )}
@@ -124,14 +124,14 @@ export default function CrearVisita({
                         <div className="max-h-40 space-y-2 overflow-y-auto">
                           {filteredObras.map((obra) => (
                             <button
-                              key={obra.id}
+                              key={obra.cod_obra}
                               type="button"
                               onClick={() => handleObraSelect(obra)}
                               className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:bg-blue-50"
                             >
                               <div className="font-medium">{obra.direccion}</div>
                               <div className="text-sm text-gray-600">
-                                {obra.cliente.nombre} - {obra.direccion}
+                                {obra.cliente.razon_social} - {obra.direccion}
                               </div>{' '}
                               {/*Cambiar a direccion si se agrega ese campo*/}
                             </button>

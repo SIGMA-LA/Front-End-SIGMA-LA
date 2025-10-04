@@ -1,6 +1,7 @@
 import { Building2, Plus, Calendar, Package } from 'lucide-react'
 import { PedidosListProps } from '@/types'
 import { mockObras } from '@/data/mockData'
+import EstadoObraBadge from '../shared/EstadoObraBadge'
 
 export default function PedidosList({
   onSchedulePedido,
@@ -25,7 +26,7 @@ export default function PedidosList({
         <div className="grid gap-4 sm:gap-6">
           {mockObras.map((obra) => (
             <div
-              key={obra.id}
+              key={obra.cod_obra}
               className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -34,24 +35,14 @@ export default function PedidosList({
                     {obra.direccion}
                   </h3>
                   <p className="text-gray-600">
-                    Cliente: {`${obra.cliente.nombre} ${obra.cliente.apellido}`}
+                    Cliente: {`${obra.cliente.razon_social}`}
                   </p>
                   <p className="text-sm text-gray-500">
                     Inicio: {obra.fechaInicio}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm font-medium ${
-                      obra.estado === 'en_progreso'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : obra.estado === 'finalizada'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
-                    }`}
-                  >
-                    {obra.estado}
-                  </span>
+                  <EstadoObraBadge estado={obra.estado} />
                   <div className="flex gap-2">
                     {onSchedulePedido && (
                       <button

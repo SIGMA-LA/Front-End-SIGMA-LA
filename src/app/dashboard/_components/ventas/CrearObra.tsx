@@ -18,7 +18,7 @@ const initialState: ObraFormData = {
   cuil_cliente: '',
   cod_postal: 0,
   fechaInicio: '',
-  estado: 'planificacion',
+  estado: 'ACTIVA',
   nota_fabrica: '',
   fechaFin: null,
 }
@@ -50,7 +50,7 @@ export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearOb
         fechaInicio,
         nota_fabrica: obraExistente.nota_fabrica || '',
         fechaFin,
-        estado: obraExistente.estado || 'planificacion',
+        estado: obraExistente.estado || 'ACTIVA',
       })
       setClienteSeleccionado(obraExistente.cliente?.cuil || '')
     } else {
@@ -252,10 +252,12 @@ export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearOb
                     value={formData.estado}
                     onChange={handleChange}
                   >
-                    <option value="planificacion">Planificación</option>
-                    <option value="en_progreso">En Progreso</option>
-                    <option value="finalizada">Finalizada</option>
-                    <option value="cancelada">Cancelada</option>
+                    <option value="ACTIVA">Activa</option>
+                    <option value="EN PRODUCCION">En producción</option>
+                    <option value="FINALIZADA">Finalizada</option>
+                    <option value="ENTREGADA">Entregada</option>
+                    <option value="CANCELADA">Cancelada</option>
+                    <option value="EN ESPERA DE STOCK">En espera de stock</option>
                   </select>
                 </div>
 

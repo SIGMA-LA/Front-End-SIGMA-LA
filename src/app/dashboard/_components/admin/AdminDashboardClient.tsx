@@ -24,6 +24,7 @@ import type { Empleado } from '@/types'
 import { mockReportesVentas } from '@/data/mockData'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
+import EstadoObraBadge from '../shared/EstadoObraBadge'
 
 export default function AdminDashboardClient() {
   const { usuario } = useAuth()
@@ -65,7 +66,7 @@ export default function AdminDashboardClient() {
     const rolNames: Record<Empleado['rol_actual'], string> = {
       ADMIN: 'Administrador',
       COORDINACION: 'Coordinación',
-      ENCARGADO: 'Encargado',
+      PLANTA: 'Planta',
       VISITADOR: 'Visitador',
       VENTAS: 'Ventas',
     }
@@ -75,9 +76,9 @@ export default function AdminDashboardClient() {
   const getEmpleadosBySection = () => {
     return {
       coordinacion: empleados.filter((u) => u.rol_actual === 'COORDINACION'),
-      visitadoresYEncargados: empleados.filter(
-        (u) => u.rol_actual === 'VISITADOR' || u.rol_actual === 'ENCARGADO'
-      ),
+      visitadores: empleados.filter((u) => u.rol_actual === 'VISITADOR'),
+      planta: empleados.filter((u) => u.rol_actual === 'PLANTA'),
+      ventas: empleados.filter((u) => u.rol_actual === 'VENTAS'),
       admin: empleados.filter((u) => u.rol_actual === 'ADMIN'),
     }
   }
@@ -124,21 +125,21 @@ export default function AdminDashboardClient() {
   const handleUpdateEmpleado = async () => {
     if (editingEmpleado) {
       try {
-        await updateEmpleado(editingEmpleado.cuil, { ...newEmpleado });
-        setEditingEmpleado(null);
-        setShowCreateEmpleado(false);
+        await updateEmpleado(editingEmpleado.cuil, { ...newEmpleado })
+        setEditingEmpleado(null)
+        setShowCreateEmpleado(false)
       } catch (error) {
-        console.error("No se pudo actualizar el empleado", error);
+        console.error('No se pudo actualizar el empleado', error)
       }
     }
   }
 
   const handleDeleteEmpleado = async (cuil: string) => {
-  if (window.confirm('¿Seguro?')) {
-    try {
-      await deleteEmpleado(cuil);
-    } catch (error) {
-      console.error("Error desde el componente al borrar empleado:", error);
+    if (window.confirm('¿Seguro?')) {
+      try {
+        await deleteEmpleado(cuil)
+      } catch (error) {
+        console.error('Error desde el componente al borrar empleado:', error)
       }
     }
   }
@@ -152,7 +153,7 @@ export default function AdminDashboardClient() {
               <div>
                 <p className="text-green-100">Obras Activas</p>
                 <p className="text-3xl font-bold">
-                  {obras.filter((o) => o.estado === 'en_progreso').length}
+                  {obras.filter((o) => o.estado === 'ACTIVA').length}
                 </p>
               </div>
               <Building className="h-12 w-12 text-green-200" />
@@ -335,13 +336,38 @@ export default function AdminDashboardClient() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center text-lg">
               <Building className="mr-2 h-5 w-5 text-purple-600" />
-              Visitadores y Encargados ({sections.visitadoresYEncargados.length}
-              )
+              Visitadores ({sections.visitadores.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.visitadoresYEncargados.map(renderEmpleadoCard)}
+              {sections.visitadores.map(renderEmpleadoCard)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Building className="mr-2 h-5 w-5 text-green-600" />
+              Planta ({sections.planta.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sections.planta.map(renderEmpleadoCard)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-lg">
+              <Building className="mr-2 h-5 w-5 text-blue-600" />
+              Ventas ({sections.ventas.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sections.ventas.map(renderEmpleadoCard)}
             </div>
           </CardContent>
         </Card>
@@ -391,7 +417,7 @@ export default function AdminDashboardClient() {
           </div>
         )}
         {showCreateEmpleado && (
-          <div className="backdrop-blur fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur">
             <div className="mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6">
               <h3 className="mb-4 text-lg font-semibold">
                 {editingEmpleado ? 'Editar Empleado' : 'Crear Nuevo Empleado'}
@@ -429,7 +455,10 @@ export default function AdminDashboardClient() {
                     type="cuil"
                     value={newEmpleado.cuil}
                     onChange={(e) =>
-                      setNewEmpleado({ ...newEmpleado, cuil: String(e.target.value) })
+                      setNewEmpleado({
+                        ...newEmpleado,
+                        cuil: String(e.target.value),
+                      })
                     }
                     placeholder="Ingrese el cuil"
                   />
@@ -552,10 +581,13 @@ export default function AdminDashboardClient() {
       <h2 className="text-2xl font-bold text-gray-800">Supervisión de Obras</h2>
       <div className="space-y-4">
         {obras.map((obra) => (
-          <Card key={obra.id}>
+          <Card key={obra.cod_obra}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
+                  <h3 className="mb-2 text-lg font-semibold">
+                    {obra.direccion}
+                  </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                     <div>
                       <strong>Cliente:</strong> {obra.cliente.razon_social}
@@ -569,11 +601,7 @@ export default function AdminDashboardClient() {
                     </div>
                   </div>
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-sm font-medium ${obra.estado === 'en_progreso' ? 'bg-blue-100 text-blue-800' : obra.estado === 'finalizada' ? 'bg-green-100 text-green-800' : obra.estado === 'planificacion' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}
-                >
-                  {obra.estado.replace('_', ' ')}
-                </span>
+                <EstadoObraBadge estado={obra.estado} />
               </div>
             </CardContent>
           </Card>

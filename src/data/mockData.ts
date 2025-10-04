@@ -5,12 +5,12 @@ import type {
   Entrega,
   Visita,
   Vehiculo,
-  Maquinaria
+  Maquinaria,
 } from '@/types'
 
 export const mockObras: Obra[] = [
   {
-    id: 1,
+    cod_obra: 1,
     direccion: 'Calle 1 345, G. Baigorria',
     cliente: {
       cuil: '3',
@@ -18,13 +18,15 @@ export const mockObras: Obra[] = [
       telefono: '221-555-9876',
       mail: 'test@test.com',
     },
-    estado: 'finalizada',
+    estado: 'FINALIZADA',
     fechaInicio: '2024-01-01',
     fechaFin: '2024-12-31',
     nota_fabrica: 'asd',
+    cod_postal: 2000,
+    cuil_cliente: '3',
   },
   {
-    id: 2,
+    cod_obra: 2,
     direccion: 'Calle 2 345, G. Baigorria',
     cliente: {
       cuil: '3',
@@ -32,13 +34,15 @@ export const mockObras: Obra[] = [
       telefono: '221-555-9876',
       mail: 'test@test.com',
     },
-    estado: 'finalizada',
+    estado: 'FINALIZADA',
     fechaInicio: '2024-01-01',
     fechaFin: '2024-12-31',
     nota_fabrica: 'asd',
+    cod_postal: 2000,
+    cuil_cliente: '3',
   },
   {
-    id: 3,
+    cod_obra: 3,
     direccion: 'Calle 3 345, G. Baigorria',
     cliente: {
       cuil: '3',
@@ -46,10 +50,12 @@ export const mockObras: Obra[] = [
       telefono: '221-555-9876',
       mail: 'test@test.com',
     },
-    estado: 'finalizada',
+    estado: 'FINALIZADA',
     fechaInicio: '2024-01-01',
     fechaFin: '2024-12-31',
     nota_fabrica: 'asd',
+    cod_postal: 2000,
+    cuil_cliente: '3',
   },
 ]
 
@@ -153,7 +159,7 @@ export const mockEntregas: Entrega[] = [
   {
     id: 1,
     obra: {
-      id: 2,
+      cod_obra: 2,
       direccion: 'Rondeau 1234, Rosario',
       cliente: {
         cuil: '2',
@@ -161,14 +167,16 @@ export const mockEntregas: Entrega[] = [
         telefono: '221-555-5678',
         mail: 'marcos@test.com',
       },
-      estado: 'en_progreso',
+      estado: 'EN PRODUCCION',
       fechaInicio: '2024-04-01',
       fechaFin: null,
-      nota_fabrica: 'Nota 1'
+      nota_fabrica: 'Nota 1',
+      cod_postal: 2000,
+      cuil_cliente: '3',
     },
     fecha: '2025-09-18',
     hora: '09:00',
-    estado: 'programada',
+    estado: 'PENDIENTE',
     encargadoAsignado: 'Diego Lezcano',
     productos: [
       '200 bolsas de cemento',
@@ -183,7 +191,7 @@ export const mockEntregas: Entrega[] = [
   {
     id: 2,
     obra: {
-      id: 1,
+      cod_obra: 1,
       direccion: 'Pampa 56, San Lorenzo',
       cliente: {
         cuil: '1',
@@ -191,14 +199,16 @@ export const mockEntregas: Entrega[] = [
         telefono: '221-555-1234',
         mail: 'lucia@test.com',
       },
-      estado: 'en_progreso',
+      estado: 'EN PRODUCCION',
       fechaInicio: '2024-03-15',
       fechaFin: null,
-      nota_fabrica: 'Nota 2'
+      nota_fabrica: 'Nota 2',
+      cod_postal: 2000,
+      cuil_cliente: '3',
     },
     fecha: '2025-09-19',
     hora: '11:00',
-    estado: 'programada',
+    estado: 'PENDIENTE',
     encargadoAsignado: 'Diego Lezcano',
     productos: ['50 cajas de cerámicos', '10 bolsas de pegamento Klaukol'],
     direccionEntrega: 'La Plata, Calle 10 n° 567 (Entrada de servicio)',
@@ -207,7 +217,7 @@ export const mockEntregas: Entrega[] = [
   {
     id: 3,
     obra: {
-      id: 3,
+      cod_obra: 3,
       direccion: 'Calle 1 345, G. Baigorria',
       cliente: {
         cuil: '3',
@@ -215,14 +225,16 @@ export const mockEntregas: Entrega[] = [
         telefono: '221-555-9876',
         mail: 'test@test.com',
       },
-      estado: 'finalizada',
+      estado: 'FINALIZADA',
       fechaInicio: '2024-01-01',
       fechaFin: '2024-12-31',
-      nota_fabrica: 'Nota 3'
+      nota_fabrica: 'Nota 3',
+      cod_postal: 2000,
+      cuil_cliente: '3',
     },
     fecha: '2025-09-12',
     hora: '14:30',
-    estado: 'entregada',
+    estado: 'ENTREGADA',
     encargadoAsignado: 'Diego Lezcano',
     productos: ['100m² de césped en panes'],
     direccionEntrega: 'Ruta 2, km 45 (Portería principal)',
@@ -235,7 +247,7 @@ export const mockVisitas: Visita[] = [
   {
     id: 1,
     obra: {
-      id: 3,
+      cod_obra: 3,
       direccion: 'Calle 1 345, G. Baigorria',
       cliente: {
         cuil: '3',
@@ -243,10 +255,12 @@ export const mockVisitas: Visita[] = [
         telefono: '221-555-9876',
         mail: 'test@test.com',
       },
-      estado: 'finalizada',
+      estado: 'FINALIZADA',
       fechaInicio: '2024-01-01',
       fechaFin: '2024-12-31',
       nota_fabrica: '',
+      cod_postal: 2000,
+      cuil_cliente: '3',
     },
     fecha: '2025-09-15',
     hora: '09:00',
@@ -260,7 +274,7 @@ export const mockVisitas: Visita[] = [
   {
     id: 2,
     obra: {
-      id: 1,
+      cod_obra: 1,
       direccion: 'Colon 1278, Rosario',
       cliente: {
         cuil: '1',
@@ -268,10 +282,12 @@ export const mockVisitas: Visita[] = [
         telefono: '221-555-1234',
         mail: 'lucia@test.com',
       },
-      estado: 'en_progreso',
+      estado: 'EN PRODUCCION',
       fechaInicio: '2024-03-15',
       fechaFin: null,
-      nota_fabrica: 'Nota 5'
+      nota_fabrica: 'Nota 5',
+      cod_postal: 2000,
+      cuil_cliente: '3',
     },
     fecha: '2025-09-15',
     hora: '11:30',
@@ -284,7 +300,7 @@ export const mockVisitas: Visita[] = [
   {
     id: 3,
     obra: {
-      id: 2,
+      cod_obra: 2,
       direccion: 'Alberdi 456, San Lorenzo',
       cliente: {
         cuil: '2',
@@ -292,10 +308,12 @@ export const mockVisitas: Visita[] = [
         telefono: '221-555-5678',
         mail: 'marcos@test.com',
       },
-      estado: 'en_progreso',
+      estado: 'EN PRODUCCION',
       fechaInicio: '2024-04-01',
       fechaFin: null,
       nota_fabrica: '',
+      cod_postal: 2000,
+      cuil_cliente: '3',
     },
     fecha: '2025-09-16',
     hora: '14:00',
@@ -314,7 +332,7 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Stralis',
     anio: 2018,
     patente: 'AB123AS',
-    estado: 'disponible'
+    estado: 'disponible',
   },
   {
     tipoVehiculo: 'Auto',
@@ -322,7 +340,7 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Corolla',
     anio: 2016,
     patente: 'OEF456',
-    estado: 'en-uso'
+    estado: 'en-uso',
   },
   {
     tipoVehiculo: 'Camioneta',
@@ -330,7 +348,7 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Ranger',
     anio: 2008,
     patente: 'GHI789',
-    estado: 'reparacion'
+    estado: 'reparacion',
   },
   {
     tipoVehiculo: 'Furgón',
@@ -338,8 +356,8 @@ export const mockVehiculos: Vehiculo[] = [
     modelo: 'Kangoo',
     anio: 2010,
     patente: 'JKL012',
-    estado: 'disponible'
-  }
+    estado: 'disponible',
+  },
 ]
 
 export const mockArquitectos = [

@@ -5,6 +5,7 @@ import { Building2, Plus, Calendar, Edit, Trash2 } from 'lucide-react'
 import type { ObrasListProps } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
+import EstadoObraBadge from './EstadoObraBadge'
 
 export default function ObrasList({
   onCreateClick,
@@ -72,7 +73,7 @@ export default function ObrasList({
           {obras.length > 0 ? (
             obras.map((obra) => (
               <div
-                key={obra.id} 
+                key={obra.cod_obra} 
                 className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -86,17 +87,7 @@ export default function ObrasList({
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span
-                      className={`rounded-full px-3 py-1 text-sm font-medium ${
-                        obra.estado === 'en_progreso'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : obra.estado === 'finalizada'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {obra.estado.replace('_', ' ')}
-                    </span>
+                    <EstadoObraBadge estado={obra.estado} />
                     <div className="flex flex-wrap gap-2 sm:gap-4">
                       {onScheduleVisit && (
                         <button onClick={() => onScheduleVisit(obra)} className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800">
@@ -111,7 +102,7 @@ export default function ObrasList({
                       <button onClick={() => onEditClick(obra)} className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800">
                         <Edit className="h-4 w-4" /> Editar
                       </button>
-                      <button onClick={() => handleEliminar(obra.id)} className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800">
+                      <button onClick={() => handleEliminar(obra.cod_obra)} className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800">
                         <Trash2 className="h-4 w-4" /> Eliminar
                       </button>
                     </div>
