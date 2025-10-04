@@ -44,7 +44,6 @@ export default function EntregaDetails({
   const getDireccionCompleta = () => {
     const direccion = entrega.obra.direccion
     const localidad = entrega.obra.localidad?.nombre_localidad
-    console.log({ direccion, localidad })
     return { direccion, localidad }
   }
 
