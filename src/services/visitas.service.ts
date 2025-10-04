@@ -72,9 +72,9 @@ const mapToFrontend = (backendVisita: BackendVisita): Visita => {
           nota_fabrica: '', // No viene del backend limitado
           cliente: {
             cuil: '',
-            razon_social: backendVisita.obra.cliente.razon_social,
-            telefono: backendVisita.obra.cliente.telefono,
-            mail: backendVisita.obra.cliente.mail,
+            razon_social: backendVisita.obra.cliente?.razon_social || '',
+            telefono: backendVisita.obra.cliente?.telefono || '',
+            mail: backendVisita.obra.cliente?.mail || '',
           },
           localidad: backendVisita.localidad,
         }
