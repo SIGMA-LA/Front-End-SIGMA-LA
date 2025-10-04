@@ -8,6 +8,7 @@ import EntregasSidebar from './EntregasSidebar'
 import EntregaDetails from './EntregaDetails'
 import FinalizarEntregaModal from './FinalizarEntregaModal'
 import EmptyState from './EmptyState'
+import { Menu, X } from 'lucide-react'
 
 export default function PlantaDashboardClient() {
   const { usuario } = useAuth()
@@ -23,6 +24,7 @@ export default function PlantaDashboardClient() {
   >([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const loadEntregas = async () => {
@@ -87,11 +89,6 @@ export default function PlantaDashboardClient() {
       }
     }
   }
-
-  const handleSelectEntrega = (entrega: EntregaEmpleado) => {
-    setSelectedEntrega(entrega)
-  }
-
   const handleRetry = async () => {
     if (!usuario?.cuil) return
 
@@ -120,6 +117,11 @@ export default function PlantaDashboardClient() {
     }
   }
 
+  const handleSelectEntrega = (entrega: EntregaEmpleado) => {
+    setSelectedEntrega(entrega)
+    setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
+  }
+
   if (!usuario) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -130,17 +132,31 @@ export default function PlantaDashboardClient() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="border-b bg-white px-6 py-4">
+      {/* Header mejorado para móvil */}
+      <div className="border-b bg-white px-4 py-4 lg:px-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Dashboard de Entregas
-            </h1>
-            <p className="text-sm text-gray-600">
-              {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
-            </p>
+          <div className="flex items-center space-x-3">
+            {/* Botón hamburguesa para móvil */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1 text-gray-600 hover:text-gray-900 lg:hidden"
+            >
+              {sidebarOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">
+                Dashboard de Entregas
+              </h1>
+              <p className="text-xs text-gray-600 lg:text-sm">
+                {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
+              </p>
+            </div>
           </div>
-          <div className="flex space-x-4 text-sm">
+          <div className="flex space-x-2 text-xs lg:space-x-4 lg:text-sm">
             <div className="text-center">
               <div className="font-semibold text-blue-600">
                 {entregasPendientes.length}
@@ -158,17 +174,31 @@ export default function PlantaDashboardClient() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <EntregasSidebar
-          entregasPendientes={entregasPendientes}
-          entregasRealizadas={entregasRealizadas}
-          selectedEntrega={selectedEntrega}
-          onSelectEntrega={handleSelectEntrega}
-          loadingEntregas={loading}
-          errorEntregas={error}
-          onRetry={handleRetry}
-        />
+        {/* Sidebar responsivo */}
+        <div
+          className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 transform transition-transform duration-300 ease-in-out lg:relative lg:w-96 lg:translate-x-0`}
+        >
+          <EntregasSidebar
+            entregasPendientes={entregasPendientes}
+            entregasRealizadas={entregasRealizadas}
+            selectedEntrega={selectedEntrega}
+            onSelectEntrega={handleSelectEntrega}
+            loadingEntregas={loading}
+            errorEntregas={error}
+            onRetry={handleRetry}
+          />
+        </div>
 
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
+        {/* Overlay para móvil */}
+        {sidebarOpen && (
+          <div
+            className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Contenido principal */}
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-3 lg:p-6">
           {selectedEntrega ? (
             <EntregaDetails
               entrega={selectedEntrega}

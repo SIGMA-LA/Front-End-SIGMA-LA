@@ -211,14 +211,14 @@ class EntregasService {
       const response = await api.get<BackendEntrega[]>(
         `${this.baseURL}/${cuil}/${estado}`
       )
-      
+
       // Aplanar el array de ENTREGAS a un array de ASIGNACIONES (BackendEntregaEmpleado[])
       const assignments = response.data.flatMap((entrega) => {
         // Encontramos la asignación específica para el CUIL del empleado que se está consultando.
         const specificAssignment = entrega.entrega_empleado.find(
           (assignment) => assignment.cuil === cuil
         )
-        
+
         // Si encontramos la asignación específica, creamos el DTO plano esperado por mapToFrontend.
         if (specificAssignment) {
           const backendEntregaEmpleado: BackendEntregaEmpleado = {
@@ -228,7 +228,7 @@ class EntregasService {
             rol_entrega: specificAssignment.rol_entrega,
             empleado: specificAssignment.empleado,
             // Copiamos la obra y la entrega de la entrega principal
-            obra: entrega.obra, 
+            obra: entrega.obra,
             // Necesitamos que el objeto entrega no tenga el array 'entrega_empleado'
             // para que coincida con la estructura esperada por el DTO.
             entrega: {
@@ -240,7 +240,7 @@ class EntregasService {
               detalle: entrega.detalle,
               obra: entrega.obra, // Obra anidada en la entrega (ya viene del backend)
               // No incluimos 'entrega_empleado' aquí
-            } as BackendEntregaEmpleado['entrega'] // Cast para ignorar la diferencia de tipos
+            } as BackendEntregaEmpleado['entrega'], // Cast para ignorar la diferencia de tipos
           }
           return [backendEntregaEmpleado]
         }
@@ -267,14 +267,14 @@ class EntregasService {
       const response = await api.get<BackendEntrega>(
         `${this.baseURL}/${cuil}/${codEntrega}`
       )
-      
+
       const entrega = response.data
 
       // Aplanar el objeto ENTREGAS a un objeto ASIGNACIÓN (BackendEntregaEmpleado)
       const specificAssignment = entrega.entrega_empleado.find(
         (assignment) => assignment.cuil === cuil
       )
-      
+
       if (!specificAssignment) {
         throw new Error('Asignación de empleado no encontrada en la entrega.')
       }
@@ -294,9 +294,9 @@ class EntregasService {
           observaciones: entrega.observaciones,
           detalle: entrega.detalle,
           obra: entrega.obra,
-        } as BackendEntregaEmpleado['entrega']
+        } as BackendEntregaEmpleado['entrega'],
       }
-      
+
       return mapToFrontend(backendEntregaEmpleado)
     } catch (error) {
       console.error(
@@ -306,8 +306,32 @@ class EntregasService {
       throw error
     }
   }
-  
-  // ... resto de métodos ...
+  async finalizarEntrega(
+    cod_entrega: number,
+    observaciones?: string
+  ): Promise<any> {
+    try {
+      const updateData: {
+        estado: 'ENTREGADO'
+        observaciones?: string
+      } = {
+        estado: 'ENTREGADO',
+      }
+
+      if (observaciones) {
+        updateData.observaciones = observaciones
+      }
+
+      const response = await api.put(
+        `${this.baseURL}/${cod_entrega}`,
+        updateData
+      )
+      return response.data
+    } catch (error) {
+      console.error(`Error al finalizar entrega ${cod_entrega}: ${error}`)
+      throw new Error('No se pudo finalizar la entrega')
+    }
+  }
 }
 
 const entregasService = new EntregasService()
