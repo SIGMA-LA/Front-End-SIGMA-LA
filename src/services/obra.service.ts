@@ -29,8 +29,8 @@ interface BackendObra {
 export interface ObraFormData {
   direccion: string;
   nota_fabrica: string;
-  fechaInicio: string;
-  fechaFin: string | null;
+  fecha_ini: string;
+  fecha_cancelacion: string | null;
   estado:
     | 'ACTIVA'
     | 'EN PRODUCCION'
@@ -52,8 +52,8 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
     mail: obra.cliente?.mail ?? '',
   },
   nota_fabrica: obra.nota_fabrica,
-  fechaInicio: obra.fecha_ini,
-  fechaFin: obra.fecha_cancelacion,
+  fecha_ini: obra.fecha_ini,
+  fecha_cancelacion: obra.fecha_cancelacion,
   estado: obra.estado,
   localidad: obra.localidad,
   cod_postal: obra.localidad?.cod_postal ?? 0,
@@ -66,15 +66,15 @@ const mapToBackend = (obraData: ObraFormData): any => {
     estado: obraData.estado,
     cod_postal: obraData.cod_postal,
     cuil: obraData.cuil_cliente,
-    fecha_ini: obraData.fechaInicio,
+    fecha_ini: obraData.fecha_ini,
   };
 
   if (obraData.nota_fabrica && obraData.nota_fabrica.trim() !== '') {
     payload.nota_fabrica = obraData.nota_fabrica;
   }
 
-  if (obraData.fechaFin) {
-    payload.fecha_cancelacion = obraData.fechaFin;
+  if (obraData.fecha_cancelacion) {
+    payload.fecha_cancelacion = obraData.fecha_cancelacion;
   }
 
   return payload;

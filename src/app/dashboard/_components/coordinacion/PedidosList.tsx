@@ -38,7 +38,7 @@ export default function PedidosList({
                     Cliente: {`${obra.cliente.razon_social}`}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Inicio: {obra.fechaInicio}
+                    Inicio: {obra.fecha_ini}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

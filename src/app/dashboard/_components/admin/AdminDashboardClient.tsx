@@ -597,7 +597,7 @@ export default function AdminDashboardClient() {
                     </div>
                     <div>
                       <strong>Fecha Inicio:</strong>{' '}
-                      {new Date(obra.fechaInicio).toLocaleDateString('es-AR')}
+                      {new Date(obra.fecha_ini).toLocaleDateString('es-AR')}
                     </div>
                   </div>
                 </div>

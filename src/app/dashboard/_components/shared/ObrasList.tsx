@@ -83,7 +83,7 @@ export default function ObrasList({
                       Cliente: {obra.cliente?.razon_social || 'No asignado'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Inicio: {new Date(obra.fechaInicio).toLocaleDateString('es-AR', { timeZone: 'UTC' })}
+                      Inicio: {new Date(obra.fecha_ini).toLocaleDateString('es-AR', { timeZone: 'UTC' })}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">

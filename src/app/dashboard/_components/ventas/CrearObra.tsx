@@ -17,10 +17,10 @@ const initialState: ObraFormData = {
   direccion: '',
   cuil_cliente: '',
   cod_postal: 0,
-  fechaInicio: '',
+  fecha_ini: '',
   estado: 'ACTIVA',
   nota_fabrica: '',
-  fechaFin: null,
+  fecha_cancelacion: null,
 }
 
 export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearObraProps) {
@@ -36,20 +36,20 @@ export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearOb
 
   useEffect(() => {
     if (esModoEdicion && obraExistente) {
-      const fechaInicio = obraExistente.fechaInicio 
-        ? new Date(obraExistente.fechaInicio).toISOString().split('T')[0] 
+      const fecha_ini = obraExistente.fecha_ini 
+        ? new Date(obraExistente.fecha_ini).toISOString().split('T')[0] 
         : ''
-      const fechaFin = obraExistente.fechaFin 
-        ? new Date(obraExistente.fechaFin).toISOString().split('T')[0] 
+      const fecha_cancelacion = obraExistente.fecha_cancelacion 
+        ? new Date(obraExistente.fecha_cancelacion).toISOString().split('T')[0] 
         : null
 
       setFormData({
         direccion: obraExistente.direccion || '',
         cuil_cliente: obraExistente.cliente?.cuil || '',
         cod_postal: obraExistente.localidad?.cod_postal || 0,
-        fechaInicio,
+        fecha_ini,
         nota_fabrica: obraExistente.nota_fabrica || '',
-        fechaFin,
+        fecha_cancelacion,
         estado: obraExistente.estado || 'ACTIVA',
       })
       setClienteSeleccionado(obraExistente.cliente?.cuil || '')
@@ -220,10 +220,10 @@ export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearOb
                       Fecha Inicio *
                     </label>
                     <input
-                      name="fechaInicio"
+                      name="fecha_ini"
                       type="date"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      value={formData.fechaInicio}
+                      value={formData.fecha_ini}
                       onChange={handleChange}
                       required
                     />
@@ -233,10 +233,10 @@ export default function CrearObra({ onCancel, onSubmit, obraExistente }: CrearOb
                       Fecha Cancelación
                     </label>
                     <input
-                      name="fechaFin"
+                      name="fecha_cancelacion"
                       type="date"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      value={formData.fechaFin || ''}
+                      value={formData.fecha_cancelacion || ''}
                       onChange={handleChange}
                     />
                   </div>

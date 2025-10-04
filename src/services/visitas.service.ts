@@ -30,8 +30,8 @@ interface BackendVisita {
     cod_postal: number
     cuil: string
     fecha_ini: string
-    estado: 'ACTIVA' | 'EN PRODUCCION' | 'FINALIZADA' | 'ENTREGADA' | 'EN ESPERA DE STOCK'
-    fecha_cancelacion?: string
+    estado: 'ACTIVA' | 'EN PRODUCCION' | 'FINALIZADA' | 'ENTREGADA' | 'CANCELADA' | 'EN ESPERA DE STOCK'
+    fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
     cliente: {

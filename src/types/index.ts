@@ -79,12 +79,11 @@ export interface Obra {
     | 'ENTREGADA'
     | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
-  fecha_cancelacion?: string
   direccion: string
   cliente: Cliente
   nota_fabrica: string
-  fechaInicio: string
-  fechaFin: string | null
+  fecha_ini: string
+  fecha_cancelacion: string | null
   localidad?: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
