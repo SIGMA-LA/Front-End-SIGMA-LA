@@ -27,7 +27,7 @@ export default function ConfirmModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="bg-opacity-50 absolute inset-0 bg-black backdrop-blur-sm"
+        className="bg-opacity-50 absolute inset-0 bg-transparent backdrop-blur-sm"
         onClick={!loading ? onCancel : undefined}
       />
 

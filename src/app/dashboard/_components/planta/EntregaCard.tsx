@@ -50,7 +50,8 @@ export default function EntregaCard({
             {formatDate(entregaEmpleado.entrega.fecha_hora_entrega)}
           </p>
           <p className="mt-1 text-xs text-gray-600">
-            {entregaEmpleado.obra.direccion.split(',')[0]}
+            {entregaEmpleado.obra.direccion.split(',')[0]},{' '}
+            {entregaEmpleado.obra.localidad.nombre_localidad}
           </p>
           <p className="text-xs text-gray-500">
             Rol: {entregaEmpleado.rol_entrega}

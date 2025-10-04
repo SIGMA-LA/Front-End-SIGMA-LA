@@ -1,7 +1,6 @@
 import api from './api/api'
 import { EntregaEmpleado, Empleado, Obra, Cliente, Localidad } from '@/types'
 
-// 1. Definir la estructura real que viene del backend (array de 'entrega's con relaciones)
 interface EmpleadoAsignado {
   cuil: string
   cod_obra: number
@@ -27,7 +26,7 @@ interface BackendEntrega {
   obra: {
     cod_obra: number
     cod_postal: number
-    cuil: string // cuil_cliente
+    cuil: string
     fecha_ini: string
     estado:
       | 'ACTIVA'
@@ -44,15 +43,16 @@ interface BackendEntrega {
       telefono: string
       mail: string
     }
-    localidad?: {
+    localidad: {
       cod_postal: number
       nombre_localidad: string
     }
   }
-  entrega_empleado: EmpleadoAsignado[] // <-- El array de asignaciones
+  entrega_empleado: EmpleadoAsignado[]
 }
 
-// 2. Mantener la estructura del DTO de asignación que 'mapToFrontend' espera
+// ...existing code...
+
 interface BackendEntregaEmpleado {
   cuil: string
   cod_obra: number
@@ -85,7 +85,7 @@ interface BackendEntregaEmpleado {
         telefono: string
         mail: string
       }
-      localidad?: {
+      localidad: {
         cod_postal: number
         nombre_localidad: string
       }
@@ -105,6 +105,10 @@ interface BackendEntregaEmpleado {
     fecha_cancelacion?: string
     direccion: string
     nota_fabrica: string
+    localidad: {
+      cod_postal: number
+      nombre_localidad: string
+    }
     cliente: {
       cuil: string
       razon_social: string
@@ -129,11 +133,16 @@ export interface CreateEntregaEmpleadoDTO {
   rol_entrega: string
 }
 
+export interface FinalizarEntregaDTO {
+  estado: 'ENTREGADO'
+  observaciones?: string
+}
+
 export interface UpdateEntregaEmpleadoDTO {
   rol_entrega?: string
 }
 
-// Función para mapear datos del backend al frontend (espera la estructura plana)
+// Mapea la estructura del backend a la estructura del frontend
 const mapToFrontend = (
   backendEntregaEmpleado: BackendEntregaEmpleado
 ): EntregaEmpleado => {
@@ -151,6 +160,7 @@ const mapToFrontend = (
       fecha_cancelacion: backendEntregaEmpleado.obra.fecha_cancelacion,
       direccion: backendEntregaEmpleado.obra.direccion,
       nota_fabrica: backendEntregaEmpleado.obra.nota_fabrica,
+      localidad: backendEntregaEmpleado.obra.localidad,
       cliente: {
         cuil: backendEntregaEmpleado.obra.cliente.cuil,
         razon_social: backendEntregaEmpleado.obra.cliente.razon_social,
@@ -179,6 +189,7 @@ const mapToFrontend = (
           backendEntregaEmpleado.entrega.obra.fecha_cancelacion,
         direccion: backendEntregaEmpleado.entrega.obra.direccion,
         nota_fabrica: backendEntregaEmpleado.entrega.obra.nota_fabrica,
+        localidad: backendEntregaEmpleado.entrega.obra.localidad,
         cliente: {
           cuil: backendEntregaEmpleado.entrega.obra.cliente.cuil,
           razon_social:
@@ -199,27 +210,19 @@ const mapToFrontend = (
 class EntregasService {
   private baseURL = '/entregas'
 
-  // ... getEntregasByEmpleado(cuil) debe ser actualizado si usa la misma ruta que getEntregasByEmpleadoAndEstado sin estado
-  // Para simplificar, asumimos que getEntregasByEmpleado es un caso especial de la de estado o usa otra ruta.
-
+  // Obtiene entregas de un empleado filtradas por estado
   async getEntregasByEmpleadoAndEstado(
     cuil: string,
     estado: 'PENDIENTE' | 'ENTREGADO' | 'EN CURSO' | 'CANCELADO'
   ): Promise<EntregaEmpleado[]> {
     try {
-      // 3. Recibir el array de ENTREGAS (BackendEntrega[])
       const response = await api.get<BackendEntrega[]>(
         `${this.baseURL}/${cuil}/${estado}`
       )
-
-      // Aplanar el array de ENTREGAS a un array de ASIGNACIONES (BackendEntregaEmpleado[])
       const assignments = response.data.flatMap((entrega) => {
-        // Encontramos la asignación específica para el CUIL del empleado que se está consultando.
         const specificAssignment = entrega.entrega_empleado.find(
           (assignment) => assignment.cuil === cuil
         )
-
-        // Si encontramos la asignación específica, creamos el DTO plano esperado por mapToFrontend.
         if (specificAssignment) {
           const backendEntregaEmpleado: BackendEntregaEmpleado = {
             cuil: specificAssignment.cuil,
@@ -227,10 +230,7 @@ class EntregasService {
             cod_entrega: specificAssignment.cod_entrega,
             rol_entrega: specificAssignment.rol_entrega,
             empleado: specificAssignment.empleado,
-            // Copiamos la obra y la entrega de la entrega principal
             obra: entrega.obra,
-            // Necesitamos que el objeto entrega no tenga el array 'entrega_empleado'
-            // para que coincida con la estructura esperada por el DTO.
             entrega: {
               cod_entrega: entrega.cod_entrega,
               cod_obra: entrega.cod_obra,
@@ -238,16 +238,15 @@ class EntregasService {
               estado: entrega.estado,
               observaciones: entrega.observaciones,
               detalle: entrega.detalle,
-              obra: entrega.obra, // Obra anidada en la entrega (ya viene del backend)
-              // No incluimos 'entrega_empleado' aquí
-            } as BackendEntregaEmpleado['entrega'], // Cast para ignorar la diferencia de tipos
+              obra: entrega.obra,
+              localidad: entrega.obra.localidad,
+            } as BackendEntregaEmpleado['entrega'],
           }
           return [backendEntregaEmpleado]
         }
-        return [] // Si por alguna razón la asignación no está, descartar la entrega (no debería pasar si el repo filtra bien)
+        return []
       })
 
-      // 4. Mapear el array de asignaciones a la estructura final del frontend
       return assignments.map(mapToFrontend)
     } catch (error) {
       console.error(
@@ -258,19 +257,16 @@ class EntregasService {
     }
   }
 
+  // Obtiene una entrega específica de un empleado
   async getEntregaByEmpleadoAndId(
     cuil: string,
     codEntrega: number
   ): Promise<EntregaEmpleado> {
     try {
-      // Si esta ruta devuelve una sola 'entrega', también necesita el aplanamiento
       const response = await api.get<BackendEntrega>(
         `${this.baseURL}/${cuil}/${codEntrega}`
       )
-
       const entrega = response.data
-
-      // Aplanar el objeto ENTREGAS a un objeto ASIGNACIÓN (BackendEntregaEmpleado)
       const specificAssignment = entrega.entrega_empleado.find(
         (assignment) => assignment.cuil === cuil
       )
@@ -294,6 +290,7 @@ class EntregasService {
           observaciones: entrega.observaciones,
           detalle: entrega.detalle,
           obra: entrega.obra,
+          localidad: entrega.obra.localidad,
         } as BackendEntregaEmpleado['entrega'],
       }
 
@@ -307,10 +304,11 @@ class EntregasService {
     }
   }
 
+  // Marca una entrega como finalizada con observaciones opcionales
   async finalizarEntrega(
     cod_entrega: number,
     observaciones?: string
-  ): Promise<any> {
+  ): Promise<FinalizarEntregaDTO> {
     try {
       const updateData: {
         estado: 'ENTREGADO'
@@ -319,18 +317,26 @@ class EntregasService {
         estado: 'ENTREGADO',
       }
 
-      if (observaciones) {
-        updateData.observaciones = observaciones
+      if (observaciones && observaciones.trim() !== '') {
+        updateData.observaciones = observaciones.trim()
       }
 
       const response = await api.put(
         `${this.baseURL}/${cod_entrega}`,
-        updateData
+        updateData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       )
+
       return response.data
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error al finalizar entrega ${cod_entrega}:`, error)
-      throw new Error('No se pudo finalizar la entrega')
+      throw new Error(
+        `No se pudo finalizar la entrega: ${error.response?.data?.message || error.message}`
+      )
     }
   }
 }

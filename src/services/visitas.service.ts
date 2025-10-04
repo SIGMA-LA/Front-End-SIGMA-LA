@@ -1,7 +1,6 @@
 import api from './api/api'
 import { Visita } from '@/types'
 
-// 1. Definir la estructura que viene del backend
 interface EmpleadoAsignadoVisita {
   cuil: string
   cod_visita: number
@@ -22,15 +21,30 @@ interface BackendVisita {
   cod_postal?: number
   fecha_cancelacion?: string
   observaciones?: string
-  motivo_visita: 'MEDICION' | 'RE-MEDICION' | 'REPARACION' | 'ASESORAMIENTO' | 'VISITA INICIAL'
-  estado: 'PROGRAMADA' | 'EN CURSO' | 'CANCELADA' | 'REPROGRAMADA' | 'COMPLETADA'
+  motivo_visita:
+    | 'MEDICION'
+    | 'RE-MEDICION'
+    | 'REPARACION'
+    | 'ASESORAMIENTO'
+    | 'VISITA INICIAL'
+  estado:
+    | 'PROGRAMADA'
+    | 'EN CURSO'
+    | 'CANCELADA'
+    | 'REPROGRAMADA'
+    | 'COMPLETADA'
   direccion_visita?: string
   obra?: {
     cod_obra: number
     cod_postal: number
     cuil: string
     fecha_ini: string
-    estado: 'ACTIVA' | 'EN PRODUCCION' | 'FINALIZADA' | 'ENTREGADA' | 'EN ESPERA DE STOCK'
+    estado:
+      | 'ACTIVA'
+      | 'EN PRODUCCION'
+      | 'FINALIZADA'
+      | 'ENTREGADA'
+      | 'EN ESPERA DE STOCK'
     fecha_cancelacion?: string
     direccion: string
     nota_fabrica: string
@@ -40,12 +54,12 @@ interface BackendVisita {
       telefono: string
       mail: string
     }
-    localidad?: {
+    localidad: {
       cod_postal: number
       nombre_localidad: string
     }
   }
-  localidad?: {
+  localidad: {
     cod_postal: number
     nombre_localidad: string
   }
@@ -64,7 +78,7 @@ interface BackendVisita {
   }>
 }
 
-// 2. Función para mapear datos del backend al frontend
+// Mapea la estructura del backend a la estructura del frontend
 const mapToFrontend = (backendVisita: BackendVisita): Visita => {
   return {
     cod_visita: backendVisita.cod_visita,
@@ -74,31 +88,35 @@ const mapToFrontend = (backendVisita: BackendVisita): Visita => {
     observaciones: backendVisita.observaciones,
     direccion_visita: backendVisita.direccion_visita,
     fecha_cancelacion: backendVisita.fecha_cancelacion,
-    obra: backendVisita.obra && backendVisita.obra.cliente ? {
-      cod_obra: backendVisita.obra.cod_obra,
-      cod_postal: backendVisita.obra.cod_postal,
-      cuil_cliente: backendVisita.obra.cuil,
-      fecha_ini: backendVisita.obra.fecha_ini,
-      estado: backendVisita.obra.estado,
-      fecha_cancelacion: backendVisita.obra.fecha_cancelacion,
-      direccion: backendVisita.obra.direccion,
-      nota_fabrica: backendVisita.obra.nota_fabrica,
-      cliente: {
-        cuil: backendVisita.obra.cliente.cuil,
-        razon_social: backendVisita.obra.cliente.razon_social,
-        telefono: backendVisita.obra.cliente.telefono,
-        mail: backendVisita.obra.cliente.mail,
-      },
-      localidad: backendVisita.obra.localidad,
-    } : undefined,
-    empleados_asignados: backendVisita.empleado_visita?.map((ev) => ({
-      cuil: ev.empleado?.cuil || ev.cuil,
-      nombre: ev.empleado?.nombre || '',
-      apellido: ev.empleado?.apellido || '',
-      rol_actual: ev.empleado?.rol_actual || '',
-      area_trabajo: ev.empleado?.area_trabajo || '',
-      contrasenia: ev.empleado?.contrasenia,
-    })) || [],
+    obra:
+      backendVisita.obra && backendVisita.obra.cliente
+        ? {
+            cod_obra: backendVisita.obra.cod_obra,
+            cod_postal: backendVisita.obra.cod_postal,
+            cuil_cliente: backendVisita.obra.cuil,
+            fecha_ini: backendVisita.obra.fecha_ini,
+            estado: backendVisita.obra.estado,
+            fecha_cancelacion: backendVisita.obra.fecha_cancelacion,
+            direccion: backendVisita.obra.direccion,
+            nota_fabrica: backendVisita.obra.nota_fabrica,
+            cliente: {
+              cuil: backendVisita.obra.cliente.cuil,
+              razon_social: backendVisita.obra.cliente.razon_social,
+              telefono: backendVisita.obra.cliente.telefono,
+              mail: backendVisita.obra.cliente.mail,
+            },
+            localidad: backendVisita.obra.localidad,
+          }
+        : undefined,
+    empleados_asignados:
+      backendVisita.empleado_visita?.map((ev) => ({
+        cuil: ev.empleado?.cuil || ev.cuil,
+        nombre: ev.empleado?.nombre || '',
+        apellido: ev.empleado?.apellido || '',
+        rol_actual: ev.empleado?.rol_actual || '',
+        area_trabajo: ev.empleado?.area_trabajo || '',
+        contrasenia: ev.empleado?.contrasenia,
+      })) || [],
     vehiculos_usados: backendVisita.uso_vehiculo_visita?.map((uv) => ({
       patente: uv.patente,
       cod_visita: backendVisita.cod_visita,
@@ -115,9 +133,7 @@ const mapToFrontend = (backendVisita: BackendVisita): Visita => {
 class VisitasService {
   private baseURL = '/visitas'
 
-  /**
-   * Obtener todas las visitas
-   */
+  // Obtiene todas las visitas
   async getAllVisitas(): Promise<Visita[]> {
     try {
       const response = await api.get<BackendVisita[]>(this.baseURL)
@@ -128,12 +144,12 @@ class VisitasService {
     }
   }
 
-  /**
-   * Obtener una visita por ID
-   */
+  // Obtiene una visita específica por ID
   async getVisitaById(cod_visita: number): Promise<Visita> {
     try {
-      const response = await api.get<BackendVisita>(`${this.baseURL}/${cod_visita}`)
+      const response = await api.get<BackendVisita>(
+        `${this.baseURL}/${cod_visita}`
+      )
       return mapToFrontend(response.data)
     } catch (error) {
       console.error(`Error al obtener visita ${cod_visita}:`, error)
@@ -141,9 +157,7 @@ class VisitasService {
     }
   }
 
-  /**
-   * Crear una nueva visita
-   */
+  // Crea una nueva visita
   async createVisita(data: {
     fecha_hora_visita: string
     cod_obra?: number
@@ -162,9 +176,7 @@ class VisitasService {
     }
   }
 
-  /**
-   * Actualizar una visita existente
-   */
+  // Actualiza una visita existente
   async updateVisita(
     cod_visita: number,
     data: {
@@ -190,9 +202,7 @@ class VisitasService {
     }
   }
 
-  /**
-   * Eliminar una visita
-   */
+  // Elimina una visita
   async deleteVisita(cod_visita: number): Promise<Visita> {
     try {
       const response = await api.delete<BackendVisita>(
@@ -205,9 +215,7 @@ class VisitasService {
     }
   }
 
-  /**
-   * Finalizar una visita (cambiar estado a COMPLETADA)
-   */
+  // Marca una visita como completada con observaciones opcionales
   async finalizarVisita(
     cod_visita: number,
     observaciones?: string
@@ -235,25 +243,25 @@ class VisitasService {
     }
   }
 
-  /**
-   * Obtener visitas por empleado y estado
-   */
+  // Obtiene visitas de un empleado filtradas por estado
   async getVisitasByEmpleadoAndEstado(
     cuil: string,
-    estado: 'PROGRAMADA' | 'EN CURSO' | 'CANCELADA' | 'REPROGRAMADA' | 'COMPLETADA'
+    estado:
+      | 'PROGRAMADA'
+      | 'EN CURSO'
+      | 'CANCELADA'
+      | 'REPROGRAMADA'
+      | 'COMPLETADA'
   ): Promise<Visita[]> {
     try {
-      // Obtener todas las visitas y filtrar por empleado y estado
       const allVisitas = await this.getAllVisitas()
-      
+
       return allVisitas.filter((visita) => {
-        // Verificar que el empleado esté asignado a la visita
         const isAssigned = visita.empleados_asignados?.some(
           (emp) => emp.cuil === cuil
         )
-        // Verificar que el estado coincida
         const matchesEstado = visita.estado === estado
-        
+
         return isAssigned && matchesEstado
       })
     } catch (error) {
@@ -265,13 +273,11 @@ class VisitasService {
     }
   }
 
-  /**
-   * Obtener visitas por empleado
-   */
+  // Obtiene todas las visitas de un empleado
   async getVisitasByEmpleado(cuil: string): Promise<Visita[]> {
     try {
       const allVisitas = await this.getAllVisitas()
-      
+
       return allVisitas.filter((visita) =>
         visita.empleados_asignados?.some((emp) => emp.cuil === cuil)
       )
@@ -281,9 +287,7 @@ class VisitasService {
     }
   }
 
-  /**
-   * Obtener visitas por obra
-   */
+  // Obtiene visitas asociadas a una obra
   async getVisitasByObra(cod_obra: number): Promise<Visita[]> {
     try {
       const allVisitas = await this.getAllVisitas()
@@ -294,9 +298,7 @@ class VisitasService {
     }
   }
 
-  /**
-   * Cancelar una visita
-   */
+  // Cancela una visita con fecha de cancelación
   async cancelarVisita(
     cod_visita: number,
     observaciones?: string

@@ -1,8 +1,8 @@
 export interface Cliente {
-  cuil: string // Cambié de number a string según el schema
+  cuil: string
   razon_social: string
   telefono: string
-  mail: string // Mapeo de email a mail
+  mail: string
 }
 
 export interface Documento {
@@ -81,7 +81,7 @@ export interface Obra {
   direccion: string
   nota_fabrica: string
   cliente: Cliente
-  localidad?: Localidad
+  localidad: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
   presupuestos?: Presupuesto[]

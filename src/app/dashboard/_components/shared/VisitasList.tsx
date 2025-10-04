@@ -65,7 +65,10 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
 
         <div className="space-y-4">
           {mockVisitas.map((visita) => (
-            <div key={visita.id} className="flex items-center space-x-4">
+            <div
+              key={visita.cod_visita}
+              className="flex items-center space-x-4"
+            >
               {/* Status Indicator */}
               <div
                 className={`h-6 w-6 rounded-full ${getStatusColor(visita.estado)}`}
@@ -76,24 +79,20 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="mb-2 text-lg font-semibold text-gray-800">
-                      {visita.obra.direccion}
+                      {visita.obra?.direccion || 'Visita sin obra asignada'}
                     </h3>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
-                        <span>{formatDate(visita.fecha)}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{visita.hora}</span>
+                        <span>{formatDate(visita.fecha_hora_visita)}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4" />
-                        <span>{visita.visitadorAsignado}</span>
+                        <span>{visita.empleados_asignados.join(', ')}</span>
                       </div>
                       <div>
                         <span className="font-medium">
-                          Tipo: {getTipoText(visita.tipo)}
+                          Tipo: {getTipoText(visita.motivo_visita)}
                         </span>
                       </div>
                     </div>

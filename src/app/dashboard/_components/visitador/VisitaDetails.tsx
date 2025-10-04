@@ -5,10 +5,12 @@ import {
   MapPin,
   Phone,
   User as UserIcon,
+  Navigation,
 } from 'lucide-react'
 import type { Visita } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
+import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
 
 interface VisitaDetailsProps {
   visita: Visita
@@ -60,6 +62,31 @@ export default function VisitaDetails({
   const canFinalize =
     visita.estado === 'PROGRAMADA' || visita.estado === 'EN CURSO'
 
+  // Función para obtener la dirección completa para navegación
+  const getDireccionCompleta = () => {
+    const direccion = visita.direccion_visita || visita.obra?.direccion
+    const localidad = visita.obra?.localidad?.nombre_localidad
+
+    return { direccion, localidad }
+  }
+
+  const handleVerEnMapa = () => {
+    const { direccion, localidad } = getDireccionCompleta()
+    if (direccion) {
+      abrirGoogleMaps(direccion, localidad)
+    }
+  }
+
+  const handleNavegar = () => {
+    const { direccion, localidad } = getDireccionCompleta()
+    if (direccion) {
+      navegarADireccion(direccion, localidad)
+    }
+  }
+
+  const { direccion, localidad } = getDireccionCompleta()
+  const tieneUbicacion = !!direccion
+
   return (
     <Card className="mx-auto max-w-4xl border-gray-200 bg-white shadow-lg">
       <CardContent className="space-y-4 p-4 lg:space-y-6 lg:p-8">
@@ -100,7 +127,8 @@ export default function VisitaDetails({
             <div className="col-span-1 flex items-center space-x-2 sm:col-span-2 lg:space-x-3">
               <MapPin className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
               <span className="break-words">
-                {visita.direccion_visita || visita.obra.direccion}
+                {direccion}
+                {localidad && `, ${localidad}`}
               </span>
             </div>
             <div className="col-span-1 flex items-center space-x-2 sm:col-span-2 lg:space-x-3">
@@ -153,12 +181,30 @@ export default function VisitaDetails({
         )}
 
         {/* Botones responsivos */}
-        <div className="flex flex-col space-y-3 border-t pt-4 sm:flex-row sm:space-y-0 sm:space-x-4 lg:pt-6">
-          <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
-            <MapPin className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Cómo llegar</span>
-            <span className="sm:hidden">Ruta</span>
-          </Button>
+        <div className="flex flex-col space-y-3 border-t pt-4 sm:flex-row sm:space-y-0 sm:space-x-2 lg:pt-6">
+          {/* Botones de navegación */}
+          {tieneUbicacion && (
+            <>
+              <Button
+                onClick={handleVerEnMapa}
+                className="flex-1 border border-blue-300 bg-white text-blue-700 hover:bg-blue-50 sm:flex-initial"
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Ver en mapa</span>
+                <span className="sm:hidden">Mapa</span>
+              </Button>
+              <Button
+                onClick={handleNavegar}
+                className="flex-1 bg-blue-600 text-white hover:bg-blue-700 sm:flex-initial"
+              >
+                <Navigation className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Cómo llegar</span>
+                <span className="sm:hidden">Navegar</span>
+              </Button>
+            </>
+          )}
+
+          {/* Botón finalizar */}
           {canFinalize && (
             <Button
               onClick={onFinalizarVisita}

@@ -184,7 +184,7 @@ export default function PlantaDashboardClient() {
         {/* Overlay para móvil */}
         {sidebarOpen && (
           <div
-            className="bg-opacity-50 fixed inset-0 z-40 bg-black lg:hidden"
+            className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
