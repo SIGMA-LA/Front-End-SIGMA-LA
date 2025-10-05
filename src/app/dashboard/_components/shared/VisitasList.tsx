@@ -1,10 +1,10 @@
 'use client'
 
 import { Calendar, Clock, User, Eye, Plus } from 'lucide-react'
-import { VisitasListProps } from '@/types'
+import { VisitasListProps, Visita } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { useState, useEffect } from 'react'
-import { obtenerVisitas, type Visita } from '@/actions/visitas'
+import { obtenerVisitas } from '@/actions/visitas'
 
 export default function VisitasList({ onCreateClick }: VisitasListProps) {
   const { usuario, logout } = useAuth() // Cambiado de 'usuario' por consistencia
@@ -18,13 +18,10 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
       setError(null)
 
       const data = await obtenerVisitas()
-      console.log('Visitas obtenidas:', data)
       setVisitas(data)
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Error desconocido'
-
-      // Si hay error de autenticación, hacer logout
       if (
         errorMessage.includes('sesión') ||
         errorMessage.includes('Token expirado')

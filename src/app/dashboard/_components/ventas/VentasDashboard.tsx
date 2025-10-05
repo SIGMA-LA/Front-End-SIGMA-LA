@@ -10,6 +10,7 @@ import {
   X,
   Home,
   PackageOpen,
+  DollarSign,
 } from 'lucide-react'
 
 import { useGlobalContext } from '@/context/GlobalContext'
@@ -24,6 +25,7 @@ import ObrasList from '../shared/ObrasList'
 import ClientesList from '../shared/ClientesList'
 import { ObraFormData } from '@/services/obra.service'
 import { PresupuestoFormData } from '@/services/presupuesto.service'
+import PagosList from './PagosList'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
@@ -51,6 +53,7 @@ export default function VentasDashboard() {
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
+    { id: 'pagos', label: 'Pagos', icon: DollarSign }, // <-- Nuevo botón de Pagos
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
   ]
 
@@ -225,6 +228,13 @@ export default function VentasDashboard() {
               /* TODO: implement create entrega logic */
             }}
           />
+        )
+
+      case 'pagos':
+        return (
+          <div className="p-8 text-center text-lg text-gray-600">
+            <PagosList />
+          </div>
         )
 
       case 'configuraciones':

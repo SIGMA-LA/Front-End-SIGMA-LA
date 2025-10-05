@@ -83,6 +83,11 @@ const mapToBackend = (obraData: ObraFormData): any => {
 /**
  * Obtiene todas las obras del backend y las formatea para el frontend.
  */
+export const getObraById = async (id: number): Promise<Obra> => {
+  const { data } = await api.get<BackendObra>(`/obras/${id}`)
+  return mapToFrontend(data)
+}
+
 export const getObras = async (): Promise<Obra[]> => {
   const { data } = await api.get<BackendObra[]>('/obras')
   return data.map(mapToFrontend)

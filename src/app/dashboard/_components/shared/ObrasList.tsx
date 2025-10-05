@@ -7,6 +7,7 @@ import {
   Calendar,
   Edit,
   Trash2,
+  DollarSign,
   Search,
   Filter,
 } from 'lucide-react'
@@ -14,6 +15,7 @@ import type { ObrasListProps, Obra } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import EstadoObraBadge from './EstadoObraBadge'
+import PagosObra from '../ventas/PagosObra'
 
 const ESTADOS_OBRA: Obra['estado'][] = [
   'ACTIVA',
@@ -33,6 +35,7 @@ export default function ObrasList({
     useGlobalContext()
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [obraPagos, setObraPagos] = useState<Obra | null>(null) // Estado para la obra seleccionada para pagos
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -46,7 +49,7 @@ export default function ObrasList({
         await fetchObras()
         await fetchLocalidades()
       } catch (err) {
-        setError('No se pudieron cargar los datos. Intente de nuevo más tarde.')
+        setError('No se pudieron cargar las obras. Intente de nuevo más tarde.')
         console.error(err)
       } finally {
         setCargando(false)
@@ -55,6 +58,21 @@ export default function ObrasList({
     cargarDatos()
   }, [])
 
+  const handleEliminar = async (id: number) => {
+    if (
+      window.confirm(
+        '¿Estás seguro de que deseas eliminar esta obra? Esta acción no se puede deshacer.'
+      )
+    ) {
+      try {
+        await deleteObra(id)
+        alert('Obra eliminada con éxito.')
+      } catch (err) {
+        console.error('Error al eliminar la obra:', err)
+        alert('Ocurrió un error al intentar eliminar la obra.')
+      }
+    }
+  }
   const obrasFiltradas = useMemo(() => {
     return obras.filter((obra) => {
       const matchDireccion =
@@ -70,6 +88,11 @@ export default function ObrasList({
       return matchDireccion && matchEstado && matchLocalidad
     })
   }, [obras, searchTerm, filtroEstado, filtroLocalidad])
+
+  // Si hay una obra seleccionada para ver pagos, muestra el componente PagosObra
+  if (obraPagos) {
+    return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
+  }
 
   if (cargando) {
     return (
@@ -199,28 +222,42 @@ export default function ObrasList({
                   </div>
                   <div className="flex flex-col items-start gap-3 sm:items-end">
                     <EstadoObraBadge estado={obra.estado} />
-                    <div className="flex flex-wrap gap-3 sm:gap-4">
-                      {onScheduleVisit && (
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
+                      {/* SOLO mostrar si NO es VENTAS */}
+                      {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
                         <button
                           onClick={() => onScheduleVisit(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800"
+                          className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
                         >
                           <Calendar className="h-4 w-4" /> Agendar Visita
                         </button>
                       )}
-                      {onScheduleEntrega && (
-                        <button
-                          onClick={() => onScheduleEntrega(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-orange-600 hover:text-orange-800"
-                        >
-                          <Calendar className="h-4 w-4" /> Agendar Entrega
-                        </button>
-                      )}
+                      {usuario?.rol_actual !== 'VENTAS' &&
+                        onScheduleEntrega && (
+                          <button
+                            onClick={() => onScheduleEntrega(obra)}
+                            className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
+                          >
+                            <Calendar className="h-4 w-4" /> Agendar Entrega
+                          </button>
+                        )}
                       <button
                         onClick={() => onEditClick(obra)}
-                        className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
+                        className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800"
                       >
                         <Edit className="h-4 w-4" /> Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminar(obra.cod_obra)}
+                        className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="h-4 w-4" /> Eliminar
+                      </button>
+                      <button
+                        onClick={() => setObraPagos(obra)}
+                        className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
+                      >
+                        <DollarSign className="h-4 w-4" /> Pagos
                       </button>
                     </div>
                   </div>

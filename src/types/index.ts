@@ -136,6 +136,13 @@ export interface Pago {
   cod_obra: number
   fecha_pago: string
   monto: number
+  obra: Obra
+}
+
+export interface PagoFormData {
+  cod_obra: number
+  fecha_pago: string
+  monto: number
 }
 
 export interface ReporteVentas {

@@ -1,18 +1,9 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { Visita } from '@/types'
 
-export interface Visita {
-  cod_visita: string
-  fecha_hora_visita: string
-  estado: string
-  motivo_visita: string
-  observaciones: string
-  empleados_asignados: string[]
-  obra?: {
-    direccion: string
-  }
-}
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
@@ -34,10 +25,7 @@ async function getAccessToken(): Promise<string> {
   }
 
   try {
-    // CAMBIO: URL base hardcodeada temporalmente
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-
-    const response = await fetch(`${baseUrl}/api/auth/refresh`, {
+    const response = await fetch(`${baseUrl}/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,12 +49,9 @@ export async function obtenerVisitas(): Promise<Visita[]> {
   try {
     const token = await getAccessToken()
 
-    // CAMBIO: URL base con fallback
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+    console.log('Using API URL:', baseUrl)
 
-    console.log('Using API URL:', baseUrl) // Para debug
-
-    const response = await fetch(`${baseUrl}/api/visitas`, {
+    const response = await fetch(`${baseUrl}/visitas`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -98,10 +83,7 @@ export async function crearVisita(
   try {
     const token = await getAccessToken()
 
-    // CAMBIO: URL base con fallback
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-
-    const response = await fetch(`${baseUrl}/api/visitas`, {
+    const response = await fetch(`${baseUrl}/visitas`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
