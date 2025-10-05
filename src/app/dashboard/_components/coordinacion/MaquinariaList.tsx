@@ -2,7 +2,6 @@ import { Wrench, Plus, CheckCircle, AlertTriangle } from 'lucide-react'
 import { mockMaquinarias } from '@/data/mockData'
 import { MaquinariaListProps } from '@/types'
 
-
 export default function MaquinariaList({ onCreateClick }: MaquinariaListProps) {
   const maquinarias = mockMaquinarias
 
@@ -60,11 +59,11 @@ export default function MaquinariaList({ onCreateClick }: MaquinariaListProps) {
 
         {maquinarias.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-            <Wrench className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Wrench className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">
               No hay máquinas registradas
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4 text-gray-600">
               Comienza agregando la primera máquina al sistema
             </p>
             <button
@@ -79,37 +78,38 @@ export default function MaquinariaList({ onCreateClick }: MaquinariaListProps) {
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {maquinarias.map((maquinaria) => (
               <div
-                key={maquinaria.id}
+                key={maquinaria.cod_maquina}
                 className={`rounded-xl border p-6 shadow-sm transition-shadow hover:shadow-md ${getEstadoColor(maquinaria.estado)}`}
               >
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-gray-500">
-                      {maquinaria.id}
+                      {maquinaria.cod_maquina}
                     </span>
                     {getEstadoIcon(maquinaria.estado)}
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs font-medium ${
-                    maquinaria.estado === 'disponible' 
-                      ? 'bg-green-100 text-green-800'
-                      : maquinaria.estado === 'inhabilitada'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                      maquinaria.estado === 'DISPONIBLE'
+                        ? 'bg-green-100 text-green-800'
+                        : maquinaria.estado === 'FUERA_DE_SERVICIO'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {maquinaria.estado}
                   </span>
                 </div>
-                
+
                 <h3 className="mb-3 text-lg font-semibold text-gray-900">
                   {maquinaria.descripcion}
                 </h3>
-                
-                
+
                 <div className="flex gap-2">
-                  <button className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10">
+                  <button className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current">
                     Ver Detalles
                   </button>
-                  <button className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10">
+                  <button className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current">
                     Editar
                   </button>
                 </div>

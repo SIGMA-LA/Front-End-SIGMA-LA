@@ -1,5 +1,5 @@
 import api from './api/api'
-import type { Obra } from '@/types'
+import type { Obra, Presupuesto } from '@/types'
 
 interface BackendObra {
   cod_obra: number
@@ -10,7 +10,7 @@ interface BackendObra {
     telefono: string
     mail: string
   }
-  nota_fabrica: string
+  nota_fabrica?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   estado:
@@ -18,17 +18,17 @@ interface BackendObra {
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
   localidad?: {
     cod_postal: number
     nombre_localidad: string
   }
+  presupuesto?: Presupuesto[]
 }
 
 export interface ObraFormData {
   direccion: string
-  nota_fabrica: string
+  nota_fabrica?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   estado:
@@ -36,7 +36,6 @@ export interface ObraFormData {
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
   cuil_cliente: string
   cod_postal: number
@@ -58,6 +57,7 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
   localidad: obra.localidad,
   cod_postal: obra.localidad?.cod_postal ?? 0,
   cuil_cliente: obra.cliente?.cuil ?? '',
+  presupuesto: obra.presupuesto || [],
 })
 
 const mapToBackend = (obraData: ObraFormData): any => {
@@ -94,12 +94,31 @@ export const getObras = async (): Promise<Obra[]> => {
 }
 
 /**
+ * Obtiene obras que tienen nota de fábrica pero NO tienen órdenes APROBADAS o EN PRODUCCION
+ */
+export const getNotasSinOrdenAprobada = async (): Promise<Obra[]> => {
+  const { data } = await api.get<BackendObra[]>('/obras/notas-sin-orden-aprobada')
+  return data.map(mapToFrontend)
+}
+
+/**
+ * Obtiene obras EN PRODUCCION con nota de fábrica que tienen órdenes en proceso
+ */
+export const getNotasConOrdenEnProceso = async (): Promise<Obra[]> => {
+  const { data } = await api.get<BackendObra[]>('/obras/notas-con-orden-proceso')
+  return data.map(mapToFrontend)
+}
+
+/**
  * Crea una nueva obra.
  * @param obraData - Datos de la obra en formato frontend.
  * @returns La nueva obra creada, formateada para el frontend.
  */
 export const createObra = async (obraData: ObraFormData): Promise<Obra> => {
   const payload = mapToBackend(obraData)
+  if (obraData.nota_fabrica && obraData.nota_fabrica.trim() !== '') {
+    payload.nota_fabrica = obraData.nota_fabrica
+  }
   const { data: nuevaObraBackend } = await api.post<BackendObra>(
     '/obras',
     payload
@@ -123,12 +142,4 @@ export const updateObra = async (
     payload
   )
   return mapToFrontend(obraActualizadaBackend)
-}
-
-/**
- * Elimina una obra por su ID.
- * @param id - El ID (cod_obra) de la obra a eliminar.
- */
-export const deleteObra = async (id: number): Promise<void> => {
-  await api.delete(`/obras/${id}`)
 }

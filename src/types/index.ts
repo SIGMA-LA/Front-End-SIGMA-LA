@@ -77,17 +77,17 @@ export interface Obra {
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
   direccion: string
   cliente: Cliente
-  nota_fabrica: string
+  nota_fabrica?: string
+  nota_fabrica_pid?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   localidad?: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
-  presupuestos?: Presupuesto[]
+  presupuesto?: Presupuesto[]
   pagos?: Pago[]
 }
 
@@ -271,4 +271,15 @@ export interface Localidad {
 export interface TabNavigationProduccionProps {
   activeTab: 'notas' | 'ordenes'
   onTabChange: (tab: 'notas' | 'ordenes') => void
+}
+
+export interface OrdenProduccion {
+  cod_op: number
+  cod_obra: number
+  estado: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
+  fecha_confeccion: string
+  fecha_validacion: string | null
+  url: string
+  public_id: string | null
+  obra: Obra
 }

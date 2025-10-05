@@ -3,7 +3,10 @@ import { X, Save, AlertCircle, Loader2 } from 'lucide-react'
 import clienteService, { CreateClienteDTO } from '@/services/cliente.service'
 import type { CrearClienteProps } from '@/types'
 
-export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) {
+export default function CrearCliente({
+  onCancel,
+  onSubmit,
+}: CrearClienteProps) {
   const [formData, setFormData] = useState<CreateClienteDTO>({
     cuil: '',
     razon_social: '',
@@ -12,7 +15,9 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateClienteDTO, string>>>({})
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof CreateClienteDTO, string>>
+  >({})
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateClienteDTO, string>> = {}
@@ -49,7 +54,7 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -66,13 +71,13 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
       if (onSubmit) {
         onSubmit(clienteCreado as any)
       }
-      
+
       onCancel()
     } catch (err: any) {
       console.error('Error al crear cliente:', err)
       setError(
-        err.response?.data?.message || 
-        'Error al crear el cliente. Por favor, intenta nuevamente.'
+        err.response?.data?.message ||
+          'Error al crear el cliente. Por favor, intenta nuevamente.'
       )
     } finally {
       setLoading(false)
@@ -80,16 +85,17 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
   }
 
   const handleChange = (field: keyof CreateClienteDTO, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }))
+      setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
   }
 
   const formatCUIL = (value: string) => {
     const numbers = value.replace(/\D/g, '')
     if (numbers.length <= 2) return numbers
-    if (numbers.length <= 10) return `${numbers.slice(0, 2)}-${numbers.slice(2)}`
+    if (numbers.length <= 10)
+      return `${numbers.slice(0, 2)}-${numbers.slice(2)}`
     return `${numbers.slice(0, 2)}-${numbers.slice(2, 10)}-${numbers.slice(10, 11)}`
   }
 
@@ -125,11 +131,13 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
               <input
                 type="text"
                 value={formatCUIL(formData.cuil)}
-                onChange={(e) => handleChange('cuil', e.target.value.replace(/\D/g, ''))}
+                onChange={(e) =>
+                  handleChange('cuil', e.target.value.replace(/\D/g, ''))
+                }
                 placeholder="20-12345678-9"
                 maxLength={13}
                 disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
                   errors.cuil
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
@@ -151,14 +159,16 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
                 placeholder="Empresa S.A."
                 maxLength={50}
                 disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
                   errors.razon_social
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
                 }`}
               />
               {errors.razon_social && (
-                <p className="mt-1 text-sm text-red-600">{errors.razon_social}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.razon_social}
+                </p>
               )}
             </div>
 
@@ -173,7 +183,7 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
                 placeholder="+54 341 1234567"
                 maxLength={20}
                 disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
                   errors.telefono
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
@@ -195,7 +205,7 @@ export default function CrearCliente({ onCancel, onSubmit }: CrearClienteProps) 
                 placeholder="contacto@empresa.com"
                 maxLength={100}
                 disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
                   errors.mail
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
                     : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
