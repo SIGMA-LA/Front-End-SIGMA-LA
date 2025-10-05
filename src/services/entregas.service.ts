@@ -1,5 +1,12 @@
 import api from './api/api'
-import { EntregaEmpleado, Empleado, Obra, Cliente, Localidad } from '@/types'
+import {
+  Entrega,
+  EntregaEmpleado,
+  Empleado,
+  Obra,
+  Cliente,
+  Localidad,
+} from '@/types'
 
 interface EmpleadoAsignado {
   cuil: string
@@ -34,7 +41,7 @@ interface BackendEntrega {
       | 'FINALIZADA'
       | 'ENTREGADA'
       | 'EN ESPERA DE STOCK'
-    fecha_cancelacion?: string
+    fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
     cliente: {
@@ -50,8 +57,6 @@ interface BackendEntrega {
   }
   entrega_empleado: EmpleadoAsignado[]
 }
-
-// ...existing code...
 
 interface BackendEntregaEmpleado {
   cuil: string
@@ -76,7 +81,7 @@ interface BackendEntregaEmpleado {
         | 'FINALIZADA'
         | 'ENTREGADA'
         | 'EN ESPERA DE STOCK'
-      fecha_cancelacion?: string
+      fecha_cancelacion: string | null
       direccion: string
       nota_fabrica: string
       cliente: {
@@ -102,7 +107,7 @@ interface BackendEntregaEmpleado {
       | 'FINALIZADA'
       | 'ENTREGADA'
       | 'EN ESPERA DE STOCK'
-    fecha_cancelacion?: string
+    fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
     localidad: {
@@ -126,6 +131,17 @@ interface BackendEntregaEmpleado {
   }
 }
 
+export interface CreateEntregaDTO {
+  cod_obra: number
+  fecha_hora_entrega: string
+  detalle: string
+  observaciones?: string
+  empleados: {
+    cuil: string
+    rol_entrega: 'ENCARGADO' | 'AYUDANTE'
+  }[]
+}
+
 export interface CreateEntregaEmpleadoDTO {
   cuil: string
   cod_entrega: number
@@ -140,6 +156,25 @@ export interface FinalizarEntregaDTO {
 
 export interface UpdateEntregaEmpleadoDTO {
   rol_entrega?: string
+}
+
+const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
+  const empleados_asignados =
+    backendEntrega.entrega_empleado?.map((ee: any) => ({
+      rol_entrega: ee.rol_entrega,
+      empleado: ee.empleado,
+    })) || []
+
+  return {
+    cod_entrega: backendEntrega.cod_entrega,
+    cod_obra: backendEntrega.cod_obra,
+    fecha_hora_entrega: backendEntrega.fecha_hora_entrega,
+    estado: backendEntrega.estado,
+    observaciones: backendEntrega.observaciones,
+    detalle: backendEntrega.detalle,
+    obra: backendEntrega.obra,
+    empleados_asignados: empleados_asignados,
+  }
 }
 
 // Mapea la estructura del backend a la estructura del frontend
@@ -210,6 +245,16 @@ const mapToFrontend = (
 class EntregasService {
   private baseURL = '/entregas'
 
+  async getAllEntregas(): Promise<Entrega[]> {
+    try {
+      const { data } = await api.get<any[]>(this.baseURL)
+      return data.map(mapGetAllToFrontend)
+    } catch (error) {
+      console.error('Error al obtener todas las entregas:', error)
+      throw error
+    }
+  }
+
   // Obtiene entregas de un empleado filtradas por estado
   async getEntregasByEmpleadoAndEstado(
     cuil: string,
@@ -256,6 +301,32 @@ class EntregasService {
       throw error
     }
   }
+
+  async createEntrega(entregaData: CreateEntregaDTO): Promise<Entrega> {
+    try {
+      const payload = {
+        ...entregaData,
+        estado: 'PENDIENTE',
+      }
+
+      console.log('Payload final enviado al backend:', payload)
+
+      const response = await api.post<any>(this.baseURL, payload)
+
+      return response.data as Entrega
+    } catch (error: any) {
+      console.error('Error detallado al crear entrega:', error)
+      if (error.response) {
+        console.error('Status:', error.response.status)
+        console.error('Data:', error.response.data)
+      }
+      throw new Error(
+        error.response?.data?.message ||
+          'Error al crear la entrega en el servidor.',
+      )
+    }
+  }
+
 
   // Obtiene una entrega específica de un empleado
   async getEntregaByEmpleadoAndId(
