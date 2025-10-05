@@ -88,6 +88,11 @@ export const getObras = async (): Promise<Obra[]> => {
   return data.map(mapToFrontend)
 }
 
+export const getObrasConNotaSinOrden = async (): Promise<Obra[]> => {
+  const { data } = await api.get<BackendObra[]>('/obras/notas-sin-orden')
+  return data.map(mapToFrontend)
+}
+
 /**
  * Crea una nueva obra.
  * @param obraData - Datos de la obra en formato frontend.
