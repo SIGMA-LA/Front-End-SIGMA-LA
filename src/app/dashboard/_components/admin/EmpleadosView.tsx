@@ -23,7 +23,8 @@ const getRolDisplayName = (rol: Empleado['rol_actual']) => {
 export default function EmpleadosView() {
   const { empleados, addEmpleado, updateEmpleado, deleteEmpleado } =
     useGlobalContext()
-  const [showCreateEmpleado, setShowCreateEmpleado] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [isModalVisible, setIsModalVisible] = useState(false)
   const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null)
   const [viewingEmpleado, setViewingEmpleado] = useState<Empleado | null>(null)
   const [newEmpleado, setNewEmpleado] = useState({
@@ -35,17 +36,13 @@ export default function EmpleadosView() {
     contrasenia: '123456',
   })
 
-  // Para la animación del modal
-  const [isModalVisible, setIsModalVisible] = useState(false)
-
   useEffect(() => {
-    if (showCreateEmpleado) {
-      // Pequeño delay para permitir que el elemento se monte antes de animar
+    if (showModal) {
       setTimeout(() => setIsModalVisible(true), 10)
     } else {
       setIsModalVisible(false)
     }
-  }, [showCreateEmpleado])
+  }, [showModal])
 
   const handleOpenModal = (empleado: Empleado | null) => {
     if (empleado) {
@@ -69,32 +66,22 @@ export default function EmpleadosView() {
         contrasenia: '123456',
       })
     }
-    setShowCreateEmpleado(true)
+    setShowModal(true)
   }
 
-  const handleCloseModal = () => {
-    setShowCreateEmpleado(false)
-  }
+  const handleCloseModal = () => setShowModal(false)
 
-  const handleCreateEmpleado = async () => {
+  const handleSave = async () => {
     try {
-      await addEmpleado(newEmpleado)
+      if (editingEmpleado) {
+        await updateEmpleado(editingEmpleado.cuil, newEmpleado)
+      } else {
+        await addEmpleado(newEmpleado)
+      }
       handleCloseModal()
     } catch (error) {
-      console.error('Error al crear empleado:', error)
-      alert('Hubo un error al crear el empleado.')
-    }
-  }
-
-  const handleUpdateEmpleado = async () => {
-    if (editingEmpleado) {
-      try {
-        await updateEmpleado(editingEmpleado.cuil, newEmpleado)
-        handleCloseModal()
-      } catch (error) {
-        console.error('No se pudo actualizar el empleado', error)
-        alert('Hubo un error al actualizar el empleado.')
-      }
+      console.error('Error al guardar empleado:', error)
+      alert('Hubo un error al guardar el empleado.')
     }
   }
 
@@ -279,30 +266,26 @@ export default function EmpleadosView() {
         </div>
       )}
 
-      {/* --- MODAL REDISEÑADO --- */}
-      {showCreateEmpleado && (
+      {/* --- INICIO DEL MODAL REDISEÑADO --- */}
+      {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          onClick={handleCloseModal}
         >
           <div
-            className={`mx-4 w-full max-w-lg transform rounded-xl bg-white shadow-2xl transition-all duration-300 ${isModalVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-            onClick={(e) => e.stopPropagation()} // Evita que el clic dentro del modal lo cierre
+            className={`mx-4 w-full max-w-lg transform rounded-2xl bg-white shadow-2xl transition-all duration-300 ${isModalVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b p-6">
               <h3 className="text-xl font-semibold text-gray-900">
                 {editingEmpleado ? 'Editar Empleado' : 'Crear Nuevo Empleado'}
               </h3>
             </div>
-            <div className="space-y-5 p-8">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-6 p-8">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <Label
-                    htmlFor="nombre"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Nombre
-                  </Label>
+                  <Label htmlFor="nombre">Nombre</Label>
                   <Input
                     id="nombre"
                     value={newEmpleado.nombre}
@@ -310,16 +293,11 @@ export default function EmpleadosView() {
                       setNewEmpleado({ ...newEmpleado, nombre: e.target.value })
                     }
                     placeholder="Ej: Juan"
-                    className="mt-1"
+                    className="mt-1 w-full rounded-md"
                   />
                 </div>
                 <div>
-                  <Label
-                    htmlFor="apellido"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Apellido
-                  </Label>
+                  <Label htmlFor="apellido">Apellido</Label>
                   <Input
                     id="apellido"
                     value={newEmpleado.apellido}
@@ -330,17 +308,12 @@ export default function EmpleadosView() {
                       })
                     }
                     placeholder="Ej: Pérez"
-                    className="mt-1"
+                    className="mt-1 w-full rounded-md"
                   />
                 </div>
               </div>
               <div>
-                <Label
-                  htmlFor="cuil"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  CUIL
-                </Label>
+                <Label htmlFor="cuil">CUIL</Label>
                 <Input
                   id="cuil"
                   value={newEmpleado.cuil}
@@ -348,7 +321,7 @@ export default function EmpleadosView() {
                     setNewEmpleado({ ...newEmpleado, cuil: e.target.value })
                   }
                   placeholder="20-12345678-9"
-                  className="mt-1"
+                  className="mt-1 w-full rounded-md"
                   disabled={!!editingEmpleado}
                 />
                 {editingEmpleado && (
@@ -358,12 +331,7 @@ export default function EmpleadosView() {
                 )}
               </div>
               <div>
-                <Label
-                  htmlFor="area_trabajo"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Área de Trabajo
-                </Label>
+                <Label htmlFor="area_trabajo">Área de Trabajo</Label>
                 <Input
                   id="area_trabajo"
                   value={newEmpleado.area_trabajo}
@@ -374,16 +342,11 @@ export default function EmpleadosView() {
                     })
                   }
                   placeholder="Ej: Ventas, Producción"
-                  className="mt-1"
+                  className="mt-1 w-full rounded-md"
                 />
               </div>
               <div>
-                <Label
-                  htmlFor="rol"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Rol
-                </Label>
+                <Label htmlFor="rol">Rol</Label>
                 <select
                   id="rol"
                   value={newEmpleado.rol_actual}
@@ -393,7 +356,7 @@ export default function EmpleadosView() {
                       rol_actual: e.target.value as Empleado['rol_actual'],
                     })
                   }
-                  className="border-input bg-background mt-1 h-11 w-full rounded-md border px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="mt-1 h-11 w-full rounded-md border border-gray-300 bg-white px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 >
                   <option value="ADMIN">Administrador</option>
                   <option value="COORDINACION">Coordinación</option>
@@ -403,15 +366,11 @@ export default function EmpleadosView() {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-3 rounded-b-xl border-t bg-gray-50 p-4">
+            <div className="flex justify-end gap-3 rounded-b-2xl border-t bg-gray-50 p-4">
               <Button onClick={handleCloseModal} variant="outline">
                 Cancelar
               </Button>
-              <Button
-                onClick={
-                  editingEmpleado ? handleUpdateEmpleado : handleCreateEmpleado
-                }
-              >
+              <Button onClick={handleSave}>
                 {editingEmpleado ? 'Guardar Cambios' : 'Crear Empleado'}
               </Button>
             </div>
