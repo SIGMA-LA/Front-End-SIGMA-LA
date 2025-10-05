@@ -1,4 +1,4 @@
-import { number } from "valibot"
+import { number } from 'valibot'
 
 export interface Cliente {
   cuil: string
@@ -136,6 +136,13 @@ export interface Pago {
   cod_obra: number
   fecha_pago: string
   monto: number
+  obra: Obra
+}
+
+export interface PagoFormData {
+  cod_obra: number
+  fecha_pago: string
+  monto: number
 }
 
 export interface ReporteVentas {
@@ -259,4 +266,9 @@ export interface VehiculosListProps {
 export interface Localidad {
   cod_postal: number
   nombre_localidad: string
+}
+
+export interface TabNavigationProduccionProps {
+  activeTab: 'notas' | 'ordenes'
+  onTabChange: (tab: 'notas' | 'ordenes') => void
 }

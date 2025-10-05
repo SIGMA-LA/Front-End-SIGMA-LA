@@ -1,11 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Building2, Plus, Calendar, Edit, Trash2 } from 'lucide-react'
-import type { ObrasListProps } from '@/types'
+import {
+  Building2,
+  Plus,
+  Calendar,
+  Edit,
+  Trash2,
+  DollarSign,
+} from 'lucide-react'
+import type { ObrasListProps, Obra } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import EstadoObraBadge from './EstadoObraBadge'
+import PagosObra from '../ventas/PagosObra'
 
 export default function ObrasList({
   onCreateClick,
@@ -16,6 +24,7 @@ export default function ObrasList({
   const { obras, fetchObras, deleteObra } = useGlobalContext()
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [obraPagos, setObraPagos] = useState<Obra | null>(null) // Estado para la obra seleccionada para pagos
 
   const { usuario } = useAuth()
 
@@ -25,7 +34,7 @@ export default function ObrasList({
         await fetchObras()
       } catch (err) {
         setError('No se pudieron cargar las obras. Intente de nuevo más tarde.')
-        console.error(err);
+        console.error(err)
       } finally {
         setCargando(false)
       }
@@ -34,7 +43,11 @@ export default function ObrasList({
   }, [])
 
   const handleEliminar = async (id: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta obra? Esta acción no se puede deshacer.')) {
+    if (
+      window.confirm(
+        '¿Estás seguro de que deseas eliminar esta obra? Esta acción no se puede deshacer.'
+      )
+    ) {
       try {
         await deleteObra(id)
         alert('Obra eliminada con éxito.')
@@ -45,8 +58,17 @@ export default function ObrasList({
     }
   }
 
+  // Si hay una obra seleccionada para ver pagos, muestra el componente PagosObra
+  if (obraPagos) {
+    return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
+  }
+
   if (cargando) {
-    return <div className="p-8 text-center text-lg text-gray-600">Cargando obras...</div>
+    return (
+      <div className="p-8 text-center text-lg text-gray-600">
+        Cargando obras...
+      </div>
+    )
   }
 
   if (error) {
@@ -57,15 +79,17 @@ export default function ObrasList({
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Obras</h1>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            Obras
+          </h1>
           {usuario?.rol_actual === 'VENTAS' && (
-          <button
-            onClick={onCreateClick}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
-          >
-            <Plus className="h-5 w-5" />
-            Nueva Obra
-          </button>
+            <button
+              onClick={onCreateClick}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              <Plus className="h-5 w-5" />
+              Nueva Obra
+            </button>
           )}
         </div>
 
@@ -73,37 +97,62 @@ export default function ObrasList({
           {obras.length > 0 ? (
             obras.map((obra) => (
               <div
-                key={obra.cod_obra} 
+                key={obra.cod_obra}
                 className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{obra.direccion}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {obra.direccion}
+                    </h3>
                     <p className="text-gray-600">
                       Cliente: {obra.cliente?.razon_social || 'No asignado'}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Inicio: {new Date(obra.fecha_ini).toLocaleDateString('es-AR', { timeZone: 'UTC' })}
+                      Inicio:{' '}
+                      {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
+                        timeZone: 'UTC',
+                      })}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <EstadoObraBadge estado={obra.estado} />
                     <div className="flex flex-wrap gap-2 sm:gap-4">
-                      {onScheduleVisit && (
-                        <button onClick={() => onScheduleVisit(obra)} className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800">
+                      {/* SOLO mostrar si NO es visitador */}
+                      {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
+                        <button
+                          onClick={() => onScheduleVisit(obra)}
+                          className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
+                        >
                           <Calendar className="h-4 w-4" /> Agendar Visita
                         </button>
                       )}
-                      {onScheduleEntrega && (
-                        <button onClick={() => onScheduleEntrega(obra)} className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800">
-                          <Calendar className="h-4 w-4" /> Agendar Entrega
-                        </button>
-                      )}
-                      <button onClick={() => onEditClick(obra)} className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800">
+                      {usuario?.rol_actual !== 'VENTAS' &&
+                        onScheduleEntrega && (
+                          <button
+                            onClick={() => onScheduleEntrega(obra)}
+                            className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
+                          >
+                            <Calendar className="h-4 w-4" /> Agendar Entrega
+                          </button>
+                        )}
+                      <button
+                        onClick={() => onEditClick(obra)}
+                        className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800"
+                      >
                         <Edit className="h-4 w-4" /> Editar
                       </button>
-                      <button onClick={() => handleEliminar(obra.cod_obra)} className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800">
+                      <button
+                        onClick={() => handleEliminar(obra.cod_obra)}
+                        className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
+                      >
                         <Trash2 className="h-4 w-4" /> Eliminar
+                      </button>
+                      <button
+                        onClick={() => setObraPagos(obra)}
+                        className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
+                      >
+                        <DollarSign className="h-4 w-4" /> Pagos
                       </button>
                     </div>
                   </div>
@@ -113,12 +162,16 @@ export default function ObrasList({
           ) : (
             <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
               <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No hay obras</h3>
-              <p className="mt-1 text-sm text-gray-500">Comienza creando una nueva obra.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No hay obras
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Comienza creando una nueva obra.
+              </p>
             </div>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }

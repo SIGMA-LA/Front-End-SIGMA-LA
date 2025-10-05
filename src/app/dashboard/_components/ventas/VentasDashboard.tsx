@@ -5,13 +5,12 @@ import {
   Building2,
   Users,
   Calendar,
-  Package,
-  Plus,
   Settings,
   Menu,
   X,
   Home,
   PackageOpen,
+  DollarSign,
 } from 'lucide-react'
 
 import { useGlobalContext } from '@/context/GlobalContext'
@@ -26,6 +25,7 @@ import VisitasList from '../shared/VisitasList' // Shared
 import ObrasList from '../shared/ObrasList' // Shared
 import ClientesList from '../shared/ClientesList' // Shared
 import { ObraFormData } from '@/services/obra.service.js'
+import PagosList from './PagosList' // Ventas
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
@@ -47,6 +47,7 @@ export default function VentasDashboard() {
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
+    { id: 'pagos', label: 'Pagos', icon: DollarSign }, // <-- Nuevo botón de Pagos
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
   ]
 
@@ -73,7 +74,7 @@ export default function VentasDashboard() {
             }}
           />
         )
-      
+
       case 'crear-obra':
         return (
           <CrearObra
@@ -89,12 +90,15 @@ export default function VentasDashboard() {
             }}
           />
         )
-      
+
       case 'editar-obra':
         return (
           <CrearObra
             obraExistente={obraParaEditar}
-            onCancel={() => { setCurrentSection('obras'); setObraParaEditar(null) }}
+            onCancel={() => {
+              setCurrentSection('obras')
+              setObraParaEditar(null)
+            }}
             onSubmit={async (obraData: ObraFormData) => {
               if (!obraParaEditar) return
               try {
@@ -132,6 +136,13 @@ export default function VentasDashboard() {
               /* TODO: implement create entrega logic */
             }}
           />
+        )
+
+      case 'pagos':
+        return (
+          <div className="p-8 text-center text-lg text-gray-600">
+            <PagosList />
+          </div>
         )
 
       case 'configuraciones':
