@@ -1,621 +1,117 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Users,
-  TrendingUp,
-  Building,
-  UserPlus,
-  BarChart3,
-  DollarSign,
-  Calendar,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  Phone,
-  Mail,
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import type { Empleado } from '@/types'
-import { mockReportesVentas } from '@/data/mockData'
-import { useGlobalContext } from '@/context/GlobalContext'
-import { useAuth } from '@/context/AuthContext'
-import EstadoObraBadge from '../shared/EstadoObraBadge'
+import { Users, Building, BarChart3, Home, Menu, X } from 'lucide-react'
+import DashboardView from './DashboardView'
+import EmpleadosView from './EmpleadosView'
+import ReportesView from './ReportesView'
+import ObrasView from './ObrasView'
+
+const menuItems = [
+  { id: 'dashboard', label: 'Dashboard', icon: Home },
+  { id: 'empleados', label: 'Empleados', icon: Users },
+  { id: 'reportes', label: 'Reportes', icon: BarChart3 },
+  { id: 'obras', label: 'Obras', icon: Building },
+]
 
 export default function AdminDashboardClient() {
-  const { usuario } = useAuth()
-  const [showCreateEmpleado, setShowCreateEmpleado] = useState(false)
-  const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null)
-  const [viewingEmpleado, setViewingEmpleado] = useState<Empleado | null>(null)
-  const [newEmpleado, setNewEmpleado] = useState({
-    nombre: '',
-    apellido: '',
-    cuil: '',
-    rol_actual: 'VISITADOR' as Empleado['rol_actual'],
-    area_trabajo: '',
-    contrasenia: '',
-  })
+  const [currentSection, setCurrentSection] = useState('dashboard')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  if (!usuario) {
-    return <div>Cargando datos del usuario...</div>
+  const handleNavigation = (section: string) => {
+    setCurrentSection(section)
+    setSidebarOpen(false)
   }
 
-  const {
-    obras,
-    clientes,
-    empleados,
-    addEmpleado,
-    updateEmpleado,
-    deleteEmpleado,
-    currentSection,
-    setCurrentSection,
-  } = useGlobalContext()
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-    }).format(amount)
-  }
-
-  const getRolDisplayName = (rol: Empleado['rol_actual']) => {
-    const rolNames: Record<Empleado['rol_actual'], string> = {
-      ADMIN: 'Administrador',
-      COORDINACION: 'Coordinación',
-      PLANTA: 'Planta',
-      VISITADOR: 'Visitador',
-      VENTAS: 'Ventas',
-    }
-    return rolNames[rol] || rol
-  }
-
-  const getEmpleadosBySection = () => {
-    return {
-      coordinacion: empleados.filter((u) => u.rol_actual === 'COORDINACION'),
-      visitadores: empleados.filter((u) => u.rol_actual === 'VISITADOR'),
-      planta: empleados.filter((u) => u.rol_actual === 'PLANTA'),
-      ventas: empleados.filter((u) => u.rol_actual === 'VENTAS'),
-      admin: empleados.filter((u) => u.rol_actual === 'ADMIN'),
+  const renderContent = () => {
+    switch (currentSection) {
+      case 'empleados':
+        return <EmpleadosView />
+      case 'reportes':
+        return <ReportesView />
+      case 'obras':
+        return <ObrasView />
+      case 'dashboard':
+      default:
+        return <DashboardView onNavigate={setCurrentSection} />
     }
   }
 
-  const handleCreateEmpleado = () => {
-    const empleadoData = {
-      ...newEmpleado,
-      contrasenia: '123456',
-    }
-
-    try {
-      addEmpleado(empleadoData)
-      setNewEmpleado({
-        nombre: '',
-        apellido: '',
-        cuil: '',
-        rol_actual: 'VISITADOR',
-        area_trabajo: '',
-        contrasenia: '',
-      })
-      setShowCreateEmpleado(false)
-    } catch (error) {
-      console.error('Error al crear empleado:', error)
-    }
-  }
-
-  const handleEditEmpleado = (empleado: Empleado) => {
-    setEditingEmpleado(empleado)
-    setNewEmpleado({
-      cuil: empleado.cuil,
-      nombre: empleado.nombre,
-      apellido: empleado.apellido,
-      area_trabajo: '',
-      rol_actual: 'VISITADOR',
-      contrasenia: '123456',
-    })
-    setShowCreateEmpleado(true)
-  }
-
-  const handleViewEmpleado = (empleado: Empleado) => {
-    setViewingEmpleado(empleado)
-  }
-
-  const handleUpdateEmpleado = async () => {
-    if (editingEmpleado) {
-      try {
-        await updateEmpleado(editingEmpleado.cuil, { ...newEmpleado })
-        setEditingEmpleado(null)
-        setShowCreateEmpleado(false)
-      } catch (error) {
-        console.error('No se pudo actualizar el empleado', error)
-      }
-    }
-  }
-
-  const handleDeleteEmpleado = async (cuil: string) => {
-    if (window.confirm('¿Seguro?')) {
-      try {
-        await deleteEmpleado(cuil)
-      } catch (error) {
-        console.error('Error desde el componente al borrar empleado:', error)
-      }
-    }
-  }
-
-  const renderDashboard = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-green-600 text-white">
-          <CardContent className="flex flex-col justify-center p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100">Obras Activas</p>
-                <p className="text-3xl font-bold">
-                  {obras.filter((o) => o.estado === 'ACTIVA').length}
-                </p>
-              </div>
-              <Building className="h-12 w-12 text-green-200" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-600 text-white">
-          <CardContent className="flex flex-col justify-center p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100">Clientes Totales</p>
-                <p className="text-3xl font-bold">{clientes.length}</p>
-              </div>
-              <Users className="h-12 w-12 text-purple-200" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-orange-600 text-white">
-          <CardContent className="flex flex-col justify-center p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100">Ingresos Mes</p>
-                <p className="text-3xl font-bold">
-                  {formatCurrency(
-                    mockReportesVentas[mockReportesVentas.length - 1]
-                      ?.ingresosBrutos || 0
-                  )}
-                </p>
-              </div>
-              <DollarSign className="h-12 w-12 text-orange-200" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5" />
-            <span>Evolución de Ventas 2024</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {mockReportesVentas.slice(-6).map((reporte) => (
-              <div
-                key={reporte.id}
-                className="flex items-center justify-between rounded-lg bg-gray-50 p-3"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">
-                      {reporte.mes} {reporte.año}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {reporte.ventasTotales} ventas
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-green-600">
-                    {formatCurrency(reporte.gananciaNeeta)}
-                  </p>
-                  <p className="text-sm text-gray-600">Ganancia neta</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-lg"
-          onClick={() => setCurrentSection('empleados')}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <UserPlus className="mx-auto mb-4 h-12 w-12 text-blue-600" />
-            <h3 className="mb-2 text-lg font-semibold">Gestionar Empleados</h3>
-            <p className="text-gray-600">
-              Crear, editar y administrar empleados
-            </p>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-lg"
-          onClick={() => setCurrentSection('reportes')}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <TrendingUp className="mx-auto mb-4 h-12 w-12 text-green-600" />
-            <h3 className="mb-2 text-lg font-semibold">Reportes de Ventas</h3>
-            <p className="text-gray-600">Análisis detallado de ventas</p>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-lg"
-          onClick={() => setCurrentSection('obras')}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <Building className="mx-auto mb-4 h-12 w-12 text-purple-600" />
-            <h3 className="mb-2 text-lg font-semibold">Supervisar Obras</h3>
-            <p className="text-gray-600">Vista general de todas las obras</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-
-  const renderEmpleadoCard = (empleado: Empleado) => (
-    <Card key={empleado.cuil}>
-      <CardContent className="flex flex-col justify-between p-4">
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex space-x-1">
-              <Button
-                onClick={() => handleViewEmpleado(empleado)}
-                variant="ghost"
-                size="icon"
-                title="Ver detalles"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => handleEditEmpleado(empleado)}
-                variant="ghost"
-                size="icon"
-                title="Editar"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={() => handleDeleteEmpleado(empleado.cuil)}
-                variant="destructive"
-                size="icon"
-                title="Eliminar"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <h4 className="mb-1 text-sm font-semibold">
-            {empleado.nombre} {empleado.apellido}
-          </h4>
-        </div>
-      </CardContent>
-    </Card>
-  )
-
-  const renderEmpleados = () => {
-    const sections = getEmpleadosBySection()
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Gestión de Empleados
-          </h2>
-          <Button onClick={() => setShowCreateEmpleado(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Empleado
-          </Button>
-        </div>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Users className="mr-2 h-5 w-5 text-blue-600" />
-              Coordinación ({sections.coordinacion.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.coordinacion.map(renderEmpleadoCard)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Building className="mr-2 h-5 w-5 text-purple-600" />
-              Visitadores ({sections.visitadores.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.visitadores.map(renderEmpleadoCard)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Building className="mr-2 h-5 w-5 text-green-600" />
-              Planta ({sections.planta.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.planta.map(renderEmpleadoCard)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Building className="mr-2 h-5 w-5 text-blue-600" />
-              Ventas ({sections.ventas.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.ventas.map(renderEmpleadoCard)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Users className="mr-2 h-5 w-5 text-red-600" />
-              Administradores ({sections.admin.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sections.admin.map(renderEmpleadoCard)}
-            </div>
-          </CardContent>
-        </Card>
-        {viewingEmpleado && (
-          <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-            <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6">
-              <h3 className="mb-4 text-lg font-semibold">
-                Detalles del Empleado
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <Users className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">
-                      {viewingEmpleado.nombre} {viewingEmpleado.apellido}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {getRolDisplayName(viewingEmpleado.rol_actual)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end">
-                <Button
-                  onClick={() => setViewingEmpleado(null)}
-                  variant="outline"
-                >
-                  Cerrar
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-        {showCreateEmpleado && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur">
-            <div className="mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-6">
-              <h3 className="mb-4 text-lg font-semibold">
-                {editingEmpleado ? 'Editar Empleado' : 'Crear Nuevo Empleado'}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="nombre">Nombre</Label>
-                  <Input
-                    id="nombre"
-                    value={newEmpleado.nombre}
-                    onChange={(e) =>
-                      setNewEmpleado({ ...newEmpleado, nombre: e.target.value })
-                    }
-                    placeholder="Ingrese el nombre"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="apellido">Apellido</Label>
-                  <Input
-                    id="apellido"
-                    value={newEmpleado.apellido}
-                    onChange={(e) =>
-                      setNewEmpleado({
-                        ...newEmpleado,
-                        apellido: e.target.value,
-                      })
-                    }
-                    placeholder="Ingrese el apellido"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cuil">Cuil</Label>
-                  <Input
-                    id="cuil"
-                    type="cuil"
-                    value={newEmpleado.cuil}
-                    onChange={(e) =>
-                      setNewEmpleado({
-                        ...newEmpleado,
-                        cuil: String(e.target.value),
-                      })
-                    }
-                    placeholder="Ingrese el cuil"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="rol">Rol</Label>
-                  <select
-                    id="rol"
-                    value={newEmpleado.rol_actual}
-                    onChange={(e) =>
-                      setNewEmpleado({
-                        ...newEmpleado,
-                        rol_actual: e.target.value as Empleado['rol_actual'],
-                      })
-                    }
-                    className="border-input bg-background h-10 w-full rounded-md border px-3"
-                  >
-                    <option value="coordinacion">Coordinación</option>
-                    <option value="visitador">Visitador</option>
-                    <option value="encargado">Encargado</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </div>
-              </div>
-              <div className="mt-6 flex space-x-4">
-                <Button
-                  onClick={() => {
-                    setShowCreateEmpleado(false)
-                    setEditingEmpleado(null)
-                    setNewEmpleado({
-                      cuil: '',
-                      nombre: '',
-                      apellido: '',
-                      area_trabajo: '',
-                      rol_actual: 'VISITADOR',
-                      contrasenia: '123456',
-                    })
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={
-                    editingEmpleado
-                      ? handleUpdateEmpleado
-                      : handleCreateEmpleado
-                  }
-                  className="flex-1"
-                >
-                  {editingEmpleado ? 'Actualizar' : 'Crear'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  const renderReportes = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Reportes de Ventas</h2>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {mockReportesVentas.map((reporte) => (
-          <Card key={reporte.id}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>
-                  {reporte.mes} {reporte.año}
-                </span>
-                <span className="text-sm font-normal text-gray-500">
-                  {reporte.ventasTotales} ventas
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ingresos Brutos:</span>
-                  <span className="font-semibold">
-                    {formatCurrency(reporte.ingresosBrutos)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Costos Materiales:</span>
-                  <span className="font-semibold text-red-600">
-                    {formatCurrency(reporte.costosMateriales)}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-medium text-gray-600">
-                    Ganancia Neta:
-                  </span>
-                  <span className="font-bold text-green-600">
-                    {formatCurrency(reporte.gananciaNeeta)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Obras Completadas:</span>
-                  <span className="font-medium">
-                    {reporte.obrasCompletadas}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Clientes Nuevos:</span>
-                  <span className="font-medium">{reporte.clientesNuevos}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
-
-  const renderObras = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Supervisión de Obras</h2>
-      <div className="space-y-4">
-        {obras.map((obra) => (
-          <Card key={obra.cod_obra}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="mb-2 text-lg font-semibold">
-                    {obra.direccion}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                      <strong>Cliente:</strong> {obra.cliente.razon_social}
-                    </div>
-                    <div>
-                      <strong>Nota de Fabrica:</strong>{obra.nota_fabrica}
-                    </div>
-                    <div>
-                      <strong>Fecha Inicio:</strong>{' '}
-                      {new Date(obra.fecha_ini).toLocaleDateString('es-AR')}
-                    </div>
-                  </div>
-                </div>
-                <EstadoObraBadge estado={obra.estado} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+  const SidebarContent = () => (
+    <nav className="flex-1 space-y-2 p-4">
+      {menuItems.map((item) => {
+        const Icon = item.icon
+        const isActive = currentSection === item.id
+        return (
+          <button
+            key={item.id}
+            onClick={() => handleNavigation(item.id)}
+            className={`flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+            {item.label}
+          </button>
+        )
+      })}
+    </nav>
   )
 
   return (
-    <div className="mx-auto max-w-7xl py-3">
-      {currentSection === 'dashboard' && renderDashboard()}
-      {currentSection === 'empleados' && renderEmpleados()}
-      {currentSection === 'reportes' && renderReportes()}
-      {currentSection === 'obras' && renderObras()}
+    <div className="flex min-h-[calc(100vh-68px)]">
+      <aside className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white md:flex md:flex-col">
+        <SidebarContent />
+      </aside>
+
+      <div
+        className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+      >
+        <div
+          className="absolute inset-0 bg-black opacity-50"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+        <div className="relative flex h-full w-64 max-w-xs flex-1 flex-col bg-white">
+          <div className="absolute top-0 right-0 -mr-12 pt-2">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full text-white focus:outline-none"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto pt-5 pb-4">
+            <div className="mb-6 flex flex-shrink-0 items-center px-4">
+              <h1 className="text-xl font-bold text-blue-600">Admin Panel</h1>
+            </div>
+            <SidebarContent />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col">
+        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm md:hidden">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-1 text-gray-600 hover:text-gray-900 focus:outline-none"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {menuItems.find((item) => currentSection === item.id)?.label ||
+                'Dashboard'}
+            </h1>
+            <div className="w-6"></div>
+          </div>
+        </header>
+
+        <main className="flex-1 bg-gray-50 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">{renderContent()}</div>
+        </main>
+      </div>
     </div>
   )
 }

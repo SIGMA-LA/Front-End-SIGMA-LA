@@ -1,45 +1,44 @@
 import api from './api/api'
-import type { Obra } from '@/types'
+import type { Obra, Presupuesto } from '@/types'
 
 interface BackendObra {
-  cod_obra: number;
-  direccion: string;
+  cod_obra: number
+  direccion: string
   cliente: {
-    cuil: string;
-    razon_social: string;
-    telefono: string;
-    mail: string;
-  };
-  nota_fabrica: string;
-  fecha_ini: string;
-  fecha_cancelacion: string | null;
+    cuil: string
+    razon_social: string
+    telefono: string
+    mail: string
+  }
+  nota_fabrica?: string
+  fecha_ini: string
+  fecha_cancelacion: string | null
   estado:
     | 'ACTIVA'
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
-    | 'EN ESPERA DE STOCK';
+    | 'EN ESPERA DE STOCK'
   localidad?: {
-    cod_postal: number;
-    nombre_localidad: string;
-  };
+    cod_postal: number
+    nombre_localidad: string
+  }
+  presupuesto?: Presupuesto[]
 }
 
 export interface ObraFormData {
-  direccion: string;
-  nota_fabrica: string;
-  fecha_ini: string;
-  fecha_cancelacion: string | null;
+  direccion: string
+  nota_fabrica?: string
+  fecha_ini: string
+  fecha_cancelacion: string | null
   estado:
     | 'ACTIVA'
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
-  cuil_cliente: string;
-  cod_postal: number;
+  cuil_cliente: string
+  cod_postal: number
 }
 
 const mapToFrontend = (obra: BackendObra): Obra => ({
@@ -58,7 +57,8 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
   localidad: obra.localidad,
   cod_postal: obra.localidad?.cod_postal ?? 0,
   cuil_cliente: obra.cliente?.cuil ?? '',
-});
+  presupuesto: obra.presupuesto || [],
+})
 
 const mapToBackend = (obraData: ObraFormData): any => {
   const payload: any = {
@@ -67,18 +67,18 @@ const mapToBackend = (obraData: ObraFormData): any => {
     cod_postal: obraData.cod_postal,
     cuil: obraData.cuil_cliente,
     fecha_ini: obraData.fecha_ini,
-  };
+  }
 
   if (obraData.nota_fabrica && obraData.nota_fabrica.trim() !== '') {
-    payload.nota_fabrica = obraData.nota_fabrica;
+    payload.nota_fabrica = obraData.nota_fabrica
   }
 
   if (obraData.fecha_cancelacion) {
-    payload.fecha_cancelacion = obraData.fecha_cancelacion;
+    payload.fecha_cancelacion = obraData.fecha_cancelacion
   }
 
-  return payload;
-};
+  return payload
+}
 
 /**
  * Obtiene todas las obras del backend y las formatea para el frontend.
@@ -94,10 +94,16 @@ export const getObras = async (): Promise<Obra[]> => {
  * @returns La nueva obra creada, formateada para el frontend.
  */
 export const createObra = async (obraData: ObraFormData): Promise<Obra> => {
-  const payload = mapToBackend(obraData);
-  const { data: nuevaObraBackend } = await api.post<BackendObra>('/obras', payload);
-  return mapToFrontend(nuevaObraBackend);
-};
+  const payload = mapToBackend(obraData)
+  if (obraData.nota_fabrica && obraData.nota_fabrica.trim() !== '') {
+    payload.nota_fabrica = obraData.nota_fabrica
+  }
+  const { data: nuevaObraBackend } = await api.post<BackendObra>(
+    '/obras',
+    payload
+  )
+  return mapToFrontend(nuevaObraBackend)
+}
 
 /**
  * Actualiza una obra existente.
@@ -105,16 +111,14 @@ export const createObra = async (obraData: ObraFormData): Promise<Obra> => {
  * @param obraData - Los datos a actualizar, en formato frontend.
  * @returns La obra actualizada, formateada para el frontend.
  */
-export const updateObra = async (id: number, obraData: ObraFormData): Promise<Obra> => {
-  const payload = mapToBackend(obraData);
-  const { data: obraActualizadaBackend } = await api.put<BackendObra>(`/obras/${id}`, payload);
-  return mapToFrontend(obraActualizadaBackend);
-};
-
-/**
- * Elimina una obra por su ID.
- * @param id - El ID (cod_obra) de la obra a eliminar.
- */
-export const deleteObra = async (id: number): Promise<void> => {
-  await api.delete(`/obras/${id}`)
+export const updateObra = async (
+  id: number,
+  obraData: ObraFormData
+): Promise<Obra> => {
+  const payload = mapToBackend(obraData)
+  const { data: obraActualizadaBackend } = await api.put<BackendObra>(
+    `/obras/${id}`,
+    payload
+  )
+  return mapToFrontend(obraActualizadaBackend)
 }
