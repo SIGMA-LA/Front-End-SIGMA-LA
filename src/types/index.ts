@@ -1,4 +1,4 @@
-import { number } from "valibot"
+import { number } from 'valibot'
 
 export interface Cliente {
   cuil: string
@@ -77,17 +77,16 @@ export interface Obra {
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
   direccion: string
   cliente: Cliente
-  nota_fabrica: string
+  nota_fabrica?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   localidad?: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
-  presupuestos?: Presupuesto[]
+  presupuesto?: Presupuesto[]
   pagos?: Pago[]
 }
 

@@ -13,6 +13,9 @@ import visitasService from '@/services/visitas.service'
 import * as obraService from '@/services/obra.service'
 import clienteService from '@/services/cliente.service'
 import { ObraFormData } from '@/services/obra.service'
+import presupuestoService, {
+  PresupuestoFormData,
+} from '@/services/presupuesto.service'
 import type {
   Empleado,
   Obra,
@@ -26,6 +29,7 @@ interface GlobalContextType {
   empleados: Empleado[]
   obras: Obra[]
   clientes: Cliente[]
+  localidades: Localidad[]
   addEmpleado: (empleado: Omit<Empleado, 'cuil'>) => Promise<void>
   updateEmpleado: (
     cuil: string,
@@ -39,9 +43,17 @@ interface GlobalContextType {
   fetchClientes: () => Promise<void>
   fetchLocalidades: () => Promise<void>
   fetchObras: () => Promise<void>
-  createObra: (obraData: ObraFormData) => Promise<void>
+  createObra: (obraData: ObraFormData) => Promise<Obra>
   updateObra: (id: number, obraData: ObraFormData) => Promise<void>
   deleteObra: (id: number) => Promise<void>
+  createPresupuesto: (
+    presupuestoData: PresupuestoFormData,
+    cod_obra: number
+  ) => Promise<void>
+  updatePresupuesto: (
+    nro_presupuesto: number,
+    data: PresupuestoFormData
+  ) => Promise<void>
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
@@ -97,10 +109,11 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const createObra = async (obraData: ObraFormData) => {
+  const createObra = async (obraData: ObraFormData): Promise<Obra> => {
     try {
       const nuevaObra = await obraService.createObra(obraData)
       setObras((prev) => [nuevaObra, ...prev])
+      return nuevaObra
     } catch (error) {
       console.error('Error al crear obra desde el contexto:', error)
       throw error
@@ -170,7 +183,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  // Funciones utilitarias - no manejan estado local, solo hacen la petición
   const finalizarEntrega = async (id: number, observaciones?: string) => {
     try {
       await entregasService.finalizarEntrega(id, observaciones)
@@ -189,9 +201,34 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const createPresupuesto = async (
+    presupuestoData: PresupuestoFormData,
+    cod_obra: number
+  ) => {
+    try {
+      await presupuestoService.createPresupuesto(presupuestoData, cod_obra)
+    } catch (error) {
+      console.error('Error al crear presupuesto desde el contexto:', error)
+      throw error
+    }
+  }
+
+  const updatePresupuesto = async (
+    nro_presupuesto: number,
+    data: PresupuestoFormData
+  ) => {
+    try {
+      await presupuestoService.updatePresupuesto(nro_presupuesto, data)
+    } catch (error) {
+      console.error('Error al actualizar presupuesto:', error)
+      throw error
+    }
+  }
+
   return (
     <GlobalContext.Provider
       value={{
+        localidades,
         empleados,
         obras,
         clientes,
@@ -208,6 +245,8 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
         updateObra,
         deleteObra,
         fetchClientes,
+        createPresupuesto,
+        updatePresupuesto,
       }}
     >
       {children}

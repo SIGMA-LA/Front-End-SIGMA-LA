@@ -1,5 +1,12 @@
 import api from './api/api'
-import { EntregaEmpleado, Empleado, Obra, Cliente, Localidad } from '@/types'
+import {
+  Entrega,
+  EntregaEmpleado,
+  Empleado,
+  Obra,
+  Cliente,
+  Localidad,
+} from '@/types'
 
 interface EmpleadoAsignado {
   cuil: string
@@ -34,7 +41,7 @@ interface BackendEntrega {
       | 'FINALIZADA'
       | 'ENTREGADA'
       | 'EN ESPERA DE STOCK'
-    fecha_cancelacion?: string
+    fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
     cliente: {
@@ -50,8 +57,6 @@ interface BackendEntrega {
   }
   entrega_empleado: EmpleadoAsignado[]
 }
-
-// ...existing code...
 
 interface BackendEntregaEmpleado {
   cuil: string
@@ -76,7 +81,7 @@ interface BackendEntregaEmpleado {
         | 'FINALIZADA'
         | 'ENTREGADA'
         | 'EN ESPERA DE STOCK'
-      fecha_cancelacion?: string
+      fecha_cancelacion: string | null
       direccion: string
       nota_fabrica: string
       cliente: {
@@ -102,7 +107,7 @@ interface BackendEntregaEmpleado {
       | 'FINALIZADA'
       | 'ENTREGADA'
       | 'EN ESPERA DE STOCK'
-    fecha_cancelacion?: string
+    fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
     localidad: {
@@ -124,6 +129,17 @@ interface BackendEntregaEmpleado {
     area_trabajo: string
     contrasenia?: string
   }
+}
+
+export interface CreateEntregaDTO {
+  cod_obra: number
+  fecha_hora_entrega: string
+  detalle: string
+  observaciones?: string
+  empleados: {
+    cuil: string
+    rol_entrega: 'ENCARGADO' | 'AYUDANTE'
+  }[]
 }
 
 export interface CreateEntregaEmpleadoDTO {
@@ -254,6 +270,82 @@ class EntregasService {
         error
       )
       throw error
+    }
+  }
+
+  async createEntrega(entregaData: CreateEntregaDTO): Promise<Entrega> {
+    try {
+      const entregaPayload = {
+        cod_obra: entregaData.cod_obra,
+        fecha_hora_entrega: entregaData.fecha_hora_entrega,
+        detalle: entregaData.detalle,
+        estado: 'PENDIENTE',
+        observaciones: entregaData.observaciones,
+      }
+
+      console.log('Paso 1 - Creando entrega:', entregaPayload)
+
+      const responseEntrega = await api.post<BackendEntrega>(
+        this.baseURL,
+        entregaPayload
+      )
+
+      const entregaCreada = responseEntrega.data
+      console.log('Entrega creada:', entregaCreada)
+
+      const empleadosPayload = {
+        empleados: entregaData.empleados,
+      }
+
+      console.log('Paso 2 - Asignando empleados:', empleadosPayload)
+
+      const responseConEmpleados = await api.post<any>(
+        `${this.baseURL}/${entregaCreada.cod_entrega}/empleados`,
+        empleadosPayload
+      )
+
+      const entregaCompleta = responseConEmpleados.data
+
+      return {
+        cod_entrega: entregaCompleta.cod_entrega,
+        cod_obra: entregaCompleta.cod_obra,
+        obra: {
+          cod_obra: entregaCompleta.obra.cod_obra,
+          cod_postal: entregaCompleta.obra.cod_postal,
+          cuil_cliente: entregaCompleta.obra.cuil,
+          fecha_ini: entregaCompleta.obra.fecha_ini,
+          estado: entregaCompleta.obra.estado,
+          fecha_cancelacion: entregaCompleta.obra.fecha_cancelacion,
+          direccion: entregaCompleta.obra.direccion,
+          nota_fabrica: entregaCompleta.obra.nota_fabrica || '',
+          localidad: entregaCompleta.obra.localidad,
+          cliente: entregaCompleta.obra.cliente,
+        },
+        fecha_hora_entrega: entregaCompleta.fecha_hora_entrega,
+        estado: entregaCompleta.estado,
+        observaciones: entregaCompleta.observaciones,
+        detalle: entregaCompleta.detalle,
+        empleados_asignados:
+          entregaCompleta.entrega_empleado?.map((emp: any) => ({
+            cuil: emp.cuil,
+            cod_obra: emp.cod_obra,
+            cod_entrega: emp.cod_entrega,
+            rol_entrega: emp.rol_entrega,
+            empleado: emp.empleado,
+            entrega: {} as any,
+            obra: entregaCompleta.obra as any,
+          })) || [],
+      }
+    } catch (error: any) {
+      console.error('Error al crear entrega:', error)
+      if (error.response) {
+        console.error('Status:', error.response.status)
+        console.error('Data:', error.response.data)
+      }
+      throw new Error(
+        error.response?.data?.message ||
+          'Error al crear la entrega en el servidor'
+      )
     }
   }
 

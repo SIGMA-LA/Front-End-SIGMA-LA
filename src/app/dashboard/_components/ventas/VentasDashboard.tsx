@@ -25,20 +25,28 @@ import EntregasList from '../shared/EntregasList' // Shared
 import VisitasList from '../shared/VisitasList' // Shared
 import ObrasList from '../shared/ObrasList' // Shared
 import ClientesList from '../shared/ClientesList' // Shared
-import { ObraFormData } from '@/services/obra.service.js'
+import { ObraFormData } from '@/services/obra.service'
+import * as obraService from '@/services/obra.service'
+import { PresupuestoFormData } from '@/services/presupuesto.service'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
+  const [selectedObra, setSelectedObra] = useState<any>(null)
 
   const [obraParaEditar, setObraParaEditar] = useState<Obra | null>(null)
 
-  const { createObra, updateObra } = useGlobalContext()
+  const {
+    createObra,
+    updateObra,
+    createPresupuesto,
+    updatePresupuesto,
+    fetchObras,
+  } = useGlobalContext()
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
-    setSidebarOpen(false) // Cerrar sidebar en mobile después de navegar
+    setSidebarOpen(false)
   }
 
   const menuItems = [
@@ -73,37 +81,77 @@ export default function VentasDashboard() {
             }}
           />
         )
-      
+
       case 'crear-obra':
         return (
           <CrearObra
             onCancel={() => setCurrentSection('obras')}
-            onSubmit={async (obraData: ObraFormData) => {
+            onSubmit={async (
+              obraData: ObraFormData,
+              presupuesto: PresupuestoFormData[]
+            ) => {
               try {
-                await createObra(obraData)
+                const nuevaObra = await createObra(obraData)
+
+                if (nuevaObra && nuevaObra.cod_obra && presupuesto.length > 0) {
+                  for (const presupuestoData of presupuesto) {
+                    await createPresupuesto(presupuestoData, nuevaObra.cod_obra)
+                  }
+                }
+                await fetchObras()
                 setCurrentSection('obras')
               } catch (error) {
-                console.error('Error al crear la obra:', error)
-                alert('Hubo un error al crear la obra.')
+                console.error('Error en el proceso de creación:', error)
+                alert('Hubo un error al crear la obra o su presupuesto.')
               }
             }}
           />
         )
-      
+
       case 'editar-obra':
         return (
           <CrearObra
             obraExistente={obraParaEditar}
-            onCancel={() => { setCurrentSection('obras'); setObraParaEditar(null) }}
-            onSubmit={async (obraData: ObraFormData) => {
+            onCancel={() => {
+              setCurrentSection('obras')
+              setObraParaEditar(null)
+            }}
+            onSubmit={async (
+              obraData: ObraFormData,
+              presupuesto: PresupuestoFormData[]
+            ) => {
               if (!obraParaEditar) return
               try {
                 await updateObra(obraParaEditar.cod_obra, obraData)
+
+                for (const p of presupuesto) {
+                  const esPresupuestoExistente =
+                    obraParaEditar.presupuesto?.some(
+                      (pe) => pe.nro_presupuesto === p.nro_presupuesto
+                    )
+
+                  if (p.nro_presupuesto && p.nro_presupuesto > 0) {
+                    const esPresupuestoExistente =
+                      obraParaEditar.presupuesto?.some(
+                        (pe) => pe.nro_presupuesto === p.nro_presupuesto
+                      )
+                    if (esPresupuestoExistente) {
+                      await updatePresupuesto(p.nro_presupuesto, p)
+                    }
+                  } else {
+                    await createPresupuesto(p, obraParaEditar.cod_obra)
+                  }
+                }
+
+                await fetchObras()
                 setCurrentSection('obras')
                 setObraParaEditar(null)
               } catch (error) {
-                console.error('Error al actualizar la obra:', error)
-                alert('Hubo un error al actualizar la obra.')
+                console.error(
+                  'Error al actualizar la obra o sus presupuestos:',
+                  error
+                )
+                alert('Hubo un error al actualizar los datos.')
               }
             }}
           />

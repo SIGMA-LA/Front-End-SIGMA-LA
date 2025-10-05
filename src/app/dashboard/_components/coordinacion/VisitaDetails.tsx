@@ -22,7 +22,7 @@ export default function VisitaDetail({ visita }: VisitaDetailProps) {
   const { finalizarVisita } = useGlobalContext()
 
   const handleFinalizarVisita = () => {
-    finalizarVisita(visita.id, observacionesFinal)
+    finalizarVisita(visita.cod_visita, observacionesFinal)
     setShowConfirmModal(false)
   }
 
@@ -36,7 +36,7 @@ export default function VisitaDetail({ visita }: VisitaDetailProps) {
                 Detalles de la Visita
               </h3>
               <p className="text-gray-500">
-                Cliente: {visita.obra.cliente.razon_social}
+                Cliente: {visita.obra?.cliente.razon_social}
               </p>
             </div>
             <UserIcon className="h-12 w-12 text-gray-300" />
@@ -46,7 +46,7 @@ export default function VisitaDetail({ visita }: VisitaDetailProps) {
               <MapPin className="mr-2 h-4 w-4" />
               Cómo llegar
             </Button>
-            {visita.estado === 'programada' && (
+            {visita.estado === 'PROGRAMADA' && (
               <Button
                 onClick={() => setShowConfirmModal(true)}
                 className="flex-1 bg-green-600 text-white hover:bg-green-700"
