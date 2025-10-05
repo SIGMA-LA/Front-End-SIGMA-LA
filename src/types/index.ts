@@ -81,6 +81,7 @@ export interface Obra {
   direccion: string
   cliente: Cliente
   nota_fabrica?: string
+  nota_fabrica_pid?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   localidad?: Localidad
@@ -258,4 +259,20 @@ export interface VehiculosListProps {
 export interface Localidad {
   cod_postal: number
   nombre_localidad: string
+}
+
+export interface TabNavigationProduccionProps {
+  activeTab: 'notas' | 'ordenes'
+  onTabChange: (tab: 'notas' | 'ordenes') => void
+}
+
+export interface OrdenProduccion {
+  cod_op: number
+  cod_obra: number
+  estado: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
+  fecha_confeccion: string
+  fecha_validacion: string | null
+  url: string
+  public_id: string | null
+  obra: Obra
 }
