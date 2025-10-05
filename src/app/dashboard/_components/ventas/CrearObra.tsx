@@ -8,8 +8,6 @@ import type { Obra } from '@/types'
 import type { ObraFormData } from '@/services/obra.service'
 import type { PresupuestoFormData } from '@/services/presupuesto.service'
 import CrearPresupuestoModal from './CrearPresupuestoModal'
-import EstadoObraBadge from '../shared/EstadoObraBadge'
-
 interface CrearObraProps {
   onCancel: () => void
   onSubmit: (
@@ -148,7 +146,6 @@ export default function CrearObra({
             </h1>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                {/* Sección Cliente */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900">
                     Cliente
@@ -195,7 +192,6 @@ export default function CrearObra({
                   </button>
                 </div>
 
-                {/* Sección Arquitecto */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -248,9 +244,7 @@ export default function CrearObra({
                   </button>
                 </div>
 
-                {/* Columna de Datos de Obra y Presupuesto */}
                 <div className="space-y-6">
-                  {/* Datos de la Obra */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Datos de la Obra
@@ -328,7 +322,7 @@ export default function CrearObra({
                         <option value="ACTIVA">Activa</option>
                         <option value="EN PRODUCCION">En produccion</option>
                         <option value="FINALIZADA">Finalizada</option>
-                        <option value="ENTREGADA">Cancelada</option>
+                        <option value="ENTREGADA">Entregada</option>
                         <option value="EN ESPERA DE STOCK">
                           En espera de stock
                         </option>
@@ -362,7 +356,6 @@ export default function CrearObra({
                     )}
                   </div>
 
-                  {/* Sección de Presupuesto */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">
                       Historial de Presupuestos

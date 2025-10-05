@@ -48,15 +48,12 @@ class PresupuestoService {
     nro_presupuesto: number,
     presupuestoData: Partial<PresupuestoFormData>
   ): Promise<Presupuesto> {
-    // Construir payload solo con campos que tienen valores válidos
     const payload: any = {}
 
-    // Valor es requerido
     if (presupuestoData.valor !== undefined && presupuestoData.valor !== null) {
       payload.valor = presupuestoData.valor
     }
 
-    // Fecha emisión - solo agregar si existe y es válida
     if (
       presupuestoData.fecha_emision &&
       presupuestoData.fecha_emision.trim() !== ''

@@ -213,8 +213,7 @@ export default function CrearEntrega({
       setSubmitting(true)
       setError(null)
 
-      const fechaLocal = new Date(`${formData.fecha}T${formData.hora}`);
-      const fechaHoraISO = fechaLocal.toISOString();
+      const fechaHoraISO = `${formData.fecha}T${formData.hora}`
 
       const empleadosConRoles = selectedEmpleados.map((cuil) => ({
         cuil,
@@ -241,7 +240,7 @@ export default function CrearEntrega({
       console.error('Error al crear entrega:', err)
       setError(
         err.message ||
-          'Error al crear la entrega. Por favor, intente nuevamente.',
+          'Error al crear la entrega. Por favor, intente nuevamente.'
       )
     } finally {
       setSubmitting(false)

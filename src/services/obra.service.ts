@@ -122,11 +122,3 @@ export const updateObra = async (
   )
   return mapToFrontend(obraActualizadaBackend)
 }
-
-/**
- * Elimina una obra por su ID.
- * @param id - El ID (cod_obra) de la obra a eliminar.
- */
-export const deleteObra = async (id: number): Promise<void> => {
-  await api.delete(`/obras/${id}`)
-}

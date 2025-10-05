@@ -6,6 +6,7 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from 'react'
 import api from '@/services/api/api'
 import entregasService from '@/services/entregas.service'
@@ -45,7 +46,6 @@ interface GlobalContextType {
   fetchObras: () => Promise<void>
   createObra: (obraData: ObraFormData) => Promise<Obra>
   updateObra: (id: number, obraData: ObraFormData) => Promise<void>
-  deleteObra: (id: number) => Promise<void>
   createPresupuesto: (
     presupuestoData: PresupuestoFormData,
     cod_obra: number
@@ -61,45 +61,40 @@ const GlobalContext = createContext<GlobalContextType | undefined>(undefined)
 export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [obras, setObras] = useState<Obra[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
-
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [currentSection, setCurrentSection] = useState('dashboard')
 
-  useEffect(() => {
-    fetchClientes()
-    fetchEmpleados()
-  }, [])
+  // --- FUNCIONES DE CARGA DE DATOS (MEMORIZADAS CON useCallback) ---
 
-  const fetchEmpleados = async () => {
+  const fetchEmpleados = useCallback(async () => {
     try {
       const { data } = await api.get('/empleados')
       setEmpleados(data)
     } catch (error) {
       console.error('Error al cargar empleados:', error)
     }
-  }
+  }, [])
 
-  const fetchClientes = async () => {
+  const fetchClientes = useCallback(async () => {
     try {
       const clientesData = await clienteService.getAllClientes()
       setClientes(clientesData)
     } catch (error) {
       console.error('Error al cargar clientes:', error)
     }
-  }
+  }, [])
 
-  const fetchLocalidades = async () => {
-    if (localidades.length > 0) return
+  const fetchLocalidades = useCallback(async () => {
     try {
       const { data } = await api.get<Localidad[]>('/localidades')
       setLocalidades(data)
     } catch (error) {
       console.error('Error al cargar localidades:', error)
     }
-  }
+  }, [])
 
-  const fetchObras = async () => {
+  const fetchObras = useCallback(async () => {
     try {
       const obrasData = await obraService.getObras()
       setObras(obrasData)
@@ -107,20 +102,32 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error al cargar obras desde el contexto:', error)
       throw error
     }
-  }
+  }, [])
 
-  const createObra = async (obraData: ObraFormData): Promise<Obra> => {
-    try {
-      const nuevaObra = await obraService.createObra(obraData)
-      setObras((prev) => [nuevaObra, ...prev])
-      return nuevaObra
-    } catch (error) {
-      console.error('Error al crear obra desde el contexto:', error)
-      throw error
-    }
-  }
+  // Efecto para la carga inicial de datos
+  useEffect(() => {
+    fetchClientes()
+    fetchEmpleados()
+    // `fetchObras` y `fetchLocalidades` se llaman bajo demanda desde los componentes
+  }, [fetchClientes, fetchEmpleados])
 
-  const updateObra = async (id: number, obraData: ObraFormData) => {
+  // --- FUNCIONES CRUD (MEMORIZADAS CON useCallback) ---
+
+  const createObra = useCallback(
+    async (obraData: ObraFormData): Promise<Obra> => {
+      try {
+        const nuevaObra = await obraService.createObra(obraData)
+        setObras((prev) => [nuevaObra, ...prev])
+        return nuevaObra
+      } catch (error) {
+        console.error('Error al crear obra desde el contexto:', error)
+        throw error
+      }
+    },
+    []
+  )
+
+  const updateObra = useCallback(async (id: number, obraData: ObraFormData) => {
     try {
       const obraActualizada = await obraService.updateObra(id, obraData)
       setObras((prev) =>
@@ -130,50 +137,43 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error al actualizar obra desde el contexto:', error)
       throw error
     }
-  }
+  }, [])
 
-  const deleteObra = async (id: number) => {
-    try {
-      await obraService.deleteObra(id)
-      setObras((prev) => prev.filter((o) => o.cod_obra !== id))
-    } catch (error) {
-      console.error('Error al eliminar obra desde el contexto:', error)
-      throw error
-    }
-  }
+  const addEmpleado = useCallback(
+    async (empleadoData: Omit<Empleado, 'cuil'>) => {
+      try {
+        const { data: nuevoEmpleado } = await api.post<Empleado>(
+          '/empleados',
+          empleadoData
+        )
+        setEmpleados((prev) => [...prev, nuevoEmpleado])
+      } catch (error) {
+        console.error('Error al crear empleado:', error)
+        throw error
+      }
+    },
+    []
+  )
 
-  const addEmpleado = async (empleadoData: Omit<Empleado, 'cuil'>) => {
-    try {
-      const { data: nuevoEmpleado } = await api.post<Empleado>(
-        '/empleados',
-        empleadoData
-      )
-      setEmpleados((prev) => [...prev, nuevoEmpleado])
-    } catch (error) {
-      console.error('Error al crear empleado:', error)
-      throw error
-    }
-  }
+  const updateEmpleado = useCallback(
+    async (cuil: string, empleadoData: Partial<Omit<Empleado, 'cuil'>>) => {
+      try {
+        const { data: empleadoActualizado } = await api.put<Empleado>(
+          `/empleados/${cuil}`,
+          empleadoData
+        )
+        setEmpleados((prev) =>
+          prev.map((u) => (u.cuil === cuil ? empleadoActualizado : u))
+        )
+      } catch (error) {
+        console.error('Error al actualizar empleado:', error)
+        throw error
+      }
+    },
+    []
+  )
 
-  const updateEmpleado = async (
-    cuil: string,
-    empleadoData: Partial<Omit<Empleado, 'cuil'>>
-  ) => {
-    try {
-      const { data: empleadoActualizado } = await api.put<Empleado>(
-        `/empleados/${cuil}`,
-        empleadoData
-      )
-      setEmpleados((prev) =>
-        prev.map((u) => (u.cuil === cuil ? empleadoActualizado : u))
-      )
-    } catch (error) {
-      console.error('Error al actualizar empleado:', error)
-      throw error
-    }
-  }
-
-  const deleteEmpleado = async (cuil: string) => {
+  const deleteEmpleado = useCallback(async (cuil: string) => {
     try {
       await api.delete(`/empleados/${cuil}`)
       setEmpleados((prev) => prev.filter((u) => u.cuil !== cuil))
@@ -181,70 +181,77 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error al eliminar empleado:', error)
       throw error
     }
-  }
+  }, [])
 
-  const finalizarEntrega = async (id: number, observaciones?: string) => {
-    try {
-      await entregasService.finalizarEntrega(id, observaciones)
-    } catch (error) {
-      console.error('Error al finalizar entrega:', error)
-      throw error
-    }
-  }
+  const finalizarEntrega = useCallback(
+    async (id: number, observaciones?: string) => {
+      try {
+        await entregasService.finalizarEntrega(id, observaciones)
+        // Aquí podrías agregar lógica para actualizar el estado de entregas si es necesario
+      } catch (error) {
+        console.error('Error al finalizar entrega:', error)
+        throw error
+      }
+    },
+    []
+  )
 
-  const finalizarVisita = async (id: number, observaciones?: string) => {
-    try {
-      await visitasService.finalizarVisita(id, observaciones)
-    } catch (error) {
-      console.error('Error al finalizar visita:', error)
-      throw error
-    }
-  }
+  const finalizarVisita = useCallback(
+    async (id: number, observaciones?: string) => {
+      try {
+        await visitasService.finalizarVisita(id, observaciones)
+        // Aquí podrías agregar lógica para actualizar el estado de visitas si es necesario
+      } catch (error) {
+        console.error('Error al finalizar visita:', error)
+        throw error
+      }
+    },
+    []
+  )
 
-  const createPresupuesto = async (
-    presupuestoData: PresupuestoFormData,
-    cod_obra: number
-  ) => {
-    try {
-      await presupuestoService.createPresupuesto(presupuestoData, cod_obra)
-    } catch (error) {
-      console.error('Error al crear presupuesto desde el contexto:', error)
-      throw error
-    }
-  }
+  const createPresupuesto = useCallback(
+    async (presupuestoData: PresupuestoFormData, cod_obra: number) => {
+      try {
+        await presupuestoService.createPresupuesto(presupuestoData, cod_obra)
+      } catch (error) {
+        console.error('Error al crear presupuesto desde el contexto:', error)
+        throw error
+      }
+    },
+    []
+  )
 
-  const updatePresupuesto = async (
-    nro_presupuesto: number,
-    data: PresupuestoFormData
-  ) => {
-    try {
-      await presupuestoService.updatePresupuesto(nro_presupuesto, data)
-    } catch (error) {
-      console.error('Error al actualizar presupuesto:', error)
-      throw error
-    }
-  }
+  const updatePresupuesto = useCallback(
+    async (nro_presupuesto: number, data: PresupuestoFormData) => {
+      try {
+        await presupuestoService.updatePresupuesto(nro_presupuesto, data)
+      } catch (error) {
+        console.error('Error al actualizar presupuesto:', error)
+        throw error
+      }
+    },
+    []
+  )
 
   return (
     <GlobalContext.Provider
       value={{
-        localidades,
         empleados,
         obras,
         clientes,
+        localidades,
         addEmpleado,
         updateEmpleado,
         deleteEmpleado,
         currentSection,
         setCurrentSection,
-        fetchLocalidades,
         finalizarEntrega,
         finalizarVisita,
         fetchObras,
         createObra,
         updateObra,
-        deleteObra,
         fetchClientes,
+        fetchLocalidades,
         createPresupuesto,
         updatePresupuesto,
       }}
