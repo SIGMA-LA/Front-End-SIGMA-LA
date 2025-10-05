@@ -11,6 +11,7 @@ import type { Obra } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { useState } from 'react'
+import OrdenesProduccionList from './OrdenesProduccionList'
 
 interface NotaFabricaDetailsProps {
   obra: Obra
@@ -40,8 +41,20 @@ export default function NotaFabricaDetails({
   obra,
   onCrearOrden,
 }: NotaFabricaDetailsProps) {
-  const [imageLoading, setImageLoading] = useState(true)
-  const [imageError, setImageError] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(true)
+  const [pdfError, setPdfError] = useState(false)
+
+  // URL de la nota de fábrica (PDF)
+  const notaFabricaUrl = obra.nota_fabrica || null
+
+  // Verificar si es un PDF
+  const isPdf = notaFabricaUrl?.toLowerCase().endsWith('.pdf')
+
+  const handleOpenPdf = () => {
+    if (notaFabricaUrl) {
+      window.open(notaFabricaUrl, '_blank')
+    }
+  }
 
   return (
     <Card className="mx-auto max-w-6xl border-gray-200 bg-white shadow-lg">
@@ -90,62 +103,108 @@ export default function NotaFabricaDetails({
           </div>
         </div>
 
-        {/* Imagen de la nota de fábrica desde Cloudinary */}
-        {obra.nota_fabrica ? (
+        {/* Nota de fábrica (PDF o Imagen) */}
+        {notaFabricaUrl ? (
           <div>
             <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
-              Nota de Fábrica (Imagen)
+              Nota de Fábrica
             </h4>
-            <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-              {imageLoading && !imageError && (
-                <div className="flex h-96 items-center justify-center">
-                  <div className="text-center">
-                    <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
-                    <p className="text-sm text-gray-500 lg:text-base">
-                      Cargando imagen...
-                    </p>
-                  </div>
+            {isPdf ? (
+              <div className="space-y-4">
+                {/* Vista previa del PDF embebido */}
+                <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                  <iframe
+                    src={`${notaFabricaUrl}#view=FitH`}
+                    className="w-full"
+                    style={{ height: '600px' }}
+                    title="Nota de Fábrica PDF"
+                    onLoad={() => setPdfLoading(false)}
+                    onError={() => {
+                      setPdfLoading(false)
+                      setPdfError(true)
+                    }}
+                  />
+                  {pdfLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">
+                      <div className="text-center">
+                        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
+                        <p className="text-sm text-gray-500 lg:text-base">
+                          Cargando PDF...
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {imageError ? (
-                <div className="flex h-96 items-center justify-center">
-                  <div className="text-center">
-                    <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400 lg:h-16 lg:w-16" />
-                    <p className="text-sm text-gray-500 lg:text-base">
-                      Error al cargar la imagen
-                    </p>
+                {/* Botón para abrir en nueva pestaña */}
+                <button
+                  onClick={handleOpenPdf}
+                  className="w-full rounded-md border-2 border-blue-500 bg-white px-5 py-3 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 lg:px-6 lg:py-4 lg:text-base"
+                >
+                  <FileText className="mr-2 inline-block h-5 w-5 lg:h-6 lg:w-6" />
+                  Abrir PDF en nueva pestaña
+                </button>
+              </div>
+            ) : (
+              // Si es imagen
+              <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                {pdfLoading && !pdfError && (
+                  <div className="flex h-96 items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
+                      <p className="text-sm text-gray-500 lg:text-base">
+                        Cargando imagen...
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <img
-                  src={obra.nota_fabrica}
-                  alt="Nota de Fábrica"
-                  className="w-full object-contain"
-                  style={{ maxHeight: '600px' }}
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => {
-                    setImageLoading(false)
-                    setImageError(true)
-                  }}
-                />
-              )}
-            </div>
+                )}
+                {pdfError ? (
+                  <div className="flex h-96 items-center justify-center">
+                    <div className="text-center">
+                      <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400 lg:h-16 lg:w-16" />
+                      <p className="text-sm text-gray-500 lg:text-base">
+                        Error al cargar el archivo
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={notaFabricaUrl}
+                    alt="Nota de Fábrica"
+                    className="w-full object-contain"
+                    style={{ maxHeight: '600px' }}
+                    onLoad={() => setPdfLoading(false)}
+                    onError={() => {
+                      setPdfLoading(false)
+                      setPdfError(true)
+                    }}
+                  />
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div>
             <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
-              Nota de Fábrica (Imagen)
+              Nota de Fábrica
             </h4>
             <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
               <div className="text-center">
                 <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400 lg:h-16 lg:w-16" />
                 <p className="text-sm text-gray-500 lg:text-base">
-                  No hay imagen de nota de fábrica disponible
+                  No hay archivo de nota de fábrica disponible
                 </p>
               </div>
             </div>
           </div>
         )}
+
+        {/* Lista de Órdenes de Producción */}
+        <div>
+          <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
+          Órdenes de Producción Asociadas
+          </h4>
+          <OrdenesProduccionList cod_obra={obra.cod_obra} />
+        </div>
 
         {/* Botón para crear orden de producción */}
         <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">

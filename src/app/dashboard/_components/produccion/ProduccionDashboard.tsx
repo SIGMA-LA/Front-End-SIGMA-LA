@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, Package, Menu, X, Wrench } from 'lucide-react'
-import type { Obra } from '@/types'
+import { FileText, Package, Menu, X } from 'lucide-react'
+import type { Obra, OrdenProduccion } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { getObrasConNotaSinOrden } from '@/services/obra.service'
+import { getNotasConOrdenEnProceso, getNotasSinOrdenAprobada } from '@/services/obra.service'
+import ordenProduccionService from '@/services/ordenProduccion.service'
 import TabNavigation from './TabNavigation'
 import SidebarNotasFabrica from './SidebarNotasFabrica'
 import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
 import NotaFabricaDetails from './NotaFabricaDetails'
+import OrdenProduccionDetails from './OrdenProduccionDetails'
 import CrearOrdenModal from './CrearOrdenModal'
 
 export default function ProduccionDashboard() {
@@ -20,15 +22,18 @@ export default function ProduccionDashboard() {
 
   // Estados para Notas de Fábrica
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null)
-  const [obrasPendientes, setObrasPendientes] = useState<Obra[]>([])
-  const [obrasConOrden, setObrasConOrden] = useState<Obra[]>([])
+  const [obrasSinOrden, setObrasSinOrden] = useState<Obra[]>([])
+  const [obrasEnProceso, setObrasEnProceso] = useState<Obra[]>([])
   const [loadingNotas, setLoadingNotas] = useState(true)
   const [errorNotas, setErrorNotas] = useState<string | null>(null)
   const [showCrearOrdenModal, setShowCrearOrdenModal] = useState(false)
 
-  // Estados para Órdenes de Producción (placeholder por ahora)
-  const ordenesAprobadas = 0
-  const ordenesEnProduccion = 0
+  // Estados para Órdenes de Producción
+  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
+  const [ordenesAprobadas, setOrdenesAprobadas] = useState<OrdenProduccion[]>([])
+  const [ordenesEnProduccion, setOrdenesEnProduccion] = useState<OrdenProduccion[]>([])
+  const [loadingOrdenes, setLoadingOrdenes] = useState(true)
+  const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
 
   // Cargar obras con nota de fábrica al montar el componente
   useEffect(() => {
@@ -37,15 +42,25 @@ export default function ProduccionDashboard() {
     }
   }, [activeTab])
 
+  // Cargar órdenes de producción al cambiar a la tab de órdenes
+  useEffect(() => {
+    if (activeTab === 'ordenes') {
+      loadOrdenesProduccion()
+    }
+  }, [activeTab])
+
   const loadObrasConNota = async () => {
     try {
       setLoadingNotas(true)
       setErrorNotas(null)
 
-      const obras = await getObrasConNotaSinOrden()
-      setObrasPendientes(obras)
-      // obrasConOrden por ahora vacío (funcionalidad futura)
-      setObrasConOrden([])
+      const [sinOrden, enProceso] = await Promise.all([
+        getNotasSinOrdenAprobada(),
+        getNotasConOrdenEnProceso(),
+      ])
+
+      setObrasSinOrden(sinOrden)
+      setObrasEnProceso(enProceso)
     } catch (error) {
       console.error('Error al cargar obras con nota:', error)
       setErrorNotas('Error al cargar las obras con nota de fábrica')
@@ -54,23 +69,95 @@ export default function ProduccionDashboard() {
     }
   }
 
+  const loadOrdenesProduccion = async () => {
+    try {
+      setLoadingOrdenes(true)
+      setErrorOrdenes(null)
+
+      const [aprobadas, enProduccion] = await Promise.all([
+        ordenProduccionService.getOrdenesValidadas(),
+        ordenProduccionService.getOrdenesEnProduccion(),
+      ])
+
+      setOrdenesAprobadas(aprobadas)
+      setOrdenesEnProduccion(enProduccion)
+    } catch (error) {
+      console.error('Error al cargar órdenes:', error)
+      setErrorOrdenes('Error al cargar las órdenes de producción')
+    } finally {
+      setLoadingOrdenes(false)
+    }
+  }
+
   const handleTabChange = (tab: 'notas' | 'ordenes') => {
     setActiveTab(tab)
     setSelectedObra(null)
-    // Aquí resetearíamos otras selecciones cuando se implemente órdenes
+    setSelectedOrden(null)
   }
 
   const handleSelectObra = (obra: Obra) => {
     setSelectedObra(obra)
-    setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
+    setSidebarOpen(false)
+  }
+
+  const handleSelectOrden = (orden: OrdenProduccion) => {
+    setSelectedOrden(orden)
+    setSidebarOpen(false)
   }
 
   const handleRetryNotas = async () => {
     await loadObrasConNota()
   }
 
+  const handleRetryOrdenes = async () => {
+    await loadOrdenesProduccion()
+  }
+
   const handleCrearOrden = () => {
     setShowCrearOrdenModal(true)
+  }
+
+  const handleOrdenCreated = async () => {
+    await loadObrasConNota()
+    setSelectedObra(null)
+  }
+
+  const handleIniciarProduccion = async () => {
+    if (!selectedOrden) return
+
+    try {
+      await ordenProduccionService.iniciarProduccion(selectedOrden.cod_op)
+      
+      await loadOrdenesProduccion()
+      
+      const ordenActualizada = {
+        ...selectedOrden,
+        estado: 'EN PRODUCCION' as const,
+        obra: {
+          ...selectedOrden.obra,
+          estado: 'EN PRODUCCION' as const,
+        },
+      }
+      setSelectedOrden(ordenActualizada)
+    } catch (error) {
+      console.error('Error al iniciar producción:', error)
+      // TODO: Agregar notificación toast aquí
+    }
+  }
+
+  const handleFinalizarProduccion = async () => {
+    if (!selectedOrden) return
+
+    try {
+      await ordenProduccionService.finalizarProduccion(selectedOrden.cod_op)
+      
+      await loadOrdenesProduccion()
+      
+      setSelectedOrden(null)
+    } catch (error) {
+      console.error('Error al finalizar producción:', error)
+      // TODO: Agregar notificación toast aquí
+    }
   }
 
   if (!usuario) {
@@ -110,18 +197,18 @@ export default function ProduccionDashboard() {
           <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
             <div className="rounded-lg bg-orange-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-orange-600 lg:text-xl">
-                {activeTab === 'notas' ? obrasPendientes.length : ordenesAprobadas}
+                {activeTab === 'notas' ? obrasSinOrden.length : ordenesAprobadas.length}
               </div>
               <div className="text-xs text-gray-600 lg:text-sm">
-                {activeTab === 'notas' ? 'Por Revisar' : 'Por Iniciar'}
+                {activeTab === 'notas' ? 'Sin Orden' : 'Por Iniciar'}
               </div>
             </div>
             <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                {activeTab === 'notas' ? obrasConOrden.length : ordenesEnProduccion}
+                {activeTab === 'notas' ? obrasEnProceso.length : ordenesEnProduccion.length}
               </div>
               <div className="text-xs text-gray-600 lg:text-sm">
-                {activeTab === 'notas' ? 'Con Orden' : 'En Producción'}
+                {activeTab === 'notas' ? 'En Proceso' : 'En Producción'}
               </div>
             </div>
           </div>
@@ -144,15 +231,22 @@ export default function ProduccionDashboard() {
             <div className="space-y-4 p-3 lg:space-y-6">
               {activeTab === 'notas' ? (
                 <SidebarNotasFabrica
-                  obrasPendientes={obrasPendientes}
-                  obrasConOrden={obrasConOrden}
+                  obrasSinOrden={obrasSinOrden}
+                  obrasEnProceso={obrasEnProceso}
                   selectedObra={selectedObra}
                   onSelectObra={handleSelectObra}
                   loading={loadingNotas}
                   error={errorNotas}
                 />
               ) : (
-                <SidebarOrdenesProduccion />
+                <SidebarOrdenesProduccion
+                  ordenesAprobadas={ordenesAprobadas}
+                  ordenesEnProduccion={ordenesEnProduccion}
+                  selectedOrden={selectedOrden}
+                  onSelectOrden={handleSelectOrden}
+                  loading={loadingOrdenes}
+                  error={errorOrdenes}
+                />
               )}
             </div>
           </aside>
@@ -185,18 +279,18 @@ export default function ProduccionDashboard() {
                     <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
                       <div className="rounded-lg bg-orange-50 px-4 py-2 text-center">
                         <div className="text-lg font-semibold text-orange-600 lg:text-xl">
-                          {obrasPendientes.length}
+                          {obrasSinOrden.length}
                         </div>
                         <div className="text-xs text-gray-600 lg:text-sm">
-                          Por Revisar
+                          Sin Orden
                         </div>
                       </div>
                       <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
                         <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                          {obrasConOrden.length}
+                          {obrasEnProceso.length}
                         </div>
                         <div className="text-xs text-gray-600 lg:text-sm">
-                          Con Orden
+                          En Proceso
                         </div>
                       </div>
                     </div>
@@ -204,34 +298,47 @@ export default function ProduccionDashboard() {
                 </div>
               </div>
             )
+          ) : selectedOrden ? (
+            <OrdenProduccionDetails
+              orden={selectedOrden}
+              onIniciarProduccion={
+                selectedOrden.estado === 'APROBADA'
+                  ? handleIniciarProduccion
+                  : undefined
+              }
+              onFinalizarProduccion={
+                selectedOrden.estado === 'EN PRODUCCION'
+                  ? handleFinalizarProduccion
+                  : undefined
+              }
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-center">
               <div className="px-4">
-                <Wrench className="mx-auto mb-4 h-12 w-12 text-gray-300 lg:h-16 lg:w-16" />
-                <p className="mb-2 text-lg text-gray-600 font-medium lg:text-xl">
-                  Funcionalidad en desarrollo
-                </p>
-                <p className="mb-6 text-base text-gray-500 lg:text-lg">
+                <Package className="mx-auto mb-4 h-12 w-12 text-gray-300 lg:h-16 lg:w-16" />
+                <p className="mb-4 text-base text-gray-500 lg:text-lg">
                   Selecciona una orden de producción para ver los detalles
                 </p>
-                <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
-                  <div className="rounded-lg bg-orange-50 px-4 py-2 text-center">
-                    <div className="text-lg font-semibold text-orange-600 lg:text-xl">
-                      {ordenesAprobadas}
+                {!loadingOrdenes && (
+                  <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
+                    <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+                      <div className="text-lg font-semibold text-blue-600 lg:text-xl">
+                        {ordenesAprobadas.length}
+                      </div>
+                      <div className="text-xs text-gray-600 lg:text-sm">
+                        Por Iniciar
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-600 lg:text-sm">
-                      Por Iniciar
+                    <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+                      <div className="text-lg font-semibold text-green-600 lg:text-xl">
+                        {ordenesEnProduccion.length}
+                      </div>
+                      <div className="text-xs text-gray-600 lg:text-sm">
+                        En Producción
+                      </div>
                     </div>
                   </div>
-                  <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-                    <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                      {ordenesEnProduccion}
-                    </div>
-                    <div className="text-xs text-gray-600 lg:text-sm">
-                      En Producción
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -243,6 +350,7 @@ export default function ProduccionDashboard() {
         isOpen={showCrearOrdenModal}
         onClose={() => setShowCrearOrdenModal(false)}
         obraCodigo={selectedObra?.cod_obra}
+        onSuccess={handleOrdenCreated}
       />
     </div>
   )

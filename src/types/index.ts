@@ -266,3 +266,14 @@ export interface TabNavigationProduccionProps {
   activeTab: 'notas' | 'ordenes'
   onTabChange: (tab: 'notas' | 'ordenes') => void
 }
+
+export interface OrdenProduccion {
+  cod_op: number
+  cod_obra: number
+  estado: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
+  fecha_confeccion: string
+  fecha_validacion: string | null
+  url: string
+  public_id: string | null
+  obra: Obra
+}
