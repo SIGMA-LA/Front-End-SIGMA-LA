@@ -59,11 +59,7 @@ export default function PagoCard({
           <div className="mb-1 flex items-center gap-2 text-base text-gray-600">
             <Calendar className="h-5 w-5 text-blue-400" />
             <span>
-              {new Date(pago.fecha_pago).toLocaleDateString('es-AR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-              })}
+              {pago.fecha_pago.slice(0, 10).split('-').reverse().join('/')}
             </span>
           </div>
         </div>

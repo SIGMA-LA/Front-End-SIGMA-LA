@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import PagoCard from './PagoCard'
+import PagoModal from './PagoModal'
 import { Pago } from '@/types'
 import { getAllPagos } from '@/actions/pagos'
 import { DollarSign } from 'lucide-react'
@@ -12,6 +13,8 @@ export default function PagosList(props: PagosListProps) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [pagoAEditar, setPagoAEditar] = useState<Pago | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchPagos = async () => {
@@ -77,7 +80,10 @@ export default function PagosList(props: PagosListProps) {
                 <PagoCard
                   pago={pago}
                   onRefresh={refreshPagos}
-                  onEdit={() => {}}
+                  onEdit={() => {
+                    setPagoAEditar(pago)
+                    setModalOpen(true)
+                  }}
                   obra={pago.obra}
                 />
               </div>
@@ -85,6 +91,23 @@ export default function PagosList(props: PagosListProps) {
           </div>
         )}
       </div>
+      {modalOpen && pagoAEditar && (
+        <PagoModal
+          codObra={pagoAEditar.cod_obra}
+          open={modalOpen}
+          onClose={() => {
+            setModalOpen(false)
+            setPagoAEditar(null)
+          }}
+          onPagoCreado={() => {}}
+          pagoAEditar={pagoAEditar}
+          onPagoEditado={() => {
+            setModalOpen(false)
+            setPagoAEditar(null)
+            refreshPagos()
+          }}
+        />
+      )}
     </div>
   )
 }

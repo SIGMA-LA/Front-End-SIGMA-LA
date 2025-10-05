@@ -48,15 +48,17 @@ export default function PagoModal({
     setLoading(true)
     try {
       if (pagoAEditar) {
+        // Asegurarse de enviar la fecha en formato YYYY-MM-DD
         const pagoEditado = await updatePago({
           ...pagoAEditar,
           monto: parseFloat(monto),
+          fecha_pago: pagoAEditar.fecha_pago.slice(0, 10), // <-- SOLO FECHA
         })
         onPagoEditado?.(pagoEditado)
       } else {
         const pagoData: PagoFormData = {
           monto: parseFloat(monto),
-          fecha_pago: new Date().toISOString().slice(0, 10),
+          fecha_pago: new Date().toISOString().slice(0, 10), // <-- SOLO FECHA
           cod_obra: codObra,
         }
         const pago = await createPagoForObra(pagoData, codObra)

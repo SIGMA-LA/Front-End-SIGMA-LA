@@ -18,13 +18,10 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
       setError(null)
 
       const data = await obtenerVisitas()
-      console.log('Visitas obtenidas:', data)
       setVisitas(data)
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Error desconocido'
-
-      // Si hay error de autenticación, hacer logout
       if (
         errorMessage.includes('sesión') ||
         errorMessage.includes('Token expirado')
