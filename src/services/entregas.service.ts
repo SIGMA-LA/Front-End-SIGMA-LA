@@ -158,6 +158,25 @@ export interface UpdateEntregaEmpleadoDTO {
   rol_entrega?: string
 }
 
+const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
+  const empleados_asignados =
+    backendEntrega.entrega_empleado?.map((ee: any) => ({
+      rol_entrega: ee.rol_entrega,
+      empleado: ee.empleado,
+    })) || []
+
+  return {
+    cod_entrega: backendEntrega.cod_entrega,
+    cod_obra: backendEntrega.cod_obra,
+    fecha_hora_entrega: backendEntrega.fecha_hora_entrega,
+    estado: backendEntrega.estado,
+    observaciones: backendEntrega.observaciones,
+    detalle: backendEntrega.detalle,
+    obra: backendEntrega.obra,
+    empleados_asignados: empleados_asignados,
+  }
+}
+
 // Mapea la estructura del backend a la estructura del frontend
 const mapToFrontend = (
   backendEntregaEmpleado: BackendEntregaEmpleado
@@ -226,6 +245,16 @@ const mapToFrontend = (
 class EntregasService {
   private baseURL = '/entregas'
 
+  async getAllEntregas(): Promise<Entrega[]> {
+    try {
+      const { data } = await api.get<any[]>(this.baseURL)
+      return data.map(mapGetAllToFrontend)
+    } catch (error) {
+      console.error('Error al obtener todas las entregas:', error)
+      throw error
+    }
+  }
+
   // Obtiene entregas de un empleado filtradas por estado
   async getEntregasByEmpleadoAndEstado(
     cuil: string,
@@ -275,79 +304,29 @@ class EntregasService {
 
   async createEntrega(entregaData: CreateEntregaDTO): Promise<Entrega> {
     try {
-      const entregaPayload = {
-        cod_obra: entregaData.cod_obra,
-        fecha_hora_entrega: entregaData.fecha_hora_entrega,
-        detalle: entregaData.detalle,
+      const payload = {
+        ...entregaData,
         estado: 'PENDIENTE',
-        observaciones: entregaData.observaciones,
       }
 
-      console.log('Paso 1 - Creando entrega:', entregaPayload)
+      console.log('Payload final enviado al backend:', payload)
 
-      const responseEntrega = await api.post<BackendEntrega>(
-        this.baseURL,
-        entregaPayload
-      )
+      const response = await api.post<any>(this.baseURL, payload)
 
-      const entregaCreada = responseEntrega.data
-      console.log('Entrega creada:', entregaCreada)
-
-      const empleadosPayload = {
-        empleados: entregaData.empleados,
-      }
-
-      console.log('Paso 2 - Asignando empleados:', empleadosPayload)
-
-      const responseConEmpleados = await api.post<any>(
-        `${this.baseURL}/${entregaCreada.cod_entrega}/empleados`,
-        empleadosPayload
-      )
-
-      const entregaCompleta = responseConEmpleados.data
-
-      return {
-        cod_entrega: entregaCompleta.cod_entrega,
-        cod_obra: entregaCompleta.cod_obra,
-        obra: {
-          cod_obra: entregaCompleta.obra.cod_obra,
-          cod_postal: entregaCompleta.obra.cod_postal,
-          cuil_cliente: entregaCompleta.obra.cuil,
-          fecha_ini: entregaCompleta.obra.fecha_ini,
-          estado: entregaCompleta.obra.estado,
-          fecha_cancelacion: entregaCompleta.obra.fecha_cancelacion,
-          direccion: entregaCompleta.obra.direccion,
-          nota_fabrica: entregaCompleta.obra.nota_fabrica || '',
-          localidad: entregaCompleta.obra.localidad,
-          cliente: entregaCompleta.obra.cliente,
-        },
-        fecha_hora_entrega: entregaCompleta.fecha_hora_entrega,
-        estado: entregaCompleta.estado,
-        observaciones: entregaCompleta.observaciones,
-        detalle: entregaCompleta.detalle,
-        empleados_asignados:
-          entregaCompleta.entrega_empleado?.map((emp: any) => ({
-            cuil: emp.cuil,
-            cod_obra: emp.cod_obra,
-            cod_entrega: emp.cod_entrega,
-            rol_entrega: emp.rol_entrega,
-            empleado: emp.empleado,
-            entrega: {} as any,
-            obra: entregaCompleta.obra as any,
-          })) || [],
-      }
+      return response.data as Entrega
     } catch (error: any) {
-      console.error('Error al crear entrega:', error)
+      console.error('Error detallado al crear entrega:', error)
       if (error.response) {
         console.error('Status:', error.response.status)
         console.error('Data:', error.response.data)
       }
       throw new Error(
         error.response?.data?.message ||
-          'Error al crear la entrega en el servidor'
+          'Error al crear la entrega en el servidor.',
       )
     }
   }
+
 
   // Obtiene una entrega específica de un empleado
   async getEntregaByEmpleadoAndId(

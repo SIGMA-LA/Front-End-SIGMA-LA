@@ -213,7 +213,8 @@ export default function CrearEntrega({
       setSubmitting(true)
       setError(null)
 
-      const fechaHoraISO = `${formData.fecha}T${formData.hora}:00`
+      const fechaLocal = new Date(`${formData.fecha}T${formData.hora}`);
+      const fechaHoraISO = fechaLocal.toISOString();
 
       const empleadosConRoles = selectedEmpleados.map((cuil) => ({
         cuil,
@@ -229,17 +230,20 @@ export default function CrearEntrega({
         detalle: formData.descripcionUso,
         observaciones: formData.observaciones || undefined,
         empleados: empleadosConRoles,
+        // vehiculos: selectedVehiculos,
       }
 
       const nuevaEntrega = await entregasService.createEntrega(createEntregaDTO)
 
+      alert('¡Entrega creada exitosamente!')
       onSubmit(nuevaEntrega)
     } catch (err: any) {
       console.error('Error al crear entrega:', err)
       setError(
-        err.response?.data?.message ||
-          'Error al crear la entrega. Por favor, intente nuevamente.'
+        err.message ||
+          'Error al crear la entrega. Por favor, intente nuevamente.',
       )
+    } finally {
       setSubmitting(false)
     }
   }
