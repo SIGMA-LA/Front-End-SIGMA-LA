@@ -1,20 +1,24 @@
 import { Car, Plus, CheckCircle, AlertTriangle, Clock, XCircle } from 'lucide-react'
 import { mockVehiculos } from '@/data/mockData'
 import { VehiculosListProps } from '@/types'
+import { useVehiculos } from '@/hooks/useVehiculos';
 
 
 // Mock data de vehículos
 
 export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
-  const vehiculos = mockVehiculos
+  /* const vehiculos = mockVehiculos */
+
+  const { vehiculos, isLoading, error } = useVehiculos();
+  /* const vehiculos = await getVehiculos(); */ // Llama a la función para obtener los vehículos
 
   const getEstadoIcon = (estado: string) => {
     switch (estado) {
-      case 'disponible':
+      case 'DISPONIBLE':
         return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'en-uso':
+      case 'EN USO':
         return <Clock className="h-4 w-4 text-blue-600" />
-      case 'reparacion':
+      case 'REPARACION':
         return <AlertTriangle className="h-4 w-4 text-yellow-600" />
       default:
         return <CheckCircle className="h-4 w-4 text-gray-600" />
@@ -23,11 +27,11 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'disponible':
+      case 'DISPONIBLE':
         return 'bg-green-50 border-green-200 text-green-800'
-      case 'en-uso':
+      case 'EN USO':
         return 'bg-blue-50 border-blue-200 text-blue-800'
-      case 'reparacion':
+      case 'REPARACION':
         return 'bg-yellow-50 border-yellow-200 text-yellow-800'
       default:
         return 'bg-gray-50 border-gray-200 text-gray-800'
@@ -49,18 +53,20 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
 
   const getEstadoBadgeColor = (estado: string) => {
     switch (estado) {
-      case 'disponible':
+      case 'DISPONIBLE':
         return 'bg-green-100 text-green-800'
-      case 'en-uso':
+      case 'EN USO':
         return 'bg-blue-100 text-blue-800'
-      case 'reparacion':
+      case 'REPARACION':
         return 'bg-yellow-100 text-yellow-800'
-      case 'fuera-servicio':
+      case 'FUERA DE SERVICIO':
         return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
+
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -96,7 +102,7 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
               <span className="text-sm font-medium text-green-800">Disponibles</span>
             </div>
             <p className="text-2xl font-bold text-green-900">
-              {vehiculos.filter(v => v.estado === 'disponible').length}
+              {vehiculos.filter(v => v.estado === 'DISPONIBLE').length}
             </p>
           </div>
           
@@ -106,7 +112,7 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
               <span className="text-sm font-medium text-blue-800">En Uso</span>
             </div>
             <p className="text-2xl font-bold text-blue-900">
-              {vehiculos.filter(v => v.estado === 'en-uso').length}
+              {vehiculos.filter(v => v.estado === 'EN USO').length}
             </p>
           </div>
 
@@ -116,7 +122,7 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
               <span className="text-sm font-medium text-yellow-800">Reparación</span>
             </div>
             <p className="text-2xl font-bold text-yellow-900">
-              {vehiculos.filter(v => v.estado === 'reparacion').length}
+              {vehiculos.filter(v => v.estado === 'REPARACION').length}
             </p>
           </div>
 
