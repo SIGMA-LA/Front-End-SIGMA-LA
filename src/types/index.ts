@@ -79,6 +79,7 @@ export interface Obra {
     | 'FINALIZADA'
     | 'ENTREGADA'
     | 'EN ESPERA DE STOCK'
+    | 'CANCELADA'
   direccion: string
   cliente: Cliente
   nota_fabrica?: string

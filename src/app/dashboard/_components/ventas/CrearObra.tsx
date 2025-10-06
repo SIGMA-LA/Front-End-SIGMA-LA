@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, User, Plus, FileText, Edit } from 'lucide-react'
-import { mockArquitectos } from '@/data/mockData'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, User, Plus, FileText, Edit, AlertCircle } from 'lucide-react'
 import { useGlobalContext } from '@/context/GlobalContext'
-import type { Obra } from '@/types'
+import type { Obra, Cliente } from '@/types'
 import type { ObraFormData } from '@/services/obra.service'
 import type { PresupuestoFormData } from '@/services/presupuesto.service'
 import CrearPresupuestoModal from './CrearPresupuestoModal'
+import CrearCliente from './CrearCliente'
+
 interface CrearObraProps {
   onCancel: () => void
   onSubmit: (
@@ -32,11 +33,17 @@ export default function CrearObra({
   onSubmit,
   obraExistente,
 }: CrearObraProps) {
-  const { clientes, localidades, fetchLocalidades } = useGlobalContext()
+  const { clientes, fetchClientes, localidades, fetchLocalidades } =
+    useGlobalContext()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
-  const [arquitectoEnabled, setArquitectoEnabled] = useState(false)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
   const esModoEdicion = !!obraExistente
+
+  const isObraCancelada = esModoEdicion && obraExistente?.estado === 'CANCELADA'
+
+  // Estados para la nueva funcionalidad
+  const [filtroCliente, setFiltroCliente] = useState('')
+  const [isClienteModalOpen, setIsClienteModalOpen] = useState(false)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [presupuestos, setPresupuestos] = useState<PresupuestoFormData[]>([])
@@ -52,9 +59,6 @@ export default function CrearObra({
       const fecha_ini = obraExistente.fecha_ini
         ? new Date(obraExistente.fecha_ini).toISOString().split('T')[0]
         : ''
-      const fecha_cancelacion = obraExistente.fecha_cancelacion
-        ? new Date(obraExistente.fecha_cancelacion).toISOString().split('T')[0]
-        : null
 
       setFormData({
         direccion: obraExistente.direccion || '',
@@ -62,7 +66,7 @@ export default function CrearObra({
         cod_postal: obraExistente.localidad?.cod_postal || 0,
         fecha_ini,
         nota_fabrica: obraExistente.nota_fabrica || '',
-        fecha_cancelacion,
+        fecha_cancelacion: null,
         estado: obraExistente.estado || 'ACTIVA',
       })
       setClienteSeleccionado(obraExistente.cliente?.cuil || '')
@@ -74,7 +78,23 @@ export default function CrearObra({
       setClienteSeleccionado('')
       setPresupuestos([])
     }
-  }, [obraExistente, esModoEdicion])
+  }, [obraExistente, esModoEdicion, clientes])
+
+  const clientesFiltrados = useMemo(() => {
+    if (!filtroCliente) return clientes
+    return clientes.filter(
+      (c) =>
+        c.razon_social.toLowerCase().includes(filtroCliente.toLowerCase()) ||
+        c.cuil.includes(filtroCliente)
+    )
+  }, [clientes, filtroCliente])
+
+  const handleClienteCreado = (nuevoCliente: Cliente) => {
+    fetchClientes().then(() => {
+      handleClienteSelect(nuevoCliente.cuil)
+    })
+    setIsClienteModalOpen(false)
+  }
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -122,11 +142,13 @@ export default function CrearObra({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isObraCancelada) return
     if (!formData.cuil_cliente || !formData.cod_postal) {
       alert('Por favor, seleccione un cliente y una localidad.')
       return
     }
-    onSubmit(formData, presupuestos)
+    const { fecha_cancelacion, ...dataToSend } = formData
+    onSubmit(dataToSend, presupuestos)
   }
 
   return (
@@ -137,6 +159,12 @@ export default function CrearObra({
         onSubmit={handleModalSubmit}
         presupuestoExistente={presupuestoParaEditar}
       />
+      {isClienteModalOpen && (
+        <CrearCliente
+          onCancel={() => setIsClienteModalOpen(false)}
+          onSubmit={handleClienteCreado}
+        />
+      )}
 
       <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-6xl">
@@ -144,23 +172,40 @@ export default function CrearObra({
             <h1 className="mb-8 text-2xl font-bold text-gray-900">
               {esModoEdicion ? 'Editar Obra' : 'Crear Nueva Obra'}
             </h1>
+            {isObraCancelada && (
+              <div className="mb-6 rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-700" />
+                  <div className="ml-3">
+                    <p className="font-bold text-red-800">Obra Cancelada</p>
+                    <p className="text-sm text-red-700">
+                      Esta obra ha sido cancelada y no se puede modificar. Los
+                      datos se muestran solo a modo de consulta.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="mb-11 text-lg font-semibold text-gray-900">
                     Cliente
                   </h3>
                   <div className="relative">
                     <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Buscar cliente..."
-                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 focus:border-blue-500"
+                      placeholder="Buscar por Razón Social o CUIL..."
+                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-5 pl-10 focus:border-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
+                      value={filtroCliente}
+                      onChange={(e) => setFiltroCliente(e.target.value)}
+                      disabled={isObraCancelada}
                     />
                   </div>
                   <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200">
-                    {clientes.length > 0 ? (
-                      clientes.map((cliente) => (
+                    {clientesFiltrados.length > 0 ? (
+                      clientesFiltrados.map((cliente) => (
                         <div
                           key={cliente.cuil}
                           className={`flex cursor-pointer items-center p-3 ${
@@ -180,155 +225,94 @@ export default function CrearObra({
                       ))
                     ) : (
                       <div className="p-4 text-center text-sm text-gray-500">
-                        No hay clientes disponibles
+                        No se encontraron clientes.
                       </div>
                     )}
                   </div>
                   <button
                     type="button"
-                    className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700"
+                    onClick={() => setIsClienteModalOpen(true)}
+                    className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
+                    disabled={isObraCancelada}
                   >
                     Nuevo Cliente
                   </button>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Arquitecto
-                    </h3>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={arquitectoEnabled}
-                        onChange={(e) => setArquitectoEnabled(e.target.checked)}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">Habilitar</span>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Datos de la Obra
+                  </h3>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Dirección *
                     </label>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                     <input
+                      name="direccion"
                       type="text"
-                      placeholder="Buscar arquitecto..."
-                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 focus:border-blue-500"
-                      disabled={!arquitectoEnabled}
+                      placeholder="Ingrese la dirección"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
+                      value={formData.direccion}
+                      onChange={handleChange}
+                      required
+                      disabled={isObraCancelada}
                     />
                   </div>
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200">
-                    {mockArquitectos.map((arquitecto) => (
-                      <div
-                        key={arquitecto.cuil}
-                        className={`flex cursor-pointer items-center p-3 ${
-                          arquitectoEnabled
-                            ? 'hover:bg-gray-50'
-                            : 'cursor-not-allowed opacity-50'
-                        }`}
-                      >
-                        <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
-                          <User className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <span className="text-gray-900">
-                          {arquitecto.nombre}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    disabled={!arquitectoEnabled}
-                    className="w-full rounded-lg bg-gray-600 py-2.5 font-medium text-white hover:bg-gray-700 disabled:opacity-50"
-                  >
-                    Nuevo Arquitecto
-                  </button>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Datos de la Obra
-                    </h3>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Dirección *
-                      </label>
-                      <input
-                        name="direccion"
-                        type="text"
-                        placeholder="Ingrese la dirección"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        value={formData.direccion}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Localidad *
-                      </label>
-                      <select
-                        name="cod_postal"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        value={formData.cod_postal || ''}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccione una localidad...</option>
-                        {localidades.map((loc) => (
-                          <option key={loc.cod_postal} value={loc.cod_postal}>
-                            {loc.nombre_localidad}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Fecha Inicio *
-                        </label>
-                        <input
-                          name="fecha_ini"
-                          type="date"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          value={formData.fecha_ini}
-                          onChange={handleChange}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Fecha Cancelación
-                        </label>
-                        <input
-                          name="fecha_cancelacion"
-                          type="date"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                          value={formData.fecha_cancelacion || ''}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Estado
-                      </label>
-                      <select
-                        name="estado"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        value={formData.estado}
-                        onChange={handleChange}
-                      >
-                        <option value="ACTIVA">Activa</option>
-                        <option value="EN PRODUCCION">En produccion</option>
-                        <option value="FINALIZADA">Finalizada</option>
-                        <option value="ENTREGADA">Entregada</option>
-                        <option value="EN ESPERA DE STOCK">
-                          En espera de stock
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Localidad *
+                    </label>
+                    <select
+                      name="cod_postal"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
+                      value={formData.cod_postal || ''}
+                      onChange={handleChange}
+                      required
+                      disabled={isObraCancelada}
+                    >
+                      <option value="">Seleccione una localidad...</option>
+                      {localidades.map((loc) => (
+                        <option key={loc.cod_postal} value={loc.cod_postal}>
+                          {loc.nombre_localidad}
                         </option>
-                      </select>
-                    </div>
-                    {esModoEdicion && (
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Fecha Inicio *
+                    </label>
+                    <input
+                      name="fecha_ini"
+                      type="date"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
+                      value={formData.fecha_ini}
+                      onChange={handleChange}
+                      required
+                      disabled={isObraCancelada}
+                    />
+                  </div>
+                  {esModoEdicion && (
+                    <>
+                      <div>
+                        <label htmlFor="estado">Estado</label>
+                        <select
+                          id="estado"
+                          name="estado"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
+                          value={formData.estado}
+                          onChange={handleChange}
+                          disabled={isObraCancelada}
+                        >
+                          <option value="ACTIVA">Activa</option>
+                          <option value="EN PRODUCCION">En producción</option>
+                          <option value="FINALIZADA">Finalizada</option>
+                          <option value="ENTREGADA">Entregada</option>
+                          <option value="EN ESPERA DE STOCK">
+                            En espera de stock
+                          </option>
+                        </select>
+                      </div>
                       <div>
                         <label className="mb-2 block text-sm font-medium text-gray-700">
                           URL de Nota de Fábrica
@@ -337,9 +321,10 @@ export default function CrearObra({
                           name="nota_fabrica"
                           type="text"
                           placeholder="https://ejemplo.com/nota.pdf"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:text-gray-400"
                           value={formData.nota_fabrica}
                           onChange={handleChange}
+                          disabled={isObraCancelada}
                         />
                         {formData.nota_fabrica && (
                           <a
@@ -353,45 +338,46 @@ export default function CrearObra({
                           </a>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
+                </div>
 
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Historial de Presupuestos
-                    </h3>
+                <div className="space-y-4">
+                  <h3 className="mb-11 text-lg font-semibold text-gray-900">
+                    Historial de Presupuestos
+                  </h3>
+                  <div className="flex flex-col space-y-3 rounded-lg border bg-gray-50 p-4">
                     {presupuestos.length === 0 ? (
-                      <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+                      <div className="flex flex-1 flex-col items-center justify-center text-center">
+                        <FileText className="mb-2 h-10 w-10 text-gray-400" />
                         <p className="text-sm text-gray-500">
                           Aún no se han agregado presupuestos.
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="max-h-80 space-y-2 overflow-y-auto pr-2">
                         {presupuestos.map((p, index) => (
                           <div
                             key={p.nro_presupuesto || index}
-                            className="flex items-center justify-between rounded-lg border bg-gray-50 p-3"
+                            className="flex items-center justify-between rounded-md border bg-white p-3 shadow-sm"
                           >
-                            <div className="flex items-center gap-3">
-                              <FileText className="h-5 w-5 text-gray-500" />
-                              <div>
-                                <span className="font-medium">
-                                  Valor: ${p.valor.toLocaleString('es-AR')}
-                                </span>
-                                <p className="text-xs text-gray-500">
-                                  Emisión:{' '}
-                                  {new Date(p.fecha_emision).toLocaleDateString(
-                                    'es-AR',
-                                    { timeZone: 'UTC' }
-                                  )}
-                                </p>
-                              </div>
+                            <div>
+                              <p className="font-medium text-gray-800">
+                                Valor: ${p.valor.toLocaleString('es-AR')}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Emisión:{' '}
+                                {new Date(p.fecha_emision).toLocaleDateString(
+                                  'es-AR',
+                                  { timeZone: 'UTC' }
+                                )}
+                              </p>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleOpenModalParaEditar(p)}
-                              className="rounded-md p-1 text-blue-600 hover:bg-blue-100 hover:text-blue-800"
+                              className="p-1 text-blue-600 hover:text-blue-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                              disabled={isObraCancelada}
                             >
                               <Edit className="h-4 w-4" />
                             </button>
@@ -402,7 +388,8 @@ export default function CrearObra({
                     <button
                       type="button"
                       onClick={handleOpenModalParaCrear}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 font-medium text-white hover:bg-green-700"
+                      className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:text-gray-400"
+                      disabled={isObraCancelada}
                     >
                       <Plus className="h-5 w-5" />
                       {esModoEdicion
@@ -423,7 +410,8 @@ export default function CrearObra({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
+                  disabled={isObraCancelada}
                 >
                   {esModoEdicion ? 'Guardar Cambios' : 'Crear Obra'}
                 </button>

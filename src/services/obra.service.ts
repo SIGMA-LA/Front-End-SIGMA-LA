@@ -19,6 +19,7 @@ interface BackendObra {
     | 'FINALIZADA'
     | 'ENTREGADA'
     | 'EN ESPERA DE STOCK'
+    | 'CANCELADA'
   localidad?: {
     cod_postal: number
     nombre_localidad: string
@@ -30,13 +31,14 @@ export interface ObraFormData {
   direccion: string
   nota_fabrica?: string
   fecha_ini: string
-  fecha_cancelacion: string | null
+  fecha_cancelacion?: string | null
   estado:
     | 'ACTIVA'
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
     | 'EN ESPERA DE STOCK'
+    | 'CANCELADA'
   cuil_cliente: string
   cod_postal: number
 }
@@ -97,7 +99,9 @@ export const getObras = async (): Promise<Obra[]> => {
  * Obtiene obras que tienen nota de fábrica pero NO tienen órdenes APROBADAS o EN PRODUCCION
  */
 export const getNotasSinOrdenAprobada = async (): Promise<Obra[]> => {
-  const { data } = await api.get<BackendObra[]>('/obras/notas-sin-orden-aprobada')
+  const { data } = await api.get<BackendObra[]>(
+    '/obras/notas-sin-orden-aprobada'
+  )
   return data.map(mapToFrontend)
 }
 
@@ -105,7 +109,9 @@ export const getNotasSinOrdenAprobada = async (): Promise<Obra[]> => {
  * Obtiene obras EN PRODUCCION con nota de fábrica que tienen órdenes en proceso
  */
 export const getNotasConOrdenEnProceso = async (): Promise<Obra[]> => {
-  const { data } = await api.get<BackendObra[]>('/obras/notas-con-orden-proceso')
+  const { data } = await api.get<BackendObra[]>(
+    '/obras/notas-con-orden-proceso'
+  )
   return data.map(mapToFrontend)
 }
 
