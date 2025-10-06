@@ -10,6 +10,7 @@ import {
   DollarSign,
   Search,
   Filter,
+  FileText,
 } from 'lucide-react'
 import type { ObrasListProps, Obra } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
@@ -17,7 +18,7 @@ import { useAuth } from '@/context/AuthContext'
 import EstadoObraBadge from './EstadoObraBadge'
 import PagosObra from '../ventas/PagosObra'
 import { deleteObra } from '@/actions/obras'
-
+import NotaFabricaModal from '../ventas/NotaFabricaModal'
 const ESTADOS_OBRA: Obra['estado'][] = [
   'ACTIVA',
   'EN PRODUCCION',
@@ -36,7 +37,11 @@ export default function ObrasList({
     useGlobalContext()
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [obraPagos, setObraPagos] = useState<Obra | null>(null) // Estado para la obra seleccionada para pagos
+  const [obraPagos, setObraPagos] = useState<Obra | null>(null)
+
+  // Para el modal de Nota de Fábrica
+  const [notaFabricaObra, setNotaFabricaObra] = useState<Obra | null>(null)
+  const [notaFabricaUrl, setNotaFabricaUrl] = useState<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -90,7 +95,6 @@ export default function ObrasList({
     })
   }, [obras, searchTerm, filtroEstado, filtroLocalidad])
 
-  // Si hay una obra seleccionada para ver pagos, muestra el componente PagosObra
   if (obraPagos) {
     return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
   }
@@ -260,6 +264,35 @@ export default function ObrasList({
                       >
                         <DollarSign className="h-4 w-4" /> Pagos
                       </button>
+                      {/* Nota de Fábrica */}
+                      {usuario?.rol_actual === 'VENTAS' ? (
+                        <button
+                          onClick={() => setNotaFabricaObra(obra)}
+                          className={`flex items-center gap-1 font-medium ${
+                            obra.nota_fabrica
+                              ? 'text-indigo-600 hover:text-indigo-800'
+                              : 'text-gray-400 hover:text-indigo-600'
+                          }`}
+                        >
+                          <FileText className="h-4 w-4" />
+                          Nota de Fábrica
+                          {!obra.nota_fabrica && (
+                            <span className="ml-1 text-xs text-gray-400">
+                              (vacío)
+                            </span>
+                          )}
+                        </button>
+                      ) : (
+                        obra.nota_fabrica && (
+                          <button
+                            onClick={() => setNotaFabricaObra(obra)}
+                            className="flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Nota de Fábrica
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -278,6 +311,21 @@ export default function ObrasList({
           )}
         </div>
       </div>
+      {/* Modal para mostrar o subir la Nota de Fábrica */}
+      {notaFabricaObra && (
+        <NotaFabricaModal
+          isOpen={!!notaFabricaObra}
+          onClose={() => setNotaFabricaObra(null)}
+          notaUrl={notaFabricaObra.nota_fabrica || null}
+          codObra={notaFabricaObra.cod_obra}
+          onUploadSuccess={(url: string) => {
+            setNotaFabricaObra((prev) =>
+              prev ? { ...prev, nota_fabrica: url } : prev
+            )
+            fetchObras() // refresca la lista
+          }}
+        />
+      )}
     </div>
   )
 }

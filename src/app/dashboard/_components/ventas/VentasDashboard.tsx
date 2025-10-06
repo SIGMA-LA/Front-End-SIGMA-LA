@@ -53,7 +53,7 @@ export default function VentasDashboard() {
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
-    { id: 'pagos', label: 'Pagos', icon: DollarSign }, // <-- Nuevo botón de Pagos
+    { id: 'pagos', label: 'Pagos', icon: DollarSign },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
   ]
 
