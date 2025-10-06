@@ -16,6 +16,7 @@ import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import EstadoObraBadge from './EstadoObraBadge'
 import PagosObra from '../ventas/PagosObra'
+import { deleteObra } from '@/actions/obras'
 
 const ESTADOS_OBRA: Obra['estado'][] = [
   'ACTIVA',

@@ -12,7 +12,7 @@ export default function TabNavigation({
   onTabChange,
 }: TabNavigationProps) {
   return (
-    <div className="border-b border-gray-200 px-3 pt-3 pb-3 lg:px-3 lg:pt-3 lg:pb-3">
+    <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-3 pt-1 pb-3 lg:px-3 lg:pt-2 lg:pb-3">
       <div className="flex justify-center space-x-3 lg:space-x-4">
         <button
           onClick={() => onTabChange('visitas')}
