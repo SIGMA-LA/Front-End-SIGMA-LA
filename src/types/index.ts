@@ -266,6 +266,7 @@ export interface MaquinariaListProps {
 
 export interface VehiculosListProps {
   onCreateClick: () => void
+  onEditClick: (vehiculo: Vehiculo) => void
 }
 
 export interface Localidad {

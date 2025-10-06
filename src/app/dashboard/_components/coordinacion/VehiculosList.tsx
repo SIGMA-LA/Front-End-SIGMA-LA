@@ -6,7 +6,7 @@ import { useVehiculos } from '@/hooks/useVehiculos';
 
 // Mock data de vehículos
 
-export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
+export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosListProps) {
   /* const vehiculos = mockVehiculos */
 
   const { vehiculos, isLoading, error } = useVehiculos();
@@ -184,9 +184,12 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
                   <button className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10">
                     Ver Detalles
                   </button>
-                  <button className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10">
-                    Editar
-                  </button>
+            <button
+              onClick={() => onEditClick(vehiculo)} // Llama a la función pasada por props
+              className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10"
+            >
+              Editar
+            </button>
                 </div>
               </div>
             ))}

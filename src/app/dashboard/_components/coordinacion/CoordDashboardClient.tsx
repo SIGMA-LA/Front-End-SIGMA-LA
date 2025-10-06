@@ -33,6 +33,8 @@ import CrearMaquinaria from './CrearMaquinaria'
 
 import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
+import EditarVehiculo from './EditarVehiculo' // 1. Importar el nuevo componente
+import { Vehiculo } from '@/types' // Importar el tipo
 import { on } from 'events'
 
 export default function CoordDashboard() {
@@ -43,6 +45,7 @@ export default function CoordDashboard() {
   // Estado para nueva máquina (para manejar la creación)
   const [nuevasMaquinas, setNuevasMaquinas] = useState<any[]>([])
 
+  const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(null);
   // Función para manejar la creación de nueva máquina
 
   const handleNavigation = (section: string) => {
@@ -188,6 +191,10 @@ export default function CoordDashboard() {
         return (
           <VehículosList
             onCreateClick={() => setCurrentSection('crear-vehiculo')}
+             onEditClick={(vehiculo) => {
+              setSelectedVehiculo(vehiculo);
+              setCurrentSection('editar-vehiculo');
+            }}
           />
         )
 
@@ -198,6 +205,23 @@ export default function CoordDashboard() {
             onSubmit={() => setCurrentSection('vehiculos')}
           />
         )
+
+      case 'editar-vehiculo':
+        // Nos aseguramos de que haya un vehículo seleccionado antes de renderizar
+        return selectedVehiculo ? (
+            <EditarVehiculo
+                vehiculo={selectedVehiculo}
+                onCancel={() => {
+                    setCurrentSection('vehiculos');
+                    setSelectedVehiculo(null); // Limpiar el estado
+                }}
+                onSubmit={() => {
+                    setCurrentSection('vehiculos');
+                    setSelectedVehiculo(null); // Limpiar el estado
+                    // Opcional: podrías querer refrescar la lista de vehículos aquí
+                }}
+            />
+        ) : null; // Si no hay vehículo seleccionado, no renderizar nada o un fallback
 
       case 'configuraciones':
         return <Configuraciones />

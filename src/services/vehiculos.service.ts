@@ -9,12 +9,24 @@ const mapToFrontend = (backendVehiculo: BackendVehiculo): Vehiculo => ({
   estado: backendVehiculo.estado as VehiculoEstado,
 });
 
-const mapToBackend = (vehiculoData: VehiculoFormData): any => ({
-  patente: vehiculoData.patente,
-  tipo_vehiculo: vehiculoData.tipo_vehiculo,
-  estado: vehiculoData.estado,
-});
+const mapToBackend = (vehiculoData: Partial<VehiculoFormData>): any => {
+  // 1. Creamos un objeto 'payload' vacío.
+  const payload: any = {};
 
+  // 2. Añadimos cada propiedad al payload SOLO SI existe en el objeto de entrada.
+  if (vehiculoData.patente !== undefined) {
+    payload.patente = vehiculoData.patente;
+  }
+  if (vehiculoData.tipo_vehiculo !== undefined) {
+    payload.tipo_vehiculo = vehiculoData.tipo_vehiculo;
+  }
+  if (vehiculoData.estado !== undefined) {
+    payload.estado = vehiculoData.estado;
+  }
+
+  // 3. Devolvemos el payload construido dinámicamente.
+  return payload;
+};
 // --- FUNCIONES DE SERVICIO ADAPTADAS ---
 
 /**
@@ -46,38 +58,58 @@ export const getVehiculos = async (token?: string): Promise<Vehiculo[]> => {
 
 /**
  * Crea un nuevo vehículo. Seguro para cliente y servidor.
+ * @param vehiculoData - Datos completos del formulario para el nuevo vehículo.
+ * @param token - (Opcional) Token de autenticación para llamadas desde el servidor.
+ * @returns El nuevo vehículo creado.
  */
 export const createVehiculo = async (
   vehiculoData: VehiculoFormData,
-  token?: string // <-- CAMBIO 2: Añadimos el parámetro opcional 'token'
+  token?: string
 ): Promise<Vehiculo> => {
+  // La nueva función mapToBackend funciona perfectamente aquí,
+  // ya que todas las propiedades de vehiculoData estarán definidas.
   const payload = mapToBackend(vehiculoData);
   let nuevoVehiculoBackend: BackendVehiculo;
 
-  if (token) {
-    // --- MODO SERVIDOR ---
-    // <-- CAMBIO 3: Lógica específica para el servidor
-    // Usa axios directamente para evitar el interceptor de localStorage.
-    const response = await axios.post<BackendVehiculo>(
-      `${process.env.NEXT_PUBLIC_API_URL}/vehiculos`,
-      payload,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    nuevoVehiculoBackend = response.data;
-  } else {
-    // --- MODO CLIENTE (tu código original) ---
-    // <-- CAMBIO 4: Tu lógica original ahora está en el 'else'
-    // Usa la instancia 'api' que tiene el interceptor que funciona en el cliente.
-    const response = await api.post<BackendVehiculo>('/vehiculos', payload);
-    nuevoVehiculoBackend = response.data;
+  try {
+    if (token) {
+      // --- MODO SERVIDOR ---
+      // Usa axios directamente para evitar el interceptor de localStorage.
+      const response = await axios.post<BackendVehiculo>(
+        `${process.env.NEXT_PUBLIC_API_URL}/vehiculos`,
+        payload,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      nuevoVehiculoBackend = response.data;
+    } else {
+      // --- MODO CLIENTE ---
+      // Usa la instancia 'api' que tiene el interceptor que funciona en el cliente.
+      const response = await api.post<BackendVehiculo>('/vehiculos', payload);
+      nuevoVehiculoBackend = response.data;
+    }
+    
+    // Si la petición fue exitosa, mapea y devuelve los datos.
+    return mapToFrontend(nuevoVehiculoBackend);
+
+  } catch (error) {
+    // --- MANEJO DE ERRORES MEJORADO ---
+    // Este bloque se ejecutará si axios rechaza la promesa (ej: por un status 4xx o 5xx)
+    console.error("Error al crear el vehículo:", error);
+
+    // Si es un error de Axios, podemos intentar obtener más detalles.
+    if (axios.isAxiosError(error) && error.response) {
+      // Re-lanzamos un error con el mensaje del backend para que la Server Action pueda capturarlo.
+      throw new Error(error.response.data.message || 'Ocurrió un error en el servidor.');
+    }
+
+    // Si es otro tipo de error, lo re-lanzamos.
+    throw error;
   }
-  
-  return mapToFrontend(nuevoVehiculoBackend);
 };
 
 /**
@@ -85,25 +117,28 @@ export const createVehiculo = async (
  */
 export const updateVehiculo = async (
   patente: string,
-  vehiculoData: Omit<VehiculoFormData, 'patente'>,
+  vehiculoData: Partial<VehiculoFormData>,
   token?: string
 ): Promise<Vehiculo> => {
-  const payload = mapToBackend({ ...vehiculoData, patente });
-  let obraActualizadaBackend: BackendVehiculo;
+  // El payload ahora solo contiene los campos que se van a actualizar.
+  const payload = mapToBackend(vehiculoData); 
+  let vehiculoActualizado: BackendVehiculo;
 
   if (token) {
-    // MODO SERVIDOR
-    const response = await axios.put<BackendVehiculo>(`${process.env.NEXT_PUBLIC_API_URL}/vehiculos/${patente}`, payload, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    obraActualizadaBackend = response.data;
+    // ...
+    const response = await axios.put<BackendVehiculo>(
+      `${process.env.NEXT_PUBLIC_API_URL}/vehiculos/${patente}`,
+      payload, // <-- 'payload' ya está correctamente formado
+      { /* ... headers ... */ }
+    );
+    vehiculoActualizado = response.data;
   } else {
-    // MODO CLIENTE
+    // ...
     const response = await api.put<BackendVehiculo>(`/vehiculos/${patente}`, payload);
-    obraActualizadaBackend = response.data;
+    vehiculoActualizado = response.data;
   }
 
-  return mapToFrontend(obraActualizadaBackend);
+  return mapToFrontend(vehiculoActualizado);
 };
 
 /**

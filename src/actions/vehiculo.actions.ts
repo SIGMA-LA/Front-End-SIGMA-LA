@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getValidAccessToken } from '@/lib/auth-server';
 import type { VehiculoFormData } from '@/types';
 import axios from 'axios'; // Usaremos Axios para un mejor manejo de errores
+import { updateVehiculo } from '@/services/vehiculos.service';
 
 // El tipo de estado que SIEMPRE devolveremos
 type ActionState = {
@@ -32,8 +33,9 @@ export async function createVehiculoAction(data: VehiculoFormData): Promise<Acti
     return { success: true, message: 'Vehículo creado con éxito.' };
 
   } catch (error) {
-    console.error('Error detallado en createVehiculoAction:', error);
-
+    if (axios.isAxiosError(error) && error.response) {
+      console.error('Mensaje del backend:', error.response.data.errors[0].issues);
+    }
     let errorMessage = 'No se pudo crear el vehículo.';
     
     // Mejoramos el manejo de errores para dar mensajes más específicos desde el backend
@@ -46,6 +48,42 @@ export async function createVehiculoAction(data: VehiculoFormData): Promise<Acti
     }
 
     // Devolvemos el objeto de error, asegurando que la función nunca devuelve 'undefined'
+    return { success: false, message: errorMessage };
+  }
+}
+
+/**
+ * Server Action para actualizar un vehículo existente.
+ * @param patente - El identificador del vehículo a actualizar.
+ * @param data - Los nuevos datos para el vehículo (pueden ser parciales).
+ */
+export async function updateVehiculoAction(
+  patente: string,
+  data: Partial<VehiculoFormData>
+): Promise<ActionState> {
+  if (!patente) {
+    return { success: false, message: 'La patente del vehículo es requerida para actualizar.' };
+  }
+
+  try {
+    const token = await getValidAccessToken();
+
+    // Llama al servicio de actualización, pasándole el token
+    await updateVehiculo(patente, data, token);
+
+    revalidatePath('/dashboard');
+
+    return { success: true, message: 'Vehículo actualizado con éxito.' };
+  } catch (error) {
+    console.error('Error en updateVehiculoAction:', error);
+
+    let errorMessage = 'No se pudo actualizar el vehículo.';
+    if (axios.isAxiosError(error) && error.response) {
+      errorMessage = error.response.data.message || 'Error de validación del servidor.';
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return { success: false, message: errorMessage };
   }
 }
