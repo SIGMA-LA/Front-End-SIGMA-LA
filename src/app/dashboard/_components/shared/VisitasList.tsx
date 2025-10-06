@@ -1,13 +1,14 @@
 'use client'
 
-import { Calendar, Clock, User, Eye, Plus } from 'lucide-react'
+import { Calendar, Plus } from 'lucide-react'
 import { VisitasListProps, Visita } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { useState, useEffect } from 'react'
 import { obtenerVisitas } from '@/actions/visitas'
+import VisitaCard from './VisitaCard'
 
 export default function VisitasList({ onCreateClick }: VisitasListProps) {
-  const { usuario, logout } = useAuth() // Cambiado de 'usuario' por consistencia
+  const { usuario, logout } = useAuth()
   const [visitas, setVisitas] = useState<Visita[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +17,6 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
     try {
       setLoading(true)
       setError(null)
-
       const data = await obtenerVisitas()
       setVisitas(data)
     } catch (err) {
@@ -29,7 +29,6 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
         logout()
         return
       }
-
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -39,39 +38,6 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
   useEffect(() => {
     fetchVisitas()
   }, [])
-  const getStatusColor = (estado: string) => {
-    switch (estado) {
-      case 'PROGRAMADA':
-        return 'bg-yellow-500'
-      case 'COMPLETADA':
-        return 'bg-green-500'
-      case 'CANCELADA':
-        return 'bg-red-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
-
-  const getTipoText = (tipo: string) => {
-    switch (tipo) {
-      case 'VISITA INICIAL':
-        return 'Visita Inicial'
-      case 'MEDICION':
-        return 'Medición'
-      case 'RE-MEDICION':
-        return 'Re-Medición'
-      case 'REPARACION':
-        return 'Reparación'
-      case 'ASESORAMIENTO':
-        return 'Asesoramiento'
-      default:
-        return tipo
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-AR')
-  }
 
   if (loading) {
     return (
@@ -144,55 +110,11 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
         ) : (
           <div className="space-y-4">
             {visitas.map((visita) => (
-              <div
+              <VisitaCard
                 key={visita.cod_visita}
-                className="flex items-center space-x-4"
-              >
-                {/* Visita Card */}
-                <div className="flex flex-1 flex-col rounded-xl border border-blue-200 bg-blue-50 p-6 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-800">
-                        {visita.obra?.direccion || 'Visita sin obra asignada'}
-                      </h3>
-                      {/* Estado Badge */}
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-bold tracking-wide text-white uppercase ${getStatusColor(
-                          visita.estado
-                        )} shadow`}
-                      >
-                        {visita.estado}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDate(visita.fecha_hora_visita)}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <span className="font-medium">
-                          Tipo: {getTipoText(visita.motivo_visita)}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="mt-2 text-gray-500">{visita.observaciones}</p>
-                  </div>
-                  {/* Action Button */}
-                  <div className="mt-4 sm:mt-0 sm:ml-4">
-                    <button className="flex items-center space-x-2 rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600">
-                      <Eye className="h-4 w-4" />
-                      <span>
-                        Ver
-                        <br />
-                        Detalles
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                visita={visita}
+                rolActual={usuario?.rol_actual}
+              />
             ))}
           </div>
         )}
