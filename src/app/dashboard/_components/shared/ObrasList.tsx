@@ -322,8 +322,9 @@ export default function ObrasList({
             setNotaFabricaObra((prev) =>
               prev ? { ...prev, nota_fabrica: url } : prev
             )
-            fetchObras() // refresca la lista
+            fetchObras()
           }}
+          rolActual={usuario?.rol_actual}
         />
       )}
     </div>

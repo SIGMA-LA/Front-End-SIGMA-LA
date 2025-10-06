@@ -204,6 +204,7 @@ export interface ObrasListProps {
   onScheduleVisit?: (obra: Obra) => void
   onScheduleEntrega?: (obra: Obra) => void
   onEditClick: (obra: Obra) => void
+  onNotaFabricaClick?: (obra: Obra) => void
 }
 
 export interface PedidosListProps {
