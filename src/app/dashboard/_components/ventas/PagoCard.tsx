@@ -35,24 +35,23 @@ export default function PagoCard({
 
   return (
     <>
-      <div className="flex flex-col gap-4 rounded-xl border border-blue-200 bg-blue-50 p-6 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex-1">
-          {/* Si hay obra, mostrar info de la obra alineada a la izquierda */}
           {obra && (
             <>
               <div className="mb-2">
-                <div className="text-base font-semibold text-blue-700">
+                <div className="truncate text-base font-semibold text-blue-700">
                   {obra.direccion}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="truncate text-sm text-gray-500">
                   Cliente: {obra.cliente?.razon_social || 'Sin cliente'}
                 </div>
               </div>
-              <hr className="my-3 border-blue-200" />
+              <hr className="my-2 border-blue-200 sm:my-3" />
             </>
           )}
           <div className="mb-2 flex items-center gap-4">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-gray-900 sm:text-2xl">
               ${pago.monto?.toLocaleString('es-AR')}
             </span>
           </div>
@@ -63,7 +62,7 @@ export default function PagoCard({
             </span>
           </div>
         </div>
-        <div className="mt-4 flex gap-2 lg:mt-0">
+        <div className="mt-3 flex gap-2 lg:mt-0">
           <button
             onClick={onEdit}
             className="rounded border-1 border-yellow-700 bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"

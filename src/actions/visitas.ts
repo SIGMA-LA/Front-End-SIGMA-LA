@@ -7,15 +7,12 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
-
-  // Buscar el token en cookies (mismo nombre que usas en localStorage)
   let accessToken = cookieStore.get('accessToken')?.value
 
   if (accessToken) {
     return accessToken
   }
 
-  // Si no hay accessToken, intentar con refreshToken si existe
   const refreshToken = cookieStore.get('refreshToken')?.value
 
   if (!refreshToken) {

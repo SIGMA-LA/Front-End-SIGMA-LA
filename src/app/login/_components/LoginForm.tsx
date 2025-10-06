@@ -113,8 +113,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           <CardContent className="px-1 pb-8 sm:px-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               {errors.general && (
-                <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2">
-                  <p className="px-4 text-sm text-red-600">{errors.general}</p>
+                <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 px-4">
+                  <p className="text-sm text-red-600">{errors.general}</p>
                 </div>
               )}
 
@@ -168,7 +168,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                   />
                 </div>
                 {errors.contrasenia && (
-                  <p className="mt-1 text-xs text-red-600">
+                  <p className="mt-1 px-4 text-xs text-red-600">
                     {errors.contrasenia}
                   </p>
                 )}

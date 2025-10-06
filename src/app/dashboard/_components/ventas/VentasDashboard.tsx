@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Building2,
   Users,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 
 import { useGlobalContext } from '@/context/GlobalContext'
-import type { Obra } from '@/types'
+import type { Empleado, Obra } from '@/types'
 
 import CrearCliente from './CrearCliente'
 import CrearObra from './CrearObra'
@@ -26,13 +26,18 @@ import ClientesList from '../shared/ClientesList'
 import { ObraFormData } from '@/services/obra.service'
 import { PresupuestoFormData } from '@/services/presupuesto.service'
 import PagosList from './PagosList'
+import { obtenerEmpleadoActual } from '@/actions/empleado'
+import NotaFabricaModal from './NotaFabricaModal'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedObra, setSelectedObra] = useState<any>(null)
-
+  const [usuarioActual, setUsuarioActual] = useState<Empleado | null>(null)
   const [obraParaEditar, setObraParaEditar] = useState<Obra | null>(null)
+  const [isNotaModalOpen, setIsNotaModalOpen] = useState(false)
+  const [notaUrl, setNotaUrl] = useState<string | null>(null)
+  const [codObra, setCodObra] = useState<number | null>(null)
 
   const {
     createObra,
@@ -42,9 +47,30 @@ export default function VentasDashboard() {
     fetchObras,
   } = useGlobalContext()
 
+  useEffect(() => {
+    async function fetchUsuario() {
+      const empleado = await obtenerEmpleadoActual()
+      setUsuarioActual(empleado)
+    }
+    fetchUsuario()
+  }, [])
+
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
     setSidebarOpen(false)
+  }
+
+  const handleUploadSuccess = (url: string) => {
+    setNotaUrl(url)
+    fetchObras()
+  }
+
+  const openNotaModal = (obra: Obra) => {
+    console.log('Abriendo modal para obra:', obra)
+    console.log('Rol', usuarioActual?.rol_actual)
+    setCodObra(obra.cod_obra)
+    setNotaUrl(obra.nota_fabrica || null)
+    setIsNotaModalOpen(true)
   }
 
   const menuItems = [
@@ -78,6 +104,7 @@ export default function VentasDashboard() {
               setSelectedObra(obra)
               setCurrentSection('crear-entrega')
             }}
+            onNotaFabricaClick={openNotaModal}
           />
         )
 
@@ -134,10 +161,6 @@ export default function VentasDashboard() {
                         : p.fecha_aceptacion
                       : undefined,
                   }
-                  console.log(
-                    'Presupuesto normalizado:',
-                    presupuestoNormalizado
-                  )
                   if (
                     presupuestoNormalizado.nro_presupuesto &&
                     presupuestoNormalizado.nro_presupuesto > 0
@@ -150,10 +173,6 @@ export default function VentasDashboard() {
                       )
 
                     if (esPresupuestoExistente) {
-                      console.log(
-                        'Actualizando presupuesto existente:',
-                        presupuestoNormalizado.nro_presupuesto
-                      )
                       try {
                         await updatePresupuesto(
                           presupuestoNormalizado.nro_presupuesto,
@@ -169,20 +188,12 @@ export default function VentasDashboard() {
                         throw error
                       }
                     } else {
-                      console.log(
-                        'Creando presupuesto (ID no coincide):',
-                        presupuestoNormalizado
-                      )
                       await createPresupuesto(
                         presupuestoNormalizado,
                         obraParaEditar.cod_obra
                       )
                     }
                   } else {
-                    console.log(
-                      'Creando presupuesto nuevo:',
-                      presupuestoNormalizado
-                    )
                     await createPresupuesto(
                       presupuestoNormalizado,
                       obraParaEditar.cod_obra
@@ -213,22 +224,10 @@ export default function VentasDashboard() {
         )
 
       case 'visitas':
-        return (
-          <VisitasList
-            onCreateClick={() => {
-              /* TODO: implement create visita logic */
-            }}
-          />
-        )
+        return <VisitasList onCreateClick={() => {}} />
 
       case 'entregas':
-        return (
-          <EntregasList
-            onCreateClick={() => {
-              /* TODO: implement create entrega logic */
-            }}
-          />
-        )
+        return <EntregasList onCreateClick={() => {}} />
 
       case 'pagos':
         return (
@@ -245,7 +244,6 @@ export default function VentasDashboard() {
           <CrearCliente
             onCancel={() => setCurrentSection('clientes')}
             onSubmit={(clienteData) => {
-              console.log('Cliente creado:', clienteData)
               setCurrentSection('clientes')
             }}
           />
@@ -259,7 +257,12 @@ export default function VentasDashboard() {
                 <div className="border-b border-blue-300 pb-4">
                   <h1 className="text-2xl font-semibold text-gray-800">
                     Bienvenido,{' '}
-                    <span className="text-blue-600">{'Emiliano Luhmann'}</span>!
+                    <span className="text-blue-600">
+                      {usuarioActual
+                        ? `${usuarioActual.nombre} ${usuarioActual.apellido}`
+                        : ''}
+                    </span>
+                    !
                   </h1>
                 </div>
 
@@ -307,6 +310,7 @@ export default function VentasDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar Desktop */}
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className="flex w-64 flex-col border-r border-gray-200 bg-white">
           <nav className="flex flex-1 flex-col space-y-2 p-4">
@@ -332,11 +336,12 @@ export default function VentasDashboard() {
         </div>
       </div>
 
+      {/* Sidebar Mobile */}
       <div
         className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
       >
         <div
-          className="absolute inset-0 bg-black opacity-50"
+          className="absolute inset-0 bg-black opacity-50 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         ></div>
 
@@ -390,12 +395,24 @@ export default function VentasDashboard() {
               {menuItems.find((item) => currentSection.startsWith(item.id))
                 ?.label || 'Dashboard'}
             </h1>
-            <div className="w-6"></div>{' '}
+            <div className="w-6"></div>
           </div>
         </header>
 
         <main className="flex-1">{renderContent()}</main>
       </div>
+
+      {/* Nota de Fábrica Modal */}
+      {isNotaModalOpen && codObra !== null && (
+        <NotaFabricaModal
+          isOpen={isNotaModalOpen}
+          onClose={() => setIsNotaModalOpen(false)}
+          notaUrl={notaUrl}
+          codObra={codObra}
+          onUploadSuccess={handleUploadSuccess}
+          rolActual={usuarioActual?.rol_actual}
+        />
+      )}
     </div>
   )
 }

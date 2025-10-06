@@ -16,7 +16,9 @@ interface CrearOrdenData {
 /**
  * Sube un PDF a Cloudinary
  */
-async function uploadToCloudinary(file: File): Promise<CloudinaryUploadResponse> {
+async function uploadToCloudinary(
+  file: File
+): Promise<CloudinaryUploadResponse> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('upload_preset', process.env.CLOUDINARY_UPLOAD_PRESET!)
@@ -66,27 +68,28 @@ export async function crearOrdenProduccion(formData: FormData) {
 
     const { secure_url, public_id } = await uploadToCloudinary(file)
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ordenes-produccion`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        cod_obra,
-        fecha_confeccion: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-        fecha_validacion: null,
-        url: secure_url,
-        public_id: public_id,
-      }),
-    })
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/ordenes-produccion`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cod_obra,
+          fecha_confeccion: new Date().toISOString().split('T')[0],
+          fecha_validacion: null,
+          url: secure_url,
+          public_id: public_id,
+        }),
+      }
+    )
 
     if (!response.ok) {
       throw new Error('Error al crear orden de producción')
     }
 
     const ordenCreada = await response.json()
-
-    // Revalidar las rutas necesarias
     revalidatePath('/produccion')
     revalidatePath('/obras')
 
