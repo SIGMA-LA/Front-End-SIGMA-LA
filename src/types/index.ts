@@ -1,4 +1,4 @@
-import { number } from "valibot"
+import { number } from 'valibot'
 
 export interface Cliente {
   cuil: string
@@ -250,6 +250,46 @@ export interface ModalEncargadoProps {
 
 export interface MaquinariaListProps {
   onCreateClick: () => void
+}
+
+export interface CrearMaquinariaProps {
+  onCancel: () => void
+  onSubmit: (maquinaria: Maquinaria) => void
+  isModal?: boolean
+  isOpen?: boolean
+}
+
+export interface DetalleMaquinariaProps {
+  maquinaria: Maquinaria
+  isOpen: boolean
+  onClose: () => void
+  onEdit: (maquinaria: Maquinaria) => void
+  onDelete: (maquinaria: Maquinaria) => void
+  onChangeStatus: (
+    maquinaria: Maquinaria,
+    newStatus: Maquinaria['estado']
+  ) => void
+}
+
+export interface EditarMaquinariaProps {
+  maquinaria: Maquinaria
+  isOpen: boolean
+  onClose: () => void
+  onSave: (maquinaria: Maquinaria) => void
+}
+
+export interface ConfirmDeleteModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+export interface CambiarEstadoModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onConfirm: (newStatus: Maquinaria['estado']) => void
+  onCancel: () => void
 }
 
 export interface VehiculosListProps {

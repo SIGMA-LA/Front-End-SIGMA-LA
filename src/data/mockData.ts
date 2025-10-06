@@ -373,6 +373,25 @@ export const mockVisitadores = [
 ]
 
 export const mockMaquinarias: Maquinaria[] = [
-  { id: '1', descripcion: 'Mezcladora de cemento', estado: 'disponible' },
-  { id: '2', descripcion: 'Andamio tubular', estado: 'inhabilitada' },
+  {
+    cod_maquina: 1,
+    descripcion: 'Mezcladora de cemento',
+    estado: 'DISPONIBLE',
+  },
+  { cod_maquina: 2, descripcion: 'Andamio tubular', estado: 'MANTENIMIENTO' },
+  {
+    cod_maquina: 3,
+    descripcion: 'Martillo neumático industrial',
+    estado: 'EN_USO',
+  },
+  {
+    cod_maquina: 4,
+    descripcion: 'Grúa torre 15 toneladas',
+    estado: 'FUERA_DE_SERVICIO',
+  },
+  {
+    cod_maquina: 5,
+    descripcion: 'Compactadora de suelo',
+    estado: 'REPARACION',
+  },
 ]
