@@ -198,6 +198,7 @@ export interface VisitasListProps {
 export interface VisitaDetailProps {
   visita: Visita
   onClose: () => void
+  onCancel?: () => void
 }
 
 export interface ObrasListProps {

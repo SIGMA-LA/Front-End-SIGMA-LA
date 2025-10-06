@@ -114,6 +114,7 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
                 key={visita.cod_visita}
                 visita={visita}
                 rolActual={usuario?.rol_actual}
+                refrescarVisitas={fetchVisitas}
               />
             ))}
           </div>
