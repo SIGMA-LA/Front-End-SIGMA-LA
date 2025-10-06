@@ -78,7 +78,7 @@ export default function CrearObra({
       setClienteSeleccionado('')
       setPresupuestos([])
     }
-  }, [obraExistente, esModoEdicion])
+  }, [obraExistente, esModoEdicion, clientes])
 
   const clientesFiltrados = useMemo(() => {
     if (!filtroCliente) return clientes
@@ -197,7 +197,7 @@ export default function CrearObra({
                     <input
                       type="text"
                       placeholder="Buscar por Razón Social o CUIL..."
-                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-5 pl-10 focus:border-blue-500"
+                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-5 pl-10 focus:border-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
                       value={filtroCliente}
                       onChange={(e) => setFiltroCliente(e.target.value)}
                       disabled={isObraCancelada}
@@ -232,7 +232,7 @@ export default function CrearObra({
                   <button
                     type="button"
                     onClick={() => setIsClienteModalOpen(true)}
-                    className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700"
+                    className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
                     disabled={isObraCancelada}
                   >
                     Nuevo Cliente
@@ -251,7 +251,7 @@ export default function CrearObra({
                       name="direccion"
                       type="text"
                       placeholder="Ingrese la dirección"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
                       value={formData.direccion}
                       onChange={handleChange}
                       required
@@ -264,7 +264,7 @@ export default function CrearObra({
                     </label>
                     <select
                       name="cod_postal"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
                       value={formData.cod_postal || ''}
                       onChange={handleChange}
                       required
@@ -285,7 +285,7 @@ export default function CrearObra({
                     <input
                       name="fecha_ini"
                       type="date"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
                       value={formData.fecha_ini}
                       onChange={handleChange}
                       required
@@ -299,7 +299,7 @@ export default function CrearObra({
                         <select
                           id="estado"
                           name="estado"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
                           value={formData.estado}
                           onChange={handleChange}
                           disabled={isObraCancelada}
@@ -321,7 +321,7 @@ export default function CrearObra({
                           name="nota_fabrica"
                           type="text"
                           placeholder="https://ejemplo.com/nota.pdf"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:text-gray-400"
                           value={formData.nota_fabrica}
                           onChange={handleChange}
                           disabled={isObraCancelada}
@@ -376,7 +376,7 @@ export default function CrearObra({
                             <button
                               type="button"
                               onClick={() => handleOpenModalParaEditar(p)}
-                              className="p-1 text-blue-600 hover:text-blue-800"
+                              className="p-1 text-blue-600 hover:text-blue-800 disabled:cursor-not-allowed disabled:text-gray-400"
                               disabled={isObraCancelada}
                             >
                               <Edit className="h-4 w-4" />
@@ -388,7 +388,7 @@ export default function CrearObra({
                     <button
                       type="button"
                       onClick={handleOpenModalParaCrear}
-                      className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 font-medium text-white hover:bg-green-700"
+                      className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:text-gray-400"
                       disabled={isObraCancelada}
                     >
                       <Plus className="h-5 w-5" />
@@ -410,7 +410,7 @@ export default function CrearObra({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
                   disabled={isObraCancelada}
                 >
                   {esModoEdicion ? 'Guardar Cambios' : 'Crear Obra'}

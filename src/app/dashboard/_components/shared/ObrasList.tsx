@@ -238,13 +238,7 @@ export default function ObrasList({
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                         <button
                           onClick={() => onEditClick(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                          disabled={isCancelada}
-                          title={
-                            isCancelada
-                              ? 'No se puede editar una obra cancelada'
-                              : 'Editar obra'
-                          }
+                          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
                         >
                           <Edit className="h-4 w-4" /> Editar
                         </button>
@@ -275,7 +269,13 @@ export default function ObrasList({
                         </button>
                         <button
                           onClick={() => setNotaFabricaObra(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                          className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                          disabled={isCancelada}
+                          title={
+                            isCancelada
+                              ? 'No se pueden gestionar Notas de Fábrica de una obra cancelada'
+                              : 'Gestionar Nota de Fábrica'
+                          }
                         >
                           <FileText className="h-4 w-4" /> Nota de Fábrica
                         </button>
