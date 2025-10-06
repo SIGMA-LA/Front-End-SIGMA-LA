@@ -10,6 +10,7 @@ interface NotaFabricaModalProps {
   notaUrl?: string | null
   codObra: number
   onUploadSuccess?: (url: string) => void
+  rolActual?: string
 }
 
 export default function NotaFabricaModal({
@@ -18,6 +19,7 @@ export default function NotaFabricaModal({
   notaUrl,
   codObra,
   onUploadSuccess,
+  rolActual = '',
 }: NotaFabricaModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -89,6 +91,7 @@ export default function NotaFabricaModal({
       setLoading(false)
     }
   }
+
   const handleCambioNota = async () => {
     try {
       setLoading(true)
@@ -106,6 +109,7 @@ export default function NotaFabricaModal({
       setLoading(false)
     }
   }
+
   const handleClose = () => {
     if (!loading) {
       setSelectedFile(null)
@@ -141,26 +145,28 @@ export default function NotaFabricaModal({
               title="Nota de Fábrica"
               className="mb-4 h-[70vh] w-full rounded border"
             />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleCambioNota}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Cambiar Nota
-              </button>
-              <button
-                type="button"
-                onClick={handleEliminar}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
-              >
-                <Trash2 className="h-4 w-4" />
-                Eliminar Nota
-              </button>
-            </div>
+            {rolActual === 'VENTAS' && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCambioNota}
+                  disabled={loading}
+                  className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Cambiar Nota
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEliminar}
+                  disabled={loading}
+                  className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar Nota
+                </button>
+              </div>
+            )}
             {error && (
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
                 <p className="text-sm text-red-800 lg:text-base">
