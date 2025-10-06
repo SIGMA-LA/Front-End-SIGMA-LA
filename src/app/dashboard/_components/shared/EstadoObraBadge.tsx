@@ -41,12 +41,6 @@ export default function EstadoObraBadge({ estado }: EstadoObraBadgeProps) {
           className: 'bg-green-100 text-green-800',
           Icon: Truck,
         }
-      case 'CANCELADA':
-        return {
-          text: 'Cancelada',
-          className: 'bg-red-100 text-red-800',
-          Icon: XCircle,
-        }
       case 'EN ESPERA DE STOCK':
         return {
           text: 'En Espera',

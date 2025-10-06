@@ -1,3 +1,4 @@
+//cliente.service.ts
 import api from './api/api'
 import type { Cliente } from '@/types'
 
@@ -28,7 +29,9 @@ const mapToFrontend = (cliente: BackendCliente): Cliente => ({
   mail: cliente.mail,
 })
 
-const mapToBackend = (clienteData: CreateClienteDTO | UpdateClienteDTO): any => ({
+const mapToBackend = (
+  clienteData: CreateClienteDTO | UpdateClienteDTO
+): any => ({
   cuil: 'cuil' in clienteData ? clienteData.cuil : undefined,
   razon_social: clienteData.razon_social,
   telefono: clienteData.telefono,

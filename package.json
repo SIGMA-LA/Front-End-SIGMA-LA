@@ -20,6 +20,7 @@
     "react-hook-form": "^7.62.0",
     "react-toastify": "^11.0.5",
     "sigma-la-schemas": "^1.0.15",
+
     "valibot": "^1.1.0"
   },
   "devDependencies": {
