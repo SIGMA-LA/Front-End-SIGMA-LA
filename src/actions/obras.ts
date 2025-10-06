@@ -98,3 +98,29 @@ export async function uploadNotaFabrica(
     throw new Error('Error al subir la nota de fábrica.')
   }
 }
+
+export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/obras/${codObra}/nota-fabrica`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+      }
+      throw new Error('Error al eliminar la nota de fábrica.')
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error al eliminar la nota de fábrica:', error)
+    throw new Error('Error al eliminar la nota de fábrica.')
+  }
+}

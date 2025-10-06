@@ -2,7 +2,7 @@
 
 import { X, Upload, FileText, Trash2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
-import { uploadNotaFabrica } from '@/actions/obras'
+import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
 
 interface NotaFabricaModalProps {
   isOpen: boolean
@@ -76,10 +76,7 @@ export default function NotaFabricaModal({
     try {
       setLoading(true)
       setError(null)
-      // Enviar un FormData vacío para eliminar la nota
-      const formData = new FormData()
-      // El backend debe interpretar esto como "eliminar nota"
-      const obraActualizada = await uploadNotaFabrica(codObra, formData)
+      const obraActualizada = await deleteNotaFabrica(codObra)
       onUploadSuccess?.(obraActualizada.nota_fabrica || '')
       setModoCambio(false)
       onClose()
@@ -92,7 +89,23 @@ export default function NotaFabricaModal({
       setLoading(false)
     }
   }
-
+  const handleCambioNota = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const obraActualizada = await deleteNotaFabrica(codObra)
+      onUploadSuccess?.(obraActualizada.nota_fabrica || '')
+      setModoCambio(true)
+      setSelectedFile(null)
+    } catch (err: any) {
+      setError(
+        err.message ||
+          'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
   const handleClose = () => {
     if (!loading) {
       setSelectedFile(null)
@@ -131,7 +144,7 @@ export default function NotaFabricaModal({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setModoCambio(true)}
+                onClick={handleCambioNota}
                 disabled={loading}
                 className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
