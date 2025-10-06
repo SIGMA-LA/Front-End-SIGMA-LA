@@ -47,6 +47,7 @@ export interface Entrega {
   empleados_asignados: EntregaEmpleado[]
   maquinarias_usadas?: UsoMaquinaria[]
   vehiculos_usados?: UsoVehiculoEntrega[]
+  dias_viaticos?: number
 }
 
 export interface EntregaEmpleado {
