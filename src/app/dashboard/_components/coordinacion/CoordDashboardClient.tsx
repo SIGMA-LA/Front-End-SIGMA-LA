@@ -25,8 +25,7 @@ import CrearVisita from './CrearVisita'
 import CrearEntrega from './CrearEntrega'
 import PedidosList from './PedidosList'
 import RegistrarPedido from './RegistrarPedido'
-import MaquinariaList from './MaquinariaList'
-import CrearMaquinaria from './CrearMaquinaria'
+import MaquinariaList from './maquinaria/MaquinariaList'
 import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
 
@@ -167,19 +166,7 @@ export default function CoordDashboard() {
         )
 
       case 'maquinarias':
-        return (
-          <MaquinariaList
-            onCreateClick={() => setCurrentSection('crear-maquinaria')}
-          />
-        )
-
-      case 'crear-maquinaria':
-        return (
-          <CrearMaquinaria
-            onCancel={() => setCurrentSection('maquinarias')}
-            onSubmit={() => setCurrentSection('maquinarias')}
-          />
-        )
+        return <MaquinariaList />
 
       case 'vehiculos':
         return (
