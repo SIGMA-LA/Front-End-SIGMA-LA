@@ -141,6 +141,7 @@ export interface CreateEntregaDTO {
     cuil: string
     rol_entrega: 'ENCARGADO' | 'AYUDANTE'
   }[]
+  maquinarias?: number[]
 }
 
 export interface CreateEntregaEmpleadoDTO {
@@ -163,8 +164,17 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
   const empleados_asignados =
     backendEntrega.entrega_empleado?.map((ee: any) => ({
       rol_entrega: ee.rol_entrega,
-      empleado: ee.empleado,
+      empleado: {
+        cuil: ee.empleado?.cuil || ee.cuil,
+        nombre: ee.empleado?.nombre || 'Nombre no disponible',
+        apellido: ee.empleado?.apellido || 'Apellido no disponible',
+      }
     })) || []
+
+  const maquinarias_usadas = backendEntrega.uso_maquinaria?.map((um: any) => ({
+    cod_maquina: um.cod_maquina,
+    descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
+  })) || []
 
   return {
     cod_entrega: backendEntrega.cod_entrega,
@@ -173,8 +183,10 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
     estado: backendEntrega.estado,
     observaciones: backendEntrega.observaciones,
     detalle: backendEntrega.detalle,
+    dias_viaticos: backendEntrega.dias_viaticos,
     obra: backendEntrega.obra,
     empleados_asignados: empleados_asignados,
+    maquinarias_usadas: maquinarias_usadas,
   }
 }
 
@@ -182,6 +194,12 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
 const mapToFrontend = (
   backendEntregaEmpleado: BackendEntregaEmpleado
 ): EntregaEmpleado => {
+  
+  const maquinarias_usadas = (backendEntregaEmpleado.entrega as any).uso_maquinaria?.map((um: any) => ({
+      cod_maquina: um.cod_maquina,
+      descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
+  })) || [];
+
   return {
     cuil: backendEntregaEmpleado.cuil,
     cod_obra: backendEntregaEmpleado.cod_obra,
@@ -239,6 +257,7 @@ const mapToFrontend = (
       observaciones: backendEntregaEmpleado.entrega.observaciones,
       detalle: backendEntregaEmpleado.entrega.detalle,
       empleados_asignados: [],
+      maquinarias_usadas: maquinarias_usadas,
     },
   }
 }

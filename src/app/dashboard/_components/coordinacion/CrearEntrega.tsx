@@ -13,9 +13,11 @@ import {
   Package,
   Truck,
   DollarSign,
+  Loader2, // NUEVO: Icono de carga
 } from 'lucide-react'
 import { mockVehiculos, mockMaquinarias } from '@/data/mockData'
-import { CrearEntregaProps, Obra, Empleado } from '@/types'
+// NUEVO: Importaciones adicionales
+import { CrearEntregaProps, Obra, Empleado, OrdenProduccion } from '@/types'
 import { ModalEncargadoProps } from '@/types'
 import empleadoService from '@/services/empleado.service'
 import { getObras } from '@/services/obra.service'
@@ -23,6 +25,8 @@ import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
 import SelectionModal from '../shared/SelectionModal'
 import AsignarPersonalModal from '../shared/AsignarPersonalModal'
 import parametroService from '@/services/parametro.service'
+import ordenProduccionService from '@/services/ordenProduccion.service'
+import OrdenProduccionCard from '../produccion/OrdenProduccionCard'
 
 function ModalEncargado({
   isOpen,
@@ -145,6 +149,12 @@ export default function CrearEntrega({
   const [diasViaticos, setDiasViaticos] = useState('')
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
 
+  // NUEVO: Estados para las órdenes de producción
+  const [ordenesProduccion, setOrdenesProduccion] = useState<OrdenProduccion[]>([])
+  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
+  const [loadingOrdenes, setLoadingOrdenes] = useState(false)
+  const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
+
   const isFromObra = !!preloadedObra
 
   useEffect(() => {
@@ -174,6 +184,33 @@ export default function CrearEntrega({
     }
     fetchData()
   }, [isFromObra])
+
+  // NUEVO: useEffect para cargar órdenes de producción cuando cambia la obra
+  useEffect(() => {
+    const fetchOrdenes = async () => {
+      if (formData.obraId) {
+        setLoadingOrdenes(true)
+        setErrorOrdenes(null)
+        setSelectedOrden(null) // Resetea la selección de orden al cambiar de obra
+        try {
+          const data = await ordenProduccionService.getOrdenesByObra(
+            Number(formData.obraId)
+          )
+          setOrdenesProduccion(data)
+        } catch (err) {
+          console.error('Error al cargar órdenes de producción:', err)
+          setErrorOrdenes('No se pudieron cargar las órdenes de producción.')
+        } finally {
+          setLoadingOrdenes(false)
+        }
+      } else {
+        // Limpia las órdenes si no hay obra seleccionada
+        setOrdenesProduccion([])
+        setSelectedOrden(null)
+      }
+    }
+    fetchOrdenes()
+  }, [formData.obraId])
 
   const totalViaticos = useMemo(() => {
     const dias = Number(diasViaticos) || 0
@@ -216,12 +253,20 @@ export default function CrearEntrega({
   }
 
   const handleObraSelect = (obra: Obra) => {
+
+    if (obra.cod_obra === formData.obraId) {
+      setShowObraSearch(false)
+      return
+    }
+
     setFormData((prev) => ({
       ...prev,
       obraId: obra.cod_obra,
       obraCliente: obra.cliente.razon_social,
       direccion: obra.direccion,
     }))
+    setOrdenesProduccion([])
+    setSelectedOrden(null)
     setShowObraSearch(false)
     setSearchTerm('')
   }
@@ -243,7 +288,7 @@ export default function CrearEntrega({
   }
 
   const crearEntregaEnBackend = async () => {
-    if (!encargado) return; // Verificación de seguridad
+    if (!encargado) return;
 
     try {
       setSubmitting(true)
@@ -266,7 +311,7 @@ export default function CrearEntrega({
         empleados: empleadosConRoles,
         dias_viaticos: diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
       }
-
+      
       console.log('DTO que se enviará desde el frontend:', createEntregaDTO)
 
       const nuevaEntrega = await entregasService.createEntrega(createEntregaDTO)
@@ -455,6 +500,64 @@ export default function CrearEntrega({
                 </div>
               </div>
 
+              {/* NUEVO: SECCIÓN DE ÓRDENES DE PRODUCCIÓN */}
+              <div>
+                <label className="mb-3 block text-sm font-medium text-gray-700">
+                  <Package className="mr-1 inline h-4 w-4" />
+                  Órdenes de Producción (Opcional)
+                </label>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  {!formData.obraId ? (
+                    <p className="text-center text-sm text-gray-500">
+                      Seleccione una obra para ver las órdenes de producción.
+                    </p>
+                  ) : loadingOrdenes ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                      <p className="ml-2 text-sm text-gray-600">
+                        Cargando órdenes...
+                      </p>
+                    </div>
+                  ) : errorOrdenes ? (
+                    <p className="text-center text-sm text-red-600">
+                      {errorOrdenes}
+                    </p>
+                  ) : ordenesProduccion.length === 0 ? (
+                    <p className="text-center text-sm text-gray-500">
+                      No hay órdenes de producción para esta obra.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {ordenesProduccion.map((orden) => (
+                        <OrdenProduccionCard
+                          key={orden.cod_op}
+                          orden={orden}
+                          isSelected={selectedOrden?.cod_op === orden.cod_op}
+                          onClick={() => setSelectedOrden(orden)}
+                          isAprobada={orden.estado === 'APROBADA'}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* NUEVO: VISUALIZADOR DE PDF */}
+              {selectedOrden && (
+                <div>
+                  <h4 className="mb-4 text-lg font-semibold text-gray-700">
+                    Visualización de Orden de Producción #{selectedOrden.cod_op}
+                  </h4>
+                  <div className="relative h-[600px] w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    <iframe
+                      src={`${selectedOrden.url}#view=FitH`}
+                      className="h-full w-full"
+                      title={`Orden de Producción #${selectedOrden.cod_op}`}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Descripción uso y Valor viáticos */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
@@ -606,7 +709,6 @@ export default function CrearEntrega({
         </div>
       </div>
 
-      {/* Modal para seleccionar encargado */}
       <AsignarPersonalModal
         isOpen={isPersonalModalOpen}
         empleados={empleados}

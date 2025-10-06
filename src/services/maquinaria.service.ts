@@ -5,6 +5,10 @@ export interface CreateMaquinariaDTO {
   descripcion: string
 }
 
+export interface MaquinariaConDisponibilidad extends Maquinaria {
+  isDisponibleEnFecha: boolean
+}
+
 export interface UpdateMaquinariaDTO {
   descripcion?: string
   estado?: Maquinaria['estado']
@@ -29,6 +33,16 @@ class MaquinariaService {
       `${this.baseURL}/disponibles`
     )
     return data.map(this.mapToFrontend)
+  }
+
+  async getDisponibilidadPorFecha(fechaInicioISO: string, fechaFinISO: string): Promise<MaquinariaConDisponibilidad[]> {
+    const { data } = await api.get<MaquinariaConDisponibilidad[]>(`${this.baseURL}/disponibilidad`, {
+      params: {
+        fecha_hora_inicio: fechaInicioISO,
+        fecha_hora_fin: fechaFinISO,
+      }
+    })
+    return data
   }
 
   async getMaquinariaById(id: number): Promise<Maquinaria> {

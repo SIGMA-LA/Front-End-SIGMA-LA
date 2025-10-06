@@ -36,6 +36,11 @@ export interface Visita {
   fecha_cancelacion?: string
 }
 
+export interface MaquinariaSimple {
+  cod_maquina: number;
+  descripcion: string;
+}
+
 export interface Entrega {
   cod_entrega: number
   cod_obra: number
@@ -45,7 +50,7 @@ export interface Entrega {
   observaciones?: string
   detalle: string
   empleados_asignados: EntregaEmpleado[]
-  maquinarias_usadas?: UsoMaquinaria[]
+  maquinarias_usadas?: MaquinariaSimple[]
   vehiculos_usados?: UsoVehiculoEntrega[]
   dias_viaticos?: number
 }

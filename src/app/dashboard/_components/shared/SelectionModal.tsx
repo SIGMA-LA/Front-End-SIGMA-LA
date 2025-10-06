@@ -6,6 +6,7 @@ import { X, Search } from 'lucide-react'
 interface Item {
   id: string
   label: string
+  disabled?: boolean
 }
 
 interface SelectionModalProps {
@@ -79,14 +80,19 @@ export default function SelectionModal({
                 className={`flex cursor-pointer items-center rounded-lg border p-4 transition-all ${
                   internalSelection.includes(item.id)
                     ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                    : 'border-gray-200 hover:bg-gray-50'
+                    : 'border-gray-200'
+                } ${
+                  item.disabled
+                    ? 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-70'
+                    : 'hover:bg-gray-50'
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={internalSelection.includes(item.id)}
                   onChange={() => handleToggle(item.id)}
-                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={item.disabled}
+                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:text-gray-400"
                 />
                 <span className="ml-4 text-base text-gray-800">{item.label}</span>
               </label>
