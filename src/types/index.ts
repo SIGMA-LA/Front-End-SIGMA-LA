@@ -82,6 +82,7 @@ export interface Obra {
   direccion: string
   cliente: Cliente
   nota_fabrica?: string
+  nota_fabrica_pid?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   localidad?: Localidad
@@ -133,6 +134,13 @@ export interface Presupuesto {
 
 export interface Pago {
   cod_pago: number
+  cod_obra: number
+  fecha_pago: string
+  monto: number
+  obra: Obra
+}
+
+export interface PagoFormData {
   cod_obra: number
   fecha_pago: string
   monto: number
@@ -252,6 +260,46 @@ export interface MaquinariaListProps {
   onCreateClick: () => void
 }
 
+export interface CrearMaquinariaProps {
+  onCancel: () => void
+  onSubmit: (maquinaria: Maquinaria) => void
+  isModal?: boolean
+  isOpen?: boolean
+}
+
+export interface DetalleMaquinariaProps {
+  maquinaria: Maquinaria
+  isOpen: boolean
+  onClose: () => void
+  onEdit: (maquinaria: Maquinaria) => void
+  onDelete: (maquinaria: Maquinaria) => void
+  onChangeStatus: (
+    maquinaria: Maquinaria,
+    newStatus: Maquinaria['estado']
+  ) => void
+}
+
+export interface EditarMaquinariaProps {
+  maquinaria: Maquinaria
+  isOpen: boolean
+  onClose: () => void
+  onSave: (maquinaria: Maquinaria) => void
+}
+
+export interface ConfirmDeleteModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+export interface CambiarEstadoModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onConfirm: (newStatus: Maquinaria['estado']) => void
+  onCancel: () => void
+}
+
 export interface VehiculosListProps {
   onCreateClick: () => void
 }
@@ -259,4 +307,20 @@ export interface VehiculosListProps {
 export interface Localidad {
   cod_postal: number
   nombre_localidad: string
+}
+
+export interface TabNavigationProduccionProps {
+  activeTab: 'notas' | 'ordenes'
+  onTabChange: (tab: 'notas' | 'ordenes') => void
+}
+
+export interface OrdenProduccion {
+  cod_op: number
+  cod_obra: number
+  estado: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
+  fecha_confeccion: string
+  fecha_validacion: string | null
+  url: string
+  public_id: string | null
+  obra: Obra
 }

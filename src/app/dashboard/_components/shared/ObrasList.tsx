@@ -7,14 +7,18 @@ import {
   Calendar,
   Edit,
   Trash2,
+  DollarSign,
   Search,
   Filter,
+  FileText,
 } from 'lucide-react'
 import type { ObrasListProps, Obra } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import EstadoObraBadge from './EstadoObraBadge'
-
+import PagosObra from '../ventas/PagosObra'
+import { deleteObra } from '@/actions/obras'
+import NotaFabricaModal from '../ventas/NotaFabricaModal'
 const ESTADOS_OBRA: Obra['estado'][] = [
   'ACTIVA',
   'EN PRODUCCION',
@@ -33,6 +37,11 @@ export default function ObrasList({
     useGlobalContext()
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [obraPagos, setObraPagos] = useState<Obra | null>(null)
+
+  // Para el modal de Nota de Fábrica
+  const [notaFabricaObra, setNotaFabricaObra] = useState<Obra | null>(null)
+  const [notaFabricaUrl, setNotaFabricaUrl] = useState<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -46,7 +55,7 @@ export default function ObrasList({
         await fetchObras()
         await fetchLocalidades()
       } catch (err) {
-        setError('No se pudieron cargar los datos. Intente de nuevo más tarde.')
+        setError('No se pudieron cargar las obras. Intente de nuevo más tarde.')
         console.error(err)
       } finally {
         setCargando(false)
@@ -55,6 +64,21 @@ export default function ObrasList({
     cargarDatos()
   }, [])
 
+  const handleEliminar = async (id: number) => {
+    if (
+      window.confirm(
+        '¿Estás seguro de que deseas eliminar esta obra? Esta acción no se puede deshacer.'
+      )
+    ) {
+      try {
+        await deleteObra(id)
+        alert('Obra eliminada con éxito.')
+      } catch (err) {
+        console.error('Error al eliminar la obra:', err)
+        alert('Ocurrió un error al intentar eliminar la obra.')
+      }
+    }
+  }
   const obrasFiltradas = useMemo(() => {
     return obras.filter((obra) => {
       const matchDireccion =
@@ -70,6 +94,10 @@ export default function ObrasList({
       return matchDireccion && matchEstado && matchLocalidad
     })
   }, [obras, searchTerm, filtroEstado, filtroLocalidad])
+
+  if (obraPagos) {
+    return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
+  }
 
   if (cargando) {
     return (
@@ -199,29 +227,72 @@ export default function ObrasList({
                   </div>
                   <div className="flex flex-col items-start gap-3 sm:items-end">
                     <EstadoObraBadge estado={obra.estado} />
-                    <div className="flex flex-wrap gap-3 sm:gap-4">
-                      {onScheduleVisit && (
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
+                      {/* SOLO mostrar si NO es VENTAS */}
+                      {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
                         <button
                           onClick={() => onScheduleVisit(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800"
+                          className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
                         >
                           <Calendar className="h-4 w-4" /> Agendar Visita
                         </button>
                       )}
-                      {onScheduleEntrega && (
-                        <button
-                          onClick={() => onScheduleEntrega(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-orange-600 hover:text-orange-800"
-                        >
-                          <Calendar className="h-4 w-4" /> Agendar Entrega
-                        </button>
-                      )}
+                      {usuario?.rol_actual !== 'VENTAS' &&
+                        onScheduleEntrega && (
+                          <button
+                            onClick={() => onScheduleEntrega(obra)}
+                            className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
+                          >
+                            <Calendar className="h-4 w-4" /> Agendar Entrega
+                          </button>
+                        )}
                       <button
                         onClick={() => onEditClick(obra)}
-                        className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
+                        className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800"
                       >
                         <Edit className="h-4 w-4" /> Editar
                       </button>
+                      <button
+                        onClick={() => handleEliminar(obra.cod_obra)}
+                        className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="h-4 w-4" /> Eliminar
+                      </button>
+                      <button
+                        onClick={() => setObraPagos(obra)}
+                        className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
+                      >
+                        <DollarSign className="h-4 w-4" /> Pagos
+                      </button>
+                      {/* Nota de Fábrica */}
+                      {usuario?.rol_actual === 'VENTAS' ? (
+                        <button
+                          onClick={() => setNotaFabricaObra(obra)}
+                          className={`flex items-center gap-1 font-medium ${
+                            obra.nota_fabrica
+                              ? 'text-indigo-600 hover:text-indigo-800'
+                              : 'text-gray-400 hover:text-indigo-600'
+                          }`}
+                        >
+                          <FileText className="h-4 w-4" />
+                          Nota de Fábrica
+                          {!obra.nota_fabrica && (
+                            <span className="ml-1 text-xs text-gray-400">
+                              (vacío)
+                            </span>
+                          )}
+                        </button>
+                      ) : (
+                        obra.nota_fabrica && (
+                          <button
+                            onClick={() => setNotaFabricaObra(obra)}
+                            className="flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Nota de Fábrica
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -240,6 +311,21 @@ export default function ObrasList({
           )}
         </div>
       </div>
+      {/* Modal para mostrar o subir la Nota de Fábrica */}
+      {notaFabricaObra && (
+        <NotaFabricaModal
+          isOpen={!!notaFabricaObra}
+          onClose={() => setNotaFabricaObra(null)}
+          notaUrl={notaFabricaObra.nota_fabrica || null}
+          codObra={notaFabricaObra.cod_obra}
+          onUploadSuccess={(url: string) => {
+            setNotaFabricaObra((prev) =>
+              prev ? { ...prev, nota_fabrica: url } : prev
+            )
+            fetchObras() // refresca la lista
+          }}
+        />
+      )}
     </div>
   )
 }

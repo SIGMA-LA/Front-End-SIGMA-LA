@@ -83,8 +83,29 @@ const mapToBackend = (obraData: ObraFormData): any => {
 /**
  * Obtiene todas las obras del backend y las formatea para el frontend.
  */
+export const getObraById = async (id: number): Promise<Obra> => {
+  const { data } = await api.get<BackendObra>(`/obras/${id}`)
+  return mapToFrontend(data)
+}
+
 export const getObras = async (): Promise<Obra[]> => {
   const { data } = await api.get<BackendObra[]>('/obras')
+  return data.map(mapToFrontend)
+}
+
+/**
+ * Obtiene obras que tienen nota de fábrica pero NO tienen órdenes APROBADAS o EN PRODUCCION
+ */
+export const getNotasSinOrdenAprobada = async (): Promise<Obra[]> => {
+  const { data } = await api.get<BackendObra[]>('/obras/notas-sin-orden-aprobada')
+  return data.map(mapToFrontend)
+}
+
+/**
+ * Obtiene obras EN PRODUCCION con nota de fábrica que tienen órdenes en proceso
+ */
+export const getNotasConOrdenEnProceso = async (): Promise<Obra[]> => {
+  const { data } = await api.get<BackendObra[]>('/obras/notas-con-orden-proceso')
   return data.map(mapToFrontend)
 }
 

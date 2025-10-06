@@ -1,21 +1,17 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { Visita } from '@/types'
+import { Obra } from '@/types'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
-
-  // Buscar el token en cookies (mismo nombre que usas en localStorage)
   let accessToken = cookieStore.get('accessToken')?.value
 
   if (accessToken) {
     return accessToken
   }
-
-  // Si no hay accessToken, intentar con refreshToken si existe
   const refreshToken = cookieStore.get('refreshToken')?.value
 
   if (!refreshToken) {
@@ -44,65 +40,87 @@ async function getAccessToken(): Promise<string> {
     throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
   }
 }
-
-export async function obtenerVisitas(): Promise<Visita[]> {
+export async function deleteObra(
+  id: number
+): Promise<{ success: boolean; error?: string }> {
   try {
     const token = await getAccessToken()
-
-    console.log('Using API URL:', baseUrl)
-
-    const response = await fetch(`${baseUrl}/visitas`, {
-      method: 'GET',
+    const response = await fetch(`${baseUrl}/obras/${id}`, {
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     })
-
     if (!response.ok) {
       if (response.status === 401) {
         throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+      } else if (response.status === 404) {
+        throw new Error('Obra no encontrada.')
       }
-      const errorText = await response.text()
-      throw new Error(
-        `Error al cargar las visitas: ${response.status} - ${errorText}`
-      )
+      throw new Error('Error al eliminar la obra.')
     }
-
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error('Error en obtenerVisitas:', error)
-    throw error
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error al eliminar la obra:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    }
   }
 }
 
-export async function crearVisita(
-  visitaData: Omit<Visita, 'cod_visita'>
-): Promise<Visita> {
+export async function uploadNotaFabrica(
+  codObra: number,
+  file: FormData
+): Promise<Obra> {
   try {
     const token = await getAccessToken()
-
-    const response = await fetch(`${baseUrl}/visitas`, {
+    const response = await fetch(`${baseUrl}/obras/${codObra}/nota-fabrica`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(visitaData),
+      body: file,
     })
 
     if (!response.ok) {
       if (response.status === 401) {
         throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
       }
-      throw new Error('Error al crear la visita')
+      throw new Error('Error al subir la nota de fábrica.')
     }
 
     const data = await response.json()
     return data
   } catch (error) {
-    console.error('Error en crearVisita:', error)
-    throw error
+    console.error('Error al subir la nota de fábrica:', error)
+    throw new Error('Error al subir la nota de fábrica.')
+  }
+}
+
+export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/obras/${codObra}/nota-fabrica`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+      }
+      throw new Error('Error al eliminar la nota de fábrica.')
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error al eliminar la nota de fábrica:', error)
+    throw new Error('Error al eliminar la nota de fábrica.')
   }
 }

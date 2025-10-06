@@ -30,8 +30,8 @@ importers:
         specifier: ^11.0.5
         version: 11.0.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       sigma-la-schemas:
-        specifier: ^1.0.14
-        version: 1.0.14(typescript@5.9.2)
+        specifier: ^1.0.15
+        version: 1.0.15(typescript@5.9.2)
       valibot:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.2)
@@ -2847,8 +2847,10 @@ packages:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
 
-  sigma-la-schemas@1.0.14:
-    resolution: {integrity: sha512-eL2UhXjmQ4doTMf7mXmQhshzm4qwIXIXyGUFVNWPOZJ9GmoiXWUZjdQw9qCHsidCH5AY5/yFDLDjbMYWRE/Nsg==}
+
+  sigma-la-schemas@1.0.15:
+    resolution: {integrity: sha512-g4S4PIXWJLuv4OMxxReBNmdJPWAGWWQ8Y7ciM4ucdh+enaUcPjfRaKd9zf8hP38sn2snAXirKTf91hwtMMY+Zw==}
+
 
   signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
@@ -6359,8 +6361,7 @@ snapshots:
       side-channel-list: 1.0.0
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
-
-  sigma-la-schemas@1.0.14(typescript@5.9.2):
+  sigma-la-schemas@1.0.15(typescript@5.9.2):
     dependencies:
       valibot: 1.1.0(typescript@5.9.2)
     transitivePeerDependencies:
