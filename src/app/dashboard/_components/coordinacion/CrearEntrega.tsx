@@ -1,23 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Calendar,
   Clock,
   User,
   Search,
+  Wrench,
   X,
   MapPin,
   Phone,
   Package,
   Truck,
+  DollarSign,
 } from 'lucide-react'
-import { mockVehiculos } from '@/data/mockData'
+import { mockVehiculos, mockMaquinarias } from '@/data/mockData'
 import { CrearEntregaProps, Obra, Empleado } from '@/types'
 import { ModalEncargadoProps } from '@/types'
 import empleadoService from '@/services/empleado.service'
 import { getObras } from '@/services/obra.service'
 import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
+import SelectionModal from '../shared/SelectionModal'
+import AsignarPersonalModal from '../shared/AsignarPersonalModal'
+import parametroService from '@/services/parametro.service'
 
 function ModalEncargado({
   isOpen,
@@ -123,11 +128,22 @@ export default function CrearEntrega({
   const [selectedVehiculos, setSelectedVehiculos] = useState<string[]>([])
   const [showModalEncargado, setShowModalEncargado] = useState(false)
 
+  const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
+  const [isMaquinariaModalOpen, setIsMaquinariaModalOpen] = useState(false)
+  const [selectedMaquinaria, setSelectedMaquinaria] = useState<string[]>([])
+
+  const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false)
+  const [encargado, setEncargado] = useState<string | null>(null)
+  const [acompanantes, setAcompanantes] = useState<string[]>([])
+
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const [diasViaticos, setDiasViaticos] = useState('')
+  const [viaticoPorDia, setViaticoPorDia] = useState(0)
 
   const isFromObra = !!preloadedObra
 
@@ -136,9 +152,14 @@ export default function CrearEntrega({
       try {
         setLoading(true)
         setError(null)
+        
+        const [empleadosData, paramsData] = await Promise.all([
+          empleadoService.getDisponiblesParaEntrega(),
+          parametroService.getActualViatico(),
+        ])
 
-        const empleadosData = await empleadoService.getVisitadores()
         setEmpleados(empleadosData)
+        setViaticoPorDia(paramsData.viatico_dia_persona)
 
         if (!isFromObra) {
           const obrasData = await getObras()
@@ -151,9 +172,26 @@ export default function CrearEntrega({
         setLoading(false)
       }
     }
-
     fetchData()
   }, [isFromObra])
+
+  const totalViaticos = useMemo(() => {
+    const dias = Number(diasViaticos) || 0
+    const cantidadPersonas = encargado ? 1 + acompanantes.length : 0
+    
+    if (dias <= 0 || viaticoPorDia <= 0 || cantidadPersonas === 0) {
+      return 0
+    }
+    
+    return dias * viaticoPorDia * cantidadPersonas
+  }, [diasViaticos, viaticoPorDia, encargado, acompanantes])
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+    }).format(amount)
+  }
 
   const filteredObras = obras.filter(
     (obra) =>
@@ -191,37 +229,34 @@ export default function CrearEntrega({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (selectedEmpleados.length === 0) {
-      alert('Debe seleccionar al menos un visitador')
+    if (!encargado) {
+      alert('Debe seleccionar un encargado para la entrega.')
       return
     }
 
     if (!formData.obraId) {
-      alert('Debe seleccionar una obra')
+      alert('Debe seleccionar una obra.')
       return
     }
-
-    if (selectedEmpleados.length === 1) {
-      await crearEntregaEnBackend(selectedEmpleados[0])
-    } else {
-      setShowModalEncargado(true)
-    }
+    
+    await crearEntregaEnBackend()
   }
 
-  const crearEntregaEnBackend = async (encargadoCuil: string) => {
+  const crearEntregaEnBackend = async () => {
+    if (!encargado) return; // Verificación de seguridad
+
     try {
       setSubmitting(true)
       setError(null)
 
       const fechaHoraISO = `${formData.fecha}T${formData.hora}`
 
-      const empleadosConRoles = selectedEmpleados.map((cuil) => ({
-        cuil,
-        rol_entrega:
-          cuil === encargadoCuil
-            ? 'ENCARGADO'
-            : ('AYUDANTE' as 'ENCARGADO' | 'AYUDANTE'),
-      }))
+      const empleadosConRoles = [
+        { cuil: encargado, rol_entrega: 'ENCARGADO' as 'ENCARGADO' | 'AYUDANTE' },
+        ...acompanantes.map(cuil => ({ cuil, rol_entrega: 'AYUDANTE' as 'ENCARGADO' | 'AYUDANTE' })),
+      ]
+
+      const diasViaticosNumerico = Number(diasViaticos)
 
       const createEntregaDTO: CreateEntregaDTO = {
         cod_obra: Number(formData.obraId),
@@ -229,8 +264,10 @@ export default function CrearEntrega({
         detalle: formData.descripcionUso,
         observaciones: formData.observaciones || undefined,
         empleados: empleadosConRoles,
-        // vehiculos: selectedVehiculos,
+        dias_viaticos: diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
       }
+
+      console.log('DTO que se enviará desde el frontend:', createEntregaDTO)
 
       const nuevaEntrega = await entregasService.createEntrega(createEntregaDTO)
 
@@ -247,9 +284,14 @@ export default function CrearEntrega({
     }
   }
 
-  const handleSelectEncargado = async (encargadoCuil: string) => {
-    setShowModalEncargado(false)
-    await crearEntregaEnBackend(encargadoCuil)
+  const handleConfirmPersonal = (encargadoId: string, acompananteIds: string[]) => {
+    setEncargado(encargadoId)
+    setAcompanantes(acompananteIds)
+  }
+  
+  const getEmpleadoNombre = (cuil: string) => {
+    const emp = empleados.find(e => e.cuil === cuil);
+    return emp ? `${emp.nombre} ${emp.apellido}` : 'Desconocido';
   }
 
   if (loading) {
@@ -277,8 +319,8 @@ export default function CrearEntrega({
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900">
                 {isFromObra
-                  ? `Detalles entrega - ${preloadedObra?.direccion}`
-                  : 'Detalles entrega'}
+                  ? `Crear entrega - ${preloadedObra?.direccion}`
+                  : 'Crear entrega'}
               </h1>
               {isFromObra && preloadedObra && (
                 <p className="mt-1 text-gray-600">
@@ -381,46 +423,35 @@ export default function CrearEntrega({
                 </div>
               </div>
 
-              {/* Visitadores */}
+              {/* Personal */}
               <div>
                 <label className="mb-3 block text-sm font-medium text-gray-700">
                   <User className="mr-1 inline h-4 w-4" />
-                  Visitadores
+                  Personal Asignado
                 </label>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-                  {empleados.length > 0 ? (
-                    empleados.map((empleado) => (
-                      <label
-                        key={empleado.cuil}
-                        className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                          selectedEmpleados.includes(empleado.cuil)
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedEmpleados.includes(empleado.cuil)}
-                          onChange={() => handleEmpleadoToggle(empleado.cuil)}
-                          className="mr-2"
-                        />
-                        <div className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-400 text-sm font-medium text-white">
-                          {`${empleado.nombre} ${empleado.apellido}`
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .slice(0, 2)}
-                        </div>
-                        <span className="text-sm">
-                          {empleado.nombre} {empleado.apellido}
-                        </span>
-                      </label>
-                    ))
-                  ) : (
-                    <p className="col-span-full text-center text-gray-500">
-                      No hay visitadores disponibles
-                    </p>
-                  )}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="text-sm">
+                      <p className="font-semibold text-gray-800">
+                        <span className="font-bold">Encargado:</span> {encargado ? getEmpleadoNombre(encargado) : 'No seleccionado'}
+                      </p>
+                      <p className="mt-2 font-semibold text-gray-800">
+                        <span className="font-bold">Acompañantes ({acompanantes.length}):</span>
+                      </p>
+                      {acompanantes.length > 0 ? (
+                        <ul className="list-disc pl-5 text-gray-600">
+                          {acompanantes.map(cuil => <li key={cuil}>{getEmpleadoNombre(cuil)}</li>)}
+                        </ul>
+                      ) : <p className="text-gray-600">Ninguno</p>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsPersonalModalOpen(true)}
+                      className="flex-shrink-0 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      Asignar
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -433,13 +464,8 @@ export default function CrearEntrega({
                   <input
                     type="text"
                     value={formData.descripcionUso}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        descripcionUso: e.target.value,
-                      }))
-                    }
-                    placeholder="Ej: Colocar $75,000"
+                    onChange={e => setFormData(prev => ({ ...prev, descripcionUso: e.target.value }))}
+                    placeholder="Ej: Colocación de aberturas"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     required
                   />
@@ -447,20 +473,29 @@ export default function CrearEntrega({
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Valor viáticos (opcional):
+                    Días de viáticos (opcional):
                   </label>
-                  <input
-                    type="text"
-                    value={formData.valorViaticos}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        valorViaticos: e.target.value,
-                      }))
-                    }
-                    placeholder="$50,00"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      value={diasViaticos}
+                      onChange={e => setDiasViaticos(e.target.value)}
+                      placeholder="Ej: 3"
+                      className="w-24 rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      min="0"
+                    />
+                    <div className="flex flex-grow items-center gap-2 rounded-lg bg-blue-50 p-2 text-blue-800">
+                      <DollarSign className="h-5 w-5 flex-shrink-0" />
+                      <span className="font-semibold text-lg">
+                        {formatCurrency(totalViaticos)}
+                      </span>
+                    </div>
+                  </div>
+                  {viaticoPorDia > 0 && Number(diasViaticos) > 0 && encargado && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Cálculo: {diasViaticos} días x {1 + acompanantes.length} personas x {formatCurrency(viaticoPorDia)} p/día
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -468,26 +503,57 @@ export default function CrearEntrega({
               <div>
                 <label className="mb-3 block text-sm font-medium text-gray-700">
                   <Truck className="mr-1 inline h-4 w-4" />
-                  Vehículo: Maquinaria especial
+                  Vehículos Asignados
                 </label>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {mockVehiculos.map((vehiculo) => (
-                    <label
-                      key={vehiculo.patente}
-                      className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                        selectedVehiculos.includes(vehiculo.patente)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-300 hover:bg-gray-50'
-                      }`}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {selectedVehiculos.length} vehículo(s) seleccionado(s)
+                      </p>
+                      {selectedVehiculos.length > 0 && (
+                        <p className="text-xs text-gray-500">{selectedVehiculos.join(', ')}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsVehiculoModalOpen(true)}
+                      className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedVehiculos.includes(vehiculo.patente)}
-                        onChange={() => handleVehiculoToggle(vehiculo.patente)}
-                        className="mr-2"
-                      />
-                    </label>
-                  ))}
+                      Seleccionar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-3 block text-sm font-medium text-gray-700">
+                  <Wrench className="mr-1 inline h-4 w-4" />
+                  Maquinaria Especial
+                </label>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-center justify-between">
+                     <div>
+                      <p className="font-medium text-gray-800">
+                        {selectedMaquinaria.length} máquina(s) seleccionada(s)
+                      </p>
+                      {selectedMaquinaria.length > 0 && (
+                        <p className="text-xs text-gray-500">
+                          {mockMaquinarias
+                            .filter(m => selectedMaquinaria.includes(m.cod_maquina.toString()))
+                            .map(m => m.descripcion)
+                            .join(', ')}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMaquinariaModalOpen(true)}
+                      className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                      Seleccionar
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -522,7 +588,7 @@ export default function CrearEntrega({
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !encargado}
                   className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                 >
                   {submitting ? (
@@ -531,7 +597,7 @@ export default function CrearEntrega({
                       Creando...
                     </>
                   ) : (
-                    'Confirmar detalles'
+                    'Confirmar Entrega'
                   )}
                 </button>
               </div>
@@ -541,12 +607,37 @@ export default function CrearEntrega({
       </div>
 
       {/* Modal para seleccionar encargado */}
-      <ModalEncargado
-        isOpen={showModalEncargado}
+      <AsignarPersonalModal
+        isOpen={isPersonalModalOpen}
         empleados={empleados}
-        selectedEmpleados={selectedEmpleados}
-        onSelectEncargado={handleSelectEncargado}
-        onCancel={() => setShowModalEncargado(false)}
+        encargadoSeleccionado={encargado}
+        acompanantesSeleccionados={acompanantes}
+        onClose={() => setIsPersonalModalOpen(false)}
+        onConfirm={handleConfirmPersonal}
+      />
+
+      <SelectionModal
+        isOpen={isVehiculoModalOpen}
+        title="Seleccionar Vehículos"
+        items={mockVehiculos.map(v => ({
+          id: v.patente,
+          label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
+        }))}
+        selectedItems={selectedVehiculos}
+        onClose={() => setIsVehiculoModalOpen(false)}
+        onConfirm={setSelectedVehiculos}
+      />
+      
+      <SelectionModal
+        isOpen={isMaquinariaModalOpen}
+        title="Seleccionar Maquinaria"
+        items={mockMaquinarias.map(m => ({
+          id: m.cod_maquina.toString(),
+          label: `${m.descripcion} (${m.estado})`,
+        }))}
+        selectedItems={selectedMaquinaria}
+        onClose={() => setIsMaquinariaModalOpen(false)}
+        onConfirm={setSelectedMaquinaria}
       />
     </>
   )
