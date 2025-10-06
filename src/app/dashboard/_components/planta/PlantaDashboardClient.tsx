@@ -8,7 +8,7 @@ import EntregasSidebar from './EntregasSidebar'
 import EntregaDetails from './EntregaDetails'
 import FinalizarEntregaModal from './FinalizarEntregaModal'
 import EmptyState from './EmptyState'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Package } from 'lucide-react'
 
 export default function PlantaDashboardClient() {
   const { usuario } = useAuth()
@@ -124,42 +124,63 @@ export default function PlantaDashboardClient() {
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header mejorado para móvil */}
-      <div className="border-b bg-white px-5 py-5 lg:px-8 lg:py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      {/* Header mejorado para móvil y desktop */}
+      <div className="border-b bg-white px-2 py-4 sm:px-5 lg:px-8 lg:py-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full items-center justify-between sm:justify-start">
             {/* Botón hamburguesa para móvil */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
             >
               {sidebarOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-8 w-8" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-8 w-8" />
               )}
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
+            {/* Info dashboard + nombre */}
+            <div className="flex flex-1 flex-col items-center sm:ml-3 sm:items-start">
+              <h1 className="text-center text-base font-bold text-gray-900 sm:text-left sm:text-2xl lg:text-3xl">
                 Dashboard de Entregas
               </h1>
-              <p className="mt-1 text-sm text-gray-600 lg:text-base">
+              <span className="mt-1 text-center text-xs text-gray-600 sm:text-left sm:text-base lg:text-base">
                 {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
-              </p>
+              </span>
+            </div>
+            {/* Contadores en mobile */}
+            <div className="flex gap-2 sm:hidden">
+              <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
+                <div className="text-base font-semibold text-blue-600">
+                  {entregasPendientes.length}
+                </div>
+                <div className="text-xs text-gray-600">Pendientes</div>
+              </div>
+              <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
+                <div className="text-base font-semibold text-green-600">
+                  {entregasRealizadas.length}
+                </div>
+                <div className="text-xs text-gray-600">Entregadas</div>
+              </div>
             </div>
           </div>
-          <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
+          {/* Contadores en desktop */}
+          <div className="hidden gap-6 sm:flex">
             <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                 {entregasPendientes.length}
               </div>
-              <div className="text-xs text-gray-600 lg:text-sm">Pendientes</div>
+              <div className="text-sm text-gray-600 lg:text-base">
+                Pendientes
+              </div>
             </div>
             <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-green-600 lg:text-xl">
                 {entregasRealizadas.length}
               </div>
-              <div className="text-xs text-gray-600 lg:text-sm">Entregadas</div>
+              <div className="text-sm text-gray-600 lg:text-base">
+                Entregadas
+              </div>
             </div>
           </div>
         </div>
