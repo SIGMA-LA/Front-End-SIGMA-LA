@@ -146,40 +146,55 @@ export default function VisitadorDashboard() {
     await loadEntregas()
   }
 
-  const handleFinalizarVisita = async () => {
-    if (selectedVisita && usuario?.cuil && !finalizandoVisita) {
+  const handleConfirmarFinalizacion = async () => {
+    if (selectedVisita && !finalizandoVisita) {
       try {
         setFinalizandoVisita(true)
-
-        // Llamar al contexto global para finalizar la visita
-        await finalizarVisitaContext(
+        const visitaActualizada = await visitasService.finalizarVisita(
           selectedVisita.cod_visita,
           observacionesVisita
         )
 
-        // Actualizar el estado local
-        const visitaActualizada = {
-          ...selectedVisita,
-          estado: 'COMPLETADA' as const,
-          observaciones: observacionesVisita || selectedVisita.observaciones,
-        }
-
         setSelectedVisita(visitaActualizada)
-
-        // Mover de pendientes a realizadas
         setVisitasPendientes((prev) =>
           prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
         )
         setVisitasRealizadas((prev) => [...prev, visitaActualizada])
 
-        // Cerrar modal
         setShowVisitaModal(false)
         setObservacionesVisita('')
-
-        console.log('Visita finalizada exitosamente')
       } catch (error) {
-        console.error('Error al finalizar visita:', error)
         alert('Error al finalizar la visita. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoVisita(false)
+      }
+    }
+  }
+
+  const handleConfirmarCancelacion = async () => {
+    if (selectedVisita && !finalizandoVisita) {
+      if (!observacionesVisita.trim()) {
+        alert('Por favor, ingresa un motivo para la cancelación.')
+        return
+      }
+      try {
+        setFinalizandoVisita(true)
+        const visitaCancelada = await visitasService.cancelarVisita(
+          selectedVisita.cod_visita,
+          observacionesVisita
+        )
+
+        // Quitar de pendientes y opcionalmente agregar a una lista de canceladas
+        setVisitasPendientes((prev) =>
+          prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
+        )
+        // Por ahora, la sacamos de la vista. Se podría crear un nuevo estado para 'visitasCanceladas'.
+
+        setSelectedVisita(null) // De-seleccionar la visita
+        setShowVisitaModal(false)
+        setObservacionesVisita('')
+      } catch (error) {
+        alert('Error al cancelar la visita. Inténtalo de nuevo.')
       } finally {
         setFinalizandoVisita(false)
       }
@@ -494,7 +509,8 @@ export default function VisitadorDashboard() {
         title="Finalizar Visita"
         observaciones={observacionesVisita}
         onObservacionesChange={setObservacionesVisita}
-        onConfirm={handleFinalizarVisita}
+        onConfirm={handleConfirmarFinalizacion}
+        onCancelVisit={handleConfirmarCancelacion}
         onCancel={() => {
           if (!finalizandoVisita) {
             setShowVisitaModal(false)
