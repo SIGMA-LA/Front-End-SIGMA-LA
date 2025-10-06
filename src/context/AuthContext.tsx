@@ -21,21 +21,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Función para establecer cookies del lado del cliente
 function setCookie(name: string, value: string, days: number = 7) {
-  const expires = new Date()
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure;samesite=strict`
+  if (typeof document !== 'undefined') {
+    const expires = new Date()
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure;samesite=strict`
+  }
 }
 
 // Función para eliminar cookies
 function deleteCookie(name: string) {
-  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
+  if (typeof document !== 'undefined') {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
+  }
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [usuario, setUsuario] = useState<Empleado | null>(null)
   const [cargando, setCargando] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const verificarSesion = async () => {
       const token = localStorage.getItem('token_sigma')
       const usuarioGuardado = localStorage.getItem('usuario_sigma')
@@ -71,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setCargando(false)
     }
     verificarSesion()
-  }, [])
+  }, [mounted])
 
   const login = async (cuil: string, contrasenia: string): Promise<boolean> => {
     try {
