@@ -49,6 +49,16 @@ class EmpleadoService {
     return data.map(mapToFrontend)
   }
 
+  async getDisponiblesParaEntrega(): Promise<Empleado[]> {
+    try {
+      const { data } = await api.get<BackendEmpleado[]>(`${this.baseURL}/disponibles-entrega`)
+      return data.map(mapToFrontend)
+    } catch (error) {
+      console.error('Error al obtener empleados disponibles para entrega:', error)
+      throw error
+    }
+  }
+
   /**
    * Obtiene solo los visitadores (empleados con rol_actual = 'visitador').
    */

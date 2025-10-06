@@ -136,6 +136,7 @@ export interface CreateEntregaDTO {
   fecha_hora_entrega: string
   detalle: string
   observaciones?: string
+  dias_viaticos?: number
   empleados: {
     cuil: string
     rol_entrega: 'ENCARGADO' | 'AYUDANTE'

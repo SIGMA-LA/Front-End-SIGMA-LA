@@ -66,7 +66,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-AR', {
-      timeZone: 'UTC',
+      timeZone: 'America/Argentina/Buenos_Aires',
     })
   }
 
@@ -74,7 +74,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
     return new Date(dateString).toLocaleTimeString('es-AR', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'UTC',
+      timeZone: 'America/Argentina/Buenos_Aires',
     })
   }
 
