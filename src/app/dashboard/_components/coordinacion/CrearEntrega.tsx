@@ -13,21 +13,23 @@ import {
   Package,
   Truck,
   DollarSign,
-  Loader2, // NUEVO: Icono de carga
+  Loader2,
 } from 'lucide-react'
-import { mockVehiculos, mockMaquinarias } from '@/data/mockData'
-// NUEVO: Importaciones adicionales
+// FUSIONADO: Se incluyen todas las importaciones de ambas versiones
+import { mockVehiculos } from '@/data/mockData'
 import { CrearEntregaProps, Obra, Empleado, OrdenProduccion } from '@/types'
 import { ModalEncargadoProps } from '@/types'
 import empleadoService from '@/services/empleado.service'
 import { getObras } from '@/services/obra.service'
 import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
+import maquinariaService, { MaquinariaConDisponibilidad } from '@/services/maquinaria.service'
 import SelectionModal from '../shared/SelectionModal'
 import AsignarPersonalModal from '../shared/AsignarPersonalModal'
 import parametroService from '@/services/parametro.service'
 import ordenProduccionService from '@/services/ordenProduccion.service'
 import OrdenProduccionCard from '../produccion/OrdenProduccionCard'
 
+// El componente ModalEncargado se mantiene sin cambios
 function ModalEncargado({
   isOpen,
   empleados,
@@ -113,6 +115,7 @@ export default function CrearEntrega({
   onSubmit,
   preloadedObra,
 }: CrearEntregaProps) {
+  // FUSIONADO: Se incluyen todos los estados de ambas versiones
   const [formData, setFormData] = useState({
     fecha: '',
     hora: '',
@@ -142,14 +145,15 @@ export default function CrearEntrega({
 
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras, setObras] = useState<Obra[]>([])
+  const [maquinarias, setMaquinarias] = useState<MaquinariaConDisponibilidad[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingDisponibilidad, setLoadingDisponibilidad] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [diasViaticos, setDiasViaticos] = useState('')
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
 
-  // NUEVO: Estados para las órdenes de producción
   const [ordenesProduccion, setOrdenesProduccion] = useState<OrdenProduccion[]>([])
   const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
   const [loadingOrdenes, setLoadingOrdenes] = useState(false)
@@ -157,6 +161,7 @@ export default function CrearEntrega({
 
   const isFromObra = !!preloadedObra
 
+  // FUSIONADO: Se incluyen todos los useEffect de ambas versiones
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -176,7 +181,7 @@ export default function CrearEntrega({
           setObras(obrasData)
         }
       } catch (err) {
-        console.error('Error al cargar datos:', err)
+        console.error('Error al cargar datos iniciales:', err)
         setError('Error al cargar los datos. Por favor, intente nuevamente.')
       } finally {
         setLoading(false)
@@ -185,13 +190,39 @@ export default function CrearEntrega({
     fetchData()
   }, [isFromObra])
 
-  // NUEVO: useEffect para cargar órdenes de producción cuando cambia la obra
+  useEffect(() => {
+    const verificarDisponibilidad = async () => {
+      if (formData.fecha && formData.hora && !loading) {
+        setLoadingDisponibilidad(true);
+        try {
+          const fechaInicio = new Date(`${formData.fecha}T${formData.hora}`);
+          const fechaFin = new Date(fechaInicio.getTime() + 8 * 60 * 60 * 1000);
+
+          const maquinariasConDisponibilidad = await maquinariaService.getDisponibilidadPorFecha(
+            fechaInicio.toISOString(),
+            fechaFin.toISOString()
+          );
+          setMaquinarias(maquinariasConDisponibilidad);
+        } catch (error) {
+          console.error("Error al verificar disponibilidad de maquinaria:", error);
+          setError("No se pudo verificar la disponibilidad de las maquinarias.");
+        } finally {
+          setLoadingDisponibilidad(false);
+        }
+      } else if (!loading) {
+        const todasLasMaquinarias = await maquinariaService.getAllMaquinarias();
+        setMaquinarias(todasLasMaquinarias.map(m => ({ ...m, availabilityStatus: 'DISPONIBLE' as const })))
+      }
+    };
+    verificarDisponibilidad();
+  }, [formData.fecha, formData.hora, loading]);
+
   useEffect(() => {
     const fetchOrdenes = async () => {
       if (formData.obraId) {
         setLoadingOrdenes(true)
         setErrorOrdenes(null)
-        setSelectedOrden(null) // Resetea la selección de orden al cambiar de obra
+        setSelectedOrden(null)
         try {
           const data = await ordenProduccionService.getOrdenesByObra(
             Number(formData.obraId)
@@ -204,7 +235,6 @@ export default function CrearEntrega({
           setLoadingOrdenes(false)
         }
       } else {
-        // Limpia las órdenes si no hay obra seleccionada
         setOrdenesProduccion([])
         setSelectedOrden(null)
       }
@@ -212,6 +242,7 @@ export default function CrearEntrega({
     fetchOrdenes()
   }, [formData.obraId])
 
+  // FUSIONADO: Se incluyen todas las funciones helper de ambas versiones
   const totalViaticos = useMemo(() => {
     const dias = Number(diasViaticos) || 0
     const cantidadPersonas = encargado ? 1 + acompanantes.length : 0
@@ -253,7 +284,6 @@ export default function CrearEntrega({
   }
 
   const handleObraSelect = (obra: Obra) => {
-
     if (obra.cod_obra === formData.obraId) {
       setShowObraSearch(false)
       return
@@ -303,6 +333,7 @@ export default function CrearEntrega({
 
       const diasViaticosNumerico = Number(diasViaticos)
 
+      // FUSIONADO: El DTO ahora incluye tanto maquinarias como cod_op
       const createEntregaDTO: CreateEntregaDTO = {
         cod_obra: Number(formData.obraId),
         fecha_hora_entrega: fechaHoraISO,
@@ -310,6 +341,8 @@ export default function CrearEntrega({
         observaciones: formData.observaciones || undefined,
         empleados: empleadosConRoles,
         dias_viaticos: diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
+        maquinarias: selectedMaquinaria.map(id => parseInt(id, 10)),
+        cod_op: selectedOrden?.cod_op
       }
       
       console.log('DTO que se enviará desde el frontend:', createEntregaDTO)
@@ -381,7 +414,7 @@ export default function CrearEntrega({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Obra Selection - Solo si no viene de obra */}
+              {/* Obra Selection */}
               {!isFromObra && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -500,7 +533,7 @@ export default function CrearEntrega({
                 </div>
               </div>
 
-              {/* NUEVO: SECCIÓN DE ÓRDENES DE PRODUCCIÓN */}
+              {/* SECCIÓN DE ÓRDENES DE PRODUCCIÓN */}
               <div>
                 <label className="mb-3 block text-sm font-medium text-gray-700">
                   <Package className="mr-1 inline h-4 w-4" />
@@ -542,7 +575,7 @@ export default function CrearEntrega({
                 </div>
               </div>
 
-              {/* NUEVO: VISUALIZADOR DE PDF */}
+              {/* VISUALIZADOR DE PDF */}
               {selectedOrden && (
                 <div>
                   <h4 className="mb-4 text-lg font-semibold text-gray-700">
@@ -642,7 +675,7 @@ export default function CrearEntrega({
                       </p>
                       {selectedMaquinaria.length > 0 && (
                         <p className="text-xs text-gray-500">
-                          {mockMaquinarias
+                          {maquinarias
                             .filter(m => selectedMaquinaria.includes(m.cod_maquina.toString()))
                             .map(m => m.descripcion)
                             .join(', ')}
@@ -654,7 +687,7 @@ export default function CrearEntrega({
                       onClick={() => setIsMaquinariaModalOpen(true)}
                       className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                      Seleccionar
+                      {loadingDisponibilidad ? 'Verificando...' : 'Seleccionar'}
                     </button>
                   </div>
                 </div>
@@ -733,10 +766,25 @@ export default function CrearEntrega({
       <SelectionModal
         isOpen={isMaquinariaModalOpen}
         title="Seleccionar Maquinaria"
-        items={mockMaquinarias.map(m => ({
-          id: m.cod_maquina.toString(),
-          label: `${m.descripcion} (${m.estado})`,
-        }))}
+        items={maquinarias.map(m => {
+          const isNotAvailableByStatus = m.estado !== 'DISPONIBLE';
+          
+          const isDisabled = isNotAvailableByStatus || (m.availabilityStatus === 'NO_DISPONIBLE');
+          
+          const warning = (m.availabilityStatus === 'ADVERTENCIA' && !isNotAvailableByStatus) ? m.warningMessage : undefined;
+
+          let label = `${m.descripcion} (${m.estado})`;
+          if (m.availabilityStatus === 'NO_DISPONIBLE' && !isNotAvailableByStatus) {
+              label += ' - OCUPADA EN FECHA';
+          }
+
+          return {
+            id: m.cod_maquina.toString(),
+            label,
+            disabled: isDisabled ? true : undefined,
+            warning: warning
+          };
+        })}
         selectedItems={selectedMaquinaria}
         onClose={() => setIsMaquinariaModalOpen(false)}
         onConfirm={setSelectedMaquinaria}

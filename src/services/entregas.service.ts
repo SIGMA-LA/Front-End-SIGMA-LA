@@ -142,6 +142,7 @@ export interface CreateEntregaDTO {
     rol_entrega: 'ENCARGADO' | 'AYUDANTE'
   }[]
   maquinarias?: number[]
+  cod_op?: number
 }
 
 export interface CreateEntregaEmpleadoDTO {
@@ -187,6 +188,7 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
     obra: backendEntrega.obra,
     empleados_asignados: empleados_asignados,
     maquinarias_usadas: maquinarias_usadas,
+    orden_de_produccion: backendEntrega.orden_de_produccion,
   }
 }
 

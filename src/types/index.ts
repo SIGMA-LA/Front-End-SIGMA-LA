@@ -53,6 +53,7 @@ export interface Entrega {
   maquinarias_usadas?: MaquinariaSimple[]
   vehiculos_usados?: UsoVehiculoEntrega[]
   dias_viaticos?: number
+  orden_de_produccion?: OrdenProduccion
 }
 
 export interface EntregaEmpleado {

@@ -5,8 +5,11 @@ export interface CreateMaquinariaDTO {
   descripcion: string
 }
 
+export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
+
 export interface MaquinariaConDisponibilidad extends Maquinaria {
-  isDisponibleEnFecha: boolean
+  availabilityStatus: AvailabilityStatus
+  warningMessage?: string
 }
 
 export interface UpdateMaquinariaDTO {

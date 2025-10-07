@@ -6,13 +6,10 @@ import {
   Truck,
   Calendar,
   Clock,
-  User,
   Shield,
   Users,
-  MapPin,
-  FileText,
-  DollarSign,
   Wrench,
+  Package,
 } from 'lucide-react'
 import type { Entrega } from '@/types'
 import parametroService from '@/services/parametro.service'
@@ -136,6 +133,31 @@ export default function EntregaDetailsModal({
               )}
             </div>
           </div>
+
+          {entrega.orden_de_produccion && (
+            <div>
+              <h3 className="font-semibold mb-3 text-lg">Orden de Producción Asociada</h3>
+              <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-indigo-600"/>
+                  <div>
+                    <p className="font-semibold text-indigo-800">Orden #{entrega.orden_de_produccion.cod_op}</p>
+                    <p className="text-xs text-gray-500">
+                      Confección: {new Date(entrega.orden_de_produccion.fecha_confeccion).toLocaleDateString('es-AR')}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={entrega.orden_de_produccion.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                >
+                  Ver PDF
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* SECCIÓN VIÁTICOS (sin cambios) */}
           {entrega.dias_viaticos && entrega.dias_viaticos > 0 && (
