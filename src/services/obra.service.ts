@@ -14,13 +14,14 @@ interface BackendObra {
   fecha_ini: string
   fecha_cancelacion: string | null
   estado:
-    | 'ACTIVA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | 'ENTREGADA'
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
     | 'EN ESPERA DE STOCK'
-    | 'CANCELADA'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
     | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
   localidad?: {
     cod_postal: number
     nombre_localidad: string
@@ -34,13 +35,14 @@ export interface ObraFormData {
   fecha_ini: string
   fecha_cancelacion?: string | null
   estado:
-    | 'ACTIVA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | 'ENTREGADA'
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
     | 'EN ESPERA DE STOCK'
-    | 'CANCELADA'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
     | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
   cuil_cliente: string
   cod_postal: number
 }

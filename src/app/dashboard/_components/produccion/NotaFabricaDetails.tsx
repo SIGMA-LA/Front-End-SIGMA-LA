@@ -27,9 +27,10 @@ const formatDate = (dateString: string) =>
 
 const getEstadoBadge = (estado: Obra['estado']) => {
   const badges = {
-    ACTIVA: 'bg-blue-100 text-blue-800',
+    'EN ESPERA DE PAGO': 'bg-blue-100 text-blue-800',
+    'PAGADA PARCIALMENTE': 'bg-indigo-100 text-indigo-800',
     'EN PRODUCCION': 'bg-yellow-100 text-yellow-800',
-    FINALIZADA: 'bg-green-100 text-green-800',
+    'PRODUCCION FINALIZADA': 'bg-green-100 text-green-800',
     ENTREGADA: 'bg-purple-100 text-purple-800',
     CANCELADA: 'bg-red-100 text-red-800',
     'EN ESPERA DE STOCK': 'bg-orange-100 text-orange-800',

@@ -23,7 +23,7 @@ const initialState: ObraFormData = {
   cuil_cliente: '',
   cod_postal: 0,
   fecha_ini: '',
-  estado: 'ACTIVA',
+  estado: 'EN ESPERA DE PAGO',
   nota_fabrica: '',
   fecha_cancelacion: null,
 }
@@ -67,7 +67,7 @@ export default function CrearObra({
         fecha_ini,
         nota_fabrica: obraExistente.nota_fabrica || '',
         fecha_cancelacion: null,
-        estado: obraExistente.estado || 'ACTIVA',
+        estado: obraExistente.estado || 'EN ESPERA DE PAGO',
       })
       setClienteSeleccionado(obraExistente.cliente?.cuil || '')
       if (obraExistente.presupuesto) {
@@ -298,54 +298,6 @@ export default function CrearObra({
                       disabled={isObraCancelada}
                     />
                   </div>
-                  {esModoEdicion && (
-                    <>
-                      <div>
-                        <label htmlFor="estado">Estado</label>
-                        <select
-                          id="estado"
-                          name="estado"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
-                          value={formData.estado}
-                          onChange={handleChange}
-                          disabled={isObraCancelada}
-                        >
-                          <option value="ACTIVA">Activa</option>
-                          <option value="EN PRODUCCION">En producción</option>
-                          <option value="FINALIZADA">Finalizada</option>
-                          <option value="ENTREGADA">Entregada</option>
-                          <option value="EN ESPERA DE STOCK">
-                            En espera de stock
-                          </option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          URL de Nota de Fábrica
-                        </label>
-                        <input
-                          name="nota_fabrica"
-                          type="text"
-                          placeholder="https://ejemplo.com/nota.pdf"
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:text-gray-400"
-                          value={formData.nota_fabrica}
-                          onChange={handleChange}
-                          disabled={isObraCancelada}
-                        />
-                        {formData.nota_fabrica && (
-                          <a
-                            href={formData.nota_fabrica}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            <FileText className="mr-1 h-4 w-4" />
-                            Ver nota de fábrica
-                          </a>
-                        )}
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 <div className="space-y-4">
