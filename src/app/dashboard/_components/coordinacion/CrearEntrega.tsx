@@ -15,7 +15,6 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react'
-// FUSIONADO: Se incluyen todas las importaciones de ambas versiones
 import { mockVehiculos } from '@/data/mockData'
 import { CrearEntregaProps, Obra, Empleado, OrdenProduccion } from '@/types'
 import { ModalEncargadoProps } from '@/types'
@@ -320,6 +319,22 @@ export default function CrearEntrega({
   const crearEntregaEnBackend = async () => {
     if (!encargado) return;
 
+    if (selectedMaquinaria.length > 0) {
+      const maquinariasSeleccionadas = maquinarias.filter(m => 
+        selectedMaquinaria.includes(m.cod_maquina.toString())
+      )
+
+      const maquinasEnConflicto = maquinariasSeleccionadas.filter(m => 
+        m.estado !== 'DISPONIBLE' || m.availabilityStatus === 'NO_DISPONIBLE'
+      );
+
+      if (maquinasEnConflicto.length > 0) {
+        const nombresMaquinas = maquinasEnConflicto.map(m => m.descripcion).join(', ');
+        setError(`No se puede crear la entrega. Las siguientes maquinarias no están disponibles en la fecha seleccionada: ${nombresMaquinas}. Por favor, ajuste la fecha o deseleccione las maquinarias.`);
+        return;
+      }
+    }
+
     try {
       setSubmitting(true)
       setError(null)
@@ -333,7 +348,6 @@ export default function CrearEntrega({
 
       const diasViaticosNumerico = Number(diasViaticos)
 
-      // FUSIONADO: El DTO ahora incluye tanto maquinarias como cod_op
       const createEntregaDTO: CreateEntregaDTO = {
         cod_obra: Number(formData.obraId),
         fecha_hora_entrega: fechaHoraISO,
@@ -353,10 +367,9 @@ export default function CrearEntrega({
       onSubmit(nuevaEntrega)
     } catch (err: any) {
       console.error('Error al crear entrega:', err)
-      setError(
-        err.message ||
-          'Error al crear la entrega. Por favor, intente nuevamente.'
-      )
+      const errorMessage = err.response?.data?.message || err.message || 'Error al crear la entrega. Por favor, intente nuevamente.';
+      setError(errorMessage);
+
     } finally {
       setSubmitting(false)
     }
