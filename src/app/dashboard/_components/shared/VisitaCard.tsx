@@ -76,7 +76,7 @@ export default function VisitaCard({
           <div className="flex-1">
             <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-lg font-semibold text-gray-800">
-                {visita.obra?.direccion || 'Visita sin obra asignada'}
+                {visita.obra?.direccion || visita.direccion_visita}
               </h3>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">

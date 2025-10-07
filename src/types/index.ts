@@ -58,7 +58,10 @@ export interface Visita {
   vehiculos_usados: UsoVehiculoVisita[]
   fecha_cancelacion?: string
   dias_viaticos?: number
-  cliente: Cliente
+  nombre_cliente?: string
+  apellido_cliente?: string
+  telefono_cliente?: string
+  mail_cliente?: string
 }
 
 export interface Entrega {

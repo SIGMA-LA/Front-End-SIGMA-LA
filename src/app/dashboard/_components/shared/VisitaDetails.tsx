@@ -113,18 +113,17 @@ export default function VisitaDetail({
                 Cliente
               </label>
               <p className="font-semibold text-gray-800">
-                {visita?.obra?.cliente?.razon_social
-                  ? visita.obra.cliente.razon_social
-                  : visita.cliente
-                    ? `${visita.cliente.razon_social}`
-                    : 'Sin cliente'}
+                {visita?.nombre_cliente && visita?.apellido_cliente
+                  ? `${visita.nombre_cliente} ${visita.apellido_cliente}`
+                  : 'Sin cliente'}
               </p>
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="h-4 w-4" />
                 <span>
+                  {visita?.telefono_cliente || 'Sin teléfono'}
                   {visita?.obra?.cliente?.telefono
                     ? visita.obra.cliente.telefono
-                    : visita.cliente?.telefono || 'Sin teléfono'}
+                    : visita.telefono_cliente || 'Sin teléfono'}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -132,7 +131,7 @@ export default function VisitaDetail({
                 <span>
                   {visita?.obra?.cliente?.mail
                     ? visita.obra.cliente.mail
-                    : visita.cliente?.mail || 'Sin email'}
+                    : visita.mail_cliente || 'Sin email'}
                 </span>
               </div>
             </div>
