@@ -2,17 +2,13 @@
 
 import { useState } from 'react'
 import { Car, CheckCircle} from 'lucide-react'
+import { useCreateVehiculo } from '@/hooks/useCreateVehiculo'
+import { VehiculoFormData } from '@/types';
 
 interface CrearVehiculoProps {
-  onCancel: () => void
-  onSubmit: (vehiculoData: { 
-    tipoVehiculo: string
-    marca: string
-    modelo: string
-    anio: number
-    patente: string
-    estado: string 
-  }) => void
+  onCancel: () => void;
+  // ¡AQUÍ ESTÁ EL CAMBIO! onSubmit ya no necesita recibir datos.
+  onSubmit: () => void;
 }
 
 interface ModalConfirmacionProps {
@@ -123,14 +119,15 @@ export default function CrearVehiculo({ onCancel, onSubmit }: CrearVehiculoProps
     patente?: string 
   }>({})
 
+    const { isPending, error, handleCreate } = useCreateVehiculo({
+    onSuccess: onSubmit,
+  });
+
   const tiposVehiculo = [
-    'Auto',
-    'Camioneta',
-    'Camión',
-    'Furgón',
-    'Utilitario',
-    'Moto',
-    'Otro'
+    'CAMION CHICO',
+    'CAMIONETA',
+    'AUTOMOVIL',
+    'CAMION GRANDE'
   ]
 
   const validatePatente = (patente: string) => {
@@ -204,17 +201,15 @@ export default function CrearVehiculo({ onCancel, onSubmit }: CrearVehiculoProps
   }
 
   const handleConfirm = () => {
-    const vehiculoData = {
-      tipoVehiculo,
-      marca: marca.trim(),
-      modelo: modelo.trim(),
-      anio: parseInt(anio),
+    // 3. AJUSTAR EL OBJETO DE DATOS A ENVIAR
+    const vehiculoData: VehiculoFormData = {
+      tipo_vehiculo: tipoVehiculo,
       patente: patente.trim(),
-      estado: 'disponible'
-    }
-
-    setShowModal(false)
-    onSubmit(vehiculoData)
+      estado: 'DISPONIBLE' // El estado inicial es 'DISPONIBLE' según el esquema
+    };
+    
+    handleCreate(vehiculoData);
+    setShowModal(false);
   }
 
   const handlePatenteChange = (e: React.ChangeEvent<HTMLInputElement>) => {

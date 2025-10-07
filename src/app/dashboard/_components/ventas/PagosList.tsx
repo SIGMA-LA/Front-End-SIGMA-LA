@@ -46,18 +46,18 @@ export default function PagosList(props: PagosListProps) {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-2 sm:p-4 lg:p-8">
+      <div className="mx-auto w-full max-w-md sm:max-w-2xl md:max-w-3xl lg:max-w-7xl">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-              <DollarSign className="h-6 w-6 text-green-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 sm:h-12 sm:w-12">
+              <DollarSign className="h-5 w-5 text-green-600 sm:h-6 sm:w-6" />
             </div>
             <div>
-              <h1 className="flex text-2xl font-bold text-gray-900 sm:text-3xl">
+              <h1 className="flex text-xl font-bold text-gray-900 sm:text-2xl">
                 Pagos
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600 sm:text-sm">
                 Gestión de pagos registrados en obras
               </p>
             </div>
@@ -74,7 +74,7 @@ export default function PagosList(props: PagosListProps) {
             No hay pagos registrados.
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {pagos.map((pago) => (
               <div key={pago.cod_pago}>
                 <PagoCard

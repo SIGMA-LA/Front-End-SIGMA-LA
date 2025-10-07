@@ -183,20 +183,9 @@ class VisitasService {
     observaciones?: string
   ): Promise<Visita> {
     try {
-      const updateData: {
-        estado: string
-        observaciones?: string
-      } = {
-        estado: 'COMPLETADA',
-      }
-
-      if (observaciones) {
-        updateData.observaciones = observaciones
-      }
-
-      const response = await api.put<BackendVisita>(
-        `${this.baseURL}/${cod_visita}`,
-        updateData
+      const response = await api.patch<BackendVisita>(
+        `${this.baseURL}/${cod_visita}/finalizar`,
+        { observaciones }
       )
       return mapToFrontend(response.data)
     } catch (error) {
@@ -255,28 +244,12 @@ class VisitasService {
     }
   }
 
-  // Cancela una visita con fecha de cancelación
-  async cancelarVisita(
-    cod_visita: number,
-    observaciones?: string
-  ): Promise<Visita> {
+  // Cancela una visita con un motivo opcional
+  async cancelarVisita(cod_visita: number, motivo?: string): Promise<Visita> {
     try {
-      const updateData: {
-        estado: string
-        fecha_cancelacion: string
-        observaciones?: string
-      } = {
-        estado: 'CANCELADA',
-        fecha_cancelacion: new Date().toISOString(),
-      }
-
-      if (observaciones) {
-        updateData.observaciones = observaciones
-      }
-
-      const response = await api.put<BackendVisita>(
-        `${this.baseURL}/${cod_visita}`,
-        updateData
+      const response = await api.patch<BackendVisita>(
+        `${this.baseURL}/${cod_visita}/cancelar`,
+        { motivo }
       )
       return mapToFrontend(response.data)
     } catch (error) {

@@ -8,19 +8,23 @@ import {
 } from 'lucide-react'
 import { mockVehiculos } from '@/data/mockData'
 import { VehiculosListProps } from '@/types'
+import { useVehiculos } from '@/hooks/useVehiculos';
 
 // Mock data de vehículos
 
-export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
-  const vehiculos = mockVehiculos
+export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosListProps) {
+  /* const vehiculos = mockVehiculos */
+
+  const { vehiculos, isLoading, error } = useVehiculos();
+  /* const vehiculos = await getVehiculos(); */ // Llama a la función para obtener los vehículos
 
   const getEstadoIcon = (estado: string) => {
     switch (estado) {
-      case 'disponible':
+      case 'DISPONIBLE':
         return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'en-uso':
+      case 'EN USO':
         return <Clock className="h-4 w-4 text-blue-600" />
-      case 'reparacion':
+      case 'REPARACION':
         return <AlertTriangle className="h-4 w-4 text-yellow-600" />
       default:
         return <CheckCircle className="h-4 w-4 text-gray-600" />
@@ -29,11 +33,11 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'disponible':
+      case 'DISPONIBLE':
         return 'bg-green-50 border-green-200 text-green-800'
-      case 'en-uso':
+      case 'EN USO':
         return 'bg-blue-50 border-blue-200 text-blue-800'
-      case 'reparacion':
+      case 'REPARACION':
         return 'bg-yellow-50 border-yellow-200 text-yellow-800'
       default:
         return 'bg-gray-50 border-gray-200 text-gray-800'
@@ -55,18 +59,20 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
 
   const getEstadoBadgeColor = (estado: string) => {
     switch (estado) {
-      case 'disponible':
+      case 'DISPONIBLE':
         return 'bg-green-100 text-green-800'
-      case 'en-uso':
+      case 'EN USO':
         return 'bg-blue-100 text-blue-800'
-      case 'reparacion':
+      case 'REPARACION':
         return 'bg-yellow-100 text-yellow-800'
-      case 'fuera-servicio':
+      case 'FUERA DE SERVICIO':
         return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
+
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -189,9 +195,12 @@ export default function VehiculosList({ onCreateClick }: VehiculosListProps) {
                   <button className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current">
                     Ver Detalles
                   </button>
-                  <button className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current">
-                    Editar
-                  </button>
+            <button
+              onClick={() => onEditClick(vehiculo)} // Llama a la función pasada por props
+              className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10"
+            >
+              Editar
+            </button>
                 </div>
               </div>
             ))}

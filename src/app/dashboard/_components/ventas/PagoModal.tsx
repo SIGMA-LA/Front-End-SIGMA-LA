@@ -48,17 +48,16 @@ export default function PagoModal({
     setLoading(true)
     try {
       if (pagoAEditar) {
-        // Asegurarse de enviar la fecha en formato YYYY-MM-DD
         const pagoEditado = await updatePago({
           ...pagoAEditar,
           monto: parseFloat(monto),
-          fecha_pago: pagoAEditar.fecha_pago.slice(0, 10), // <-- SOLO FECHA
+          fecha_pago: pagoAEditar.fecha_pago.slice(0, 10),
         })
         onPagoEditado?.(pagoEditado)
       } else {
         const pagoData: PagoFormData = {
           monto: parseFloat(monto),
-          fecha_pago: new Date().toISOString().slice(0, 10), // <-- SOLO FECHA
+          fecha_pago: new Date().toISOString().slice(0, 10),
           cod_obra: codObra,
         }
         const pago = await createPagoForObra(pagoData, codObra)
@@ -76,13 +75,13 @@ export default function PagoModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
-        <h2 className="mb-2 text-xl font-bold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-2 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-lg sm:p-6">
+        <h2 className="mb-2 text-lg font-bold text-gray-900 sm:text-xl">
           {pagoAEditar ? 'Editar Pago' : 'Nuevo Pago'}
         </h2>
         {obra ? (
-          <div className="mb-4 rounded bg-blue-50 p-3 text-sm text-gray-700">
+          <div className="mb-4 rounded bg-blue-50 p-2 text-sm text-gray-700 sm:p-3">
             <div>
               <span className="font-semibold">Obra:</span> {obra.direccion}
             </div>
@@ -112,7 +111,7 @@ export default function PagoModal({
             />
           </div>
           {error && <div className="text-sm text-red-600">{error}</div>}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}

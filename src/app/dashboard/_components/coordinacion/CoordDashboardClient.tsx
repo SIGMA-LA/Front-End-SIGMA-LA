@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Building2,
   Users,
@@ -14,9 +14,9 @@ import {
   Wrench,
   Car,
   PackageOpen,
+  ClipboardList,
 } from 'lucide-react'
 
-// Importar componentes
 import Configuraciones from './Configuraciones'
 import EntregasList from '../shared/EntregasList'
 import VisitasList from '../shared/VisitasList'
@@ -24,30 +24,37 @@ import ObrasList from '../shared/ObrasList'
 import ClientesList from '../shared/ClientesList'
 import CrearVisita from './CrearVisita'
 import CrearEntrega from './CrearEntrega'
-
 import PedidosList from './PedidosList'
 import RegistrarPedido from './RegistrarPedido'
-
-import MaquinariaList from './MaquinariaList'
-import CrearMaquinaria from './CrearMaquinaria'
-
+import MaquinariaList from './maquinaria/MaquinariaList'
 import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
-import { on } from 'events'
+import EditarVehiculo from './EditarVehiculo' // 1. Importar el nuevo componente
+import { Vehiculo } from '@/types' // Importar el tipo
+import OrdenesProduccionView from './ordenes_produccion/OrdenesProduccionView'
+
+import type { Empleado } from '@/types'
+import { obtenerEmpleadoActual } from '@/actions/empleado'
 
 export default function CoordDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
-
-  // Estado para nueva máquina (para manejar la creación)
+  const [selectedObra, setSelectedObra] = useState<any>(null)
+  const [usuarioActual, setUsuarioActual] = useState<Empleado | null>(null)
   const [nuevasMaquinas, setNuevasMaquinas] = useState<any[]>([])
 
-  // Función para manejar la creación de nueva máquina
+  const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(null);
+  useEffect(() => {
+    async function fetchUsuario() {
+      const empleado = await obtenerEmpleadoActual()
+      setUsuarioActual(empleado)
+    }
+    fetchUsuario()
+  }, [])
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
-    setSidebarOpen(false) // Cerrar sidebar en mobile después de navegar
+    setSidebarOpen(false)
   }
 
   const menuItems = [
@@ -55,8 +62,9 @@ export default function CoordDashboard() {
     { id: 'obras', label: 'Obras', icon: Building2 },
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
+    { id: 'ordenes-produccion', label: 'Órdenes de Producción', icon: Package },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
-    { id: 'pedidos', label: 'Pedidos', icon: Package },
+    { id: 'pedidos', label: 'Pedidos', icon: ClipboardList },
     { id: 'maquinarias', label: 'Maquinarias', icon: Wrench },
     { id: 'vehiculos', label: 'Vehículos', icon: Car },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
@@ -95,6 +103,9 @@ export default function CoordDashboard() {
           />
         )
 
+      case 'ordenes-produccion':
+        return <OrdenesProduccionView />
+
       case 'entregas':
         return (
           <EntregasList
@@ -115,8 +126,6 @@ export default function CoordDashboard() {
               setSelectedObra(null)
             }}
             onSubmit={(visitaData) => {
-              // Aquí puedes agregar lógica para guardar la visita
-
               setCurrentSection(selectedObra ? 'obras' : 'visitas')
               setSelectedObra(null)
             }}
@@ -132,8 +141,6 @@ export default function CoordDashboard() {
               setSelectedObra(null)
             }}
             onSubmit={(entregaData) => {
-              // Aquí puedes agregar lógica para guardar la entrega
-
               setCurrentSection(selectedObra ? 'obras' : 'entregas')
               setSelectedObra(null)
             }}
@@ -149,8 +156,6 @@ export default function CoordDashboard() {
               setSelectedObra(null)
             }}
             onSubmit={(pedidoData) => {
-              // Aquí puedes agregar lógica para guardar la entrega
-
               setCurrentSection('pedidos')
               setSelectedObra(null)
             }}
@@ -170,24 +175,16 @@ export default function CoordDashboard() {
         )
 
       case 'maquinarias':
-        return (
-          <MaquinariaList
-            onCreateClick={() => setCurrentSection('crear-maquinaria')}
-          />
-        )
-
-      case 'crear-maquinaria':
-        return (
-          <CrearMaquinaria
-            onCancel={() => setCurrentSection('maquinarias')}
-            onSubmit={() => setCurrentSection('maquinarias')}
-          />
-        )
+        return <MaquinariaList />
 
       case 'vehiculos':
         return (
           <VehículosList
             onCreateClick={() => setCurrentSection('crear-vehiculo')}
+             onEditClick={(vehiculo) => {
+              setSelectedVehiculo(vehiculo);
+              setCurrentSection('editar-vehiculo');
+            }}
           />
         )
 
@@ -198,6 +195,23 @@ export default function CoordDashboard() {
             onSubmit={() => setCurrentSection('vehiculos')}
           />
         )
+
+      case 'editar-vehiculo':
+        // Nos aseguramos de que haya un vehículo seleccionado antes de renderizar
+        return selectedVehiculo ? (
+            <EditarVehiculo
+                vehiculo={selectedVehiculo}
+                onCancel={() => {
+                    setCurrentSection('vehiculos');
+                    setSelectedVehiculo(null); // Limpiar el estado
+                }}
+                onSubmit={() => {
+                    setCurrentSection('vehiculos');
+                    setSelectedVehiculo(null); // Limpiar el estado
+                    // Opcional: podrías querer refrescar la lista de vehículos aquí
+                }}
+            />
+        ) : null; // Si no hay vehículo seleccionado, no renderizar nada o un fallback
 
       case 'configuraciones':
         return <Configuraciones />
@@ -210,7 +224,12 @@ export default function CoordDashboard() {
                 <div className="border-b border-blue-300 pb-4">
                   <h1 className="text-2xl font-semibold text-gray-800">
                     Bienvenido,{' '}
-                    <span className="text-blue-600">{'Emiliano Luhmann'}</span>!
+                    <span className="text-blue-600">
+                      {usuarioActual
+                        ? `${usuarioActual.nombre} ${usuarioActual.apellido}`
+                        : ''}
+                    </span>
+                    !
                   </h1>
                 </div>
 
@@ -233,6 +252,7 @@ export default function CoordDashboard() {
                     <span className="font-semibold text-blue-600">
                       Coordinación
                     </span>
+                    .
                   </p>
                 </div>
               </div>
@@ -248,7 +268,6 @@ export default function CoordDashboard() {
       <div className="hidden lg:flex lg:flex-shrink-0">
         <div className="flex w-64 flex-col">
           <div className="flex flex-grow flex-col border-r border-gray-200 bg-white shadow-lg">
-            {/* Navigation */}
             <nav className="flex-1 space-y-2 px-4 py-4">
               {menuItems.map((item) => {
                 const Icon = item.icon
@@ -258,7 +277,9 @@ export default function CoordDashboard() {
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
 
                 return (
                   <button
@@ -282,23 +303,23 @@ export default function CoordDashboard() {
 
       {/* Mobile Sidebar */}
       <div
-        className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+        className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
       >
         <div
-          className="bg-opacity-75 fixed inset-0 bg-gray-600"
+          className="absolute inset-0 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         ></div>
-        <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
+
+        <div className="relative flex h-full w-64 max-w-xs flex-1 flex-col bg-white">
           <div className="absolute top-0 right-0 -mr-12 pt-2">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:ring-2 focus:ring-white focus:outline-none focus:ring-inset"
+              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full text-white focus:outline-none"
             >
-              <X className="h-6 w-6 text-white" />
+              <X className="h-6 w-6" />
             </button>
           </div>
-
-          <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
+          <div className="flex-1 overflow-y-auto pt-5 pb-4">
             <div className="mb-6 flex flex-shrink-0 items-center px-4">
               <h1 className="text-xl font-bold text-blue-600">SIGMA - LA</h1>
             </div>
@@ -311,16 +332,18 @@ export default function CoordDashboard() {
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
 
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
-                    className={`flex w-full items-center rounded-lg px-4 py-3 text-left text-sm font-medium transition-all ${
+                    className={`flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-all ${
                       isActive
-                        ? 'border border-blue-200 bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <Icon className="mr-3 h-5 w-5" />
@@ -340,7 +363,7 @@ export default function CoordDashboard() {
           <div className="flex h-16 items-center justify-between px-4 sm:px-6">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-600 hover:text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset"
+              className="p-1 text-gray-600 hover:text-gray-900 focus:outline-none"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -354,10 +377,12 @@ export default function CoordDashboard() {
                   (item.id === 'visitas' &&
                     currentSection.includes('visita')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
               )?.label || 'Dashboard'}
             </h1>
-            <div></div> {/* Spacer */}
+            <div className="w-6"></div>
           </div>
         </header>
 
