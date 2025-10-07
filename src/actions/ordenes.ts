@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+
 interface CloudinaryUploadResponse {
   secure_url: string
   public_id: string
@@ -68,22 +70,19 @@ export async function crearOrdenProduccion(formData: FormData) {
 
     const { secure_url, public_id } = await uploadToCloudinary(file)
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/ordenes-produccion`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cod_obra,
-          fecha_confeccion: new Date().toISOString().split('T')[0],
-          fecha_validacion: null,
-          url: secure_url,
-          public_id: public_id,
-        }),
-      }
-    )
+    const response = await fetch(`${baseUrl}/ordenes-produccion`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cod_obra,
+        fecha_confeccion: new Date().toISOString().split('T')[0],
+        fecha_validacion: null,
+        url: secure_url,
+        public_id: public_id,
+      }),
+    })
 
     if (!response.ok) {
       throw new Error('Error al crear orden de producción')
@@ -99,6 +98,138 @@ export async function crearOrdenProduccion(formData: FormData) {
     }
   } catch (error) {
     console.error('Error en crearOrdenProduccion:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    }
+  }
+}
+
+/**
+ * Obtiene órdenes de producción con filtros opcionales
+ */
+export async function obtenerOrdenesProduccion(
+  estado?: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA',
+  cod_obra?: number
+) {
+  try {
+    let url = `${baseUrl}/ordenes-produccion`
+
+    // Si se especifica un estado específico, usar el endpoint correspondiente
+    if (estado === 'APROBADA') {
+      url = `${baseUrl}/ordenes-produccion/validadas`
+    } else if (estado === 'EN PRODUCCION') {
+      url = `${baseUrl}/ordenes-produccion/en-produccion`
+    }
+
+    // Si se especifica una obra, usar el endpoint por obra
+    if (cod_obra) {
+      url = `${baseUrl}/ordenes-produccion/obra/${cod_obra}`
+    }
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      throw new Error('Error al obtener órdenes de producción')
+    }
+
+    const ordenes = await response.json()
+
+    // Si se especifica un estado y no es un endpoint específico, filtrar manualmente
+    if (
+      estado &&
+      estado !== 'APROBADA' &&
+      estado !== 'EN PRODUCCION' &&
+      !cod_obra
+    ) {
+      return {
+        success: true,
+        data: ordenes.filter((orden: any) => orden.estado === estado),
+      }
+    }
+
+    return {
+      success: true,
+      data: ordenes,
+    }
+  } catch (error) {
+    console.error('Error en obtenerOrdenesProduccion:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+      data: [],
+    }
+  }
+}
+
+/**
+ * Aprueba una orden de producción (cambia estado a APROBADA y registra fecha_validacion)
+ */
+export async function aprobarOrdenProduccion(cod_op: number) {
+  try {
+    const response = await fetch(`${baseUrl}/ordenes-produccion/${cod_op}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        estado: 'APROBADA',
+        fecha_validacion: new Date().toISOString(),
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Error al aprobar orden de producción')
+    }
+
+    const ordenActualizada = await response.json()
+    revalidatePath('/dashboard')
+    revalidatePath('/coordinacion')
+
+    return {
+      success: true,
+      data: ordenActualizada,
+      message: 'Orden de producción aprobada exitosamente',
+    }
+  } catch (error) {
+    console.error('Error en aprobarOrdenProduccion:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    }
+  }
+}
+
+/**
+ * Obtiene una orden de producción por su código
+ */
+export async function obtenerOrdenProduccion(cod_op: number) {
+  try {
+    const response = await fetch(`${baseUrl}/ordenes-produccion/${cod_op}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      throw new Error('Error al obtener orden de producción')
+    }
+
+    const orden = await response.json()
+
+    return {
+      success: true,
+      data: orden,
+    }
+  } catch (error) {
+    console.error('Error en obtenerOrdenProduccion:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',

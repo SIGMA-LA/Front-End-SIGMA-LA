@@ -14,6 +14,7 @@ import {
   Wrench,
   Car,
   PackageOpen,
+  ClipboardList,
 } from 'lucide-react'
 
 import Configuraciones from './Configuraciones'
@@ -30,6 +31,7 @@ import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
 import EditarVehiculo from './EditarVehiculo' // 1. Importar el nuevo componente
 import { Vehiculo } from '@/types' // Importar el tipo
+import OrdenesProduccionView from './ordenes_produccion/OrdenesProduccionView'
 
 import type { Empleado } from '@/types'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
@@ -60,8 +62,9 @@ export default function CoordDashboard() {
     { id: 'obras', label: 'Obras', icon: Building2 },
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
+    { id: 'ordenes-produccion', label: 'Órdenes de Producción', icon: Package },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
-    { id: 'pedidos', label: 'Pedidos', icon: Package },
+    { id: 'pedidos', label: 'Pedidos', icon: ClipboardList },
     { id: 'maquinarias', label: 'Maquinarias', icon: Wrench },
     { id: 'vehiculos', label: 'Vehículos', icon: Car },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
@@ -99,6 +102,9 @@ export default function CoordDashboard() {
             onCreateClick={() => setCurrentSection('crear-visita')}
           />
         )
+
+      case 'ordenes-produccion':
+        return <OrdenesProduccionView />
 
       case 'entregas':
         return (
@@ -271,7 +277,9 @@ export default function CoordDashboard() {
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
 
                 return (
                   <button
@@ -324,7 +332,9 @@ export default function CoordDashboard() {
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
 
                 return (
                   <button
@@ -367,7 +377,9 @@ export default function CoordDashboard() {
                   (item.id === 'visitas' &&
                     currentSection.includes('visita')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
               )?.label || 'Dashboard'}
             </h1>
             <div className="w-6"></div>
