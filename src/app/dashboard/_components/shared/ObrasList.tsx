@@ -27,6 +27,7 @@ const ESTADOS_OBRA: Obra['estado'][] = [
   'ENTREGADA',
   'EN ESPERA DE STOCK',
   'CANCELADA',
+  'PAGADA TOTALMENTE',
 ]
 
 export default function ObrasList({

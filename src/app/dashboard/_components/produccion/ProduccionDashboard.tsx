@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { FileText, Package, Menu, X } from 'lucide-react'
 import type { Obra, OrdenProduccion } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { getNotasConOrdenEnProceso, getNotasSinOrdenAprobada } from '@/services/obra.service'
+import {
+  getNotasConOrdenEnProceso,
+  getNotasSinOrdenAprobada,
+} from '@/services/obra.service'
 import ordenProduccionService from '@/services/ordenProduccion.service'
 import TabNavigation from './TabNavigation'
 import SidebarNotasFabrica from './SidebarNotasFabrica'
@@ -29,9 +32,15 @@ export default function ProduccionDashboard() {
   const [showCrearOrdenModal, setShowCrearOrdenModal] = useState(false)
 
   // Estados para Órdenes de Producción
-  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
-  const [ordenesAprobadas, setOrdenesAprobadas] = useState<OrdenProduccion[]>([])
-  const [ordenesEnProduccion, setOrdenesEnProduccion] = useState<OrdenProduccion[]>([])
+  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(
+    null
+  )
+  const [ordenesAprobadas, setOrdenesAprobadas] = useState<OrdenProduccion[]>(
+    []
+  )
+  const [ordenesEnProduccion, setOrdenesEnProduccion] = useState<
+    OrdenProduccion[]
+  >([])
   const [loadingOrdenes, setLoadingOrdenes] = useState(true)
   const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
 
@@ -127,9 +136,9 @@ export default function ProduccionDashboard() {
 
     try {
       await ordenProduccionService.iniciarProduccion(selectedOrden.cod_op)
-      
+
       await loadOrdenesProduccion()
-      
+
       const ordenActualizada = {
         ...selectedOrden,
         estado: 'EN PRODUCCION' as const,
@@ -150,13 +159,12 @@ export default function ProduccionDashboard() {
 
     try {
       await ordenProduccionService.finalizarProduccion(selectedOrden.cod_op)
-      
+
       await loadOrdenesProduccion()
-      
+
       setSelectedOrden(null)
     } catch (error) {
       console.error('Error al finalizar producción:', error)
-      // TODO: Agregar notificación toast aquí
     }
   }
 
@@ -197,7 +205,9 @@ export default function ProduccionDashboard() {
           <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
             <div className="rounded-lg bg-orange-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-orange-600 lg:text-xl">
-                {activeTab === 'notas' ? obrasSinOrden.length : ordenesAprobadas.length}
+                {activeTab === 'notas'
+                  ? obrasSinOrden.length
+                  : ordenesAprobadas.length}
               </div>
               <div className="text-xs text-gray-600 lg:text-sm">
                 {activeTab === 'notas' ? 'Sin Orden' : 'Por Iniciar'}
@@ -205,7 +215,9 @@ export default function ProduccionDashboard() {
             </div>
             <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                {activeTab === 'notas' ? obrasEnProceso.length : ordenesEnProduccion.length}
+                {activeTab === 'notas'
+                  ? obrasEnProceso.length
+                  : ordenesEnProduccion.length}
               </div>
               <div className="text-xs text-gray-600 lg:text-sm">
                 {activeTab === 'notas' ? 'En Proceso' : 'En Producción'}
