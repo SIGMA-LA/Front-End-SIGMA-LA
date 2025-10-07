@@ -1,7 +1,7 @@
 'use server'
 
 import { getAccessToken } from './auth'
-import { Visita } from '@/types'
+import { Visita, CrearVisita } from '@/types'
 
 const baseUrl =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/visitas'
@@ -110,12 +110,10 @@ export async function obtenerVisitas(): Promise<Visita[]> {
   }
 }
 
-export async function crearVisita(
-  visitaData: Omit<Visita, 'cod_visita'>
-): Promise<Visita> {
+export async function crearVisita(visitaData: CrearVisita): Promise<Visita> {
   try {
     const token = await getAccessToken()
-
+    console.log('Creating visita with data:', visitaData)
     const response = await fetch(`${baseUrl}`, {
       method: 'POST',
       headers: {

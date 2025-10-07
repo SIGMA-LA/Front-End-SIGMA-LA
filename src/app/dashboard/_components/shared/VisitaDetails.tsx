@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { Visita, VisitaDetailProps } from '@/types'
 import { obtenerVisitaPorId, cancelarVisita } from '@/actions/visitas'
 import { getStatusColor, getTipoText } from './VisitaCard'
+import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
 
 export default function VisitaDetail({
   visita: visitaProp,
@@ -94,11 +95,11 @@ export default function VisitaDetail({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span
               className={`inline-flex items-center gap-2 rounded-md px-3 py-1 text-xs font-bold tracking-wide uppercase ${getStatusColor(
-                visita.estado
+                visita.estado ? visita.estado : 'PROGRAMADA'
               )} shadow`}
               style={{ minWidth: 110 }}
             >
-              {visita.estado}
+              {visita.estado ? visita.estado : 'PROGRAMADA'}
             </span>
             <span className="inline-flex items-center gap-2 rounded border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
               {getTipoText(visita.motivo_visita)}
@@ -112,14 +113,18 @@ export default function VisitaDetail({
                 Cliente
               </label>
               <p className="font-semibold text-gray-800">
-                {visita?.obra?.cliente?.razon_social || 'Sin cliente'}
+                {visita?.obra?.cliente?.razon_social
+                  ? visita.obra.cliente.razon_social
+                  : visita.cliente
+                    ? `${visita.cliente.razon_social}`
+                    : 'Sin cliente'}
               </p>
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="h-4 w-4" />
                 <span>
                   {visita?.obra?.cliente?.telefono
                     ? visita.obra.cliente.telefono
-                    : 'Sin teléfono'}
+                    : visita.cliente?.telefono || 'Sin teléfono'}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -127,16 +132,18 @@ export default function VisitaDetail({
                 <span>
                   {visita?.obra?.cliente?.mail
                     ? visita.obra.cliente.mail
-                    : 'Sin email'}
+                    : visita.cliente?.mail || 'Sin email'}
                 </span>
               </div>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">
-                Dirección
+                Dirección y Fecha
               </label>
               <p className="font-semibold text-gray-800">
-                {visita.obra?.direccion || 'Sin dirección'}
+                {visita.obra?.direccion
+                  ? visita.obra.direccion
+                  : visita.direccion_visita || 'Sin dirección'}
               </p>
               <div className="mt-1 flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-400" />
@@ -158,12 +165,12 @@ export default function VisitaDetail({
           {/* Empleados asignados */}
           <div>
             <h3 className="mb-2 text-lg font-semibold">Empleados asignados</h3>
-            {Array.isArray(visita.empleados_asignados) &&
-            visita.empleados_asignados.length > 0 ? (
+            {Array.isArray(visita.empleado_visita) &&
+            visita.empleado_visita.length > 0 ? (
               <ul className="ml-4 list-disc space-y-1 text-sm text-gray-700">
-                {visita.empleados_asignados.map((emp) => (
-                  <li key={emp.cuil}>
-                    {emp.nombre} {emp.apellido}
+                {visita.empleado_visita.map((ev) => (
+                  <li key={ev.cuil}>
+                    {ev.empleado.nombre} {ev.empleado.apellido}
                   </li>
                 ))}
               </ul>
@@ -175,19 +182,30 @@ export default function VisitaDetail({
           </div>
 
           {/* Acciones */}
+
           <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:space-x-4">
-            <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700">
+            <Button
+              onClick={() =>
+                navegarADireccion(
+                  visita.obra?.direccion || visita.direccion_visita || ''
+                )
+              }
+              className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+            >
               <MapPin className="mr-2 h-4 w-4" />
               Cómo llegar
             </Button>
-            {visita.estado === 'PROGRAMADA' && (
-              <Button
-                onClick={() => setShowCancelModal(true)}
-                className="flex-1 bg-red-600 text-white hover:bg-red-700"
-              >
-                Cancelar Visita
-              </Button>
-            )}
+            <Button
+              onClick={() =>
+                abrirGoogleMaps(
+                  visita.obra?.direccion || visita.direccion_visita || ''
+                )
+              }
+              className="flex-1 bg-green-600 text-white hover:bg-green-700"
+            >
+              <MapPin className="mr-2 h-4 w-4" />
+              Ver en el mapa
+            </Button>
           </div>
         </div>
       </div>

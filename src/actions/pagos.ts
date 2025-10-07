@@ -10,7 +10,7 @@ export async function getAllPagos(): Promise<Pago[]> {
     const token = await getAccessToken()
 
     console.log('Using API URL:', baseUrl)
-    const response = await fetch(`/${baseUrl}`, {
+    const response = await fetch(`${baseUrl}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

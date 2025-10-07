@@ -86,17 +86,23 @@ export default function VisitaCard({
               </div>
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4" />
-                {Array.isArray(visita.empleados_asignados) &&
-                visita.empleados_asignados.length > 0 ? (
+                {Array.isArray(visita.empleado_visita) &&
+                visita.empleado_visita.length > 0 ? (
                   <ul className="ml-2 list-disc pl-4">
-                    {visita.empleados_asignados.map((empleado, idx) => (
-                      <li
-                        key={empleado.cuil || idx}
-                        className="text-xs text-gray-700"
-                      >
-                        {empleado.nombre} {empleado.apellido}
-                      </li>
-                    ))}
+                    {visita.empleado_visita.map((ev, idx) =>
+                      ev ? (
+                        <li
+                          key={ev.cuil || idx}
+                          className="text-xs text-gray-700"
+                        >
+                          {ev.empleado.nombre} {ev.empleado.apellido}
+                        </li>
+                      ) : (
+                        <li key={idx} className="text-xs text-gray-400 italic">
+                          Empleado no disponible
+                        </li>
+                      )
+                    )}
                   </ul>
                 ) : (
                   <span className="text-xs text-gray-400">Sin asignar</span>
@@ -113,11 +119,11 @@ export default function VisitaCard({
           <div className="mt-4 flex w-full flex-col items-end gap-2 sm:mt-0 sm:ml-4 sm:w-auto">
             <span
               className={`mb-2 inline-flex items-center justify-center rounded-md px-3 py-1 text-xs font-bold tracking-wide uppercase ${getStatusColor(
-                visita.estado
+                visita.estado ? visita.estado : 'PROGRAMADA'
               )} shadow`}
               style={{ minWidth: 110 }}
             >
-              {visita.estado}
+              {visita.estado ? visita.estado : 'PROGRAMADA'}
             </span>
             <div className="flex gap-2">
               <button

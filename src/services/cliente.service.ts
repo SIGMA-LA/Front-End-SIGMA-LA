@@ -3,6 +3,9 @@ import api from './api/api'
 import type { Cliente } from '@/types'
 
 interface BackendCliente {
+  nombre?: string
+  apellido?: string
+  tipo_cliente?: 'PERSONA' | 'EMPRESA'
   cuil: string
   razon_social: string
   telefono: string
@@ -23,6 +26,10 @@ export interface UpdateClienteDTO {
 }
 
 const mapToFrontend = (cliente: BackendCliente): Cliente => ({
+  nombre: cliente.nombre,
+  apellido: cliente.apellido,
+  tipo_cliente:
+    cliente.tipo_cliente ?? (cliente.razon_social ? 'EMPRESA' : 'PERSONA'),
   cuil: cliente.cuil,
   razon_social: cliente.razon_social,
   telefono: cliente.telefono,
