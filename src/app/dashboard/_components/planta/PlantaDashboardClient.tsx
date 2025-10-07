@@ -114,6 +114,31 @@ export default function PlantaDashboardClient() {
     }
   }
 
+  const handleCancelarEntrega = async () => {
+    if (selectedEntrega && !finalizandoEntrega) {
+      try {
+        setFinalizandoEntrega(true)
+        await entregasService.cancelarEntrega(
+          selectedEntrega.cod_entrega,
+          observacionesFinal || 'No se especificó motivo.'
+        )
+
+        setEntregasPendientes((prev) =>
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+        )
+        setSelectedEntrega(null)
+
+        setShowConfirmModal(false)
+        setObservacionesFinal('')
+      } catch (error) {
+        console.error('Error al cancelar entrega:', error)
+        alert('Error al cancelar la entrega. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoEntrega(false)
+      }
+    }
+  }
+
   if (!usuario) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -232,6 +257,7 @@ export default function PlantaDashboardClient() {
         observaciones={observacionesFinal}
         onObservacionesChange={setObservacionesFinal}
         onConfirm={handleFinalizarEntrega}
+        onCancelDelivery={handleCancelarEntrega}
         onCancel={() => {
           if (!finalizandoEntrega) {
             setShowConfirmModal(false)

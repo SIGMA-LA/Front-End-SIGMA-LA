@@ -202,43 +202,60 @@ export default function VisitadorDashboard() {
   }
 
   const handleFinalizarEntrega = async () => {
-    if (selectedEntrega && usuario?.cuil && !finalizandoEntrega) {
+    if (selectedEntrega && !finalizandoEntrega) {
       try {
         setFinalizandoEntrega(true)
+        const entregaActualizadaBackend =
+          await entregasService.finalizarEntrega(
+            selectedEntrega.cod_entrega,
+            observacionesEntrega || undefined
+          )
 
-        // Llamar al servicio para actualizar en la base de datos
-        await entregasService.finalizarEntrega(
-          selectedEntrega.cod_entrega,
-          observacionesEntrega || undefined
-        )
-
-        // Actualizar el estado local después de la actualización exitosa
         const entregaActualizada = {
           ...selectedEntrega,
           entrega: {
             ...selectedEntrega.entrega,
-            estado: 'ENTREGADO' as const,
-            observaciones:
-              observacionesEntrega || selectedEntrega.entrega.observaciones,
+            estado: entregaActualizadaBackend.estado,
+            observaciones: entregaActualizadaBackend.observaciones,
           },
         }
 
-        setSelectedEntrega(entregaActualizada)
-
-        // Mover de pendientes a realizadas
         setEntregasPendientes((prev) =>
           prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
         )
-        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
+        setEntregasRealizadas((prev) => [entregaActualizada, ...prev])
+        setSelectedEntrega(entregaActualizada)
 
-        // Cerrar modal
         setShowEntregaModal(false)
         setObservacionesEntrega('')
-
-        console.log('Entrega finalizada exitosamente')
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
         alert('Error al finalizar la entrega. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoEntrega(false)
+      }
+    }
+  }
+
+  const handleCancelarEntrega = async () => {
+    if (selectedEntrega && !finalizandoEntrega) {
+      try {
+        setFinalizandoEntrega(true)
+        await entregasService.cancelarEntrega(
+          selectedEntrega.cod_entrega,
+          observacionesEntrega || 'No se especificó motivo.'
+        )
+
+        setEntregasPendientes((prev) =>
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+        )
+        setSelectedEntrega(null)
+
+        setShowEntregaModal(false)
+        setObservacionesEntrega('')
+      } catch (error) {
+        console.error('Error al cancelar entrega:', error)
+        alert('Error al cancelar la entrega. Inténtalo de nuevo.')
       } finally {
         setFinalizandoEntrega(false)
       }
@@ -526,6 +543,7 @@ export default function VisitadorDashboard() {
         observaciones={observacionesEntrega}
         onObservacionesChange={setObservacionesEntrega}
         onConfirm={handleFinalizarEntrega}
+        onCancelDelivery={handleCancelarEntrega}
         onCancel={() => {
           if (!finalizandoEntrega) {
             setShowEntregaModal(false)

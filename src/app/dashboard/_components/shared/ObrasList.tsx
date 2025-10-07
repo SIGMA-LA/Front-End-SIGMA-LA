@@ -21,13 +21,14 @@ import { deleteObra } from '@/actions/obras'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
 
 const ESTADOS_OBRA: Obra['estado'][] = [
-  'ACTIVA',
-  'EN PRODUCCION',
-  'FINALIZADA',
-  'ENTREGADA',
+  'EN ESPERA DE PAGO',
+  'PAGADA PARCIALMENTE',
   'EN ESPERA DE STOCK',
-  'CANCELADA',
+  'EN PRODUCCION',
+  'PRODUCCION FINALIZADA',
   'PAGADA TOTALMENTE',
+  'ENTREGADA',
+  'CANCELADA',
 ]
 
 export default function ObrasList({

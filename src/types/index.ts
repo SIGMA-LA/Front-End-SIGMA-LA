@@ -37,8 +37,8 @@ export interface Visita {
 }
 
 export interface MaquinariaSimple {
-  cod_maquina: number;
-  descripcion: string;
+  cod_maquina: number
+  descripcion: string
 }
 
 export interface Entrega {
@@ -80,13 +80,14 @@ export interface Obra {
   cod_postal: number
   cuil_cliente: string
   estado:
-    | 'ACTIVA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | 'ENTREGADA'
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
     | 'EN ESPERA DE STOCK'
-    | 'CANCELADA'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
     | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
   direccion: string
   cliente: Cliente
   nota_fabrica?: string
