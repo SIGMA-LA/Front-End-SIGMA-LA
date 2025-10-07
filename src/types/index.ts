@@ -169,16 +169,28 @@ export interface CrearClienteProps {
   onSubmit?: (clienteData: Cliente) => void
 }
 
+export type VehiculoTipo = 'CAMION CHICO' | 'CAMIONETA' | 'AUTOMOVIL' | 'CAMION GRANDE';
+export type VehiculoEstado = 'DISPONIBLE' | 'EN USO' | 'MANTENIMIENTO' | 'REPARACION' | 'FUERA DE SERVICIO' | 'RESERVADO';
+
+// Este es el tipo que usará el formulario y la Server Action
+export interface VehiculoFormData {
+  patente: string;
+  tipo_vehiculo: VehiculoTipo;
+  estado: VehiculoEstado;
+}
+
+// El tipo Vehiculo puede seguir teniendo más campos si la API GET los devuelve
 export interface Vehiculo {
-  patente: string
-  tipo_vehiculo: string
-  estado:
-    | 'DISPONIBLE'
-    | 'EN USO'
-    | 'MANTENIMIENTO'
-    | 'REPARACION'
-    | 'FUERA DE SERVICIO'
-    | 'RESERVADO'
+  patente: string;
+  tipo_vehiculo: VehiculoTipo;
+  estado: VehiculoEstado;
+  // Puede que el GET sí devuelva más datos, como una fecha de creación, etc.
+}
+
+export interface BackendVehiculo {
+  patente: string;
+  tipo_vehiculo: string;
+  estado: string; 
 }
 
 export interface Maquinaria {
@@ -282,6 +294,7 @@ export interface EditarMaquinariaModalProps {
 
 export interface VehiculosListProps {
   onCreateClick: () => void
+  onEditClick: (vehiculo: Vehiculo) => void
 }
 
 export interface Localidad {
