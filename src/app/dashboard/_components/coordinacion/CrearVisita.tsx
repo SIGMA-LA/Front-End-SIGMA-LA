@@ -9,6 +9,7 @@ import {
   MapPin,
   Phone,
   Users,
+  Car,
 } from 'lucide-react'
 import { CrearVisitaProps } from '@/types'
 import ObraSearchWrapper from './ObraSearchWrapper'
@@ -17,6 +18,8 @@ import {
   obtenerVisitadores,
   getDisponiblesParaEntrega,
 } from '@/actions/empleado'
+import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
+import parametroService from '../../../../services/parametro.service'
 
 export default function CrearVisita({
   onCancel,
@@ -25,6 +28,7 @@ export default function CrearVisita({
 }: CrearVisitaProps) {
   const [formData, setFormData] = useState({
     fecha: '',
+    fechaHasta: '',
     hora: '',
     tipo: '',
     encargado: '',
@@ -35,6 +39,7 @@ export default function CrearVisita({
     obraCliente: preloadedObra?.cliente
       ? `${preloadedObra.cliente.razon_social}`
       : '',
+    vehiculo: '',
   })
 
   const [isVisitaInicial, setIsVisitaInicial] = useState(!preloadedObra)
@@ -43,7 +48,11 @@ export default function CrearVisita({
   const [selectedAcompanantes, setSelectedAcompanantes] = useState<string[]>([])
   const [visitadores, setVisitadores] = useState<any[]>([])
   const [acompanantes, setAcompanantes] = useState<any[]>([])
+  const [vehiculos, setVehiculos] = useState<any[]>([])
   const [formError, setFormError] = useState<string | null>(null)
+  const [costoViatico, setCostoViatico] = useState<number>(0)
+  const [diasViatico, setDiasViatico] = useState<number>(1)
+  const [costoTotalViatico, setCostoTotalViatico] = useState<number>(0)
 
   const isFromObra = !!preloadedObra
 
@@ -77,6 +86,10 @@ export default function CrearVisita({
   useEffect(() => {
     obtenerVisitadores().then(setVisitadores)
     getDisponiblesParaEntrega().then(setAcompanantes)
+    obtenerVehiculosDisponibles().then(setVehiculos)
+    parametroService
+      .getActualViatico()
+      .then((res) => setCostoViatico(res.viatico_dia_persona))
   }, [])
 
   // Si seleccionás visita sin obra, limpia y bloquea los campos de obra
@@ -92,32 +105,61 @@ export default function CrearVisita({
     }
   }, [isVisitaInicial])
 
+  // Cuando cambia la fecha, por defecto fechaHasta es igual
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      fechaHasta: prev.fecha || '',
+    }))
+  }, [formData.fecha])
+
+  // Calcular días viático y costo total
+  useEffect(() => {
+    if (formData.fecha && formData.fechaHasta) {
+      const desde = new Date(formData.fecha)
+      const hasta = new Date(formData.fechaHasta)
+      const diff = Math.floor(
+        (hasta.getTime() - desde.getTime()) / (1000 * 60 * 60 * 24)
+      )
+      const dias = diff > 0 ? diff : 0
+      setDiasViatico(dias)
+      setCostoTotalViatico(dias * costoViatico)
+      setDiasViatico(dias)
+      setCostoTotalViatico(dias * costoViatico)
+    } else {
+      setDiasViatico(1)
+      setCostoTotalViatico(costoViatico)
+    }
+  }, [formData.fecha, formData.fechaHasta, costoViatico])
+
   // Visitadores seleccionados no pueden ser acompañantes y viceversa
   const filteredVisitadores = visitadores.filter(
-    (v) => !selectedAcompanantes.includes(v.id)
+    (v) => !selectedAcompanantes.includes(v.cuil)
   )
   const filteredAcompanantes = acompanantes.filter(
-    (a) => !selectedVisitadores.includes(a.id)
+    (a) => !selectedVisitadores.includes(a.cuil)
   )
 
-  const handleVisitadorToggle = (visitadorId: string) => {
+  const handleVisitadorToggle = (visitadorCuil: string) => {
     setSelectedVisitadores((prev) =>
-      prev.includes(visitadorId)
-        ? prev.filter((id) => id !== visitadorId)
-        : [...prev, visitadorId]
+      prev.includes(visitadorCuil)
+        ? prev.filter((id) => id !== visitadorCuil)
+        : [...prev, visitadorCuil]
     )
-    // Si lo agregás como visitador, lo sacás de acompañantes
-    setSelectedAcompanantes((prev) => prev.filter((id) => id !== visitadorId))
+    setSelectedAcompanantes((prev) =>
+      prev.filter((cuil) => cuil !== visitadorCuil)
+    )
   }
 
-  const handleAcompananteToggle = (acompananteId: string) => {
+  const handleAcompananteToggle = (acompananteCuil: string) => {
     setSelectedAcompanantes((prev) =>
-      prev.includes(acompananteId)
-        ? prev.filter((id) => id !== acompananteId)
-        : [...prev, acompananteId]
+      prev.includes(acompananteCuil)
+        ? prev.filter((cuil) => cuil !== acompananteCuil)
+        : [...prev, acompananteCuil]
     )
-    // Si lo agregás como acompañante, lo sacás de visitadores
-    setSelectedVisitadores((prev) => prev.filter((id) => id !== acompananteId))
+    setSelectedVisitadores((prev) =>
+      prev.filter((cuil) => cuil !== acompananteCuil)
+    )
   }
 
   const handleObraSelect = (obra: any) => {
@@ -139,10 +181,12 @@ export default function CrearVisita({
     // Validaciones obligatorias
     if (
       !formData.fecha ||
+      !formData.fechaHasta ||
       !formData.hora ||
       !formData.tipo ||
       !formData.direccion ||
-      !formData.contacto
+      !formData.contacto ||
+      !formData.vehiculo
     ) {
       setFormError('Todos los campos son obligatorios.')
       return
@@ -162,8 +206,8 @@ export default function CrearVisita({
 
     // Mapear IDs a objetos completos
     const empleadosAsignados = visitadores
-      .filter((v) => selectedVisitadores.includes(v.id))
-      .concat(acompanantes.filter((a) => selectedAcompanantes.includes(a.id)))
+      .filter((v) => selectedVisitadores.includes(v.cuil))
+      .concat(acompanantes.filter((a) => selectedAcompanantes.includes(a.cuil)))
 
     const visitaData = {
       fecha_hora_visita: fechaHoraVisita,
@@ -174,6 +218,8 @@ export default function CrearVisita({
       contacto: formData.contacto,
       cod_obra: isVisitaInicial ? null : formData.obraId || null,
       empleados_asignados: empleadosAsignados,
+      vehiculo: formData.vehiculo,
+      dias_viatico: diasViatico,
       esVisitaInicial: isVisitaInicial && !isFromObra,
     }
     try {
@@ -294,8 +340,8 @@ export default function CrearVisita({
               </div>
             </div>
 
-            {/* Fecha y Hora */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Fecha, Fecha Hasta, Días Viático y Hora */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   <Calendar className="mr-1 inline h-4 w-4" />
@@ -305,13 +351,52 @@ export default function CrearVisita({
                   type="date"
                   value={formData.fecha}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, fecha: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      fecha: e.target.value,
+                      fechaHasta: e.target.value, // por defecto igual
+                    }))
                   }
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   required
                 />
               </div>
-
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  <Calendar className="mr-1 inline h-4 w-4" />
+                  Fecha hasta
+                </label>
+                <input
+                  type="date"
+                  value={formData.fechaHasta}
+                  min={formData.fecha}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      fechaHasta: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Días viático
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={diasViatico}
+                    readOnly
+                    className="w-16 rounded-md border border-gray-300 bg-gray-100 px-3 py-2"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Costo total:{' '}
+                    <span className="font-semibold">${costoTotalViatico}</span>
+                  </span>
+                </div>
+              </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   <Clock className="mr-1 inline h-4 w-4" />
@@ -327,6 +412,32 @@ export default function CrearVisita({
                   required
                 />
               </div>
+            </div>
+
+            {/* Vehículo */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                <Car className="mr-1 inline h-4 w-4" />
+                Vehículo
+              </label>
+              <select
+                value={formData.vehiculo}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehiculo: e.target.value,
+                  }))
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              >
+                <option value="">Seleccionar vehículo...</option>
+                {vehiculos.map((vehiculo: any) => (
+                  <option key={vehiculo.patente} value={vehiculo.patente}>
+                    {vehiculo.patente} - {vehiculo.tipo_vehiculo}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Tipo de Visita */}
@@ -383,19 +494,19 @@ export default function CrearVisita({
                   )}
                   {filteredVisitadores.map((visitador) => (
                     <label
-                      key={visitador.id}
+                      key={visitador.cuil}
                       className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                        selectedVisitadores.includes(visitador.id)
+                        selectedVisitadores.includes(visitador.cuil)
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       <input
                         type="checkbox"
-                        checked={selectedVisitadores.includes(visitador.id)}
-                        onChange={() => handleVisitadorToggle(visitador.id)}
+                        checked={selectedVisitadores.includes(visitador.cuil)}
+                        onChange={() => handleVisitadorToggle(visitador.cuil)}
                         className="mr-2"
-                        required
+                        required={selectedVisitadores.length === 0}
                       />
                       <span className="text-sm">
                         {visitador.nombre} {visitador.apellido}
@@ -417,17 +528,21 @@ export default function CrearVisita({
                   )}
                   {filteredAcompanantes.map((acompanante) => (
                     <label
-                      key={acompanante.id}
+                      key={acompanante.cuil}
                       className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                        selectedAcompanantes.includes(acompanante.id)
+                        selectedAcompanantes.includes(acompanante.cuil)
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-300 hover:bg-gray-50'
                       }`}
                     >
                       <input
                         type="checkbox"
-                        checked={selectedAcompanantes.includes(acompanante.id)}
-                        onChange={() => handleAcompananteToggle(acompanante.id)}
+                        checked={selectedAcompanantes.includes(
+                          acompanante.cuil
+                        )}
+                        onChange={() =>
+                          handleAcompananteToggle(acompanante.cuil)
+                        }
                         className="mr-2"
                       />
                       <span className="text-sm">
