@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { getPagosObra } from '@/actions/pagos'
 import PagoModal from './PagoModal'
 import { Pago, Obra } from '@/types'
@@ -18,6 +18,40 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [pagoAEditar, setPagoAEditar] = useState<Pago | null>(null)
+  const [montoSugerido, setMontoSugerido] = useState<number | null>(null)
+
+  const presupuestoAceptado = useMemo(
+    () =>
+      obra.presupuesto?.find(
+        (p) => p.fecha_aceptacion && p.fecha_aceptacion !== ''
+      ),
+    [obra.presupuesto]
+  )
+
+  const totalPagado = useMemo(
+    () => pagos.reduce((sum, pago) => sum + pago.monto, 0),
+    [pagos]
+  )
+
+  const puedeCrearPago = useMemo(() => {
+    if (!presupuestoAceptado) return false
+    if (totalPagado >= presupuestoAceptado.valor - 0.01) return false
+    if (pagos.length === 0) return true
+    return obra.estado === 'FINALIZADA'
+  }, [pagos.length, obra.estado, presupuestoAceptado, totalPagado])
+
+  useEffect(() => {
+    if (presupuestoAceptado) {
+      if (pagos.length === 0) {
+        setMontoSugerido(presupuestoAceptado.valor * 0.7)
+      } else {
+        const restante = presupuestoAceptado.valor - totalPagado
+        setMontoSugerido(restante > 0 ? restante : 0)
+      }
+    } else {
+      setMontoSugerido(null)
+    }
+  }, [pagos, presupuestoAceptado, totalPagado])
 
   useEffect(() => {
     const fetchPagos = async () => {
@@ -66,6 +100,9 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
       prev.map((p) => (p.cod_pago === pagoEditado.cod_pago ? pagoEditado : p))
     )
   }
+
+  const isFirstPayment = pagos.length === 0
+
   return (
     <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-gray-200 bg-white p-0 shadow-lg lg:mt-16">
       {/* Header */}
@@ -84,7 +121,13 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
         <div className="flex gap-2">
           <button
             onClick={handleCrearPago}
-            className="flex items-center gap-1 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700"
+            className="flex items-center gap-1 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            disabled={!puedeCrearPago}
+            title={
+              !puedeCrearPago
+                ? 'No se puede registrar un pago en este momento. Verifique el estado de la obra o si ya se pagó el total.'
+                : 'Crear un nuevo pago'
+            }
           >
             <Plus className="h-4 w-4" /> Crear pago
           </button>
@@ -126,8 +169,10 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onPagoCreado={handlePagoCreado}
-        pagoAEditar={pagoAEditar} // PASA EL PAGO A EDITAR
-        onPagoEditado={handlePagoEditado} // PASA EL HANDLER DE EDICIÓN
+        pagoAEditar={pagoAEditar}
+        onPagoEditado={handlePagoEditado}
+        montoSugerido={montoSugerido}
+        isFirstPayment={isFirstPayment}
       />
     </div>
   )

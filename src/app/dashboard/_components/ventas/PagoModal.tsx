@@ -10,6 +10,8 @@ interface PagoModalProps {
   onPagoCreado: (pago: Pago) => void
   pagoAEditar?: Pago | null
   onPagoEditado?: (pago: Pago) => void
+  montoSugerido?: number | null
+  isFirstPayment: boolean
 }
 
 export default function PagoModal({
@@ -19,6 +21,8 @@ export default function PagoModal({
   onPagoCreado,
   pagoAEditar = null,
   onPagoEditado,
+  montoSugerido = null,
+  isFirstPayment,
 }: PagoModalProps) {
   const [obra, setObra] = useState<Obra | null>(null)
   const [monto, setMonto] = useState('')
@@ -37,14 +41,30 @@ export default function PagoModal({
   useEffect(() => {
     if (pagoAEditar && open) {
       setMonto(pagoAEditar.monto.toString())
+    } else if (montoSugerido && open && !pagoAEditar) {
+      setMonto(montoSugerido.toFixed(2))
     } else if (open) {
       setMonto('')
     }
-  }, [pagoAEditar, open])
+  }, [pagoAEditar, open, montoSugerido])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    // CORRECCIÓN: Validación en el frontend
+    const montoFloat = parseFloat(monto)
+    if (
+      montoSugerido !== null &&
+      !isFirstPayment &&
+      montoFloat > montoSugerido + 0.01
+    ) {
+      setError(
+        `El monto no puede exceder el saldo restante de $${montoSugerido.toLocaleString('es-AR')}.`
+      )
+      return
+    }
+
     setLoading(true)
     try {
       if (pagoAEditar) {
@@ -102,6 +122,11 @@ export default function PagoModal({
               type="number"
               min={0}
               step="any"
+              max={
+                montoSugerido !== null && !isFirstPayment
+                  ? montoSugerido.toFixed(2)
+                  : undefined
+              }
               required
               value={monto}
               onChange={(e) => setMonto(e.target.value)}
@@ -109,6 +134,13 @@ export default function PagoModal({
               placeholder="Ingrese el monto"
               disabled={loading}
             />
+            {montoSugerido !== null && !pagoAEditar && (
+              <p className="mt-2 text-xs text-blue-600">
+                {isFirstPayment
+                  ? `Monto sugerido (70%): $${montoSugerido.toLocaleString('es-AR')}`
+                  : `Saldo restante: $${montoSugerido.toLocaleString('es-AR')}`}
+              </p>
+            )}
           </div>
           {error && <div className="text-sm text-red-600">{error}</div>}
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">

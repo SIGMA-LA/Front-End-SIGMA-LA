@@ -33,6 +33,7 @@ const getEstadoBadge = (estado: Obra['estado']) => {
     ENTREGADA: 'bg-purple-100 text-purple-800',
     CANCELADA: 'bg-red-100 text-red-800',
     'EN ESPERA DE STOCK': 'bg-orange-100 text-orange-800',
+    'PAGADA TOTALMENTE': 'bg-teal-100 text-teal-800',
   }
   return badges[estado] || 'bg-gray-100 text-gray-800'
 }
@@ -75,7 +76,10 @@ export default function NotaFabricaDetails({
                 {obra.estado}
               </span>
               <span className="text-sm text-gray-500 lg:text-base">
-                Iniciada: <span className="font-medium">{formatDate(obra.fecha_ini)}</span>
+                Iniciada:{' '}
+                <span className="font-medium">
+                  {formatDate(obra.fecha_ini)}
+                </span>
               </span>
             </div>
           </div>
@@ -125,7 +129,7 @@ export default function NotaFabricaDetails({
                     }}
                   />
                   {pdfLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">
+                    <div className="bg-opacity-90 absolute inset-0 flex items-center justify-center bg-white">
                       <div className="text-center">
                         <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
                         <p className="text-sm text-gray-500 lg:text-base">
@@ -201,7 +205,7 @@ export default function NotaFabricaDetails({
         {/* Lista de Órdenes de Producción */}
         <div>
           <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
-          Órdenes de Producción Asociadas
+            Órdenes de Producción Asociadas
           </h4>
           <OrdenesProduccionList cod_obra={obra.cod_obra} />
         </div>

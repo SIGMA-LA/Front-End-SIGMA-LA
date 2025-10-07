@@ -20,6 +20,7 @@ interface BackendObra {
     | 'ENTREGADA'
     | 'EN ESPERA DE STOCK'
     | 'CANCELADA'
+    | 'PAGADA TOTALMENTE'
   localidad?: {
     cod_postal: number
     nombre_localidad: string
@@ -39,6 +40,7 @@ export interface ObraFormData {
     | 'ENTREGADA'
     | 'EN ESPERA DE STOCK'
     | 'CANCELADA'
+    | 'PAGADA TOTALMENTE'
   cuil_cliente: string
   cod_postal: number
 }

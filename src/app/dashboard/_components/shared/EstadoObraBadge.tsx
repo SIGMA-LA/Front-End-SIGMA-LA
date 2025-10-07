@@ -6,6 +6,7 @@ import {
   Clock,
   Truck,
   Hourglass,
+  DollarSign,
 } from 'lucide-react'
 
 interface EstadoObraBadgeProps {
@@ -46,6 +47,18 @@ export default function EstadoObraBadge({ estado }: EstadoObraBadgeProps) {
           text: 'En Espera',
           className: 'bg-orange-100 text-orange-800',
           Icon: Clock,
+        }
+      case 'CANCELADA':
+        return {
+          text: 'Cancelada',
+          className: 'bg-red-100 text-red-800',
+          Icon: XCircle,
+        }
+      case 'PAGADA TOTALMENTE':
+        return {
+          text: 'Pagada Totalmente',
+          className: 'bg-teal-100 text-teal-800',
+          Icon: DollarSign,
         }
       default:
         return {

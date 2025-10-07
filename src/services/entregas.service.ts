@@ -323,11 +323,10 @@ class EntregasService {
       }
       throw new Error(
         error.response?.data?.message ||
-          'Error al crear la entrega en el servidor.',
+          'Error al crear la entrega en el servidor.'
       )
     }
   }
-
 
   // Obtiene una entrega específica de un empleado
   async getEntregaByEmpleadoAndId(

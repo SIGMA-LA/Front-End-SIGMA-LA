@@ -89,6 +89,12 @@ export default function CrearObra({
     )
   }, [clientes, filtroCliente])
 
+  const hayPresupuestoAceptado = useMemo(
+    () =>
+      presupuestos.some((p) => p.fecha_aceptacion && p.fecha_aceptacion !== ''),
+    [presupuestos]
+  )
+
   const handleClienteCreado = (nuevoCliente: Cliente) => {
     fetchClientes().then(() => {
       handleClienteSelect(nuevoCliente.cuil)
@@ -389,7 +395,12 @@ export default function CrearObra({
                       type="button"
                       onClick={handleOpenModalParaCrear}
                       className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:text-gray-400"
-                      disabled={isObraCancelada}
+                      disabled={isObraCancelada || hayPresupuestoAceptado}
+                      title={
+                        hayPresupuestoAceptado
+                          ? 'Ya existe un presupuesto aceptado para esta obra'
+                          : ''
+                      }
                     >
                       <Plus className="h-5 w-5" />
                       {esModoEdicion
