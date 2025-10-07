@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Search } from 'lucide-react'
+import { X, Search, AlertTriangle } from 'lucide-react'
 
 interface Item {
   id: string
   label: string
+  disabled?: boolean
+  warning?: string
 }
 
 interface SelectionModalProps {
@@ -74,22 +76,36 @@ export default function SelectionModal({
           </div>
           <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
             {filteredItems.map(item => (
-              <label
-                key={item.id}
-                className={`flex cursor-pointer items-center rounded-lg border p-4 transition-all ${
-                  internalSelection.includes(item.id)
-                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={internalSelection.includes(item.id)}
-                  onChange={() => handleToggle(item.id)}
-                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-4 text-base text-gray-800">{item.label}</span>
-              </label>
+              <div key={item.id}>
+                <label
+                  className={`flex cursor-pointer items-center rounded-lg border p-4 transition-all ${
+                    internalSelection.includes(item.id)
+                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                      : item.warning
+                        ? 'border-yellow-400 bg-yellow-50'
+                        : 'border-gray-200'
+                  } ${
+                    item.disabled
+                      ? 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-70'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={internalSelection.includes(item.id)}
+                    onChange={() => handleToggle(item.id)}
+                    disabled={item.disabled}
+                    className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:text-gray-400"
+                  />
+                  <span className="ml-4 text-base text-gray-800">{item.label}</span>
+                </label>
+                {item.warning && !item.disabled && (
+                  <div className="mt-1 flex items-center gap-2 rounded-b-lg bg-yellow-100 px-4 py-2 text-xs text-yellow-800">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <span>{item.warning}</span>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

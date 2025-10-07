@@ -42,6 +42,7 @@ export default function OrdenProduccionCard({
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`w-full rounded-lg border p-3 text-left shadow-sm transition-colors lg:p-4 ${getCardStyle()}`}
     >

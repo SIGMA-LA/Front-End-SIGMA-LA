@@ -6,13 +6,10 @@ import {
   Truck,
   Calendar,
   Clock,
-  User,
   Shield,
   Users,
-  MapPin,
-  FileText,
-  DollarSign,
   Wrench,
+  Package,
 } from 'lucide-react'
 import type { Entrega } from '@/types'
 import parametroService from '@/services/parametro.service'
@@ -58,6 +55,7 @@ export default function EntregaDetailsModal({
   const encargado = entrega.empleados_asignados?.find(
     e => e.rol_entrega === 'ENCARGADO'
   )
+  // --- CAMBIO AQUÍ: Lógica para filtrar acompañantes ---
   const acompanantes = entrega.empleados_asignados?.filter(
     e => e.rol_entrega !== 'ENCARGADO'
   )
@@ -78,7 +76,7 @@ export default function EntregaDetailsModal({
         </div>
 
         <div className="overflow-y-auto p-6 space-y-6">
-          {/* SECCIÓN PRINCIPAL */}
+          {/* SECCIÓN PRINCIPAL (sin cambios) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-lg bg-gray-50 border p-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Obra</label>
@@ -104,7 +102,7 @@ export default function EntregaDetailsModal({
             </div>
           </div>
           
-          {/* SECCIÓN PERSONAL */}
+          {/* SECCIÓN PERSONAL (actualizada) */}
           <div>
             <h3 className="font-semibold mb-3 text-lg">Personal Asignado</h3>
             <div className="space-y-3">
@@ -117,6 +115,7 @@ export default function EntregaDetailsModal({
                   </div>
                 </div>
               )}
+              {/* --- CAMBIO AQUÍ: Renderizado dinámico de acompañantes --- */}
               {acompanantes && acompanantes.length > 0 && (
                 <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center gap-3 mb-2">
@@ -135,7 +134,32 @@ export default function EntregaDetailsModal({
             </div>
           </div>
 
-          {/* SECCIÓN VIÁTICOS */}
+          {entrega.orden_de_produccion && (
+            <div>
+              <h3 className="font-semibold mb-3 text-lg">Orden de Producción Asociada</h3>
+              <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div className="flex items-center gap-3">
+                  <Package className="h-5 w-5 text-indigo-600"/>
+                  <div>
+                    <p className="font-semibold text-indigo-800">Orden #{entrega.orden_de_produccion.cod_op}</p>
+                    <p className="text-xs text-gray-500">
+                      Confección: {new Date(entrega.orden_de_produccion.fecha_confeccion).toLocaleDateString('es-AR')}
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={entrega.orden_de_produccion.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                >
+                  Ver PDF
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* SECCIÓN VIÁTICOS (sin cambios) */}
           {entrega.dias_viaticos && entrega.dias_viaticos > 0 && (
             <div>
               <h3 className="font-semibold mb-3 text-lg">Costo de Viáticos</h3>
@@ -151,7 +175,7 @@ export default function EntregaDetailsModal({
             </div>
           )}
 
-          {/* SECCIÓN VEHÍCULOS Y MAQUINARIA (MOCKEADO POR AHORA) */}
+          {/* --- CAMBIO AQUÍ: SECCIÓN DE RECURSOS COMPLETAMENTE ACTUALIZADA --- */}
           <div>
             <h3 className="font-semibold mb-3 text-lg">Recursos Utilizados</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -160,23 +184,28 @@ export default function EntregaDetailsModal({
                     <Truck className="h-5 w-5 text-gray-600" />
                     <p className="font-medium">Vehículos</p>
                   </div>
-                  <ul className="list-disc pl-8 text-sm text-gray-700">
-                    <li>Ford Ranger (Patente AB123CD)</li>
-                  </ul>
+                  {/* (La lógica de vehículos se implementará a futuro) */}
+                  <p className="pl-8 text-sm text-gray-500">No especificados</p>
                </div>
                <div className="p-3 bg-gray-100 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Wrench className="h-5 w-5 text-gray-600" />
                     <p className="font-medium">Maquinaria</p>
                   </div>
-                  <ul className="list-disc pl-8 text-sm text-gray-700">
-                    <li>Andamio tubular</li>
-                  </ul>
+                  {entrega.maquinarias_usadas && entrega.maquinarias_usadas.length > 0 ? (
+                    <ul className="list-disc pl-8 text-sm text-gray-700">
+                      {entrega.maquinarias_usadas.map(m => (
+                        <li key={m.cod_maquina}>{m.descripcion}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="pl-8 text-sm text-gray-500">Ninguna</p>
+                  )}
                </div>
              </div>
           </div>
 
-          {/* DETALLES Y OBSERVACIONES */}
+          {/* DETALLES Y OBSERVACIONES (sin cambios) */}
           <div>
             <h3 className="font-semibold mb-3 text-lg">Información Adicional</h3>
             <div className="p-4 bg-gray-50 rounded-lg border text-sm text-gray-700 space-y-2">

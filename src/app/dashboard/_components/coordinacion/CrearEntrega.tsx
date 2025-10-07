@@ -13,17 +13,22 @@ import {
   Package,
   Truck,
   DollarSign,
+  Loader2,
 } from 'lucide-react'
-import { mockVehiculos, mockMaquinarias } from '@/data/mockData'
-import { CrearEntregaProps, Obra, Empleado } from '@/types'
+import { mockVehiculos } from '@/data/mockData'
+import { CrearEntregaProps, Obra, Empleado, OrdenProduccion } from '@/types'
 import { ModalEncargadoProps } from '@/types'
 import empleadoService from '@/services/empleado.service'
 import { getObras } from '@/services/obra.service'
 import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
+import maquinariaService, { MaquinariaConDisponibilidad } from '@/services/maquinaria.service'
 import SelectionModal from '../shared/SelectionModal'
 import AsignarPersonalModal from '../shared/AsignarPersonalModal'
 import parametroService from '@/services/parametro.service'
+import ordenProduccionService from '@/services/ordenProduccion.service'
+import OrdenProduccionCard from '../produccion/OrdenProduccionCard'
 
+// El componente ModalEncargado se mantiene sin cambios
 function ModalEncargado({
   isOpen,
   empleados,
@@ -109,6 +114,7 @@ export default function CrearEntrega({
   onSubmit,
   preloadedObra,
 }: CrearEntregaProps) {
+  // FUSIONADO: Se incluyen todos los estados de ambas versiones
   const [formData, setFormData] = useState({
     fecha: '',
     hora: '',
@@ -138,15 +144,23 @@ export default function CrearEntrega({
 
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras, setObras] = useState<Obra[]>([])
+  const [maquinarias, setMaquinarias] = useState<MaquinariaConDisponibilidad[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingDisponibilidad, setLoadingDisponibilidad] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [diasViaticos, setDiasViaticos] = useState('')
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
 
+  const [ordenesProduccion, setOrdenesProduccion] = useState<OrdenProduccion[]>([])
+  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
+  const [loadingOrdenes, setLoadingOrdenes] = useState(false)
+  const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
+
   const isFromObra = !!preloadedObra
 
+  // FUSIONADO: Se incluyen todos los useEffect de ambas versiones
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -166,7 +180,7 @@ export default function CrearEntrega({
           setObras(obrasData)
         }
       } catch (err) {
-        console.error('Error al cargar datos:', err)
+        console.error('Error al cargar datos iniciales:', err)
         setError('Error al cargar los datos. Por favor, intente nuevamente.')
       } finally {
         setLoading(false)
@@ -175,6 +189,59 @@ export default function CrearEntrega({
     fetchData()
   }, [isFromObra])
 
+  useEffect(() => {
+    const verificarDisponibilidad = async () => {
+      if (formData.fecha && formData.hora && !loading) {
+        setLoadingDisponibilidad(true);
+        try {
+          const fechaInicio = new Date(`${formData.fecha}T${formData.hora}`);
+          const fechaFin = new Date(fechaInicio.getTime() + 8 * 60 * 60 * 1000);
+
+          const maquinariasConDisponibilidad = await maquinariaService.getDisponibilidadPorFecha(
+            fechaInicio.toISOString(),
+            fechaFin.toISOString()
+          );
+          setMaquinarias(maquinariasConDisponibilidad);
+        } catch (error) {
+          console.error("Error al verificar disponibilidad de maquinaria:", error);
+          setError("No se pudo verificar la disponibilidad de las maquinarias.");
+        } finally {
+          setLoadingDisponibilidad(false);
+        }
+      } else if (!loading) {
+        const todasLasMaquinarias = await maquinariaService.getAllMaquinarias();
+        setMaquinarias(todasLasMaquinarias.map(m => ({ ...m, availabilityStatus: 'DISPONIBLE' as const })))
+      }
+    };
+    verificarDisponibilidad();
+  }, [formData.fecha, formData.hora, loading]);
+
+  useEffect(() => {
+    const fetchOrdenes = async () => {
+      if (formData.obraId) {
+        setLoadingOrdenes(true)
+        setErrorOrdenes(null)
+        setSelectedOrden(null)
+        try {
+          const data = await ordenProduccionService.getOrdenesByObra(
+            Number(formData.obraId)
+          )
+          setOrdenesProduccion(data)
+        } catch (err) {
+          console.error('Error al cargar órdenes de producción:', err)
+          setErrorOrdenes('No se pudieron cargar las órdenes de producción.')
+        } finally {
+          setLoadingOrdenes(false)
+        }
+      } else {
+        setOrdenesProduccion([])
+        setSelectedOrden(null)
+      }
+    }
+    fetchOrdenes()
+  }, [formData.obraId])
+
+  // FUSIONADO: Se incluyen todas las funciones helper de ambas versiones
   const totalViaticos = useMemo(() => {
     const dias = Number(diasViaticos) || 0
     const cantidadPersonas = encargado ? 1 + acompanantes.length : 0
@@ -216,12 +283,19 @@ export default function CrearEntrega({
   }
 
   const handleObraSelect = (obra: Obra) => {
+    if (obra.cod_obra === formData.obraId) {
+      setShowObraSearch(false)
+      return
+    }
+
     setFormData((prev) => ({
       ...prev,
       obraId: obra.cod_obra,
       obraCliente: obra.cliente.razon_social,
       direccion: obra.direccion,
     }))
+    setOrdenesProduccion([])
+    setSelectedOrden(null)
     setShowObraSearch(false)
     setSearchTerm('')
   }
@@ -243,7 +317,23 @@ export default function CrearEntrega({
   }
 
   const crearEntregaEnBackend = async () => {
-    if (!encargado) return; // Verificación de seguridad
+    if (!encargado) return;
+
+    if (selectedMaquinaria.length > 0) {
+      const maquinariasSeleccionadas = maquinarias.filter(m => 
+        selectedMaquinaria.includes(m.cod_maquina.toString())
+      )
+
+      const maquinasEnConflicto = maquinariasSeleccionadas.filter(m => 
+        m.estado !== 'DISPONIBLE' || m.availabilityStatus === 'NO_DISPONIBLE'
+      );
+
+      if (maquinasEnConflicto.length > 0) {
+        const nombresMaquinas = maquinasEnConflicto.map(m => m.descripcion).join(', ');
+        setError(`No se puede crear la entrega. Las siguientes maquinarias no están disponibles en la fecha seleccionada: ${nombresMaquinas}. Por favor, ajuste la fecha o deseleccione las maquinarias.`);
+        return;
+      }
+    }
 
     try {
       setSubmitting(true)
@@ -265,8 +355,10 @@ export default function CrearEntrega({
         observaciones: formData.observaciones || undefined,
         empleados: empleadosConRoles,
         dias_viaticos: diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
+        maquinarias: selectedMaquinaria.map(id => parseInt(id, 10)),
+        cod_op: selectedOrden?.cod_op
       }
-
+      
       console.log('DTO que se enviará desde el frontend:', createEntregaDTO)
 
       const nuevaEntrega = await entregasService.createEntrega(createEntregaDTO)
@@ -275,10 +367,9 @@ export default function CrearEntrega({
       onSubmit(nuevaEntrega)
     } catch (err: any) {
       console.error('Error al crear entrega:', err)
-      setError(
-        err.message ||
-          'Error al crear la entrega. Por favor, intente nuevamente.'
-      )
+      const errorMessage = err.response?.data?.message || err.message || 'Error al crear la entrega. Por favor, intente nuevamente.';
+      setError(errorMessage);
+
     } finally {
       setSubmitting(false)
     }
@@ -336,7 +427,7 @@ export default function CrearEntrega({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Obra Selection - Solo si no viene de obra */}
+              {/* Obra Selection */}
               {!isFromObra && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -455,6 +546,64 @@ export default function CrearEntrega({
                 </div>
               </div>
 
+              {/* SECCIÓN DE ÓRDENES DE PRODUCCIÓN */}
+              <div>
+                <label className="mb-3 block text-sm font-medium text-gray-700">
+                  <Package className="mr-1 inline h-4 w-4" />
+                  Órdenes de Producción (Opcional)
+                </label>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  {!formData.obraId ? (
+                    <p className="text-center text-sm text-gray-500">
+                      Seleccione una obra para ver las órdenes de producción.
+                    </p>
+                  ) : loadingOrdenes ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                      <p className="ml-2 text-sm text-gray-600">
+                        Cargando órdenes...
+                      </p>
+                    </div>
+                  ) : errorOrdenes ? (
+                    <p className="text-center text-sm text-red-600">
+                      {errorOrdenes}
+                    </p>
+                  ) : ordenesProduccion.length === 0 ? (
+                    <p className="text-center text-sm text-gray-500">
+                      No hay órdenes de producción para esta obra.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {ordenesProduccion.map((orden) => (
+                        <OrdenProduccionCard
+                          key={orden.cod_op}
+                          orden={orden}
+                          isSelected={selectedOrden?.cod_op === orden.cod_op}
+                          onClick={() => setSelectedOrden(orden)}
+                          isAprobada={orden.estado === 'APROBADA'}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* VISUALIZADOR DE PDF */}
+              {selectedOrden && (
+                <div>
+                  <h4 className="mb-4 text-lg font-semibold text-gray-700">
+                    Visualización de Orden de Producción #{selectedOrden.cod_op}
+                  </h4>
+                  <div className="relative h-[600px] w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    <iframe
+                      src={`${selectedOrden.url}#view=FitH`}
+                      className="h-full w-full"
+                      title={`Orden de Producción #${selectedOrden.cod_op}`}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Descripción uso y Valor viáticos */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
@@ -539,7 +688,7 @@ export default function CrearEntrega({
                       </p>
                       {selectedMaquinaria.length > 0 && (
                         <p className="text-xs text-gray-500">
-                          {mockMaquinarias
+                          {maquinarias
                             .filter(m => selectedMaquinaria.includes(m.cod_maquina.toString()))
                             .map(m => m.descripcion)
                             .join(', ')}
@@ -551,7 +700,7 @@ export default function CrearEntrega({
                       onClick={() => setIsMaquinariaModalOpen(true)}
                       className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                      Seleccionar
+                      {loadingDisponibilidad ? 'Verificando...' : 'Seleccionar'}
                     </button>
                   </div>
                 </div>
@@ -606,7 +755,6 @@ export default function CrearEntrega({
         </div>
       </div>
 
-      {/* Modal para seleccionar encargado */}
       <AsignarPersonalModal
         isOpen={isPersonalModalOpen}
         empleados={empleados}
@@ -631,10 +779,25 @@ export default function CrearEntrega({
       <SelectionModal
         isOpen={isMaquinariaModalOpen}
         title="Seleccionar Maquinaria"
-        items={mockMaquinarias.map(m => ({
-          id: m.cod_maquina.toString(),
-          label: `${m.descripcion} (${m.estado})`,
-        }))}
+        items={maquinarias.map(m => {
+          const isNotAvailableByStatus = m.estado !== 'DISPONIBLE';
+          
+          const isDisabled = isNotAvailableByStatus || (m.availabilityStatus === 'NO_DISPONIBLE');
+          
+          const warning = (m.availabilityStatus === 'ADVERTENCIA' && !isNotAvailableByStatus) ? m.warningMessage : undefined;
+
+          let label = `${m.descripcion} (${m.estado})`;
+          if (m.availabilityStatus === 'NO_DISPONIBLE' && !isNotAvailableByStatus) {
+              label += ' - OCUPADA EN FECHA';
+          }
+
+          return {
+            id: m.cod_maquina.toString(),
+            label,
+            disabled: isDisabled ? true : undefined,
+            warning: warning
+          };
+        })}
         selectedItems={selectedMaquinaria}
         onClose={() => setIsMaquinariaModalOpen(false)}
         onConfirm={setSelectedMaquinaria}
