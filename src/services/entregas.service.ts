@@ -36,11 +36,14 @@ interface BackendEntrega {
     cuil: string
     fecha_ini: string
     estado:
-      | 'ACTIVA'
-      | 'EN PRODUCCION'
-      | 'FINALIZADA'
-      | 'ENTREGADA'
+      | 'EN ESPERA DE PAGO'
+      | 'PAGADA PARCIALMENTE'
       | 'EN ESPERA DE STOCK'
+      | 'EN PRODUCCION'
+      | 'PRODUCCION FINALIZADA'
+      | 'PAGADA TOTALMENTE'
+      | 'ENTREGADA'
+      | 'CANCELADA'
     fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
@@ -76,11 +79,14 @@ interface BackendEntregaEmpleado {
       cuil: string
       fecha_ini: string
       estado:
-        | 'ACTIVA'
-        | 'EN PRODUCCION'
-        | 'FINALIZADA'
-        | 'ENTREGADA'
+        | 'EN ESPERA DE PAGO'
+        | 'PAGADA PARCIALMENTE'
         | 'EN ESPERA DE STOCK'
+        | 'EN PRODUCCION'
+        | 'PRODUCCION FINALIZADA'
+        | 'PAGADA TOTALMENTE'
+        | 'ENTREGADA'
+        | 'CANCELADA'
       fecha_cancelacion: string | null
       direccion: string
       nota_fabrica: string
@@ -102,11 +108,14 @@ interface BackendEntregaEmpleado {
     cuil: string
     fecha_ini: string
     estado:
-      | 'ACTIVA'
-      | 'EN PRODUCCION'
-      | 'FINALIZADA'
-      | 'ENTREGADA'
+      | 'EN ESPERA DE PAGO'
+      | 'PAGADA PARCIALMENTE'
       | 'EN ESPERA DE STOCK'
+      | 'EN PRODUCCION'
+      | 'PRODUCCION FINALIZADA'
+      | 'PAGADA TOTALMENTE'
+      | 'ENTREGADA'
+      | 'CANCELADA'
     fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
@@ -169,13 +178,14 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
         cuil: ee.empleado?.cuil || ee.cuil,
         nombre: ee.empleado?.nombre || 'Nombre no disponible',
         apellido: ee.empleado?.apellido || 'Apellido no disponible',
-      }
+      },
     })) || []
 
-  const maquinarias_usadas = backendEntrega.uso_maquinaria?.map((um: any) => ({
-    cod_maquina: um.cod_maquina,
-    descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
-  })) || []
+  const maquinarias_usadas =
+    backendEntrega.uso_maquinaria?.map((um: any) => ({
+      cod_maquina: um.cod_maquina,
+      descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
+    })) || []
 
   return {
     cod_entrega: backendEntrega.cod_entrega,
@@ -196,11 +206,11 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
 const mapToFrontend = (
   backendEntregaEmpleado: BackendEntregaEmpleado
 ): EntregaEmpleado => {
-  
-  const maquinarias_usadas = (backendEntregaEmpleado.entrega as any).uso_maquinaria?.map((um: any) => ({
+  const maquinarias_usadas =
+    (backendEntregaEmpleado.entrega as any).uso_maquinaria?.map((um: any) => ({
       cod_maquina: um.cod_maquina,
       descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
-  })) || [];
+    })) || []
 
   return {
     cuil: backendEntregaEmpleado.cuil,
@@ -400,34 +410,34 @@ class EntregasService {
   async finalizarEntrega(
     cod_entrega: number,
     observaciones?: string
-  ): Promise<FinalizarEntregaDTO> {
+  ): Promise<Entrega> {
     try {
-      const updateData: {
-        estado: 'ENTREGADO'
-        observaciones?: string
-      } = {
-        estado: 'ENTREGADO',
-      }
-
-      if (observaciones && observaciones.trim() !== '') {
-        updateData.observaciones = observaciones.trim()
-      }
-
-      const response = await api.put(
-        `${this.baseURL}/${cod_entrega}`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      const { data } = await api.patch<BackendEntrega>(
+        `${this.baseURL}/${cod_entrega}/finalizar`,
+        { observaciones }
       )
-
-      return response.data
+      return mapGetAllToFrontend(data)
     } catch (error: any) {
-      console.error(`Error al finalizar entrega ${cod_entrega}:`, error)
       throw new Error(
         `No se pudo finalizar la entrega: ${error.response?.data?.message || error.message}`
+      )
+    }
+  }
+
+  // Marca una entrega como cancelada con observaciones opcionales
+  async cancelarEntrega(
+    cod_entrega: number,
+    motivo?: string
+  ): Promise<Entrega> {
+    try {
+      const { data } = await api.patch<BackendEntrega>(
+        `${this.baseURL}/${cod_entrega}/cancelar`,
+        { motivo }
+      )
+      return mapGetAllToFrontend(data)
+    } catch (error: any) {
+      throw new Error(
+        `No se pudo cancelar la entrega: ${error.response?.data?.message || error.message}`
       )
     }
   }
