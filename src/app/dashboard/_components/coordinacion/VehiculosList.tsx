@@ -1,8 +1,14 @@
-import { Car, Plus, CheckCircle, AlertTriangle, Clock, XCircle } from 'lucide-react'
+import {
+  Car,
+  Plus,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  XCircle,
+} from 'lucide-react'
 import { mockVehiculos } from '@/data/mockData'
 import { VehiculosListProps } from '@/types'
 import { useVehiculos } from '@/hooks/useVehiculos';
-
 
 // Mock data de vehículos
 
@@ -99,30 +105,34 @@ export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosLi
           <div className="rounded-lg border border-green-200 bg-green-50 p-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Disponibles</span>
+              <span className="text-sm font-medium text-green-800">
+                Disponibles
+              </span>
             </div>
             <p className="text-2xl font-bold text-green-900">
-              {vehiculos.filter(v => v.estado === 'DISPONIBLE').length}
+              {vehiculos.filter((v) => v.estado === 'DISPONIBLE').length}
             </p>
           </div>
-          
+
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-medium text-blue-800">En Uso</span>
             </div>
             <p className="text-2xl font-bold text-blue-900">
-              {vehiculos.filter(v => v.estado === 'EN USO').length}
+              {vehiculos.filter((v) => v.estado === 'EN USO').length}
             </p>
           </div>
 
           <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-800">Reparación</span>
+              <span className="text-sm font-medium text-yellow-800">
+                Reparación
+              </span>
             </div>
             <p className="text-2xl font-bold text-yellow-900">
-              {vehiculos.filter(v => v.estado === 'REPARACION').length}
+              {vehiculos.filter((v) => v.estado === 'REPARACION').length}
             </p>
           </div>
 
@@ -139,11 +149,11 @@ export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosLi
 
         {vehiculos.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-            <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Car className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">
               No hay vehículos registrados
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4 text-gray-600">
               Comienza agregando el primer vehículo a la flota
             </p>
             <button
@@ -165,23 +175,24 @@ export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosLi
                   <div className="flex items-center gap-2">
                     {getEstadoIcon(vehiculo.estado)}
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs font-medium ${getEstadoBadgeColor(vehiculo.estado)}`}>
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium ${getEstadoBadgeColor(vehiculo.estado)}`}
+                  >
                     {getEstadoText(vehiculo.estado)}
                   </span>
                 </div>
-                
+
                 <div className="mb-4">
-                  <span className='text-sm text-gray-600'>{vehiculo.tipoVehiculo}</span>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    {vehiculo.marca} {vehiculo.modelo} {vehiculo.anio}
-                  </h3>
-                  <p className="text-2xl font-mono font-bold text-gray-800">
+                  <span className="text-sm text-gray-600">
+                    {vehiculo.tipo_vehiculo}
+                  </span>
+                  <p className="font-mono text-2xl font-bold text-gray-800">
                     {vehiculo.patente}
                   </p>
                 </div>
-                
+
                 <div className="flex gap-2">
-                  <button className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10">
+                  <button className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current">
                     Ver Detalles
                   </button>
             <button

@@ -1,4 +1,4 @@
-import { number } from "valibot"
+import { number } from 'valibot'
 
 export interface Cliente {
   cuil: string
@@ -47,6 +47,7 @@ export interface Entrega {
   empleados_asignados: EntregaEmpleado[]
   maquinarias_usadas?: UsoMaquinaria[]
   vehiculos_usados?: UsoVehiculoEntrega[]
+  dias_viaticos?: number
 }
 
 export interface EntregaEmpleado {
@@ -77,17 +78,18 @@ export interface Obra {
     | 'EN PRODUCCION'
     | 'FINALIZADA'
     | 'ENTREGADA'
-    | 'CANCELADA'
     | 'EN ESPERA DE STOCK'
+    | 'CANCELADA'
   direccion: string
   cliente: Cliente
-  nota_fabrica: string
+  nota_fabrica?: string
+  nota_fabrica_pid?: string
   fecha_ini: string
   fecha_cancelacion: string | null
   localidad?: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
-  presupuestos?: Presupuesto[]
+  presupuesto?: Presupuesto[]
   pagos?: Pago[]
 }
 
@@ -133,6 +135,13 @@ export interface Presupuesto {
 
 export interface Pago {
   cod_pago: number
+  cod_obra: number
+  fecha_pago: string
+  monto: number
+  obra: Obra
+}
+
+export interface PagoFormData {
   cod_obra: number
   fecha_pago: string
   monto: number
@@ -187,12 +196,8 @@ export interface BackendVehiculo {
 export interface Maquinaria {
   cod_maquina: number
   descripcion: string
-  estado:
-    | 'DISPONIBLE'
-    | 'EN_USO'
-    | 'MANTENIMIENTO'
-    | 'REPARACION'
-    | 'FUERA_DE_SERVICIO'
+  estado: 'DISPONIBLE' | 'NO DISPONIBLE'
+  uso_maquinaria?: any[] // Para futuro uso
 }
 
 export interface VisitasListProps {
@@ -209,6 +214,7 @@ export interface ObrasListProps {
   onScheduleVisit?: (obra: Obra) => void
   onScheduleEntrega?: (obra: Obra) => void
   onEditClick: (obra: Obra) => void
+  onNotaFabricaClick?: (obra: Obra) => void
 }
 
 export interface PedidosListProps {
@@ -260,8 +266,30 @@ export interface ModalEncargadoProps {
   onCancel: () => void
 }
 
-export interface MaquinariaListProps {
-  onCreateClick: () => void
+export interface MaquinariaCardProps {
+  maquinaria: Maquinaria
+  onViewDetails: (maquinaria: Maquinaria) => void
+  onEdit: (maquinaria: Maquinaria) => void
+  onDelete: (maquinaria: Maquinaria) => void
+}
+
+export interface CrearMaquinariaModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}
+
+export interface VerDetallesMaquinariaModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onClose: () => void
+}
+
+export interface EditarMaquinariaModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onClose: () => void
+  onSuccess: () => void
 }
 
 export interface VehiculosListProps {
@@ -272,4 +300,20 @@ export interface VehiculosListProps {
 export interface Localidad {
   cod_postal: number
   nombre_localidad: string
+}
+
+export interface TabNavigationProduccionProps {
+  activeTab: 'notas' | 'ordenes'
+  onTabChange: (tab: 'notas' | 'ordenes') => void
+}
+
+export interface OrdenProduccion {
+  cod_op: number
+  cod_obra: number
+  estado: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
+  fecha_confeccion: string
+  fecha_validacion: string | null
+  url: string
+  public_id: string | null
+  obra: Obra
 }

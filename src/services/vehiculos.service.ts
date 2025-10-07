@@ -120,21 +120,39 @@ export const updateVehiculo = async (
   vehiculoData: Partial<VehiculoFormData>,
   token?: string
 ): Promise<Vehiculo> => {
-  // El payload ahora solo contiene los campos que se van a actualizar.
-  const payload = mapToBackend(vehiculoData); 
+  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE! ---
+  // Combinamos los datos que vienen del formulario con la patente.
+  // Esto asegura que el payload final SIEMPRE incluya la patente.
+  const dataToSend = {
+    ...vehiculoData,
+    patente: patente, // Añadimos la patente al objeto de datos
+  };
+
+  // mapToBackend ahora recibirá un objeto que incluye la patente,
+  // y construirá el payload final correctamente.
+  const payload = mapToBackend(dataToSend);
   let vehiculoActualizado: BackendVehiculo;
 
   if (token) {
-    // ...
+    // MODO SERVIDOR
+    console.log('Data a enviar para actualización (incluye patente):', dataToSend);
+    console.log('Actualizando vehículo en modo SERVIDOR:', payload);
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/vehiculos/${patente}`;
     const response = await axios.put<BackendVehiculo>(
-      `${process.env.NEXT_PUBLIC_API_URL}/vehiculos/${patente}`,
-      payload, // <-- 'payload' ya está correctamente formado
-      { /* ... headers ... */ }
+      url,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
     );
     vehiculoActualizado = response.data;
   } else {
-    // ...
-    const response = await api.put<BackendVehiculo>(`/vehiculos/${patente}`, payload);
+    // MODO CLIENTE
+    const url = `/vehiculos/${patente}`;
+    const response = await api.put<BackendVehiculo>(url, payload);
     vehiculoActualizado = response.data;
   }
 

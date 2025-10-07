@@ -1,44 +1,76 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Building2,
   Users,
   Calendar,
-  Package,
-  Plus,
   Settings,
   Menu,
   X,
   Home,
   PackageOpen,
+  DollarSign,
 } from 'lucide-react'
 
 import { useGlobalContext } from '@/context/GlobalContext'
-import type { Obra } from '@/types'
+import type { Empleado, Obra } from '@/types'
 
-// Importar componentes
-import CrearCliente from './CrearCliente' // Ventas
-import CrearObra from './CrearObra' // Coordinacion
-import Configuraciones from './Configuraciones' // Hacer uno para cada rol
-import EntregasList from '../shared/EntregasList' // Shared
-import VisitasList from '../shared/VisitasList' // Shared
-import ObrasList from '../shared/ObrasList' // Shared
-import ClientesList from '../shared/ClientesList' // Shared
-import { ObraFormData } from '@/services/obra.service.js'
+import CrearCliente from './CrearCliente'
+import CrearObra from './CrearObra'
+import Configuraciones from './Configuraciones'
+import EntregasList from '../shared/EntregasList'
+import VisitasList from '../shared/VisitasList'
+import ObrasList from '../shared/ObrasList'
+import ClientesList from '../shared/ClientesList'
+import { ObraFormData } from '@/services/obra.service'
+import { PresupuestoFormData } from '@/services/presupuesto.service'
+import PagosList from './PagosList'
+import { obtenerEmpleadoActual } from '@/actions/empleado'
+import NotaFabricaModal from './NotaFabricaModal'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedObra, setSelectedObra] = useState<any>(null) // Replace 'any' with the correct type if available
-
+  const [selectedObra, setSelectedObra] = useState<any>(null)
+  const [usuarioActual, setUsuarioActual] = useState<Empleado | null>(null)
   const [obraParaEditar, setObraParaEditar] = useState<Obra | null>(null)
+  const [isNotaModalOpen, setIsNotaModalOpen] = useState(false)
+  const [notaUrl, setNotaUrl] = useState<string | null>(null)
+  const [codObra, setCodObra] = useState<number | null>(null)
 
-  const { createObra, updateObra } = useGlobalContext()
+  const {
+    createObra,
+    updateObra,
+    createPresupuesto,
+    updatePresupuesto,
+    fetchObras,
+  } = useGlobalContext()
+
+  useEffect(() => {
+    async function fetchUsuario() {
+      const empleado = await obtenerEmpleadoActual()
+      setUsuarioActual(empleado)
+    }
+    fetchUsuario()
+  }, [])
 
   const handleNavigation = (section: string) => {
     setCurrentSection(section)
-    setSidebarOpen(false) // Cerrar sidebar en mobile después de navegar
+    setSidebarOpen(false)
+  }
+
+  const handleUploadSuccess = (url: string) => {
+    setNotaUrl(url)
+    fetchObras()
+  }
+
+  const openNotaModal = (obra: Obra) => {
+    console.log('Abriendo modal para obra:', obra)
+    console.log('Rol', usuarioActual?.rol_actual)
+    setCodObra(obra.cod_obra)
+    setNotaUrl(obra.nota_fabrica || null)
+    setIsNotaModalOpen(true)
   }
 
   const menuItems = [
@@ -47,6 +79,7 @@ export default function VentasDashboard() {
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
+    { id: 'pagos', label: 'Pagos', icon: DollarSign },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
   ]
 
@@ -71,39 +104,113 @@ export default function VentasDashboard() {
               setSelectedObra(obra)
               setCurrentSection('crear-entrega')
             }}
+            onNotaFabricaClick={openNotaModal}
           />
         )
-      
+
       case 'crear-obra':
         return (
           <CrearObra
             onCancel={() => setCurrentSection('obras')}
-            onSubmit={async (obraData: ObraFormData) => {
+            onSubmit={async (
+              obraData: ObraFormData,
+              presupuesto: PresupuestoFormData[]
+            ) => {
               try {
-                await createObra(obraData)
+                const nuevaObra = await createObra(obraData)
+
+                if (nuevaObra && nuevaObra.cod_obra && presupuesto.length > 0) {
+                  for (const presupuestoData of presupuesto) {
+                    await createPresupuesto(presupuestoData, nuevaObra.cod_obra)
+                  }
+                }
+                await fetchObras()
                 setCurrentSection('obras')
               } catch (error) {
-                console.error('Error al crear la obra:', error)
-                alert('Hubo un error al crear la obra.')
+                console.error('Error en el proceso de creación:', error)
+                alert('Hubo un error al crear la obra o su presupuesto.')
               }
             }}
           />
         )
-      
+
       case 'editar-obra':
         return (
           <CrearObra
             obraExistente={obraParaEditar}
-            onCancel={() => { setCurrentSection('obras'); setObraParaEditar(null) }}
-            onSubmit={async (obraData: ObraFormData) => {
+            onCancel={() => {
+              setCurrentSection('obras')
+              setObraParaEditar(null)
+            }}
+            onSubmit={async (
+              obraData: ObraFormData,
+              presupuestos: PresupuestoFormData[]
+            ) => {
               if (!obraParaEditar) return
               try {
                 await updateObra(obraParaEditar.cod_obra, obraData)
+                for (const p of presupuestos) {
+                  const presupuestoNormalizado = {
+                    ...p,
+                    fecha_emision: p.fecha_emision.includes('T')
+                      ? p.fecha_emision.split('T')[0]
+                      : p.fecha_emision,
+                    fecha_aceptacion: p.fecha_aceptacion
+                      ? p.fecha_aceptacion.includes('T')
+                        ? p.fecha_aceptacion.split('T')[0]
+                        : p.fecha_aceptacion
+                      : undefined,
+                  }
+                  if (
+                    presupuestoNormalizado.nro_presupuesto &&
+                    presupuestoNormalizado.nro_presupuesto > 0
+                  ) {
+                    const esPresupuestoExistente =
+                      obraParaEditar.presupuesto?.some(
+                        (pe) =>
+                          pe.nro_presupuesto ===
+                          presupuestoNormalizado.nro_presupuesto
+                      )
+
+                    if (esPresupuestoExistente) {
+                      try {
+                        await updatePresupuesto(
+                          presupuestoNormalizado.nro_presupuesto,
+                          {
+                            valor: presupuestoNormalizado.valor,
+                            fecha_emision: presupuestoNormalizado.fecha_emision,
+                            fecha_aceptacion:
+                              presupuestoNormalizado.fecha_aceptacion,
+                          }
+                        )
+                      } catch (error) {
+                        console.error('Error al actualizar presupuesto:', error)
+                        throw error
+                      }
+                    } else {
+                      await createPresupuesto(
+                        presupuestoNormalizado,
+                        obraParaEditar.cod_obra
+                      )
+                    }
+                  } else {
+                    await createPresupuesto(
+                      presupuestoNormalizado,
+                      obraParaEditar.cod_obra
+                    )
+                  }
+                }
+                await fetchObras()
                 setCurrentSection('obras')
                 setObraParaEditar(null)
               } catch (error) {
-                console.error('Error al actualizar la obra:', error)
-                alert('Hubo un error al actualizar la obra.')
+                console.error(
+                  'Error al actualizar la obra o sus presupuestos:',
+                  error
+                )
+                alert(
+                  `Hubo un error al actualizar los datos: ${error instanceof Error ? error.message : 'Error desconocido'}`
+                )
               }
             }}
           />
@@ -117,21 +224,16 @@ export default function VentasDashboard() {
         )
 
       case 'visitas':
-        return (
-          <VisitasList
-            onCreateClick={() => {
-              /* TODO: implement create visita logic */
-            }}
-          />
-        )
+        return <VisitasList onCreateClick={() => {}} />
 
       case 'entregas':
+        return <EntregasList onCreateClick={() => {}} />
+
+      case 'pagos':
         return (
-          <EntregasList
-            onCreateClick={() => {
-              /* TODO: implement create entrega logic */
-            }}
-          />
+          <div className="p-8 text-center text-lg text-gray-600">
+            <PagosList />
+          </div>
         )
 
       case 'configuraciones':
@@ -142,7 +244,6 @@ export default function VentasDashboard() {
           <CrearCliente
             onCancel={() => setCurrentSection('clientes')}
             onSubmit={(clienteData) => {
-              console.log('Cliente creado:', clienteData)
               setCurrentSection('clientes')
             }}
           />
@@ -156,7 +257,12 @@ export default function VentasDashboard() {
                 <div className="border-b border-blue-300 pb-4">
                   <h1 className="text-2xl font-semibold text-gray-800">
                     Bienvenido,{' '}
-                    <span className="text-blue-600">{'Emiliano Luhmann'}</span>!
+                    <span className="text-blue-600">
+                      {usuarioActual
+                        ? `${usuarioActual.nombre} ${usuarioActual.apellido}`
+                        : ''}
+                    </span>
+                    !
                   </h1>
                 </div>
 
@@ -206,75 +312,64 @@ export default function VentasDashboard() {
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar Desktop */}
       <div className="hidden lg:flex lg:flex-shrink-0">
-        <div className="flex w-64 flex-col">
-          <div className="flex flex-grow flex-col border-r border-gray-200 bg-white shadow-lg">
-            {/* Navigation */}
-            <nav className="flex-1 space-y-2 px-4 py-4">
-              {menuItems.map((item) => {
-                const Icon = item.icon
-                const isActive =
-                  currentSection === item.id ||
-                  (item.id === 'obras' && currentSection.includes('obra')) ||
-                  (item.id === 'clientes' && currentSection.includes('cliente'))
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavigation(item.id)}
-                    className={`flex w-full items-center rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'border border-blue-200 bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
-                  >
-                    <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                    {item.label}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
+        <div className="flex w-64 flex-col border-r border-gray-200 bg-white">
+          <nav className="flex flex-1 flex-col space-y-2 p-4">
+            {menuItems.map((item) => {
+              const Icon = item.icon
+              const isActive = currentSection.startsWith(item.id)
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigation(item.id)}
+                  className={`flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                  {item.label}
+                </button>
+              )
+            })}
+          </nav>
         </div>
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* Sidebar Mobile */}
       <div
-        className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+        className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
       >
         <div
-          className="bg-opacity-75 fixed inset-0 bg-gray-600"
+          className="absolute inset-0 bg-black opacity-50 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         ></div>
-        <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
+
+        <div className="relative flex h-full w-64 max-w-xs flex-1 flex-col bg-white">
           <div className="absolute top-0 right-0 -mr-12 pt-2">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:ring-2 focus:ring-white focus:outline-none focus:ring-inset"
+              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full text-white focus:outline-none"
             >
-              <X className="h-6 w-6 text-white" />
+              <X className="h-6 w-6" />
             </button>
           </div>
-
-          <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
+          <div className="flex-1 overflow-y-auto pt-5 pb-4">
             <div className="mb-6 flex flex-shrink-0 items-center px-4">
               <h1 className="text-xl font-bold text-blue-600">SIGMA - LA</h1>
             </div>
             <nav className="space-y-1 px-4">
               {menuItems.map((item) => {
                 const Icon = item.icon
-                const isActive =
-                  currentSection === item.id ||
-                  (item.id === 'obras' && currentSection.includes('obra')) ||
-                  (item.id === 'clientes' && currentSection.includes('cliente'))
-
+                const isActive = currentSection.startsWith(item.id)
                 return (
                   <button
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
-                    className={`flex w-full items-center rounded-lg px-4 py-3 text-left text-sm font-medium transition-all ${
+                    className={`flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-all ${
                       isActive
-                        ? 'border border-blue-200 bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     <Icon className="mr-3 h-5 w-5" />
@@ -287,34 +382,37 @@ export default function VentasDashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col lg:pl-0">
-        {/* Mobile Header */}
-        <header className="border-b border-gray-200 bg-white shadow-sm lg:hidden">
+      <div className="flex flex-1 flex-col">
+        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm lg:hidden">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-600 hover:text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset"
+              className="p-1 text-gray-600 hover:text-gray-900 focus:outline-none"
             >
               <Menu className="h-6 w-6" />
             </button>
             <h1 className="text-lg font-semibold text-gray-900">
-              {menuItems.find(
-                (item) =>
-                  currentSection === item.id ||
-                  (item.id === 'obras' && currentSection.includes('obra')) ||
-                  (item.id === 'clientes' &&
-                    currentSection.includes('cliente')) ||
-                  (item.id === 'visitas' && currentSection.includes('visita'))
-              )?.label || 'Dashboard'}
+              {menuItems.find((item) => currentSection.startsWith(item.id))
+                ?.label || 'Dashboard'}
             </h1>
-            <div></div> {/* Spacer */}
+            <div className="w-6"></div>
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="min-h-0 flex-1 bg-gray-50">{renderContent()}</main>
+        <main className="flex-1">{renderContent()}</main>
       </div>
+
+      {/* Nota de Fábrica Modal */}
+      {isNotaModalOpen && codObra !== null && (
+        <NotaFabricaModal
+          isOpen={isNotaModalOpen}
+          onClose={() => setIsNotaModalOpen(false)}
+          notaUrl={notaUrl}
+          codObra={codObra}
+          onUploadSuccess={handleUploadSuccess}
+          rolActual={usuarioActual?.rol_actual}
+        />
+      )}
     </div>
   )
 }

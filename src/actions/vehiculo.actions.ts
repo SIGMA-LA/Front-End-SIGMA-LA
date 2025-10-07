@@ -76,7 +76,7 @@ export async function updateVehiculoAction(
     return { success: true, message: 'Vehículo actualizado con éxito.' };
   } catch (error) {
     console.error('Error en updateVehiculoAction:', error);
-
+    
     let errorMessage = 'No se pudo actualizar el vehículo.';
     if (axios.isAxiosError(error) && error.response) {
       errorMessage = error.response.data.message || 'Error de validación del servidor.';
