@@ -34,6 +34,7 @@ export interface Visita {
   direccion_visita?: string
   vehiculos_usados?: UsoVehiculoVisita[]
   fecha_cancelacion?: string
+  dias_viaticos?: number
 }
 
 export interface Entrega {

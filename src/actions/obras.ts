@@ -1,51 +1,17 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { Obra } from '@/types'
+import { getAccessToken } from './auth'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const baseUrl =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/obras'
 
-async function getAccessToken(): Promise<string> {
-  const cookieStore = await cookies()
-  let accessToken = cookieStore.get('accessToken')?.value
-
-  if (accessToken) {
-    return accessToken
-  }
-  const refreshToken = cookieStore.get('refreshToken')?.value
-
-  if (!refreshToken) {
-    throw new Error(
-      'No hay tokens disponibles. Por favor, inicia sesión nuevamente.'
-    )
-  }
-
-  try {
-    const response = await fetch(`${baseUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    })
-
-    if (!response.ok) {
-      throw new Error('Error al renovar el token de acceso')
-    }
-
-    const data = await response.json()
-    return data.token || data.accessToken
-  } catch (error) {
-    console.error('Error renovando token:', error)
-    throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
-  }
-}
 export async function deleteObra(
   id: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/obras/${id}`, {
+    const response = await fetch(`${baseUrl}/${id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -76,7 +42,7 @@ export async function uploadNotaFabrica(
 ): Promise<Obra> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/obras/${codObra}/nota-fabrica`, {
+    const response = await fetch(`${baseUrl}/${codObra}/nota-fabrica`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -102,7 +68,7 @@ export async function uploadNotaFabrica(
 export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/obras/${codObra}/nota-fabrica`, {
+    const response = await fetch(`${baseUrl}/${codObra}/nota-fabrica`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,

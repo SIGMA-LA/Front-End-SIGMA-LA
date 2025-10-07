@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getAccessToken } from './auth'
 
 interface CloudinaryUploadResponse {
   secure_url: string
@@ -68,12 +69,16 @@ export async function crearOrdenProduccion(formData: FormData) {
 
     const { secure_url, public_id } = await uploadToCloudinary(file)
 
+    // Obtener token antes de llamar a la API protegida
+    const token = await getAccessToken()
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/ordenes-produccion`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           cod_obra,
