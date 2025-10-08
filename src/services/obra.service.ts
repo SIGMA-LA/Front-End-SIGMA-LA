@@ -9,6 +9,9 @@ interface BackendObra {
     razon_social: string
     telefono: string
     mail: string
+    nombre?: string
+    apellido?: string
+    tipo_cliente: 'EMPRESA' | 'PERSONA'
   }
   nota_fabrica?: string
   fecha_ini: string
@@ -49,12 +52,15 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
     razon_social: obra.cliente?.razon_social ?? 'No disponible',
     telefono: obra.cliente?.telefono ?? '',
     mail: obra.cliente?.mail ?? '',
+    tipo_cliente: obra.cliente?.razon_social ? 'EMPRESA' : 'PERSONA',
+    nombre: obra.cliente?.razon_social ? '' : (obra.cliente?.nombre ?? ''),
+    apellido: obra.cliente?.razon_social ? '' : (obra.cliente?.apellido ?? ''),
   },
   nota_fabrica: obra.nota_fabrica,
   fecha_ini: obra.fecha_ini,
   fecha_cancelacion: obra.fecha_cancelacion,
   estado: obra.estado,
-  localidad: obra.localidad,
+  localidad: obra.localidad ?? { cod_postal: 0, nombre_localidad: '' },
   cod_postal: obra.localidad?.cod_postal ?? 0,
   cuil_cliente: obra.cliente?.cuil ?? '',
   presupuesto: obra.presupuesto || [],
@@ -97,7 +103,9 @@ export const getObras = async (): Promise<Obra[]> => {
  * Obtiene obras que tienen nota de fábrica pero NO tienen órdenes APROBADAS o EN PRODUCCION
  */
 export const getNotasSinOrdenAprobada = async (): Promise<Obra[]> => {
-  const { data } = await api.get<BackendObra[]>('/obras/notas-sin-orden-aprobada')
+  const { data } = await api.get<BackendObra[]>(
+    '/obras/notas-sin-orden-aprobada'
+  )
   return data.map(mapToFrontend)
 }
 
@@ -105,7 +113,9 @@ export const getNotasSinOrdenAprobada = async (): Promise<Obra[]> => {
  * Obtiene obras EN PRODUCCION con nota de fábrica que tienen órdenes en proceso
  */
 export const getNotasConOrdenEnProceso = async (): Promise<Obra[]> => {
-  const { data } = await api.get<BackendObra[]>('/obras/notas-con-orden-proceso')
+  const { data } = await api.get<BackendObra[]>(
+    '/obras/notas-con-orden-proceso'
+  )
   return data.map(mapToFrontend)
 }
 

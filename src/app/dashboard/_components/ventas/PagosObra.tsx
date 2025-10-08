@@ -78,7 +78,10 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
           </div>
           <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
             <User className="h-4 w-4 text-gray-400" />
-            Cliente: {obra.cliente?.razon_social || 'No asignado'}
+            Cliente:{' '}
+            {obra.cliente?.razon_social ||
+              `${obra.cliente?.nombre} ${obra.cliente?.apellido}` ||
+              'No asignado'}
           </div>
         </div>
         <div className="flex gap-2">

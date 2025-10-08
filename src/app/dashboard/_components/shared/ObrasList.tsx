@@ -216,7 +216,13 @@ export default function ObrasList({
                       {obra.direccion}
                     </h3>
                     <p className="text-gray-600">
-                      Cliente: {obra.cliente?.razon_social || 'No asignado'}
+                      Cliente:{' '}
+                      {obra.cliente
+                        ? obra.cliente.tipo_cliente === 'EMPRESA'
+                          ? obra.cliente.razon_social
+                          : `${obra.cliente.nombre ?? ''} ${obra.cliente.apellido ?? ''}`.trim() ||
+                            'No asignado'
+                        : 'No asignado'}
                     </p>
                     <p className="text-sm text-gray-500">
                       Inicio:{' '}

@@ -108,8 +108,7 @@ export default function CrearVisita({
         tipo: visitaEditar.motivo_visita || '',
         encargado: '',
         observaciones: visitaEditar.observaciones || '',
-        direccion:
-          visitaEditar.direccion_visita || visitaEditar.obra?.direccion || '',
+        direccion: visitaEditar.direccion_visita || '',
 
         contacto: visitaEditar.obra?.cliente?.telefono || '',
         localidad:
@@ -223,7 +222,7 @@ export default function CrearVisita({
   const filteredVisitadores = visitadores
 
   const handleObraSelect = (obra: any) => {
-    setObraSeleccionada(obra.cliente?.razon_social ?? '')
+    setObraSeleccionada(obra.direccion ?? '')
     setFormData((prev) => ({
       ...prev,
       obraId: obra.cod_obra,

@@ -40,7 +40,7 @@ export default function ObraSearchResults({
       {obras.length === 0 && (
         <div className="text-sm text-gray-500">No se encontraron obras.</div>
       )}
-      {obras.map((obra: any) => (
+      {obras.map((obra: Obra) => (
         <button
           key={obra.cod_obra}
           type="button"
@@ -49,7 +49,11 @@ export default function ObraSearchResults({
         >
           <div className="font-medium">{obra.direccion}</div>
           <div className="text-sm text-gray-600">
-            {obra.cliente.razon_social} - {obra.direccion}
+            {obra.cliente?.razon_social
+              ? obra.cliente.razon_social
+              : `${obra.cliente?.nombre ?? ''} ${obra.cliente?.apellido ?? ''}`}
+            {' - '}
+            {obra.direccion}
           </div>
         </button>
       ))}

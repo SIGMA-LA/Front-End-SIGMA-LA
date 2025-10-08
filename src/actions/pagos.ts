@@ -37,9 +37,6 @@ export async function getAllPagos(): Promise<Pago[]> {
 export async function getPagosObra(cod_obra: number): Promise<Pago[]> {
   try {
     const token = await getAccessToken()
-
-    console.log('Using API URL:', baseUrl)
-
     const response = await fetch(`${baseUrl}/obra/${cod_obra}`, {
       method: 'GET',
       headers: {
@@ -59,6 +56,7 @@ export async function getPagosObra(cod_obra: number): Promise<Pago[]> {
     }
 
     const data = await response.json()
+    console.log('Pagos obtenidos para la obra:', data)
     return data
   } catch (error) {
     console.error('Error en obtenerVisitas:', error)
