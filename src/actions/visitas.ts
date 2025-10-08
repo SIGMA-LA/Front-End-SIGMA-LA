@@ -137,3 +137,32 @@ export async function crearVisita(visitaData: CrearVisita): Promise<Visita> {
     throw error
   }
 }
+
+export async function actualizarVisita(
+  id: number,
+  visitaData: Partial<CrearVisita>
+): Promise<Visita> {
+  try {
+    const token = await getAccessToken()
+    console.log('Updating visita with data:', visitaData)
+    const response = await fetch(`${baseUrl}/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(visitaData),
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+      }
+      throw new Error('Error al actualizar la visita')
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error en actualizarVisita:', error)
+    throw error
+  }
+}

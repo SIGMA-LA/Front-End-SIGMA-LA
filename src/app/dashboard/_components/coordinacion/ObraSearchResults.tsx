@@ -1,5 +1,6 @@
 'use client'
 
+import { Obra } from '@/types'
 import { useEffect, useState } from 'react'
 
 export default function ObraSearchResults({
@@ -7,9 +8,9 @@ export default function ObraSearchResults({
   onSelectObra,
 }: {
   filtro: string
-  onSelectObra: (obra: any) => void
+  onSelectObra: (obra: Obra) => void
 }) {
-  const [obras, setObras] = useState<any[]>([])
+  const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {

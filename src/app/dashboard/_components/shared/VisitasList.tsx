@@ -7,7 +7,10 @@ import { useState, useEffect } from 'react'
 import { obtenerVisitas } from '@/actions/visitas'
 import VisitaCard from './VisitaCard'
 
-export default function VisitasList({ onCreateClick }: VisitasListProps) {
+export default function VisitasList({
+  onCreateClick,
+  onEditClick,
+}: VisitasListProps) {
   const { usuario, logout } = useAuth()
   const [visitas, setVisitas] = useState<Visita[]>([])
   const [loading, setLoading] = useState(true)
@@ -115,6 +118,7 @@ export default function VisitasList({ onCreateClick }: VisitasListProps) {
                 visita={visita}
                 rolActual={usuario?.rol_actual}
                 refrescarVisitas={fetchVisitas}
+                onEdit={onEditClick}
               />
             ))}
           </div>

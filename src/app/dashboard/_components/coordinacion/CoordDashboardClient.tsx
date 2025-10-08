@@ -6,7 +6,6 @@ import {
   Users,
   Calendar,
   Package,
-  Plus,
   Settings,
   Menu,
   X,
@@ -30,7 +29,7 @@ import CrearMaquinaria from './CrearMaquinaria'
 import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
 
-import type { Empleado } from '@/types'
+import type { Empleado, Visita } from '@/types'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
 
 export default function CoordDashboard() {
@@ -39,6 +38,7 @@ export default function CoordDashboard() {
   const [selectedObra, setSelectedObra] = useState<any>(null)
   const [usuarioActual, setUsuarioActual] = useState<Empleado | null>(null)
   const [nuevasMaquinas, setNuevasMaquinas] = useState<any[]>([])
+  const [visitaEditar, setVisitaEditar] = useState<Visita | null>(null)
 
   useEffect(() => {
     async function fetchUsuario() {
@@ -95,6 +95,10 @@ export default function CoordDashboard() {
         return (
           <VisitasList
             onCreateClick={() => setCurrentSection('crear-visita')}
+            onEditClick={(visita) => {
+              setVisitaEditar(visita)
+              setCurrentSection('editar-visita')
+            }}
           />
         )
 
@@ -109,6 +113,21 @@ export default function CoordDashboard() {
 
       case 'configuraciones':
         return <Configuraciones />
+
+      case 'editar-visita':
+        return (
+          <CrearVisita
+            onCancel={() => {
+              setCurrentSection(selectedObra ? 'obras' : 'visitas')
+              setVisitaEditar(null)
+            }}
+            onSubmit={() => {
+              setCurrentSection('visitas')
+              setVisitaEditar(null)
+            }}
+            visitaEditar={visitaEditar}
+          />
+        )
 
       case 'crear-visita':
         return (

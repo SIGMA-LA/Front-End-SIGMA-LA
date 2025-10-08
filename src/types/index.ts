@@ -55,13 +55,14 @@ export interface Visita {
   empleado_visita: EmpleadoVisita[]
   observaciones?: string
   direccion_visita?: string
-  vehiculos_usados: UsoVehiculoVisita[]
+  uso_vehiculo_visita: UsoVehiculoVisita
   fecha_cancelacion?: string
   dias_viaticos?: number
   nombre_cliente?: string
   apellido_cliente?: string
   telefono_cliente?: string
   mail_cliente?: string
+  localidad?: Localidad
 }
 
 export interface Entrega {
@@ -221,6 +222,7 @@ export interface Maquinaria {
 
 export interface VisitasListProps {
   onCreateClick: () => void
+  onEditClick: (visita: Visita) => void
 }
 
 export interface VisitaDetailProps {

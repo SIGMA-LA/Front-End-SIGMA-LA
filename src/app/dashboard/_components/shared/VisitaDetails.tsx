@@ -2,7 +2,6 @@
 
 import {
   Calendar,
-  XCircle,
   MapPin,
   Phone,
   Mail,
@@ -54,7 +53,6 @@ export default function VisitaDetail({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-        <span className="ml-4 text-blue-700">Cargando visita...</span>
       </div>
     )
   }
@@ -77,7 +75,9 @@ export default function VisitaDetail({
           <div className="flex items-center gap-3">
             <UserIcon className="h-6 w-6 text-blue-600" />
             <h2 className="text-xl font-bold text-gray-900">
-              Detalles de la Visita
+              {visita?.nombre_cliente
+                ? 'Detalles de la Visita - Sin Obra'
+                : 'Detalles de la Visita'}
             </h2>
           </div>
           <button
@@ -109,18 +109,21 @@ export default function VisitaDetail({
           {/* Cliente y contacto */}
           <div className="grid grid-cols-1 gap-6 rounded-lg border bg-gray-50 p-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-gray-500">
-                Cliente
-              </label>
+              <label className="text-sm font-bold text-gray-500">Cliente</label>
               <p className="font-semibold text-gray-800">
-                {visita?.nombre_cliente && visita?.apellido_cliente
-                  ? `${visita.nombre_cliente} ${visita.apellido_cliente}`
-                  : 'Sin cliente'}
+                {visita.obra?.cliente?.razon_social
+                  ? visita.obra.cliente.razon_social
+                  : visita.obra?.cliente?.nombre &&
+                      visita.obra?.cliente?.apellido
+                    ? `${visita.obra.cliente.apellido} ${visita.obra.cliente.nombre}`
+                    : visita.nombre_cliente && visita.apellido_cliente
+                      ? `${visita.apellido_cliente} ${visita.nombre_cliente}`
+                      : 'Sin cliente'}
               </p>
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="h-4 w-4" />
                 <span>
-                  {visita?.telefono_cliente || 'Sin teléfono'}
+                  {visita?.telefono_cliente}
                   {visita?.obra?.cliente?.telefono
                     ? visita.obra.cliente.telefono
                     : visita.telefono_cliente || 'Sin teléfono'}
@@ -136,7 +139,7 @@ export default function VisitaDetail({
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">
+              <label className="text-sm font-bold text-gray-500">
                 Dirección y Fecha
               </label>
               <p className="font-semibold text-gray-800">
@@ -208,36 +211,6 @@ export default function VisitaDetail({
           </div>
         </div>
       </div>
-
-      {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="flex w-full max-w-sm flex-col items-center rounded-xl border border-gray-200 bg-white p-8 shadow-2xl">
-            <div className="mb-4 flex flex-col items-center">
-              <XCircle className="mb-2 h-12 w-12 text-red-500" />
-              <h2 className="mb-1 text-lg font-bold text-gray-900">
-                Cancelar visita
-              </h2>
-              <p className="text-center text-sm text-gray-600">
-                ¿Seguro que deseas cancelar la visita?
-              </p>
-            </div>
-            <div className="mt-4 flex w-full gap-4">
-              <Button
-                onClick={handleCancelarVisita}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-red-700"
-              >
-                Confirmar
-              </Button>
-              <Button
-                onClick={() => setShowCancelModal(false)}
-                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 font-semibold text-gray-700 shadow transition hover:bg-gray-200"
-              >
-                Volver
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

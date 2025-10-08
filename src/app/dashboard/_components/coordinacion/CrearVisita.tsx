@@ -14,9 +14,15 @@ import {
   Info,
   X,
 } from 'lucide-react'
-import { CrearVisitaProps, Empleado, Localidad, Vehiculo } from '@/types'
+import {
+  CrearVisitaProps,
+  Empleado,
+  Localidad,
+  Vehiculo,
+  Visita,
+} from '@/types'
 import ObraSearchWrapper from './ObraSearchWrapper'
-import { crearVisita } from '@/actions/visitas'
+import { crearVisita, actualizarVisita } from '@/actions/visitas'
 import {
   obtenerVisitadores,
   getDisponiblesParaEntrega,
@@ -30,7 +36,8 @@ export default function CrearVisita({
   onCancel,
   onSubmit,
   preloadedObra,
-}: CrearVisitaProps) {
+  visitaEditar,
+}: CrearVisitaProps & { visitaEditar?: Visita | null }) {
   const [formData, setFormData] = useState({
     fecha: '',
     fechaHasta: '',
@@ -69,6 +76,7 @@ export default function CrearVisita({
     Empleado[]
   >([])
   const [loadingAcompanantes, setLoadingAcompanantes] = useState(false)
+  const [obraSeleccionada, setObraSeleccionada] = useState<string>('')
 
   const isFromObra = !!preloadedObra
 
@@ -76,7 +84,63 @@ export default function CrearVisita({
     { value: 'VISITA INICIAL', label: 'Visita inicial', disabled: isFromObra },
     { value: 'REPARACION', label: 'Reparación' },
     { value: 'ASESORAMIENTO', label: 'Asesoramiento' },
+    { value: 'MEDICION', label: 'Medición' },
+    { value: 'RE-MEDICION', label: 'Re-Medición' },
   ]
+
+  // Precarga datos si es edición
+  useEffect(() => {
+    if (visitaEditar) {
+      const esVisitaInicial = !visitaEditar.obra?.cod_obra
+      let patenteSeleccionada = ''
+      if (visitaEditar.uso_vehiculo_visita?.patente) {
+        const existe = vehiculos.some(
+          (v) => v.patente === visitaEditar.uso_vehiculo_visita.patente
+        )
+        if (existe) {
+          patenteSeleccionada = visitaEditar.uso_vehiculo_visita.patente
+        }
+      }
+      setFormData({
+        fecha: visitaEditar.fecha_hora_visita?.slice(0, 10) || '',
+        fechaHasta: visitaEditar.fecha_hora_visita?.slice(0, 10) || '',
+        hora: visitaEditar.fecha_hora_visita?.slice(11, 16) || '',
+        tipo: visitaEditar.motivo_visita || '',
+        encargado: '',
+        observaciones: visitaEditar.observaciones || '',
+        direccion:
+          visitaEditar.direccion_visita || visitaEditar.obra?.direccion || '',
+
+        contacto: visitaEditar.obra?.cliente?.telefono || '',
+        localidad:
+          visitaEditar.obra?.localidad?.nombre_localidad ||
+          visitaEditar.localidad?.nombre_localidad ||
+          '',
+        obraId: visitaEditar.obra?.cod_obra ?? undefined,
+        obraCliente: visitaEditar.obra?.cliente?.razon_social || '',
+        vehiculo: patenteSeleccionada || '',
+        nombre: visitaEditar.nombre_cliente || '',
+        apellido: visitaEditar.apellido_cliente || '',
+        clienteTelefono: visitaEditar.telefono_cliente || '',
+        clienteMail: '',
+      })
+      setObraSeleccionada(visitaEditar.obra?.direccion || '')
+      setIsVisitaInicial(esVisitaInicial)
+
+      if (
+        visitaEditar.empleado_visita &&
+        visitaEditar.empleado_visita.length > 0
+      ) {
+        setVisitadorPrincipal(visitaEditar.empleado_visita[0]?.cuil || '')
+
+        const acompanantesIds = visitaEditar.empleado_visita
+          .slice(1)
+          .map((ev) => ev.cuil)
+          .filter(Boolean)
+        setSelectedAcompanantes(acompanantesIds)
+      }
+    }
+  }, [visitaEditar, vehiculos])
 
   useEffect(() => {
     obtenerVisitadores().then(setVisitadores)
@@ -89,7 +153,7 @@ export default function CrearVisita({
   }, [])
 
   useEffect(() => {
-    if (isVisitaInicial) {
+    if (isVisitaInicial && !visitaEditar) {
       setFormData((prev) => ({
         ...prev,
         obraId: undefined,
@@ -105,14 +169,16 @@ export default function CrearVisita({
       setVisitadorPrincipal('')
       setSelectedAcompanantes([])
     }
-  }, [isVisitaInicial])
+  }, [isVisitaInicial, visitaEditar])
 
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      fechaHasta: prev.fecha || '',
-    }))
-  }, [formData.fecha])
+    if (!visitaEditar) {
+      setFormData((prev) => ({
+        ...prev,
+        fechaHasta: prev.fecha || '',
+      }))
+    }
+  }, [formData.fecha, visitaEditar])
 
   useEffect(() => {
     if (formData.fecha && formData.fechaHasta) {
@@ -157,10 +223,10 @@ export default function CrearVisita({
   const filteredVisitadores = visitadores
 
   const handleObraSelect = (obra: any) => {
+    setObraSeleccionada(obra.cliente?.razon_social ?? '')
     setFormData((prev) => ({
       ...prev,
       obraId: obra.cod_obra,
-      obraCliente: obra.cliente?.razon_social ?? '',
       direccion: obra.direccion,
       contacto: obra.cliente?.telefono ?? '',
       localidad: obra.localidad?.nombre_localidad ?? '',
@@ -242,14 +308,19 @@ export default function CrearVisita({
     }
 
     try {
-      const visita = await crearVisita(visitaData)
+      let visita
+      if (visitaEditar) {
+        visita = await actualizarVisita(visitaEditar.cod_visita, visitaData)
+      } else {
+        visita = await crearVisita(visitaData)
+      }
       if (visita) {
         onSubmit(visita)
       } else {
-        setFormError('Error al crear la visita')
+        setFormError('Error al guardar la visita')
       }
     } catch (error) {
-      setFormError('Error inesperado al crear la visita')
+      setFormError('Error inesperado al guardar la visita')
     }
   }
 
@@ -261,7 +332,11 @@ export default function CrearVisita({
             <div className="mb-8 border-b pb-4">
               <h1 className="flex items-center gap-2 text-3xl font-bold text-blue-900">
                 <Calendar className="h-7 w-7 text-blue-500" />
-                {isFromObra ? `Agendar Visita` : 'Nueva Visita'}
+                {visitaEditar
+                  ? 'Editar Visita'
+                  : isFromObra
+                    ? `Agendar Visita`
+                    : 'Nueva Visita'}
               </h1>
               {isFromObra && (
                 <p className="mt-2 text-lg text-gray-600">
@@ -276,9 +351,21 @@ export default function CrearVisita({
                   {preloadedObra?.direccion}
                 </p>
               )}
+              {isFromObra && visitaEditar && (
+                <p className="mt-2 text-lg text-gray-600">
+                  <span className="font-semibold">Cliente:</span>{' '}
+                  {preloadedObra?.cliente
+                    ? preloadedObra.cliente.tipo_cliente === 'EMPRESA'
+                      ? preloadedObra.cliente.razon_social
+                      : `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`
+                    : ''}
+                  <span className="mx-2 text-gray-400">|</span>
+                  <span className="font-semibold">Dirección:</span>{' '}
+                  {preloadedObra?.direccion}
+                </p>
+              )}
             </div>
-
-            {!isFromObra && (
+            {!isFromObra && visitaEditar && (
               <section className="mb-8">
                 <div className="flex items-center gap-3">
                   <button
@@ -292,7 +379,46 @@ export default function CrearVisita({
                     disabled={isVisitaInicial}
                   >
                     <Building2 className="h-4 w-4" />
-                    {formData.direccion || 'Buscar obra existente...'}
+                    {obraSeleccionada || 'Buscar obra existente...'}{' '}
+                  </button>
+                  <div className="ml-4 flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsVisitaInicial((v) => !v)}
+                      className={`flex items-center gap-2 rounded-full px-4 py-2 font-semibold shadow transition-colors ${
+                        isVisitaInicial
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50'
+                      } `}
+                    >
+                      <Info className="h-4 w-4" />
+                      Visita sin obra
+                    </button>
+                  </div>
+                </div>
+                {showObraSearch && !isVisitaInicial && (
+                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <ObraSearchWrapper onSelectObra={handleObraSelect} />
+                  </div>
+                )}
+              </section>
+            )}
+
+            {!isFromObra && !visitaEditar && (
+              <section className="mb-8">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowObraSearch(!showObraSearch)}
+                    className={`flex items-center gap-2 rounded-lg border px-4 py-2 shadow-sm transition-colors ${
+                      isVisitaInicial
+                        ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                        : 'border-gray-300 bg-white text-blue-700 hover:bg-blue-50'
+                    } `}
+                    disabled={isVisitaInicial}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    {obraSeleccionada || 'Buscar obra existente...'}
                   </button>
                   <div className="ml-4 flex items-center">
                     <button
@@ -379,80 +505,70 @@ export default function CrearVisita({
             )}
 
             <section className="mb-8">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
+              <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-800">
                 <Info className="h-5 w-5" /> Datos de la Visita
               </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    <MapPin className="mr-1 inline h-4 w-4" />
-                    Dirección
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.direccion}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        direccion: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                    readOnly={isFromObra || (!isFromObra && !isVisitaInicial)}
-                  />
-                </div>
-                {!isVisitaInicial && (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      <Phone className="mr-1 inline h-4 w-4" />
-                      Contacto
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.contacto}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          contacto: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                      readOnly={isFromObra || (!isFromObra && !isVisitaInicial)}
-                    />
-                  </div>
+              <div className="mb-2 grid grid-cols-1 gap-6 md:grid-cols-3">
+                {isVisitaInicial && (
+                  <>
+                    <div>
+                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                        <MapPin className="h-4 w-4" />
+                        Dirección
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.direccion}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            direccion: e.target.value,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                        readOnly={isFromObra}
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                        <Building2 className="h-4 w-4" />
+                        Localidad
+                      </label>
+                      <select
+                        value={formData.localidad || ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            localidad: e.target.value,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                        disabled={
+                          isFromObra ||
+                          (!isFromObra && !isVisitaInicial && !visitaEditar)
+                        }
+                      >
+                        <option value="">Seleccionar localidad...</option>
+                        {localidades.map((loc) => (
+                          <option
+                            key={loc.cod_postal}
+                            value={loc.nombre_localidad}
+                          >
+                            {loc.nombre_localidad}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
                 )}
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Localidad
-                  </label>
-                  <select
-                    value={formData.localidad || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        localidad: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                    disabled={isFromObra || (!isFromObra && !isVisitaInicial)}
-                  >
-                    <option value="">Seleccionar localidad...</option>
-                    {localidades.map((loc) => (
-                      <option key={loc.cod_postal} value={loc.nombre_localidad}>
-                        {loc.nombre_localidad}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
-              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    <Calendar className="mr-1 inline h-4 w-4" />
-                    Fecha
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                    <Calendar className="h-4 w-4" />
+                    Fecha Inicio
                   </label>
                   <input
                     type="date"
@@ -464,14 +580,14 @@ export default function CrearVisita({
                         fechaHasta: e.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    <Calendar className="mr-1 inline h-4 w-4" />
-                    Fecha hasta
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                    <Calendar className="h-4 w-4" />
+                    Fecha Fin
                   </label>
                   <input
                     type="date"
@@ -483,15 +599,30 @@ export default function CrearVisita({
                         fechaHasta: e.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                    <Clock className="h-4 w-4" />
+                    Hora
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.hora}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, hora: e.target.value }))
+                    }
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
                     Días viático
                   </label>
-                  <div className="flex items-center gap-3">
+                  <div className="mt-1 flex items-center gap-3">
                     <input
                       type="number"
                       value={diasViatico}
@@ -506,26 +637,11 @@ export default function CrearVisita({
                     </span>
                   </div>
                 </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    <Clock className="mr-1 inline h-4 w-4" />
-                    Hora
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.hora}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, hora: e.target.value }))
-                    }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
               </div>
               <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    <Car className="mr-1 inline h-4 w-4" />
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                    <Car className="h-4 w-4" />
                     Vehículo
                   </label>
                   <select
@@ -536,7 +652,7 @@ export default function CrearVisita({
                         vehiculo: e.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     required
                   >
                     <option value="">Seleccionar vehículo...</option>
@@ -548,7 +664,7 @@ export default function CrearVisita({
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
                     Tipo de Visita
                   </label>
                   <select
@@ -559,7 +675,7 @@ export default function CrearVisita({
                         tipo: e.target.value,
                       }))
                     }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     required
                   >
                     <option value="">Seleccionar tipo...</option>
@@ -585,7 +701,7 @@ export default function CrearVisita({
                 <div>
                   <label className="mb-3 flex items-center gap-1 text-sm font-medium text-blue-700">
                     <User className="inline h-4 w-4" />
-                    Visitador principal <span className="text-red-500">*</span>
+                    Visitador <span className="text-red-500">*</span>
                   </label>
                   <div className="grid grid-cols-1 gap-3">
                     {filteredVisitadores.length === 0 && (
@@ -621,7 +737,7 @@ export default function CrearVisita({
                 <div>
                   <label className="mb-3 flex items-center gap-1 text-sm font-medium text-blue-700">
                     <Users className="inline h-4 w-4" />
-                    Acompañantes (buscador)
+                    Acompañantes
                   </label>
                   <input
                     type="text"
@@ -735,7 +851,7 @@ export default function CrearVisita({
                   type="submit"
                   className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700"
                 >
-                  Confirmar Visita
+                  {visitaEditar ? 'Guardar Cambios' : 'Confirmar Visita'}
                 </button>
               </div>
             </section>

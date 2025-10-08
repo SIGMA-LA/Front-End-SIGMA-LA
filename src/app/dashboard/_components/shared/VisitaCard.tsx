@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, User, Eye, Pencil, XCircle } from 'lucide-react'
+import { Calendar, Clock, User, Eye, Pencil, XCircle } from 'lucide-react'
 import { Visita } from '@/types'
 import VisitaDetail from './VisitaDetails'
 import { cancelarVisita } from '@/actions/visitas'
@@ -38,6 +38,14 @@ function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('es-AR')
 }
 
+function formatTime(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 interface VisitaCardProps {
   visita: Visita
   rolActual?: string
@@ -74,47 +82,65 @@ export default function VisitaCard({
       <div className="flex items-center">
         <div className="flex flex-1 flex-col rounded-xl border border-blue-200 bg-blue-50 p-6 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
-            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
-                {visita.obra?.direccion || visita.direccion_visita}
-              </h3>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4" />
-                <span>{formatDate(visita.fecha_hora_visita)}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4" />
-                {Array.isArray(visita.empleado_visita) &&
-                visita.empleado_visita.length > 0 ? (
-                  <ul className="ml-2 list-disc pl-4">
-                    {visita.empleado_visita.map((ev, idx) =>
-                      ev ? (
-                        <li
-                          key={ev.cuil || idx}
-                          className="text-xs text-gray-700"
-                        >
-                          {ev.empleado.nombre} {ev.empleado.apellido}
-                        </li>
-                      ) : (
-                        <li key={idx} className="text-xs text-gray-400 italic">
-                          Empleado no disponible
-                        </li>
-                      )
-                    )}
-                  </ul>
-                ) : (
-                  <span className="text-xs text-gray-400">Sin asignar</span>
-                )}
-              </div>
-              <div>
-                <span className="font-medium">
-                  Tipo: {getTipoText(visita.motivo_visita)}
+            <h3 className="mb-1 text-lg font-semibold text-gray-800">
+              {visita.obra?.direccion || visita.direccion_visita}
+            </h3>
+            <div className="mb-2 grid grid-cols-4 items-start gap-x-2 gap-y-1">
+              <div className="flex items-center gap-1">
+                <Calendar className="hidden h-4 w-4 text-blue-600 sm:inline" />
+                <span className="text-sm text-gray-700">
+                  {formatDate(visita.fecha_hora_visita)}
                 </span>
               </div>
+              <div className="flex items-center gap-1">
+                <Clock className="hidden h-4 w-4 text-blue-600 sm:inline" />
+                <span className="text-sm text-gray-700">
+                  {formatTime(visita.fecha_hora_visita)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
+                  {getTipoText(visita.motivo_visita)}
+                </span>
+              </div>
+              <div className="flex items-start gap-1">
+                <User className="mt-[2px] hidden h-4 w-4 text-blue-600 sm:inline" />
+                <div className="flex flex-col">
+                  {Array.isArray(visita.empleado_visita) &&
+                  visita.empleado_visita.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {visita.empleado_visita.map((ev, idx) =>
+                        ev ? (
+                          <li
+                            key={ev.cuil || idx}
+                            className="text-xs leading-tight text-gray-700"
+                            style={idx === 0 ? { marginTop: '-2px' } : {}}
+                          >
+                            {ev.empleado.nombre} {ev.empleado.apellido}
+                          </li>
+                        ) : (
+                          <li
+                            key={idx}
+                            className="text-xs leading-tight text-gray-400 italic"
+                            style={idx === 0 ? { marginTop: '-2px' } : {}}
+                          >
+                            Empleado no disponible
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  ) : (
+                    <span className="text-xs text-gray-400">Sin asignar</span>
+                  )}
+                </div>
+              </div>
             </div>
-            <p className="mt-2 text-gray-500">{visita.observaciones}</p>
+            <label className="text-sm font-medium text-gray-700">
+              Observaciones:{' '}
+            </label>
+            <p className="pr-4 text-sm font-medium text-gray-500">
+              {visita.observaciones || '(vacío)'}
+            </p>
           </div>
           <div className="mt-4 flex w-full flex-col items-end gap-2 sm:mt-0 sm:ml-4 sm:w-auto">
             <span
@@ -125,41 +151,39 @@ export default function VisitaCard({
             >
               {visita.estado ? visita.estado : 'PROGRAMADA'}
             </span>
-            <div className="flex gap-2">
-              <button
-                className="flex items-center space-x-2 rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
-                onClick={() => setShowDetail(true)}
-              >
-                <Eye className="h-4 w-4" />
-                <span>Ver Detalles</span>
-              </button>
-              {esCoordinacion && (
-                <>
-                  {visita.estado === 'PROGRAMADA' && (
-                    <>
-                      <button
-                        onClick={() => onEdit?.(visita)}
-                        className="flex items-center space-x-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 hover:bg-yellow-100"
-                        title="Editar"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        <span>Editar</span>
-                      </button>
-                      <button
-                        onClick={() => setShowCancelModal(true)}
-                        disabled={cancelLoading}
-                        className="flex items-center space-x-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
-                        title="Cancelar"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        <span>
-                          {cancelLoading ? 'Cancelando...' : 'Cancelar'}
-                        </span>
-                      </button>
-                    </>
-                  )}
-                </>
-              )}
+            <div className="block" style={{ width: 300, minHeight: 44 }}>
+              <div className="flex w-full justify-end gap-2">
+                <button
+                  className="flex h-11 w-32 items-center justify-center space-x-2 rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
+                  onClick={() => setShowDetail(true)}
+                >
+                  <Eye className="hidden h-5 w-5 sm:inline" />
+                  <span>Ver Detalles</span>
+                </button>
+                {esCoordinacion && visita.estado === 'PROGRAMADA' && (
+                  <>
+                    <button
+                      onClick={() => onEdit?.(visita)}
+                      className="flex h-11 w-32 items-center justify-center space-x-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 hover:bg-yellow-100"
+                      title="Editar"
+                    >
+                      <Pencil className="hidden h-4 w-4 sm:inline" />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      onClick={() => setShowCancelModal(true)}
+                      disabled={cancelLoading}
+                      className="flex h-11 w-32 items-center justify-center space-x-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                      title="Cancelar"
+                    >
+                      <XCircle className="hidden h-4 w-4 sm:inline" />
+                      <span>
+                        {cancelLoading ? 'Cancelando...' : 'Cancelar'}
+                      </span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -184,7 +208,6 @@ export default function VisitaCard({
           </div>
         </div>
       )}
-      {/* Modal de confirmación de cancelación */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="flex w-full max-w-sm flex-col items-center rounded-xl border border-gray-200 bg-white p-8 shadow-2xl">

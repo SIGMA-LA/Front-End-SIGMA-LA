@@ -96,8 +96,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200">
       <div className="flex w-full justify-center px-4 sm:px-0">
         <Card className="w-full max-w-xs border-0 bg-white shadow-xl sm:max-w-md">
-          <CardHeader className="pt-8 text-center">
-            <div className="mb-6 flex flex-col items-center">
+          <CardHeader className="!p-0 !pt-8 text-center">
+            <div className="mb-4 flex flex-col items-center">
               <div className="flex items-center justify-center rounded-full bg-gradient-to-br from-blue-200 via-blue-300 to-blue-400 p-3 shadow-md">
                 <Sigma className="h-12 w-12 text-blue-700 drop-shadow" />
               </div>
@@ -105,23 +105,25 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 SIGMA <span className="font-light text-blue-500">- LA</span>
               </span>
             </div>
-            <h1 className="mb-2 text-lg font-medium text-blue-900">
+            <h1 className="text-lg font-medium text-blue-900">
               Inicio de sesión
             </h1>
           </CardHeader>
 
-          <CardContent className="px-1 pb-8 sm:px-8">
+          <CardContent className="p-0 px-1 pb-8 sm:px-8">
             <form onSubmit={handleSubmit} className="space-y-5">
-              {errors.general && (
-                <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-2 px-4">
-                  <p className="text-sm text-red-600">{errors.general}</p>
-                </div>
-              )}
+              <div className="mb-3">
+                {errors.general && (
+                  <div className="!m-4 rounded-md border border-red-200 bg-red-50 p-2 !px-4">
+                    <p className="text-sm text-red-600">{errors.general}</p>
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-1">
                 <Label
                   htmlFor="usuario"
-                  className="px-4 text-sm font-medium text-blue-800"
+                  className="p-0 px-4 text-sm font-medium text-blue-800"
                 >
                   Usuario
                 </Label>
