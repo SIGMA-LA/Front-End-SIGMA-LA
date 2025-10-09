@@ -18,10 +18,11 @@ import {
   CrearVisitaProps,
   Empleado,
   Localidad,
+  Provincia,
   Vehiculo,
   Visita,
 } from '@/types'
-import ObraSearchWrapper from './ObraSearchWrapper'
+import ObraSearchWrapper from '../shared/ObraSearchWrapper'
 import { crearVisita, actualizarVisita } from '@/actions/visitas'
 import {
   obtenerVisitadores,
@@ -30,7 +31,7 @@ import {
 } from '@/actions/empleado'
 import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
 import parametroService from '../../../../services/parametro.service'
-import { obtenerLocalidades } from '@/actions/localidad'
+import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
 
 export default function CrearVisita({
   onCancel,
@@ -77,6 +78,10 @@ export default function CrearVisita({
   >([])
   const [loadingAcompanantes, setLoadingAcompanantes] = useState(false)
   const [obraSeleccionada, setObraSeleccionada] = useState<string>('')
+  const [provincias, setProvincias] = useState<Provincia[]>([])
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
+    number | ''
+  >('')
 
   const isFromObra = !!preloadedObra
 
@@ -109,7 +114,6 @@ export default function CrearVisita({
         encargado: '',
         observaciones: visitaEditar.observaciones || '',
         direccion: visitaEditar.direccion_visita || '',
-
         contacto: visitaEditar.obra?.cliente?.telefono || '',
         localidad:
           visitaEditar.obra?.localidad?.nombre_localidad ||
@@ -142,13 +146,24 @@ export default function CrearVisita({
   }, [visitaEditar, vehiculos])
 
   useEffect(() => {
+    obtenerProvincias().then(setProvincias)
+  }, [])
+
+  useEffect(() => {
+    if (provinciaSeleccionada) {
+      localidadesPorProvincia(provinciaSeleccionada).then(setLocalidades)
+    } else {
+      setLocalidades([])
+    }
+  }, [provinciaSeleccionada])
+
+  useEffect(() => {
     obtenerVisitadores().then(setVisitadores)
     getDisponiblesParaEntrega().then(setAcompanantes)
     obtenerVehiculosDisponibles().then(setVehiculos)
     parametroService
       .getActualViatico()
       .then((res) => setCostoViatico(res.viatico_dia_persona))
-    obtenerLocalidades().then(setLocalidades)
   }, [])
 
   useEffect(() => {
@@ -508,60 +523,62 @@ export default function CrearVisita({
                 <Info className="h-5 w-5" /> Datos de la Visita
               </h2>
               <div className="mb-2 grid grid-cols-1 gap-6 md:grid-cols-3">
-                {isVisitaInicial && (
-                  <>
-                    <div>
-                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                        <MapPin className="h-4 w-4" />
-                        Dirección
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.direccion}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            direccion: e.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                        readOnly={isFromObra}
-                      />
-                    </div>
-                    <div>
-                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                        <Building2 className="h-4 w-4" />
-                        Localidad
-                      </label>
-                      <select
-                        value={formData.localidad || ''}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            localidad: e.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                        disabled={
-                          isFromObra ||
-                          (!isFromObra && !isVisitaInicial && !visitaEditar)
-                        }
+                {/* --- NUEVO CAMPO PROVINCIA --- */}
+                <div>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                    Provincia
+                  </label>
+                  <select
+                    value={provinciaSeleccionada}
+                    onChange={(e) => {
+                      const value = e.target.value ? Number(e.target.value) : ''
+                      setProvinciaSeleccionada(value)
+                      setFormData((prev) => ({
+                        ...prev,
+                        localidad: '',
+                      }))
+                    }}
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">Seleccionar provincia...</option>
+                    {provincias.map((prov) => (
+                      <option
+                        key={prov.cod_provincia}
+                        value={prov.cod_provincia}
                       >
-                        <option value="">Seleccionar localidad...</option>
-                        {localidades.map((loc) => (
-                          <option
-                            key={loc.cod_localidad}
-                            value={loc.nombre_localidad}
-                          >
-                            {loc.nombre_localidad}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
-                )}
+                        {prov.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                    <Building2 className="h-4 w-4" />
+                    Localidad
+                  </label>
+                  <select
+                    value={formData.localidad || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        localidad: e.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    required
+                    disabled={!provinciaSeleccionada}
+                  >
+                    <option value="">Seleccionar localidad...</option>
+                    {localidades.map((loc) => (
+                      <option
+                        key={loc.cod_localidad}
+                        value={loc.nombre_localidad}
+                      >
+                        {loc.nombre_localidad}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
                 <div>

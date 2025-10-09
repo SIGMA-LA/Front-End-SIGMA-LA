@@ -6,6 +6,39 @@ import { getAccessToken } from './auth'
 const baseUrl =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/obras'
 
+export async function filtrarObras({
+  estado,
+  cod_localidad,
+}: {
+  estado?: string
+  cod_localidad?: number
+}): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const params = new URLSearchParams()
+    if (estado) params.append('estado', estado)
+    if (cod_localidad) params.append('localidad', cod_localidad.toString())
+    const response = await fetch(`${baseUrl}/filtrar?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+      }
+      throw new Error('Error al filtrar las obras.')
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error al filtrar las obras:', error)
+    throw new Error('Error al filtrar las obras.')
+  }
+}
+
 export async function deleteObra(
   id: number
 ): Promise<{ success: boolean; error?: string }> {

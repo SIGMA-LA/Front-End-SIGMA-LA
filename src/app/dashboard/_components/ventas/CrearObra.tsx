@@ -84,7 +84,9 @@ export default function CrearObra({
     if (!filtroCliente) return clientes
     return clientes.filter(
       (c) =>
-        c.razon_social.toLowerCase().includes(filtroCliente.toLowerCase()) ||
+        c.razon_social?.toLowerCase().includes(filtroCliente.toLowerCase()) ||
+        c.nombre?.toLowerCase().includes(filtroCliente.toLowerCase()) ||
+        c.apellido?.toLowerCase().includes(filtroCliente.toLowerCase()) ||
         c.cuil.includes(filtroCliente)
     )
   }, [clientes, filtroCliente])
@@ -225,7 +227,8 @@ export default function CrearObra({
                             <User className="h-4 w-4 text-gray-600" />
                           </div>
                           <span className="text-gray-900">
-                            {cliente.razon_social}
+                            {cliente.razon_social ||
+                              cliente.nombre + ' ' + cliente.apellido}{' '}
                           </span>
                         </div>
                       ))
