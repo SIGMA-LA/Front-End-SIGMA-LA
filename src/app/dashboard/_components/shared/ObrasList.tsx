@@ -16,6 +16,7 @@ export default function ObrasList({
   onScheduleVisit,
   onScheduleEntrega,
   onEditClick,
+  onNotaFabricaClick,
 }: ObrasListProps) {
   const { usuario } = useAuth()
   const [cargando, setCargando] = useState(true)
@@ -244,5 +245,4 @@ export default function ObrasList({
         </div>
       </div>
     </div>
-  )
-}
+  )}

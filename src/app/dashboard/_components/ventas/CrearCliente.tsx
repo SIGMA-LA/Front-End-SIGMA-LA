@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Save, AlertCircle, Loader2 } from 'lucide-react'
+import { X, Save, AlertCircle, Loader2, User, Building } from 'lucide-react'
 import clienteService, { CreateClienteDTO } from '@/services/cliente.service'
 import type { CrearClienteProps } from '@/types'
 
@@ -7,11 +7,16 @@ export default function CrearCliente({
   onCancel,
   onSubmit,
 }: CrearClienteProps) {
+  const [tipoCliente, setTipoCliente] = useState<'PERSONA' | 'EMPRESA'>('PERSONA')
   const [formData, setFormData] = useState<CreateClienteDTO>({
     cuil: '',
-    razon_social: '',
+    tipo_cliente: 'PERSONA',
     telefono: '',
     mail: '',
+    nombre: '',
+    apellido: '',
+    sexo: '',
+    razon_social: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,10 +33,28 @@ export default function CrearCliente({
       newErrors.cuil = 'El CUIL debe tener 11 dígitos'
     }
 
-    if (!formData.razon_social.trim()) {
-      newErrors.razon_social = 'La razón social es obligatoria'
-    } else if (formData.razon_social.length > 50) {
-      newErrors.razon_social = 'La razón social no puede exceder 50 caracteres'
+    if (tipoCliente === 'EMPRESA') {
+      if (!formData.razon_social?.trim()) {
+        newErrors.razon_social = 'La razón social es obligatoria'
+      } else if (formData.razon_social.length > 50) {
+        newErrors.razon_social = 'La razón social no puede exceder 50 caracteres'
+      }
+    } else {
+      if (!formData.nombre?.trim()) {
+        newErrors.nombre = 'El nombre es obligatorio'
+      } else if (formData.nombre.length > 50) {
+        newErrors.nombre = 'El nombre no puede exceder 50 caracteres'
+      }
+
+      if (!formData.apellido?.trim()) {
+        newErrors.apellido = 'El apellido es obligatorio'
+      } else if (formData.apellido.length > 50) {
+        newErrors.apellido = 'El apellido no puede exceder 50 caracteres'
+      }
+
+      if (!formData.sexo?.trim()) {
+        newErrors.sexo = 'El sexo es obligatorio'
+      }
     }
 
     if (!formData.telefono.trim()) {
@@ -63,10 +86,22 @@ export default function CrearCliente({
       setLoading(true)
       setError(null)
 
-      const clienteCreado = await clienteService.createCliente({
-        ...formData,
-        cuil: formData.cuil.replace(/-/g, ''), // Remover guiones si los hay
-      })
+      const dataToSend: CreateClienteDTO = {
+        cuil: formData.cuil.replace(/-/g, ''),
+        tipo_cliente: tipoCliente,
+        telefono: formData.telefono,
+        mail: formData.mail,
+      }
+
+      if (tipoCliente === 'EMPRESA') {
+        dataToSend.razon_social = formData.razon_social
+      } else {
+        dataToSend.nombre = formData.nombre
+        dataToSend.apellido = formData.apellido
+        dataToSend.sexo = formData.sexo
+      }
+
+      const clienteCreado = await clienteService.createCliente(dataToSend)
 
       if (onSubmit) {
         onSubmit(clienteCreado as any)
@@ -89,6 +124,12 @@ export default function CrearCliente({
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
+  }
+
+  const handleTipoClienteChange = (tipo: 'PERSONA' | 'EMPRESA') => {
+    setTipoCliente(tipo)
+    setFormData(prev => ({ ...prev, tipo_cliente: tipo }))
+    setErrors({})
   }
 
   const formatCUIL = (value: string) => {
@@ -123,10 +164,45 @@ export default function CrearCliente({
             </div>
           )}
 
+          {/* Selector de Tipo de Cliente */}
+          <div className="mb-6">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Tipo de Cliente <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleTipoClienteChange('PERSONA')}
+                disabled={loading}
+                className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                  tipoCliente === 'PERSONA'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                } disabled:opacity-50`}
+              >
+                <User className="h-5 w-5" />
+                <span className="font-medium">Persona</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTipoClienteChange('EMPRESA')}
+                disabled={loading}
+                className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                  tipoCliente === 'EMPRESA'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                } disabled:opacity-50`}
+              >
+                <Building className="h-5 w-5" />
+                <span className="font-medium">Empresa</span>
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                CUIL <span className="text-red-500">*</span>
+                CUIL/CUIT <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -148,29 +224,101 @@ export default function CrearCliente({
               )}
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Razón Social <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.razon_social}
-                onChange={(e) => handleChange('razon_social', e.target.value)}
-                placeholder="Empresa S.A."
-                maxLength={50}
-                disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
-                  errors.razon_social
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                }`}
-              />
-              {errors.razon_social && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.razon_social}
-                </p>
-              )}
-            </div>
+            {tipoCliente === 'EMPRESA' ? (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Razón Social <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.razon_social}
+                  onChange={(e) => handleChange('razon_social', e.target.value)}
+                  placeholder="Empresa S.A."
+                  maxLength={50}
+                  disabled={loading}
+                  className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
+                    errors.razon_social
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                  }`}
+                />
+                {errors.razon_social && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.razon_social}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Nombre <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nombre}
+                      onChange={(e) => handleChange('nombre', e.target.value)}
+                      placeholder="Juan"
+                      maxLength={50}
+                      disabled={loading}
+                      className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
+                        errors.nombre
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                      }`}
+                    />
+                    {errors.nombre && (
+                      <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Apellido <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.apellido}
+                      onChange={(e) => handleChange('apellido', e.target.value)}
+                      placeholder="Pérez"
+                      maxLength={50}
+                      disabled={loading}
+                      className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
+                        errors.apellido
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                      }`}
+                    />
+                    {errors.apellido && (
+                      <p className="mt-1 text-sm text-red-600">{errors.apellido}</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Sexo <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.sexo}
+                    onChange={(e) => handleChange('sexo', e.target.value)}
+                    disabled={loading}
+                    className={`w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none disabled:bg-gray-100 ${
+                      errors.sexo
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                    }`}
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                  {errors.sexo && (
+                    <p className="mt-1 text-sm text-red-600">{errors.sexo}</p>
+                  )}
+                </div>
+              </>
+            )}
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
