@@ -8,6 +8,10 @@ export interface Cliente {
   tipo_cliente: 'PERSONA' | 'EMPRESA'
   telefono: string
   mail: string
+  apellido?: string
+  nombre?: string
+  sexo?: string
+  tipo_cliente: 'PERSONA' | 'EMPRESA'
 }
 
 export interface Documento {
@@ -65,6 +69,11 @@ export interface Visita {
   localidad?: Localidad
 }
 
+export interface MaquinariaSimple {
+  cod_maquina: number
+  descripcion: string
+}
+
 export interface Entrega {
   cod_entrega: number
   cod_obra: number
@@ -74,9 +83,10 @@ export interface Entrega {
   observaciones?: string
   detalle: string
   empleados_asignados: EntregaEmpleado[]
-  maquinarias_usadas?: UsoMaquinaria[]
+  maquinarias_usadas?: MaquinariaSimple[]
   vehiculos_usados?: UsoVehiculoEntrega[]
   dias_viaticos?: number
+  orden_de_produccion?: OrdenProduccion
 }
 
 export interface EntregaEmpleado {
@@ -100,14 +110,17 @@ export interface Empleado {
 
 export interface Obra {
   cod_obra: number
-  cod_postal: number
+  cod_localidad: number
   cuil_cliente: string
   estado:
-    | 'ACTIVA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | 'ENTREGADA'
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
     | 'EN ESPERA DE STOCK'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
+    | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
   direccion: string
   cliente: Cliente
   nota_fabrica?: string
@@ -121,9 +134,19 @@ export interface Obra {
   pagos?: Pago[]
 }
 
+export interface Provincia {
+  cod_provincia: number
+  nombre_provincia: string
+  localidades?: Localidad[]
+}
+
 export interface Localidad {
-  cod_postal: number
+  cod_localidad: number
   nombre_localidad: string
+  cod_provincia: number
+  provincia: Provincia
+  obras?: Obra[]
+  visitas?: Visita[]
 }
 
 export interface UsoMaquinaria {
@@ -197,27 +220,45 @@ export interface CrearClienteProps {
   onSubmit?: (clienteData: Cliente) => void
 }
 
+export type VehiculoTipo =
+  | 'CAMION CHICO'
+  | 'CAMIONETA'
+  | 'AUTOMOVIL'
+  | 'CAMION GRANDE'
+export type VehiculoEstado =
+  | 'DISPONIBLE'
+  | 'EN USO'
+  | 'MANTENIMIENTO'
+  | 'REPARACION'
+  | 'FUERA DE SERVICIO'
+  | 'RESERVADO'
+
+// Este es el tipo que usará el formulario y la Server Action
+export interface VehiculoFormData {
+  patente: string
+  tipo_vehiculo: VehiculoTipo
+  estado: VehiculoEstado
+}
+
+// El tipo Vehiculo puede seguir teniendo más campos si la API GET los devuelve
 export interface Vehiculo {
   patente: string
+  tipo_vehiculo: VehiculoTipo
+  estado: VehiculoEstado
+  // Puede que el GET sí devuelva más datos, como una fecha de creación, etc.
+}
+
+export interface BackendVehiculo {
+  patente: string
   tipo_vehiculo: string
-  estado:
-    | 'DISPONIBLE'
-    | 'EN USO'
-    | 'MANTENIMIENTO'
-    | 'REPARACION'
-    | 'FUERA DE SERVICIO'
-    | 'RESERVADO'
+  estado: string
 }
 
 export interface Maquinaria {
   cod_maquina: number
   descripcion: string
-  estado:
-    | 'DISPONIBLE'
-    | 'EN_USO'
-    | 'MANTENIMIENTO'
-    | 'REPARACION'
-    | 'FUERA_DE_SERVICIO'
+  estado: 'DISPONIBLE' | 'NO DISPONIBLE'
+  uso_maquinaria?: any[] // Para futuro uso
 }
 
 export interface VisitasListProps {
@@ -288,57 +329,42 @@ export interface ModalEncargadoProps {
   onCancel: () => void
 }
 
-export interface MaquinariaListProps {
-  onCreateClick: () => void
-}
-
-export interface CrearMaquinariaProps {
-  onCancel: () => void
-  onSubmit: (maquinaria: Maquinaria) => void
-  isModal?: boolean
-  isOpen?: boolean
-}
-
-export interface DetalleMaquinariaProps {
+export interface MaquinariaCardProps {
   maquinaria: Maquinaria
-  isOpen: boolean
-  onClose: () => void
+  onViewDetails: (maquinaria: Maquinaria) => void
   onEdit: (maquinaria: Maquinaria) => void
   onDelete: (maquinaria: Maquinaria) => void
-  onChangeStatus: (
-    maquinaria: Maquinaria,
-    newStatus: Maquinaria['estado']
-  ) => void
 }
 
-export interface EditarMaquinariaProps {
-  maquinaria: Maquinaria
+export interface CrearMaquinariaModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (maquinaria: Maquinaria) => void
+  onSuccess: () => void
 }
 
-export interface ConfirmDeleteModalProps {
+export interface VerDetallesMaquinariaModalProps {
   isOpen: boolean
   maquinaria: Maquinaria | null
-  onConfirm: () => void
-  onCancel: () => void
+  onClose: () => void
 }
 
-export interface CambiarEstadoModalProps {
+export interface EditarMaquinariaModalProps {
   isOpen: boolean
   maquinaria: Maquinaria | null
-  onConfirm: (newStatus: Maquinaria['estado']) => void
-  onCancel: () => void
+  onClose: () => void
+  onSuccess: () => void
 }
 
 export interface VehiculosListProps {
   onCreateClick: () => void
+  onEditClick: (vehiculo: Vehiculo) => void
 }
 
 export interface Localidad {
-  cod_postal: number
+  cod_localidad: number
   nombre_localidad: string
+  cod_provincia: number
+  provincia: Provincia
 }
 
 export interface TabNavigationProduccionProps {

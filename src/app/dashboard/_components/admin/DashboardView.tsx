@@ -38,7 +38,17 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                   Obras Activas
                 </p>
                 <p className="text-3xl font-bold">
-                  {obras.filter((o) => o.estado === 'ACTIVA').length}
+                  {
+                    obras.filter(
+                      (o) =>
+                        o.estado === 'EN ESPERA DE PAGO' ||
+                        o.estado === 'PAGADA PARCIALMENTE' ||
+                        o.estado === 'EN ESPERA DE STOCK' ||
+                        o.estado === 'EN PRODUCCION' ||
+                        o.estado === 'PRODUCCION FINALIZADA' ||
+                        o.estado === 'PAGADA TOTALMENTE'
+                    ).length
+                  }
                 </p>
               </div>
               <Building className="h-10 w-10 text-blue-200" />

@@ -19,12 +19,16 @@ import EstadoObraBadge from './EstadoObraBadge'
 import PagosObra from '../ventas/PagosObra'
 import { deleteObra } from '@/actions/obras'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
+
 const ESTADOS_OBRA: Obra['estado'][] = [
-  'ACTIVA',
-  'EN PRODUCCION',
-  'FINALIZADA',
-  'ENTREGADA',
+  'EN ESPERA DE PAGO',
+  'PAGADA PARCIALMENTE',
   'EN ESPERA DE STOCK',
+  'EN PRODUCCION',
+  'PRODUCCION FINALIZADA',
+  'PAGADA TOTALMENTE',
+  'ENTREGADA',
+  'CANCELADA',
 ]
 
 export default function ObrasList({
@@ -38,10 +42,7 @@ export default function ObrasList({
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [obraPagos, setObraPagos] = useState<Obra | null>(null)
-
-  // Para el modal de Nota de Fábrica
   const [notaFabricaObra, setNotaFabricaObra] = useState<Obra | null>(null)
-  const [notaFabricaUrl, setNotaFabricaUrl] = useState<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
@@ -62,34 +63,41 @@ export default function ObrasList({
       }
     }
     cargarDatos()
-  }, [])
+  }, [fetchObras, fetchLocalidades])
 
   const handleEliminar = async (id: number) => {
     if (
       window.confirm(
-        '¿Estás seguro de que deseas eliminar esta obra? Esta acción no se puede deshacer.'
+        '¿Estás seguro de que deseas cancelar esta obra? El estado cambiará a "CANCELADA".'
       )
     ) {
-      try {
-        await deleteObra(id)
-        alert('Obra eliminada con éxito.')
-      } catch (err) {
-        console.error('Error al eliminar la obra:', err)
-        alert('Ocurrió un error al intentar eliminar la obra.')
+      const result = await deleteObra(id)
+      if (result.success) {
+        alert('Obra cancelada con éxito.')
+        await fetchObras()
+      } else {
+        console.error('Error al cancelar la obra:', result.error)
+        alert(`Ocurrió un error: ${result.error}`)
       }
     }
   }
+
   const obrasFiltradas = useMemo(() => {
     return obras.filter((obra) => {
       const matchDireccion =
         searchTerm === '' ||
         obra.direccion.toLowerCase().includes(searchTerm.toLowerCase())
 
-      const matchEstado = filtroEstado === '' || obra.estado === filtroEstado
+      let matchEstado = true
+      if (filtroEstado === '') {
+        matchEstado = obra.estado !== 'CANCELADA'
+      } else {
+        matchEstado = obra.estado === filtroEstado
+      }
 
       const matchLocalidad =
         filtroLocalidad === '' ||
-        obra.localidad?.cod_postal === parseInt(filtroLocalidad)
+        obra.localidad?.cod_localidad === parseInt(filtroLocalidad)
 
       return matchDireccion && matchEstado && matchLocalidad
     })
@@ -194,7 +202,7 @@ export default function ObrasList({
               >
                 <option value="">Todas las localidades</option>
                 {localidades.map((loc) => (
-                  <option key={loc.cod_postal} value={loc.cod_postal}>
+                  <option key={loc.cod_localidad} value={loc.cod_localidad}>
                     {loc.nombre_localidad}
                   </option>
                 ))}
@@ -237,73 +245,35 @@ export default function ObrasList({
                       {/* SOLO mostrar si NO es VENTAS */}
                       {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
                         <button
-                          onClick={() => onScheduleVisit(obra)}
-                          className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
+                          onClick={() => setObraPagos(obra)}
+                          className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                          disabled={isCancelada}
+                          title={
+                            isCancelada
+                              ? 'No se pueden gestionar pagos de una obra cancelada'
+                              : 'Gestionar pagos'
+                          }
                         >
-                          <Calendar className="h-4 w-4" /> Agendar Visita
+                          <DollarSign className="h-4 w-4" /> Pagos
                         </button>
-                      )}
-                      {usuario?.rol_actual !== 'VENTAS' &&
-                        onScheduleEntrega && (
-                          <button
-                            onClick={() => onScheduleEntrega(obra)}
-                            className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
-                          >
-                            <Calendar className="h-4 w-4" /> Agendar Entrega
-                          </button>
-                        )}
-                      <button
-                        onClick={() => onEditClick(obra)}
-                        className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit className="h-4 w-4" /> Editar
-                      </button>
-                      <button
-                        onClick={() => handleEliminar(obra.cod_obra)}
-                        className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-4 w-4" /> Eliminar
-                      </button>
-                      <button
-                        onClick={() => setObraPagos(obra)}
-                        className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
-                      >
-                        <DollarSign className="h-4 w-4" /> Pagos
-                      </button>
-                      {/* Nota de Fábrica */}
-                      {usuario?.rol_actual === 'VENTAS' ? (
                         <button
                           onClick={() => setNotaFabricaObra(obra)}
-                          className={`flex items-center gap-1 font-medium ${
-                            obra.nota_fabrica
-                              ? 'text-indigo-600 hover:text-indigo-800'
-                              : 'text-gray-400 hover:text-indigo-600'
-                          }`}
+                          className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                          disabled={isCancelada}
+                          title={
+                            isCancelada
+                              ? 'No se pueden gestionar Notas de Fábrica de una obra cancelada'
+                              : 'Gestionar Nota de Fábrica'
+                          }
                         >
-                          <FileText className="h-4 w-4" />
-                          Nota de Fábrica
-                          {!obra.nota_fabrica && (
-                            <span className="ml-1 text-xs text-gray-400">
-                              (vacío)
-                            </span>
-                          )}
+                          <FileText className="h-4 w-4" /> Nota de Fábrica
                         </button>
-                      ) : (
-                        obra.nota_fabrica && (
-                          <button
-                            onClick={() => setNotaFabricaObra(obra)}
-                            className="flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Nota de Fábrica
-                          </button>
-                        )
-                      )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
               <Filter className="mx-auto h-12 w-12 text-gray-400" />
@@ -317,7 +287,6 @@ export default function ObrasList({
           )}
         </div>
       </div>
-      {/* Modal para mostrar o subir la Nota de Fábrica */}
       {notaFabricaObra && (
         <NotaFabricaModal
           isOpen={!!notaFabricaObra}

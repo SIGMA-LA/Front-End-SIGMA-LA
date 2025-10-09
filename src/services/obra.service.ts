@@ -6,7 +6,7 @@ interface BackendObra {
   direccion: string
   cliente: {
     cuil: string
-    razon_social: string
+    razon_social?: string
     telefono: string
     mail: string
     nombre?: string
@@ -17,14 +17,18 @@ interface BackendObra {
   fecha_ini: string
   fecha_cancelacion: string | null
   estado:
-    | 'ACTIVA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | 'ENTREGADA'
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
     | 'EN ESPERA DE STOCK'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
+    | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
   localidad?: {
-    cod_postal: number
+    cod_localidad: number
     nombre_localidad: string
+    cod_provincia: number
   }
   presupuesto?: Presupuesto[]
 }
@@ -33,15 +37,18 @@ export interface ObraFormData {
   direccion: string
   nota_fabrica?: string
   fecha_ini: string
-  fecha_cancelacion: string | null
+  fecha_cancelacion?: string | null
   estado:
-    | 'ACTIVA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | 'ENTREGADA'
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
     | 'EN ESPERA DE STOCK'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
+    | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
   cuil_cliente: string
-  cod_postal: number
+  cod_localidad: number
 }
 
 const mapToFrontend = (obra: BackendObra): Obra => ({
@@ -70,7 +77,7 @@ const mapToBackend = (obraData: ObraFormData): any => {
   const payload: any = {
     direccion: obraData.direccion,
     estado: obraData.estado,
-    cod_postal: obraData.cod_postal,
+    cod_localidad: obraData.cod_localidad,
     cuil: obraData.cuil_cliente,
     fecha_ini: obraData.fecha_ini,
   }

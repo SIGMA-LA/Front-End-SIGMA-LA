@@ -32,15 +32,18 @@ interface BackendEntrega {
   detalle: string
   obra: {
     cod_obra: number
-    cod_postal: number
+    cod_localidad: number
     cuil: string
     fecha_ini: string
     estado:
-      | 'ACTIVA'
-      | 'EN PRODUCCION'
-      | 'FINALIZADA'
-      | 'ENTREGADA'
+      | 'EN ESPERA DE PAGO'
+      | 'PAGADA PARCIALMENTE'
       | 'EN ESPERA DE STOCK'
+      | 'EN PRODUCCION'
+      | 'PRODUCCION FINALIZADA'
+      | 'PAGADA TOTALMENTE'
+      | 'ENTREGADA'
+      | 'CANCELADA'
     fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
@@ -51,7 +54,7 @@ interface BackendEntrega {
       mail: string
     }
     localidad: {
-      cod_postal: number
+      cod_localidad: number
       nombre_localidad: string
     }
   }
@@ -72,15 +75,18 @@ interface BackendEntregaEmpleado {
     detalle: string
     obra: {
       cod_obra: number
-      cod_postal: number
+      cod_localidad: number
       cuil: string
       fecha_ini: string
       estado:
-        | 'ACTIVA'
-        | 'EN PRODUCCION'
-        | 'FINALIZADA'
-        | 'ENTREGADA'
+        | 'EN ESPERA DE PAGO'
+        | 'PAGADA PARCIALMENTE'
         | 'EN ESPERA DE STOCK'
+        | 'EN PRODUCCION'
+        | 'PRODUCCION FINALIZADA'
+        | 'PAGADA TOTALMENTE'
+        | 'ENTREGADA'
+        | 'CANCELADA'
       fecha_cancelacion: string | null
       direccion: string
       nota_fabrica: string
@@ -91,27 +97,30 @@ interface BackendEntregaEmpleado {
         mail: string
       }
       localidad: {
-        cod_postal: number
+        cod_localidad: number
         nombre_localidad: string
       }
     }
   }
   obra: {
     cod_obra: number
-    cod_postal: number
+    cod_localidad: number
     cuil: string
     fecha_ini: string
     estado:
-      | 'ACTIVA'
-      | 'EN PRODUCCION'
-      | 'FINALIZADA'
-      | 'ENTREGADA'
+      | 'EN ESPERA DE PAGO'
+      | 'PAGADA PARCIALMENTE'
       | 'EN ESPERA DE STOCK'
+      | 'EN PRODUCCION'
+      | 'PRODUCCION FINALIZADA'
+      | 'PAGADA TOTALMENTE'
+      | 'ENTREGADA'
+      | 'CANCELADA'
     fecha_cancelacion: string | null
     direccion: string
     nota_fabrica: string
     localidad: {
-      cod_postal: number
+      cod_localidad: number
       nombre_localidad: string
     }
     cliente: {
@@ -141,6 +150,8 @@ export interface CreateEntregaDTO {
     cuil: string
     rol_entrega: 'ENCARGADO' | 'AYUDANTE'
   }[]
+  maquinarias?: number[]
+  cod_op?: number
 }
 
 export interface CreateEntregaEmpleadoDTO {
@@ -163,7 +174,17 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
   const empleados_asignados =
     backendEntrega.entrega_empleado?.map((ee: any) => ({
       rol_entrega: ee.rol_entrega,
-      empleado: ee.empleado,
+      empleado: {
+        cuil: ee.empleado?.cuil || ee.cuil,
+        nombre: ee.empleado?.nombre || 'Nombre no disponible',
+        apellido: ee.empleado?.apellido || 'Apellido no disponible',
+      },
+    })) || []
+
+  const maquinarias_usadas =
+    backendEntrega.uso_maquinaria?.map((um: any) => ({
+      cod_maquina: um.cod_maquina,
+      descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
     })) || []
 
   return {
@@ -173,8 +194,11 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
     estado: backendEntrega.estado,
     observaciones: backendEntrega.observaciones,
     detalle: backendEntrega.detalle,
+    dias_viaticos: backendEntrega.dias_viaticos,
     obra: backendEntrega.obra,
     empleados_asignados: empleados_asignados,
+    maquinarias_usadas: maquinarias_usadas,
+    orden_de_produccion: backendEntrega.orden_de_produccion,
   }
 }
 
@@ -182,6 +206,12 @@ const mapGetAllToFrontend = (backendEntrega: any): Entrega => {
 const mapToFrontend = (
   backendEntregaEmpleado: BackendEntregaEmpleado
 ): EntregaEmpleado => {
+  const maquinarias_usadas =
+    (backendEntregaEmpleado.entrega as any).uso_maquinaria?.map((um: any) => ({
+      cod_maquina: um.cod_maquina,
+      descripcion: um.maquinaria?.descripcion || 'Descripción no disponible',
+    })) || []
+
   return {
     cuil: backendEntregaEmpleado.cuil,
     cod_obra: backendEntregaEmpleado.cod_obra,
@@ -189,7 +219,7 @@ const mapToFrontend = (
     rol_entrega: backendEntregaEmpleado.rol_entrega,
     obra: {
       cod_obra: backendEntregaEmpleado.obra.cod_obra,
-      cod_postal: backendEntregaEmpleado.obra.cod_postal,
+      cod_localidad: backendEntregaEmpleado.obra.cod_localidad,
       cuil_cliente: backendEntregaEmpleado.obra.cuil,
       fecha_ini: backendEntregaEmpleado.obra.fecha_ini,
       estado: backendEntregaEmpleado.obra.estado,
@@ -217,7 +247,7 @@ const mapToFrontend = (
       cod_obra: backendEntregaEmpleado.entrega.cod_obra,
       obra: {
         cod_obra: backendEntregaEmpleado.entrega.obra.cod_obra,
-        cod_postal: backendEntregaEmpleado.entrega.obra.cod_postal,
+        cod_localidad: backendEntregaEmpleado.entrega.obra.cod_localidad,
         cuil_cliente: backendEntregaEmpleado.entrega.obra.cuil,
         fecha_ini: backendEntregaEmpleado.entrega.obra.fecha_ini,
         estado: backendEntregaEmpleado.entrega.obra.estado,
@@ -239,6 +269,7 @@ const mapToFrontend = (
       observaciones: backendEntregaEmpleado.entrega.observaciones,
       detalle: backendEntregaEmpleado.entrega.detalle,
       empleados_asignados: [],
+      maquinarias_usadas: maquinarias_usadas,
     },
   }
 }
@@ -323,11 +354,10 @@ class EntregasService {
       }
       throw new Error(
         error.response?.data?.message ||
-          'Error al crear la entrega en el servidor.',
+          'Error al crear la entrega en el servidor.'
       )
     }
   }
-
 
   // Obtiene una entrega específica de un empleado
   async getEntregaByEmpleadoAndId(
@@ -380,34 +410,34 @@ class EntregasService {
   async finalizarEntrega(
     cod_entrega: number,
     observaciones?: string
-  ): Promise<FinalizarEntregaDTO> {
+  ): Promise<Entrega> {
     try {
-      const updateData: {
-        estado: 'ENTREGADO'
-        observaciones?: string
-      } = {
-        estado: 'ENTREGADO',
-      }
-
-      if (observaciones && observaciones.trim() !== '') {
-        updateData.observaciones = observaciones.trim()
-      }
-
-      const response = await api.put(
-        `${this.baseURL}/${cod_entrega}`,
-        updateData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      const { data } = await api.patch<BackendEntrega>(
+        `${this.baseURL}/${cod_entrega}/finalizar`,
+        { observaciones }
       )
-
-      return response.data
+      return mapGetAllToFrontend(data)
     } catch (error: any) {
-      console.error(`Error al finalizar entrega ${cod_entrega}:`, error)
       throw new Error(
         `No se pudo finalizar la entrega: ${error.response?.data?.message || error.message}`
+      )
+    }
+  }
+
+  // Marca una entrega como cancelada con observaciones opcionales
+  async cancelarEntrega(
+    cod_entrega: number,
+    motivo?: string
+  ): Promise<Entrega> {
+    try {
+      const { data } = await api.patch<BackendEntrega>(
+        `${this.baseURL}/${cod_entrega}/cancelar`,
+        { motivo }
+      )
+      return mapGetAllToFrontend(data)
+    } catch (error: any) {
+      throw new Error(
+        `No se pudo cancelar la entrega: ${error.response?.data?.message || error.message}`
       )
     }
   }

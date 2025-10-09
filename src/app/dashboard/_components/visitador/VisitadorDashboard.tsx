@@ -146,39 +146,24 @@ export default function VisitadorDashboard() {
     await loadEntregas()
   }
 
-  const handleFinalizarVisita = async () => {
-    if (selectedVisita && usuario?.cuil && !finalizandoVisita) {
+  const handleConfirmarFinalizacion = async () => {
+    if (selectedVisita && !finalizandoVisita) {
       try {
         setFinalizandoVisita(true)
-
-        // Llamar al contexto global para finalizar la visita
-        await finalizarVisitaContext(
+        const visitaActualizada = await visitasService.finalizarVisita(
           selectedVisita.cod_visita,
           observacionesVisita
         )
 
-        // Actualizar el estado local
-        const visitaActualizada = {
-          ...selectedVisita,
-          estado: 'COMPLETADA' as const,
-          observaciones: observacionesVisita || selectedVisita.observaciones,
-        }
-
         setSelectedVisita(visitaActualizada)
-
-        // Mover de pendientes a realizadas
         setVisitasPendientes((prev) =>
           prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
         )
         setVisitasRealizadas((prev) => [...prev, visitaActualizada])
 
-        // Cerrar modal
         setShowVisitaModal(false)
         setObservacionesVisita('')
-
-        console.log('Visita finalizada exitosamente')
       } catch (error) {
-        console.error('Error al finalizar visita:', error)
         alert('Error al finalizar la visita. Inténtalo de nuevo.')
       } finally {
         setFinalizandoVisita(false)
@@ -186,44 +171,91 @@ export default function VisitadorDashboard() {
     }
   }
 
-  const handleFinalizarEntrega = async () => {
-    if (selectedEntrega && usuario?.cuil && !finalizandoEntrega) {
+  const handleConfirmarCancelacion = async () => {
+    if (selectedVisita && !finalizandoVisita) {
+      if (!observacionesVisita.trim()) {
+        alert('Por favor, ingresa un motivo para la cancelación.')
+        return
+      }
       try {
-        setFinalizandoEntrega(true)
-
-        // Llamar al servicio para actualizar en la base de datos
-        await entregasService.finalizarEntrega(
-          selectedEntrega.cod_entrega,
-          observacionesEntrega || undefined
+        setFinalizandoVisita(true)
+        const visitaCancelada = await visitasService.cancelarVisita(
+          selectedVisita.cod_visita,
+          observacionesVisita
         )
 
-        // Actualizar el estado local después de la actualización exitosa
+        // Quitar de pendientes y opcionalmente agregar a una lista de canceladas
+        setVisitasPendientes((prev) =>
+          prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
+        )
+        // Por ahora, la sacamos de la vista. Se podría crear un nuevo estado para 'visitasCanceladas'.
+
+        setSelectedVisita(null) // De-seleccionar la visita
+        setShowVisitaModal(false)
+        setObservacionesVisita('')
+      } catch (error) {
+        alert('Error al cancelar la visita. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoVisita(false)
+      }
+    }
+  }
+
+  const handleFinalizarEntrega = async () => {
+    if (selectedEntrega && !finalizandoEntrega) {
+      try {
+        setFinalizandoEntrega(true)
+        const entregaActualizadaBackend =
+          await entregasService.finalizarEntrega(
+            selectedEntrega.cod_entrega,
+            observacionesEntrega || undefined
+          )
+
         const entregaActualizada = {
           ...selectedEntrega,
           entrega: {
             ...selectedEntrega.entrega,
-            estado: 'ENTREGADO' as const,
-            observaciones:
-              observacionesEntrega || selectedEntrega.entrega.observaciones,
+            estado: entregaActualizadaBackend.estado,
+            observaciones: entregaActualizadaBackend.observaciones,
           },
         }
 
-        setSelectedEntrega(entregaActualizada)
-
-        // Mover de pendientes a realizadas
         setEntregasPendientes((prev) =>
           prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
         )
-        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
+        setEntregasRealizadas((prev) => [entregaActualizada, ...prev])
+        setSelectedEntrega(entregaActualizada)
 
-        // Cerrar modal
         setShowEntregaModal(false)
         setObservacionesEntrega('')
-
-        console.log('Entrega finalizada exitosamente')
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
         alert('Error al finalizar la entrega. Inténtalo de nuevo.')
+      } finally {
+        setFinalizandoEntrega(false)
+      }
+    }
+  }
+
+  const handleCancelarEntrega = async () => {
+    if (selectedEntrega && !finalizandoEntrega) {
+      try {
+        setFinalizandoEntrega(true)
+        await entregasService.cancelarEntrega(
+          selectedEntrega.cod_entrega,
+          observacionesEntrega || 'No se especificó motivo.'
+        )
+
+        setEntregasPendientes((prev) =>
+          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+        )
+        setSelectedEntrega(null)
+
+        setShowEntregaModal(false)
+        setObservacionesEntrega('')
+      } catch (error) {
+        console.error('Error al cancelar entrega:', error)
+        alert('Error al cancelar la entrega. Inténtalo de nuevo.')
       } finally {
         setFinalizandoEntrega(false)
       }
@@ -494,7 +526,8 @@ export default function VisitadorDashboard() {
         title="Finalizar Visita"
         observaciones={observacionesVisita}
         onObservacionesChange={setObservacionesVisita}
-        onConfirm={handleFinalizarVisita}
+        onConfirm={handleConfirmarFinalizacion}
+        onCancelVisit={handleConfirmarCancelacion}
         onCancel={() => {
           if (!finalizandoVisita) {
             setShowVisitaModal(false)
@@ -510,6 +543,7 @@ export default function VisitadorDashboard() {
         observaciones={observacionesEntrega}
         onObservacionesChange={setObservacionesEntrega}
         onConfirm={handleFinalizarEntrega}
+        onCancelDelivery={handleCancelarEntrega}
         onCancel={() => {
           if (!finalizandoEntrega) {
             setShowEntregaModal(false)

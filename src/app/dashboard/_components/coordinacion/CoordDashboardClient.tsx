@@ -13,6 +13,7 @@ import {
   Wrench,
   Car,
   PackageOpen,
+  ClipboardList,
 } from 'lucide-react'
 
 import Configuraciones from './Configuraciones'
@@ -24,10 +25,12 @@ import CrearVisita from './CrearVisita'
 import CrearEntrega from './CrearEntrega'
 import PedidosList from './PedidosList'
 import RegistrarPedido from './RegistrarPedido'
-import MaquinariaList from './MaquinariaList'
-import CrearMaquinaria from './CrearMaquinaria'
+import MaquinariaList from './maquinaria/MaquinariaList'
 import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
+import EditarVehiculo from './EditarVehiculo' // 1. Importar el nuevo componente
+import { Vehiculo } from '@/types' // Importar el tipo
+import OrdenesProduccionView from './ordenes_produccion/OrdenesProduccionView'
 
 import type { Empleado, Visita } from '@/types'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
@@ -40,6 +43,7 @@ export default function CoordDashboard() {
   const [nuevasMaquinas, setNuevasMaquinas] = useState<any[]>([])
   const [visitaEditar, setVisitaEditar] = useState<Visita | null>(null)
 
+  const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(null);
   useEffect(() => {
     async function fetchUsuario() {
       const empleado = await obtenerEmpleadoActual()
@@ -58,8 +62,9 @@ export default function CoordDashboard() {
     { id: 'obras', label: 'Obras', icon: Building2 },
     { id: 'clientes', label: 'Clientes', icon: Users },
     { id: 'visitas', label: 'Visitas', icon: Calendar },
+    { id: 'ordenes-produccion', label: 'Órdenes de Producción', icon: Package },
     { id: 'entregas', label: 'Entregas', icon: PackageOpen },
-    { id: 'pedidos', label: 'Pedidos', icon: Package },
+    { id: 'pedidos', label: 'Pedidos', icon: ClipboardList },
     { id: 'maquinarias', label: 'Maquinarias', icon: Wrench },
     { id: 'vehiculos', label: 'Vehículos', icon: Car },
     { id: 'configuraciones', label: 'Configuraciones', icon: Settings },
@@ -101,6 +106,9 @@ export default function CoordDashboard() {
             }}
           />
         )
+
+      case 'ordenes-produccion':
+        return <OrdenesProduccionView />
 
       case 'entregas':
         return (
@@ -186,24 +194,16 @@ export default function CoordDashboard() {
         )
 
       case 'maquinarias':
-        return (
-          <MaquinariaList
-            onCreateClick={() => setCurrentSection('crear-maquinaria')}
-          />
-        )
-
-      case 'crear-maquinaria':
-        return (
-          <CrearMaquinaria
-            onCancel={() => setCurrentSection('maquinarias')}
-            onSubmit={() => setCurrentSection('maquinarias')}
-          />
-        )
+        return <MaquinariaList />
 
       case 'vehiculos':
         return (
           <VehículosList
             onCreateClick={() => setCurrentSection('crear-vehiculo')}
+             onEditClick={(vehiculo) => {
+              setSelectedVehiculo(vehiculo);
+              setCurrentSection('editar-vehiculo');
+            }}
           />
         )
 
@@ -214,6 +214,26 @@ export default function CoordDashboard() {
             onSubmit={() => setCurrentSection('vehiculos')}
           />
         )
+
+      case 'editar-vehiculo':
+        // Nos aseguramos de que haya un vehículo seleccionado antes de renderizar
+        return selectedVehiculo ? (
+            <EditarVehiculo
+                vehiculo={selectedVehiculo}
+                onCancel={() => {
+                    setCurrentSection('vehiculos');
+                    setSelectedVehiculo(null); // Limpiar el estado
+                }}
+                onSubmit={() => {
+                    setCurrentSection('vehiculos');
+                    setSelectedVehiculo(null); // Limpiar el estado
+                    // Opcional: podrías querer refrescar la lista de vehículos aquí
+                }}
+            />
+        ) : null; // Si no hay vehículo seleccionado, no renderizar nada o un fallback
+
+      case 'configuraciones':
+        return <Configuraciones />
 
       default:
         return (
@@ -276,7 +296,9 @@ export default function CoordDashboard() {
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
 
                 return (
                   <button
@@ -329,7 +351,9 @@ export default function CoordDashboard() {
                   (item.id === 'clientes' &&
                     currentSection.includes('cliente')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
 
                 return (
                   <button
@@ -372,7 +396,9 @@ export default function CoordDashboard() {
                   (item.id === 'visitas' &&
                     currentSection.includes('visita')) ||
                   (item.id === 'maquinarias' &&
-                    currentSection.includes('maquinaria'))
+                    currentSection.includes('maquinaria')) ||
+                  (item.id === 'ordenes-produccion' &&
+                    currentSection.includes('ordenes'))
               )?.label || 'Dashboard'}
             </h1>
             <div className="w-6"></div>

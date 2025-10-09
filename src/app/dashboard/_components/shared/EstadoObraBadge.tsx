@@ -6,6 +6,8 @@ import {
   Clock,
   Truck,
   Hourglass,
+  DollarSign,
+  Banknote,
 } from 'lucide-react'
 
 interface EstadoObraBadgeProps {
@@ -17,23 +19,29 @@ export default function EstadoObraBadge({ estado }: EstadoObraBadgeProps) {
     estado: Obra['estado']
   ): { text: string; className: string; Icon: React.ElementType } => {
     switch (estado) {
-      case 'ACTIVA':
+      case 'EN ESPERA DE PAGO':
         return {
-          text: 'Activa',
+          text: 'En Espera de Pago',
           className: 'bg-blue-100 text-blue-800',
-          Icon: Cog,
+          Icon: Clock,
         }
       case 'EN PRODUCCION':
         return {
           text: 'En Producción',
           className: 'bg-yellow-100 text-yellow-800',
-          Icon: Hourglass,
+          Icon: Cog,
         }
-      case 'FINALIZADA':
+      case 'PRODUCCION FINALIZADA':
         return {
-          text: 'Finalizada',
+          text: 'Producción Finalizada',
           className: 'bg-purple-100 text-purple-800',
           Icon: CheckCircle,
+        }
+      case 'PAGADA PARCIALMENTE':
+        return {
+          text: 'Pagada Parcialmente',
+          className: 'bg-cyan-100 text-cyan-800',
+          Icon: Banknote,
         }
       case 'ENTREGADA':
         return {
@@ -43,9 +51,21 @@ export default function EstadoObraBadge({ estado }: EstadoObraBadgeProps) {
         }
       case 'EN ESPERA DE STOCK':
         return {
-          text: 'En Espera',
+          text: 'En Espera de Stock',
           className: 'bg-orange-100 text-orange-800',
-          Icon: Clock,
+          Icon: Hourglass,
+        }
+      case 'CANCELADA':
+        return {
+          text: 'Cancelada',
+          className: 'bg-red-100 text-red-800',
+          Icon: XCircle,
+        }
+      case 'PAGADA TOTALMENTE':
+        return {
+          text: 'Pagada Totalmente',
+          className: 'bg-teal-100 text-teal-800',
+          Icon: DollarSign,
         }
       default:
         return {
