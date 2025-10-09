@@ -33,27 +33,21 @@ export default function ObrasList({
 
   // Cargar provincias al inicio
   useEffect(() => {
-    setCargando(true)
     obtenerProvincias()
       .then((provs) => setProvincias(provs))
       .catch(() => setError('No se pudieron cargar las provincias.'))
-      .finally(() => setCargando(false))
   }, [])
 
   // Cargar localidades cuando cambia la provincia
   useEffect(() => {
     if (filtroProvincia) {
-      setCargando(true)
       localidadesPorProvincia(Number(filtroProvincia))
         .then((locs) => setLocalidades(locs))
         .catch(() => setError('No se pudieron cargar las localidades.'))
-        .finally(() => setCargando(false))
       setFiltroLocalidad('')
-      setObras([]) // Limpiar obras al cambiar provincia
     } else {
       setLocalidades([])
       setFiltroLocalidad('')
-      setObras([])
     }
   }, [filtroProvincia])
 
@@ -75,11 +69,14 @@ export default function ObrasList({
         setCargando(false)
       }
     }
-    if (filtroLocalidad || filtroEstado) {
+    if (
+      filtroLocalidad ||
+      filtroEstado ||
+      (!filtroProvincia && !filtroLocalidad && !filtroEstado)
+    ) {
       fetchObrasFiltradas()
-    } else {
-      setObras([])
     }
+    // Si solo cambia provincia, no hace fetch de obras
   }, [filtroLocalidad, filtroEstado])
 
   const handleEliminar = async (id: number) => {
@@ -245,4 +242,5 @@ export default function ObrasList({
         </div>
       </div>
     </div>
-  )}
+  )
+}

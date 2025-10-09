@@ -5,8 +5,6 @@ import {
   Calendar,
   Clock,
   User,
-  MapPin,
-  Phone,
   Users,
   Car,
   Building2,
@@ -236,6 +234,32 @@ export default function CrearVisita({
 
   const filteredVisitadores = visitadores
 
+  const handleVisitaInicialToggle = () => {
+    setIsVisitaInicial((v) => {
+      const nuevoValor = !v
+      if (nuevoValor) {
+        setObraSeleccionada('')
+        setFormData((prev) => ({
+          ...prev,
+          obraId: undefined,
+          obraCliente: '',
+          direccion: '',
+          contacto: '',
+          localidad: '',
+          nombre: '',
+          apellido: '',
+          clienteTelefono: '',
+          clienteMail: '',
+        }))
+        setProvinciaSeleccionada('')
+      }
+      return nuevoValor
+    })
+    setShowObraSearch(false)
+    setVisitadorPrincipal('')
+    setSelectedAcompanantes([])
+  }
+
   const handleObraSelect = (obra: any) => {
     setObraSeleccionada(obra.direccion ?? '')
     setFormData((prev) => ({
@@ -267,7 +291,7 @@ export default function CrearVisita({
       !formData.direccion ||
       (!isVisitaInicial && !formData.contacto) ||
       !formData.vehiculo ||
-      !formData.localidad
+      (isVisitaInicial && (!provinciaSeleccionada || !formData.localidad))
     ) {
       setFormError('Todos los campos son obligatorios.')
       return
@@ -352,73 +376,10 @@ export default function CrearVisita({
                     ? `Agendar Visita`
                     : 'Nueva Visita'}
               </h1>
-              {isFromObra && (
-                <p className="mt-2 text-lg text-gray-600">
-                  <span className="font-semibold">Cliente:</span>{' '}
-                  {preloadedObra?.cliente
-                    ? preloadedObra.cliente.tipo_cliente === 'EMPRESA'
-                      ? preloadedObra.cliente.razon_social
-                      : `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`
-                    : ''}
-                  <span className="mx-2 text-gray-400">|</span>
-                  <span className="font-semibold">Dirección:</span>{' '}
-                  {preloadedObra?.direccion}
-                </p>
-              )}
-              {isFromObra && visitaEditar && (
-                <p className="mt-2 text-lg text-gray-600">
-                  <span className="font-semibold">Cliente:</span>{' '}
-                  {preloadedObra?.cliente
-                    ? preloadedObra.cliente.tipo_cliente === 'EMPRESA'
-                      ? preloadedObra.cliente.razon_social
-                      : `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`
-                    : ''}
-                  <span className="mx-2 text-gray-400">|</span>
-                  <span className="font-semibold">Dirección:</span>{' '}
-                  {preloadedObra?.direccion}
-                </p>
-              )}
             </div>
-            {!isFromObra && visitaEditar && (
-              <section className="mb-8">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowObraSearch(!showObraSearch)}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-2 shadow-sm transition-colors ${
-                      isVisitaInicial
-                        ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                        : 'border-gray-300 bg-white text-blue-700 hover:bg-blue-50'
-                    } `}
-                    disabled={isVisitaInicial}
-                  >
-                    <Building2 className="h-4 w-4" />
-                    {obraSeleccionada || 'Buscar obra existente...'}{' '}
-                  </button>
-                  <div className="ml-4 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => setIsVisitaInicial((v) => !v)}
-                      className={`flex items-center gap-2 rounded-full px-4 py-2 font-semibold shadow transition-colors ${
-                        isVisitaInicial
-                          ? 'bg-blue-600 text-white'
-                          : 'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50'
-                      } `}
-                    >
-                      <Info className="h-4 w-4" />
-                      Visita sin obra
-                    </button>
-                  </div>
-                </div>
-                {showObraSearch && !isVisitaInicial && (
-                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                    <ObraSearchWrapper onSelectObra={handleObraSelect} />
-                  </div>
-                )}
-              </section>
-            )}
 
-            {!isFromObra && !visitaEditar && (
+            {/* VISITA INICIAL O BUSCAR OBRA */}
+            {!isFromObra && (
               <section className="mb-8">
                 <div className="flex items-center gap-3">
                   <button
@@ -437,7 +398,7 @@ export default function CrearVisita({
                   <div className="ml-4 flex items-center">
                     <button
                       type="button"
-                      onClick={() => setIsVisitaInicial((v) => !v)}
+                      onClick={handleVisitaInicialToggle}
                       className={`flex items-center gap-2 rounded-full px-4 py-2 font-semibold shadow transition-colors ${
                         isVisitaInicial
                           ? 'bg-blue-600 text-white'
@@ -457,129 +418,174 @@ export default function CrearVisita({
               </section>
             )}
 
+            {/* SOLO mostrar datos de contacto y dirección si es visita inicial */}
             {isVisitaInicial && (
-              <section className="mb-8">
-                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                  <User2 className="h-5 w-5" /> Datos de Contacto
-                </h2>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Nombre
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.nombre || ''}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          nombre: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                    />
+              <>
+                {/* DATOS DE CONTACTO */}
+                <section className="mb-8">
+                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
+                    <User2 className="h-5 w-5" /> Datos de Contacto
+                  </h2>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          formData.nombre ||
+                          preloadedObra?.cliente?.nombre ||
+                          ''
+                        }
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            nombre: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Apellido
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          formData.apellido ||
+                          preloadedObra?.cliente?.apellido ||
+                          ''
+                        }
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            apellido: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Teléfono
+                      </label>
+                      <input
+                        type="text"
+                        value={
+                          formData.clienteTelefono ||
+                          preloadedObra?.cliente?.telefono ||
+                          ''
+                        }
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            clienteTelefono: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Apellido
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.apellido || ''}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          apellido: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                    />
+                </section>
+
+                {/* DATOS DE LA DIRECCIÓN */}
+                <section className="mb-8">
+                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
+                    <Building2 className="h-5 w-5" /> Datos de la Dirección
+                  </h2>
+                  <div className="mb-2 grid grid-cols-1 gap-6 md:grid-cols-3">
+                    {/* Provincia */}
+                    <div>
+                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                        Provincia
+                      </label>
+                      <select
+                        value={provinciaSeleccionada}
+                        onChange={(e) => {
+                          const value = e.target.value
+                            ? Number(e.target.value)
+                            : ''
+                          setProvinciaSeleccionada(value)
+                          setFormData((prev) => ({
+                            ...prev,
+                            localidad: '',
+                          }))
+                        }}
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                      >
+                        <option value="">Seleccionar provincia...</option>
+                        {provincias.map((prov) => (
+                          <option
+                            key={prov.cod_provincia}
+                            value={prov.cod_provincia}
+                          >
+                            {prov.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Localidad */}
+                    <div>
+                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                        Localidad
+                      </label>
+                      <select
+                        value={formData.localidad || ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            localidad: e.target.value,
+                          }))
+                        }
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                        disabled={!provinciaSeleccionada}
+                      >
+                        <option value="">Seleccionar localidad...</option>
+                        {localidades.map((loc) => (
+                          <option
+                            key={loc.cod_localidad}
+                            value={loc.nombre_localidad}
+                          >
+                            {loc.nombre_localidad}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Dirección */}
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Dirección
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.direccion}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            direccion: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Teléfono
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.clienteTelefono || ''}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          clienteTelefono: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                </div>
-              </section>
+                </section>
+              </>
             )}
 
+            {/* DATOS DE LA VISITA */}
             <section className="mb-8">
-              <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-800">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
                 <Info className="h-5 w-5" /> Datos de la Visita
               </h2>
-              <div className="mb-2 grid grid-cols-1 gap-6 md:grid-cols-3">
-                {/* --- NUEVO CAMPO PROVINCIA --- */}
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    Provincia
-                  </label>
-                  <select
-                    value={provinciaSeleccionada}
-                    onChange={(e) => {
-                      const value = e.target.value ? Number(e.target.value) : ''
-                      setProvinciaSeleccionada(value)
-                      setFormData((prev) => ({
-                        ...prev,
-                        localidad: '',
-                      }))
-                    }}
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="">Seleccionar provincia...</option>
-                    {provincias.map((prov) => (
-                      <option
-                        key={prov.cod_provincia}
-                        value={prov.cod_provincia}
-                      >
-                        {prov.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Building2 className="h-4 w-4" />
-                    Localidad
-                  </label>
-                  <select
-                    value={formData.localidad || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        localidad: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                    disabled={!provinciaSeleccionada}
-                  >
-                    <option value="">Seleccionar localidad...</option>
-                    {localidades.map((loc) => (
-                      <option
-                        key={loc.cod_localidad}
-                        value={loc.nombre_localidad}
-                      >
-                        {loc.nombre_localidad}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
                 <div>
                   <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
@@ -709,6 +715,7 @@ export default function CrearVisita({
               </div>
             </section>
 
+            {/* Empleados asignados y observaciones */}
             <section className="mb-8">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
                 <Users className="h-5 w-5" /> Empleados asignados
