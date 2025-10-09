@@ -6,9 +6,13 @@ interface BackendObra {
   direccion: string
   cliente: {
     cuil: string
-    razon_social: string
+    razon_social?: string
     telefono: string
     mail: string
+    nombre?: string
+    apellido?: string
+    tipo_cliente: 'PERSONA' | 'EMPRESA'
+    sexo?: string
   }
   nota_fabrica?: string
   fecha_ini: string
@@ -23,8 +27,9 @@ interface BackendObra {
     | 'ENTREGADA'
     | 'CANCELADA'
   localidad?: {
-    cod_postal: number
+    cod_localidad: number
     nombre_localidad: string
+    cod_provincia: number
   }
   presupuesto?: Presupuesto[]
 }
@@ -44,7 +49,7 @@ export interface ObraFormData {
     | 'ENTREGADA'
     | 'CANCELADA'
   cuil_cliente: string
-  cod_postal: number
+  cod_localidad: number
 }
 
 const mapToFrontend = (obra: BackendObra): Obra => ({
@@ -55,13 +60,17 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
     razon_social: obra.cliente?.razon_social ?? 'No disponible',
     telefono: obra.cliente?.telefono ?? '',
     mail: obra.cliente?.mail ?? '',
+    nombre: obra.cliente?.nombre ?? '',
+    apellido: obra.cliente?.apellido ?? '',
+    sexo: obra.cliente?.sexo ?? '',
+    tipo_cliente: obra.cliente?.tipo_cliente ?? '',
   },
   nota_fabrica: obra.nota_fabrica,
   fecha_ini: obra.fecha_ini,
   fecha_cancelacion: obra.fecha_cancelacion,
   estado: obra.estado,
   localidad: obra.localidad,
-  cod_postal: obra.localidad?.cod_postal ?? 0,
+  cod_localidad: obra.localidad?.cod_localidad ?? 0,
   cuil_cliente: obra.cliente?.cuil ?? '',
   presupuesto: obra.presupuesto || [],
 })
@@ -70,7 +79,7 @@ const mapToBackend = (obraData: ObraFormData): any => {
   const payload: any = {
     direccion: obraData.direccion,
     estado: obraData.estado,
-    cod_postal: obraData.cod_postal,
+    cod_localidad: obraData.cod_localidad,
     cuil: obraData.cuil_cliente,
     fecha_ini: obraData.fecha_ini,
   }

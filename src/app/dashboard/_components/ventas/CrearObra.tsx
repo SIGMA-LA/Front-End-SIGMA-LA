@@ -21,7 +21,7 @@ interface CrearObraProps {
 const initialState: ObraFormData = {
   direccion: '',
   cuil_cliente: '',
-  cod_postal: 0,
+  cod_localidad: 0,
   fecha_ini: '',
   estado: 'EN ESPERA DE PAGO',
   nota_fabrica: '',
@@ -63,7 +63,7 @@ export default function CrearObra({
       setFormData({
         direccion: obraExistente.direccion || '',
         cuil_cliente: obraExistente.cliente?.cuil || '',
-        cod_postal: obraExistente.localidad?.cod_postal || 0,
+        cod_localidad: obraExistente.localidad?.cod_localidad || 0,
         fecha_ini,
         nota_fabrica: obraExistente.nota_fabrica || '',
         fecha_cancelacion: null,
@@ -110,7 +110,7 @@ export default function CrearObra({
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'cod_postal' ? Number(value) : value,
+      [name]: name === 'cod_localidad' ? Number(value) : value,
     }))
   }
 
@@ -149,7 +149,7 @@ export default function CrearObra({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (isObraCancelada) return
-    if (!formData.cuil_cliente || !formData.cod_postal) {
+    if (!formData.cuil_cliente || !formData.cod_localidad) {
       alert('Por favor, seleccione un cliente y una localidad.')
       return
     }
@@ -269,16 +269,19 @@ export default function CrearObra({
                       Localidad *
                     </label>
                     <select
-                      name="cod_postal"
+                      name="cod_localidad"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
-                      value={formData.cod_postal || ''}
+                      value={formData.cod_localidad || ''}
                       onChange={handleChange}
                       required
                       disabled={isObraCancelada}
                     >
                       <option value="">Seleccione una localidad...</option>
                       {localidades.map((loc) => (
-                        <option key={loc.cod_postal} value={loc.cod_postal}>
+                        <option
+                          key={loc.cod_localidad}
+                          value={loc.cod_localidad}
+                        >
                           {loc.nombre_localidad}
                         </option>
                       ))}

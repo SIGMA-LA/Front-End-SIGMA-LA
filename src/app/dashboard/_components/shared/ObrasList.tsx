@@ -97,7 +97,7 @@ export default function ObrasList({
 
       const matchLocalidad =
         filtroLocalidad === '' ||
-        obra.localidad?.cod_postal === parseInt(filtroLocalidad)
+        obra.localidad?.cod_localidad === parseInt(filtroLocalidad)
 
       return matchDireccion && matchEstado && matchLocalidad
     })
@@ -202,7 +202,7 @@ export default function ObrasList({
               >
                 <option value="">Todas las localidades</option>
                 {localidades.map((loc) => (
-                  <option key={loc.cod_postal} value={loc.cod_postal}>
+                  <option key={loc.cod_localidad} value={loc.cod_localidad}>
                     {loc.nombre_localidad}
                   </option>
                 ))}

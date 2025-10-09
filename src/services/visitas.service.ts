@@ -18,7 +18,7 @@ interface BackendVisita {
   cod_visita: number
   fecha_hora_visita: string
   cod_obra?: number
-  cod_postal?: number
+  cod_localidad?: number
   fecha_cancelacion?: string
   observaciones?: string
   motivo_visita:
@@ -44,7 +44,7 @@ interface BackendVisita {
     }
   }
   localidad: {
-    cod_postal: number
+    cod_localidad: number
     nombre_localidad: string
   }
   empleado_visita: EmpleadoAsignadoVisita[]
@@ -63,7 +63,7 @@ const mapToFrontend = (backendVisita: BackendVisita): Visita => {
     obra: backendVisita.obra
       ? {
           cod_obra: backendVisita.obra.cod_obra,
-          cod_postal: backendVisita.cod_postal || 0,
+          cod_localidad: backendVisita.cod_localidad || 0,
           cuil_cliente: '',
           fecha_ini: '', // No viene del backend limitado
           estado: 'EN ESPERA DE PAGO' as const, // No viene del backend limitado
@@ -123,7 +123,7 @@ class VisitasService {
   async createVisita(data: {
     fecha_hora_visita: string
     cod_obra?: number
-    cod_postal?: number
+    cod_localidad?: number
     motivo_visita: string
     estado: string
     observaciones?: string
@@ -144,7 +144,7 @@ class VisitasService {
     data: {
       fecha_hora_visita?: string
       cod_obra?: number
-      cod_postal?: number
+      cod_localidad?: number
       motivo_visita?: string
       estado?: string
       observaciones?: string
