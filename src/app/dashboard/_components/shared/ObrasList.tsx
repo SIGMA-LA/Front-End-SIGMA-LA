@@ -36,6 +36,7 @@ export default function ObrasList({
   onScheduleVisit,
   onScheduleEntrega,
   onEditClick,
+  onNotaFabricaClick,
 }: ObrasListProps) {
   const { obras, fetchObras, localidades, fetchLocalidades } =
     useGlobalContext()
@@ -244,37 +245,39 @@ export default function ObrasList({
                     <div className="flex flex-wrap gap-2 sm:gap-4">
                       {/* SOLO mostrar si NO es VENTAS */}
                       {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
-                        <button
-                          onClick={() => setObraPagos(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                          disabled={isCancelada}
-                          title={
-                            isCancelada
-                              ? 'No se pueden gestionar pagos de una obra cancelada'
-                              : 'Gestionar pagos'
-                          }
-                        >
-                          <DollarSign className="h-4 w-4" /> Pagos
-                        </button>
-                        <button
-                          onClick={() => setNotaFabricaObra(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                          disabled={isCancelada}
-                          title={
-                            isCancelada
-                              ? 'No se pueden gestionar Notas de Fábrica de una obra cancelada'
-                              : 'Gestionar Nota de Fábrica'
-                          }
-                        >
-                          <FileText className="h-4 w-4" /> Nota de Fábrica
-                        </button>
-                      </div>
+                        <>
+                          <button
+                            onClick={() => setObraPagos(obra)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                            disabled={obra.estado === 'CANCELADA'}
+                            title={
+                              obra.estado === 'CANCELADA'
+                                ? 'No se pueden gestionar pagos de una obra cancelada'
+                                : 'Gestionar pagos'
+                            }
+                          >
+                            <DollarSign className="h-4 w-4" /> Pagos
+                          </button>
+                          <button
+                            onClick={() => setNotaFabricaObra(obra)}
+                            className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                            disabled={obra.estado === 'CANCELADA'}
+                            title={
+                              obra.estado === 'CANCELADA'
+                                ? 'No se pueden gestionar Notas de Fábrica de una obra cancelada'
+                                : 'Gestionar Nota de Fábrica'
+                            }
+                          >
+                            <FileText className="h-4 w-4" /> Nota de Fábrica
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-              )
-            })
-          ) : (
+              </div>
+            
+          ))) : (
             <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
               <Filter className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -303,5 +306,4 @@ export default function ObrasList({
         />
       )}
     </div>
-  )
-}
+  )}
