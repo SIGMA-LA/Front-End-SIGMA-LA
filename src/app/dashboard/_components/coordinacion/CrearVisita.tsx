@@ -288,9 +288,9 @@ export default function CrearVisita({
       observaciones: formData.observaciones,
       direccion_visita: formData.direccion,
       cod_obra: isVisitaInicial ? null : (formData.obraId ?? null),
-      cod_postal:
+      cod_localidad:
         localidades.find((l) => l.nombre_localidad === formData.localidad)
-          ?.cod_postal ?? null,
+          ?.cod_localidad ?? null,
       dias_viatico: diasViatico,
       empleados_visita: empleadosAsignados.map((e) => e.cuil),
       vehiculo: formData.vehiculo,
@@ -552,7 +552,7 @@ export default function CrearVisita({
                         <option value="">Seleccionar localidad...</option>
                         {localidades.map((loc) => (
                           <option
-                            key={loc.cod_postal}
+                            key={loc.cod_localidad}
                             value={loc.nombre_localidad}
                           >
                             {loc.nombre_localidad}

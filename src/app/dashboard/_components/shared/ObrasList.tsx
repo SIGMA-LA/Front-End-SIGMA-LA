@@ -213,61 +213,75 @@ export default function ObrasList({
 
         <div className="grid gap-4 sm:gap-6">
           {obrasFiltradas.length > 0 ? (
-            obrasFiltradas.map((obra) => (
-              <div
-                key={obra.cod_obra}
-                className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {obra.direccion}
-                    </h3>
-                    <p className="text-gray-600">
-                      Cliente:{' '}
-                      {obra.cliente
-                        ? obra.cliente.tipo_cliente === 'EMPRESA'
-                          ? obra.cliente.razon_social
-                          : `${obra.cliente.nombre ?? ''} ${obra.cliente.apellido ?? ''}`.trim() ||
-                            'No asignado'
-                        : 'No asignado'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Inicio:{' '}
-                      {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
-                        timeZone: 'UTC',
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-start gap-3 sm:items-end">
-                    <EstadoObraBadge estado={obra.estado} />
-                    <div className="flex flex-wrap gap-2 sm:gap-4">
-                      {/* SOLO mostrar si NO es VENTAS */}
-                      {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
-                        <button
-                          onClick={() => setObraPagos(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                          disabled={isCancelada}
-                          title={
-                            isCancelada
-                              ? 'No se pueden gestionar pagos de una obra cancelada'
-                              : 'Gestionar pagos'
-                          }
-                        >
-                          <DollarSign className="h-4 w-4" /> Pagos
-                        </button>
-                        <button
-                          onClick={() => setNotaFabricaObra(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                          disabled={isCancelada}
-                          title={
-                            isCancelada
-                              ? 'No se pueden gestionar Notas de Fábrica de una obra cancelada'
-                              : 'Gestionar Nota de Fábrica'
-                          }
-                        >
-                          <FileText className="h-4 w-4" /> Nota de Fábrica
-                        </button>
+            obrasFiltradas.map((obra) => {
+              // Cliente: Empresa => razón social, Persona => nombre y apellido, sino "No asignado"
+              let clienteStr = 'No asignado'
+              if (obra.cliente) {
+                if (
+                  obra.cliente.tipo_cliente === 'EMPRESA' &&
+                  obra.cliente.razon_social
+                ) {
+                  clienteStr = obra.cliente.razon_social
+                } else if (obra.cliente.tipo_cliente === 'PERSONA') {
+                  const nombre = obra.cliente.nombre ?? ''
+                  const apellido = obra.cliente.apellido ?? ''
+                  clienteStr = `${nombre} ${apellido}`.trim() || 'No asignado'
+                }
+              }
+
+              const isCancelada = obra.estado === 'CANCELADA'
+
+              return (
+                <div
+                  key={obra.cod_obra}
+                  className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {obra.direccion}
+                      </h3>
+                      <p className="text-gray-600">Cliente: {clienteStr}</p>
+                      <p className="text-sm text-gray-500">
+                        Inicio:{' '}
+                        {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
+                          timeZone: 'UTC',
+                        })}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-start gap-3 sm:items-end">
+                      <EstadoObraBadge estado={obra.estado} />
+                      <div className="flex flex-wrap gap-2 sm:gap-4">
+                        {/* SOLO mostrar si NO es VENTAS */}
+                        {usuario?.rol_actual !== 'VENTAS' &&
+                          onScheduleVisit && (
+                            <div className="flex flex-wrap gap-2 sm:gap-4">
+                              <button
+                                onClick={() => setObraPagos(obra)}
+                                className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                                disabled={isCancelada}
+                                title={
+                                  isCancelada
+                                    ? 'No se pueden gestionar pagos de una obra cancelada'
+                                    : 'Gestionar pagos'
+                                }
+                              >
+                                <DollarSign className="h-4 w-4" /> Pagos
+                              </button>
+                              <button
+                                onClick={() => setNotaFabricaObra(obra)}
+                                className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                                disabled={isCancelada}
+                                title={
+                                  isCancelada
+                                    ? 'No se pueden gestionar Notas de Fábrica de una obra cancelada'
+                                    : 'Gestionar Nota de Fábrica'
+                                }
+                              >
+                                <FileText className="h-4 w-4" /> Nota de Fábrica
+                              </button>
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>

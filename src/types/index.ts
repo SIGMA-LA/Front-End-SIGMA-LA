@@ -3,9 +3,6 @@ import { number } from 'valibot'
 export interface Cliente {
   cuil: string
   razon_social?: string
-  nombre?: string
-  apellido?: string
-  tipo_cliente: 'PERSONA' | 'EMPRESA'
   telefono: string
   mail: string
   apellido?: string
@@ -136,7 +133,7 @@ export interface Obra {
 
 export interface Provincia {
   cod_provincia: number
-  nombre_provincia: string
+  nombre: string
   localidades?: Localidad[]
 }
 
