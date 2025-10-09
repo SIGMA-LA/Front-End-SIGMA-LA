@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, Save, AlertCircle, Loader2 } from 'lucide-react'
-import clienteService, { UpdateClienteDTO } from '@/services/cliente.service'
+import clienteService from '@/services/cliente.service'
 import type { Cliente } from '@/types'
 
 interface EditarClienteProps {
@@ -9,12 +9,31 @@ interface EditarClienteProps {
   onSuccess?: (clienteActualizado: Cliente) => void
 }
 
+interface UpdateClienteDTO {
+  razon_social?: string
+  telefono?: string
+  mail?: string
+  nombre?: string
+  apellido?: string
+  sexo?: string
+}
+
 export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarClienteProps) {
+  const esEmpresa = cliente.tipo_cliente === 'EMPRESA'
+  
   const [formData, setFormData] = useState<UpdateClienteDTO>({
-    razon_social: cliente.razon_social,
+    ...(esEmpresa 
+      ? { razon_social: cliente.razon_social || '' }
+      : { 
+          nombre: cliente.nombre || '', 
+          apellido: cliente.apellido || '', 
+          sexo: cliente.sexo || '' 
+        }
+    ),
     telefono: cliente.telefono,
     mail: cliente.mail,
   })
+  
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [errors, setErrors] = useState<Partial<Record<keyof UpdateClienteDTO, string>>>({})
@@ -22,10 +41,28 @@ export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarCl
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof UpdateClienteDTO, string>> = {}
 
-    if (!formData.razon_social?.trim()) {
-      newErrors.razon_social = 'La razón social es obligatoria'
-    } else if (formData.razon_social.length > 50) {
-      newErrors.razon_social = 'La razón social no puede exceder 50 caracteres'
+    if (esEmpresa) {
+      if (!formData.razon_social?.trim()) {
+        newErrors.razon_social = 'La razón social es obligatoria'
+      } else if (formData.razon_social.length > 50) {
+        newErrors.razon_social = 'La razón social no puede exceder 50 caracteres'
+      }
+    } else {
+      if (!formData.nombre?.trim()) {
+        newErrors.nombre = 'El nombre es obligatorio'
+      } else if (formData.nombre.length > 50) {
+        newErrors.nombre = 'El nombre no puede exceder 50 caracteres'
+      }
+
+      if (!formData.apellido?.trim()) {
+        newErrors.apellido = 'El apellido es obligatorio'
+      } else if (formData.apellido.length > 50) {
+        newErrors.apellido = 'El apellido no puede exceder 50 caracteres'
+      }
+
+      if (!formData.sexo?.trim()) {
+        newErrors.sexo = 'El sexo es obligatorio'
+      }
     }
 
     if (!formData.telefono?.trim()) {
@@ -86,11 +123,21 @@ export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarCl
   }
 
   const hasChanges = () => {
-    return (
-      formData.razon_social !== cliente.razon_social ||
-      formData.telefono !== cliente.telefono ||
-      formData.mail !== cliente.mail
-    )
+    if (esEmpresa) {
+      return (
+        formData.razon_social !== cliente.razon_social ||
+        formData.telefono !== cliente.telefono ||
+        formData.mail !== cliente.mail
+      )
+    } else {
+      return (
+        formData.nombre !== cliente.nombre ||
+        formData.apellido !== cliente.apellido ||
+        formData.sexo !== cliente.sexo ||
+        formData.telefono !== cliente.telefono ||
+        formData.mail !== cliente.mail
+      )
+    }
   }
 
   return (
@@ -101,6 +148,9 @@ export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarCl
             <h2 className="text-2xl font-bold text-gray-900">Editar Cliente</h2>
             <p className="mt-1 text-sm text-gray-600">
               CUIL: <span className="font-semibold">{cliente.cuil}</span>
+              <span className="ml-3 rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                {esEmpresa ? 'Empresa' : 'Persona'}
+              </span>
             </p>
           </div>
           <button
@@ -123,27 +173,99 @@ export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarCl
           )}
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Razón Social <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.razon_social}
-                onChange={(e) => handleChange('razon_social', e.target.value)}
-                placeholder="Empresa S.A."
-                maxLength={50}
-                disabled={loading}
-                className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
-                  errors.razon_social
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-                }`}
-              />
-              {errors.razon_social && (
-                <p className="mt-1 text-sm text-red-600">{errors.razon_social}</p>
-              )}
-            </div>
+            {esEmpresa ? (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Razón Social <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.razon_social}
+                  onChange={(e) => handleChange('razon_social', e.target.value)}
+                  placeholder="Empresa S.A."
+                  maxLength={50}
+                  disabled={loading}
+                  className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                    errors.razon_social
+                      ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                  }`}
+                />
+                {errors.razon_social && (
+                  <p className="mt-1 text-sm text-red-600">{errors.razon_social}</p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Nombre <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nombre}
+                      onChange={(e) => handleChange('nombre', e.target.value)}
+                      placeholder="Juan"
+                      maxLength={50}
+                      disabled={loading}
+                      className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                        errors.nombre
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                      }`}
+                    />
+                    {errors.nombre && (
+                      <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Apellido <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.apellido}
+                      onChange={(e) => handleChange('apellido', e.target.value)}
+                      placeholder="Pérez"
+                      maxLength={50}
+                      disabled={loading}
+                      className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                        errors.apellido
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                      }`}
+                    />
+                    {errors.apellido && (
+                      <p className="mt-1 text-sm text-red-600">{errors.apellido}</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Sexo <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.sexo}
+                    onChange={(e) => handleChange('sexo', e.target.value)}
+                    disabled={loading}
+                    className={`w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 disabled:bg-gray-100 ${
+                      errors.sexo
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+                    }`}
+                  >
+                    <option value="">Seleccione...</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                  {errors.sexo && (
+                    <p className="mt-1 text-sm text-red-600">{errors.sexo}</p>
+                  )}
+                </div>
+              </>
+            )}
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -192,8 +314,8 @@ export default function EditarCliente({ cliente, onCancel, onSuccess }: EditarCl
             {/* Información no editable */}
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Nota:</span> El CUIL no puede ser modificado. 
-                Si necesitas cambiar el CUIL, deberás crear un nuevo cliente.
+                <span className="font-medium">Nota:</span> El CUIL y el tipo de cliente no pueden ser modificados. 
+                Si necesitas cambiarlos, deberás crear un nuevo cliente.
               </p>
             </div>
           </div>

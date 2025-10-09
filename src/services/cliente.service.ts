@@ -3,9 +3,6 @@ import api from './api/api'
 import type { Cliente } from '@/types'
 
 interface BackendCliente {
-  nombre?: string
-  apellido?: string
-  tipo_cliente?: 'PERSONA' | 'EMPRESA'
   cuil: string
   razon_social?: string
   telefono: string
@@ -31,31 +28,52 @@ export interface UpdateClienteDTO {
   razon_social?: string
   telefono?: string
   mail?: string
+  nombre?: string
+  apellido?: string
+  sexo?: string
 }
 
 const mapToFrontend = (cliente: BackendCliente): Cliente => ({
-  nombre: cliente.nombre,
-  apellido: cliente.apellido,
-  tipo_cliente:
-    cliente.tipo_cliente ?? (cliente.razon_social ? 'EMPRESA' : 'PERSONA'),
   cuil: cliente.cuil,
-  razon_social: cliente.razon_social,
+  tipo_cliente: cliente.tipo_cliente,
   telefono: cliente.telefono,
   mail: cliente.mail,
-  apellido: cliente.apellido,
+  razon_social: cliente.razon_social,
   nombre: cliente.nombre,
+  apellido: cliente.apellido,
   sexo: cliente.sexo,
-  tipo_cliente: cliente.tipo_cliente,
 })
 
 const mapToBackend = (
   clienteData: CreateClienteDTO | UpdateClienteDTO
-): any => ({
-  cuil: 'cuil' in clienteData ? clienteData.cuil : undefined,
-  razon_social: clienteData.razon_social,
-  telefono: clienteData.telefono,
-  mail: clienteData.mail,
-})
+): any => {
+  const payload: any = {
+    telefono: clienteData.telefono,
+    mail: clienteData.mail,
+  }
+
+  // Para CreateClienteDTO
+  if ('cuil' in clienteData) {
+    payload.cuil = clienteData.cuil
+    payload.tipo_cliente = clienteData.tipo_cliente
+  }
+
+  // Campos específicos según tipo de cliente
+  if (clienteData.razon_social !== undefined) {
+    payload.razon_social = clienteData.razon_social
+  }
+  if (clienteData.nombre !== undefined) {
+    payload.nombre = clienteData.nombre
+  }
+  if (clienteData.apellido !== undefined) {
+    payload.apellido = clienteData.apellido
+  }
+  if (clienteData.sexo !== undefined) {
+    payload.sexo = clienteData.sexo
+  }
+
+  return payload
+}
 
 class ClienteService {
   private baseURL = '/clientes'
@@ -102,6 +120,7 @@ class ClienteService {
     clienteData: UpdateClienteDTO
   ): Promise<Cliente> {
     const payload = mapToBackend(clienteData)
+    console.log('Payload de actualización enviado al backend:', payload)
     const { data } = await api.put<BackendCliente>(
       `${this.baseURL}/${cuil}`,
       payload

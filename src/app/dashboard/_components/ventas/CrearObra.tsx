@@ -82,11 +82,19 @@ export default function CrearObra({
 
   const clientesFiltrados = useMemo(() => {
     if (!filtroCliente) return clientes
-    return clientes.filter(
-      (c) =>
-        c.razon_social.toLowerCase().includes(filtroCliente.toLowerCase()) ||
-        c.cuil.includes(filtroCliente)
-    )
+    const filtroLower = filtroCliente.toLowerCase()
+    return clientes.filter((c) => {
+      const matchCuil = c.cuil.includes(filtroCliente)
+      
+      if (c.tipo_cliente === 'EMPRESA') {
+        const matchRazonSocial = c.razon_social?.toLowerCase().includes(filtroLower)
+        return matchCuil || matchRazonSocial
+      } else {
+        const nombreCompleto = `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase()
+        const matchNombre = nombreCompleto.includes(filtroLower)
+        return matchCuil || matchNombre
+      }
+    })
   }, [clientes, filtroCliente])
 
   const hayPresupuestoAceptado = useMemo(
@@ -225,7 +233,9 @@ export default function CrearObra({
                             <User className="h-4 w-4 text-gray-600" />
                           </div>
                           <span className="text-gray-900">
-                            {cliente.razon_social}
+                            {cliente.tipo_cliente === 'EMPRESA'
+                              ? cliente.razon_social
+                              : `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()}
                           </span>
                         </div>
                       ))
