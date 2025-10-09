@@ -28,8 +28,8 @@ import RegistrarPedido from './RegistrarPedido'
 import MaquinariaList from './maquinaria/MaquinariaList'
 import VehículosList from './VehiculosList'
 import CrearVehiculo from './CrearVehiculo'
-import EditarVehiculo from './EditarVehiculo' // 1. Importar el nuevo componente
-import { Vehiculo } from '@/types' // Importar el tipo
+import EditarVehiculo from './EditarVehiculo'
+import { Vehiculo } from '@/types'
 import OrdenesProduccionView from './ordenes_produccion/OrdenesProduccionView'
 
 import type { Empleado, Visita } from '@/types'
@@ -43,7 +43,9 @@ export default function CoordDashboard() {
   const [nuevasMaquinas, setNuevasMaquinas] = useState<any[]>([])
   const [visitaEditar, setVisitaEditar] = useState<Visita | null>(null)
 
-  const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(null);
+  const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(
+    null
+  )
   useEffect(() => {
     async function fetchUsuario() {
       const empleado = await obtenerEmpleadoActual()
@@ -200,9 +202,9 @@ export default function CoordDashboard() {
         return (
           <VehículosList
             onCreateClick={() => setCurrentSection('crear-vehiculo')}
-             onEditClick={(vehiculo) => {
-              setSelectedVehiculo(vehiculo);
-              setCurrentSection('editar-vehiculo');
+            onEditClick={(vehiculo) => {
+              setSelectedVehiculo(vehiculo)
+              setCurrentSection('editar-vehiculo')
             }}
           />
         )
@@ -218,19 +220,19 @@ export default function CoordDashboard() {
       case 'editar-vehiculo':
         // Nos aseguramos de que haya un vehículo seleccionado antes de renderizar
         return selectedVehiculo ? (
-            <EditarVehiculo
-                vehiculo={selectedVehiculo}
-                onCancel={() => {
-                    setCurrentSection('vehiculos');
-                    setSelectedVehiculo(null); // Limpiar el estado
-                }}
-                onSubmit={() => {
-                    setCurrentSection('vehiculos');
-                    setSelectedVehiculo(null); // Limpiar el estado
-                    // Opcional: podrías querer refrescar la lista de vehículos aquí
-                }}
-            />
-        ) : null; // Si no hay vehículo seleccionado, no renderizar nada o un fallback
+          <EditarVehiculo
+            vehiculo={selectedVehiculo}
+            onCancel={() => {
+              setCurrentSection('vehiculos')
+              setSelectedVehiculo(null) // Limpiar el estado
+            }}
+            onSubmit={() => {
+              setCurrentSection('vehiculos')
+              setSelectedVehiculo(null) // Limpiar el estado
+              // Opcional: podrías querer refrescar la lista de vehículos aquí
+            }}
+          />
+        ) : null // Si no hay vehículo seleccionado, no renderizar nada o un fallback
 
       case 'configuraciones':
         return <Configuraciones />

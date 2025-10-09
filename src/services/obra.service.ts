@@ -67,8 +67,26 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
   fecha_ini: obra.fecha_ini,
   fecha_cancelacion: obra.fecha_cancelacion,
   estado: obra.estado,
-  localidad: obra.localidad ?? { cod_postal: 0, nombre_localidad: '' },
-  cod_postal: obra.localidad?.cod_postal ?? 0,
+  localidad: obra.localidad
+    ? {
+        cod_localidad: obra.localidad.cod_localidad,
+        nombre_localidad: obra.localidad.nombre_localidad,
+        cod_provincia: obra.localidad.cod_provincia,
+        provincia: {
+          cod_provincia: obra.localidad.cod_provincia,
+          nombre: obra.localidad.nombre_localidad ?? '',
+        },
+      }
+    : {
+        cod_localidad: 0,
+        nombre_localidad: '',
+        cod_provincia: 0,
+        provincia: {
+          cod_provincia: 0,
+          nombre: '',
+        },
+      },
+  cod_localidad: obra.localidad?.cod_localidad ?? 0,
   cuil_cliente: obra.cliente?.cuil ?? '',
   presupuesto: obra.presupuesto || [],
 })

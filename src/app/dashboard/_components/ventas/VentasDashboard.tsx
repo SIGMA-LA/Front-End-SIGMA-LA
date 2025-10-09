@@ -224,7 +224,7 @@ export default function VentasDashboard() {
         )
 
       case 'visitas':
-        return <VisitasList onCreateClick={() => {}} />
+        return <VisitasList onCreateClick={() => {}} onEditClick={() => {}} />
 
       case 'entregas':
         return <EntregasList onCreateClick={() => {}} />

@@ -21,7 +21,9 @@ import { ModalEncargadoProps } from '@/types'
 import empleadoService from '@/services/empleado.service'
 import { getObras } from '@/services/obra.service'
 import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
-import maquinariaService, { MaquinariaConDisponibilidad } from '@/services/maquinaria.service'
+import maquinariaService, {
+  MaquinariaConDisponibilidad,
+} from '@/services/maquinaria.service'
 import SelectionModal from '../shared/SelectionModal'
 import AsignarPersonalModal from '../shared/AsignarPersonalModal'
 import parametroService from '@/services/parametro.service'
@@ -144,7 +146,9 @@ export default function CrearEntrega({
 
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [obras, setObras] = useState<Obra[]>([])
-  const [maquinarias, setMaquinarias] = useState<MaquinariaConDisponibilidad[]>([])
+  const [maquinarias, setMaquinarias] = useState<MaquinariaConDisponibilidad[]>(
+    []
+  )
   const [loading, setLoading] = useState(true)
   const [loadingDisponibilidad, setLoadingDisponibilidad] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -153,8 +157,12 @@ export default function CrearEntrega({
   const [diasViaticos, setDiasViaticos] = useState('')
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
 
-  const [ordenesProduccion, setOrdenesProduccion] = useState<OrdenProduccion[]>([])
-  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
+  const [ordenesProduccion, setOrdenesProduccion] = useState<OrdenProduccion[]>(
+    []
+  )
+  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(
+    null
+  )
   const [loadingOrdenes, setLoadingOrdenes] = useState(false)
   const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
 
@@ -166,7 +174,7 @@ export default function CrearEntrega({
       try {
         setLoading(true)
         setError(null)
-        
+
         const [empleadosData, paramsData] = await Promise.all([
           empleadoService.getDisponiblesParaEntrega(),
           parametroService.getActualViatico(),
@@ -192,29 +200,38 @@ export default function CrearEntrega({
   useEffect(() => {
     const verificarDisponibilidad = async () => {
       if (formData.fecha && formData.hora && !loading) {
-        setLoadingDisponibilidad(true);
+        setLoadingDisponibilidad(true)
         try {
-          const fechaInicio = new Date(`${formData.fecha}T${formData.hora}`);
-          const fechaFin = new Date(fechaInicio.getTime() + 8 * 60 * 60 * 1000);
+          const fechaInicio = new Date(`${formData.fecha}T${formData.hora}`)
+          const fechaFin = new Date(fechaInicio.getTime() + 8 * 60 * 60 * 1000)
 
-          const maquinariasConDisponibilidad = await maquinariaService.getDisponibilidadPorFecha(
-            fechaInicio.toISOString(),
-            fechaFin.toISOString()
-          );
-          setMaquinarias(maquinariasConDisponibilidad);
+          const maquinariasConDisponibilidad =
+            await maquinariaService.getDisponibilidadPorFecha(
+              fechaInicio.toISOString(),
+              fechaFin.toISOString()
+            )
+          setMaquinarias(maquinariasConDisponibilidad)
         } catch (error) {
-          console.error("Error al verificar disponibilidad de maquinaria:", error);
-          setError("No se pudo verificar la disponibilidad de las maquinarias.");
+          console.error(
+            'Error al verificar disponibilidad de maquinaria:',
+            error
+          )
+          setError('No se pudo verificar la disponibilidad de las maquinarias.')
         } finally {
-          setLoadingDisponibilidad(false);
+          setLoadingDisponibilidad(false)
         }
       } else if (!loading) {
-        const todasLasMaquinarias = await maquinariaService.getAllMaquinarias();
-        setMaquinarias(todasLasMaquinarias.map(m => ({ ...m, availabilityStatus: 'DISPONIBLE' as const })))
+        const todasLasMaquinarias = await maquinariaService.getAllMaquinarias()
+        setMaquinarias(
+          todasLasMaquinarias.map((m) => ({
+            ...m,
+            availabilityStatus: 'DISPONIBLE' as const,
+          }))
+        )
       }
-    };
-    verificarDisponibilidad();
-  }, [formData.fecha, formData.hora, loading]);
+    }
+    verificarDisponibilidad()
+  }, [formData.fecha, formData.hora, loading])
 
   useEffect(() => {
     const fetchOrdenes = async () => {
@@ -245,11 +262,11 @@ export default function CrearEntrega({
   const totalViaticos = useMemo(() => {
     const dias = Number(diasViaticos) || 0
     const cantidadPersonas = encargado ? 1 + acompanantes.length : 0
-    
+
     if (dias <= 0 || viaticoPorDia <= 0 || cantidadPersonas === 0) {
       return 0
     }
-    
+
     return dias * viaticoPorDia * cantidadPersonas
   }, [diasViaticos, viaticoPorDia, encargado, acompanantes])
 
@@ -263,7 +280,11 @@ export default function CrearEntrega({
   const filteredObras = obras.filter(
     (obra) =>
       obra.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.cliente.razon_social.toLowerCase().includes(searchTerm.toLowerCase())
+      obra.cliente.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.cliente.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      obra.cliente.razon_social
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   )
 
   const handleEmpleadoToggle = (empleadoCuil: string) => {
@@ -312,26 +333,31 @@ export default function CrearEntrega({
       alert('Debe seleccionar una obra.')
       return
     }
-    
+
     await crearEntregaEnBackend()
   }
 
   const crearEntregaEnBackend = async () => {
-    if (!encargado) return;
+    if (!encargado) return
 
     if (selectedMaquinaria.length > 0) {
-      const maquinariasSeleccionadas = maquinarias.filter(m => 
+      const maquinariasSeleccionadas = maquinarias.filter((m) =>
         selectedMaquinaria.includes(m.cod_maquina.toString())
       )
 
-      const maquinasEnConflicto = maquinariasSeleccionadas.filter(m => 
-        m.estado !== 'DISPONIBLE' || m.availabilityStatus === 'NO_DISPONIBLE'
-      );
+      const maquinasEnConflicto = maquinariasSeleccionadas.filter(
+        (m) =>
+          m.estado !== 'DISPONIBLE' || m.availabilityStatus === 'NO_DISPONIBLE'
+      )
 
       if (maquinasEnConflicto.length > 0) {
-        const nombresMaquinas = maquinasEnConflicto.map(m => m.descripcion).join(', ');
-        setError(`No se puede crear la entrega. Las siguientes maquinarias no están disponibles en la fecha seleccionada: ${nombresMaquinas}. Por favor, ajuste la fecha o deseleccione las maquinarias.`);
-        return;
+        const nombresMaquinas = maquinasEnConflicto
+          .map((m) => m.descripcion)
+          .join(', ')
+        setError(
+          `No se puede crear la entrega. Las siguientes maquinarias no están disponibles en la fecha seleccionada: ${nombresMaquinas}. Por favor, ajuste la fecha o deseleccione las maquinarias.`
+        )
+        return
       }
     }
 
@@ -342,8 +368,14 @@ export default function CrearEntrega({
       const fechaHoraISO = `${formData.fecha}T${formData.hora}`
 
       const empleadosConRoles = [
-        { cuil: encargado, rol_entrega: 'ENCARGADO' as 'ENCARGADO' | 'AYUDANTE' },
-        ...acompanantes.map(cuil => ({ cuil, rol_entrega: 'AYUDANTE' as 'ENCARGADO' | 'AYUDANTE' })),
+        {
+          cuil: encargado,
+          rol_entrega: 'ENCARGADO' as 'ENCARGADO' | 'AYUDANTE',
+        },
+        ...acompanantes.map((cuil) => ({
+          cuil,
+          rol_entrega: 'AYUDANTE' as 'ENCARGADO' | 'AYUDANTE',
+        })),
       ]
 
       const diasViaticosNumerico = Number(diasViaticos)
@@ -354,11 +386,12 @@ export default function CrearEntrega({
         detalle: formData.descripcionUso,
         observaciones: formData.observaciones || undefined,
         empleados: empleadosConRoles,
-        dias_viaticos: diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
-        maquinarias: selectedMaquinaria.map(id => parseInt(id, 10)),
-        cod_op: selectedOrden?.cod_op
+        dias_viaticos:
+          diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
+        maquinarias: selectedMaquinaria.map((id) => parseInt(id, 10)),
+        cod_op: selectedOrden?.cod_op,
       }
-      
+
       console.log('DTO que se enviará desde el frontend:', createEntregaDTO)
 
       const nuevaEntrega = await entregasService.createEntrega(createEntregaDTO)
@@ -367,22 +400,27 @@ export default function CrearEntrega({
       onSubmit(nuevaEntrega)
     } catch (err: any) {
       console.error('Error al crear entrega:', err)
-      const errorMessage = err.response?.data?.message || err.message || 'Error al crear la entrega. Por favor, intente nuevamente.';
-      setError(errorMessage);
-
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Error al crear la entrega. Por favor, intente nuevamente.'
+      setError(errorMessage)
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleConfirmPersonal = (encargadoId: string, acompananteIds: string[]) => {
+  const handleConfirmPersonal = (
+    encargadoId: string,
+    acompananteIds: string[]
+  ) => {
     setEncargado(encargadoId)
     setAcompanantes(acompananteIds)
   }
-  
+
   const getEmpleadoNombre = (cuil: string) => {
-    const emp = empleados.find(e => e.cuil === cuil);
-    return emp ? `${emp.nombre} ${emp.apellido}` : 'Desconocido';
+    const emp = empleados.find((e) => e.cuil === cuil)
+    return emp ? `${emp.nombre} ${emp.apellido}` : 'Desconocido'
   }
 
   if (loading) {
@@ -524,16 +562,25 @@ export default function CrearEntrega({
                   <div className="flex items-start justify-between">
                     <div className="text-sm">
                       <p className="font-semibold text-gray-800">
-                        <span className="font-bold">Encargado:</span> {encargado ? getEmpleadoNombre(encargado) : 'No seleccionado'}
+                        <span className="font-bold">Encargado:</span>{' '}
+                        {encargado
+                          ? getEmpleadoNombre(encargado)
+                          : 'No seleccionado'}
                       </p>
                       <p className="mt-2 font-semibold text-gray-800">
-                        <span className="font-bold">Acompañantes ({acompanantes.length}):</span>
+                        <span className="font-bold">
+                          Acompañantes ({acompanantes.length}):
+                        </span>
                       </p>
                       {acompanantes.length > 0 ? (
                         <ul className="list-disc pl-5 text-gray-600">
-                          {acompanantes.map(cuil => <li key={cuil}>{getEmpleadoNombre(cuil)}</li>)}
+                          {acompanantes.map((cuil) => (
+                            <li key={cuil}>{getEmpleadoNombre(cuil)}</li>
+                          ))}
                         </ul>
-                      ) : <p className="text-gray-600">Ninguno</p>}
+                      ) : (
+                        <p className="text-gray-600">Ninguno</p>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -613,7 +660,12 @@ export default function CrearEntrega({
                   <input
                     type="text"
                     value={formData.descripcionUso}
-                    onChange={e => setFormData(prev => ({ ...prev, descripcionUso: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        descripcionUso: e.target.value,
+                      }))
+                    }
                     placeholder="Ej: Colocación de aberturas"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     required
@@ -628,23 +680,26 @@ export default function CrearEntrega({
                     <input
                       type="number"
                       value={diasViaticos}
-                      onChange={e => setDiasViaticos(e.target.value)}
+                      onChange={(e) => setDiasViaticos(e.target.value)}
                       placeholder="Ej: 3"
                       className="w-24 rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       min="0"
                     />
                     <div className="flex flex-grow items-center gap-2 rounded-lg bg-blue-50 p-2 text-blue-800">
                       <DollarSign className="h-5 w-5 flex-shrink-0" />
-                      <span className="font-semibold text-lg">
+                      <span className="text-lg font-semibold">
                         {formatCurrency(totalViaticos)}
                       </span>
                     </div>
                   </div>
-                  {viaticoPorDia > 0 && Number(diasViaticos) > 0 && encargado && (
-                    <p className="mt-1 text-xs text-gray-500">
-                      Cálculo: {diasViaticos} días x {1 + acompanantes.length} personas x {formatCurrency(viaticoPorDia)} p/día
-                    </p>
-                  )}
+                  {viaticoPorDia > 0 &&
+                    Number(diasViaticos) > 0 &&
+                    encargado && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Cálculo: {diasViaticos} días x {1 + acompanantes.length}{' '}
+                        personas x {formatCurrency(viaticoPorDia)} p/día
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -661,7 +716,9 @@ export default function CrearEntrega({
                         {selectedVehiculos.length} vehículo(s) seleccionado(s)
                       </p>
                       {selectedVehiculos.length > 0 && (
-                        <p className="text-xs text-gray-500">{selectedVehiculos.join(', ')}</p>
+                        <p className="text-xs text-gray-500">
+                          {selectedVehiculos.join(', ')}
+                        </p>
                       )}
                     </div>
                     <button
@@ -682,15 +739,19 @@ export default function CrearEntrega({
                 </label>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                     <div>
+                    <div>
                       <p className="font-medium text-gray-800">
                         {selectedMaquinaria.length} máquina(s) seleccionada(s)
                       </p>
                       {selectedMaquinaria.length > 0 && (
                         <p className="text-xs text-gray-500">
                           {maquinarias
-                            .filter(m => selectedMaquinaria.includes(m.cod_maquina.toString()))
-                            .map(m => m.descripcion)
+                            .filter((m) =>
+                              selectedMaquinaria.includes(
+                                m.cod_maquina.toString()
+                              )
+                            )
+                            .map((m) => m.descripcion)
                             .join(', ')}
                         </p>
                       )}
@@ -767,7 +828,7 @@ export default function CrearEntrega({
       <SelectionModal
         isOpen={isVehiculoModalOpen}
         title="Seleccionar Vehículos"
-        items={mockVehiculos.map(v => ({
+        items={mockVehiculos.map((v) => ({
           id: v.patente,
           label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
         }))}
@@ -775,28 +836,35 @@ export default function CrearEntrega({
         onClose={() => setIsVehiculoModalOpen(false)}
         onConfirm={setSelectedVehiculos}
       />
-      
+
       <SelectionModal
         isOpen={isMaquinariaModalOpen}
         title="Seleccionar Maquinaria"
-        items={maquinarias.map(m => {
-          const isNotAvailableByStatus = m.estado !== 'DISPONIBLE';
-          
-          const isDisabled = isNotAvailableByStatus || (m.availabilityStatus === 'NO_DISPONIBLE');
-          
-          const warning = (m.availabilityStatus === 'ADVERTENCIA' && !isNotAvailableByStatus) ? m.warningMessage : undefined;
+        items={maquinarias.map((m) => {
+          const isNotAvailableByStatus = m.estado !== 'DISPONIBLE'
 
-          let label = `${m.descripcion} (${m.estado})`;
-          if (m.availabilityStatus === 'NO_DISPONIBLE' && !isNotAvailableByStatus) {
-              label += ' - OCUPADA EN FECHA';
+          const isDisabled =
+            isNotAvailableByStatus || m.availabilityStatus === 'NO_DISPONIBLE'
+
+          const warning =
+            m.availabilityStatus === 'ADVERTENCIA' && !isNotAvailableByStatus
+              ? m.warningMessage
+              : undefined
+
+          let label = `${m.descripcion} (${m.estado})`
+          if (
+            m.availabilityStatus === 'NO_DISPONIBLE' &&
+            !isNotAvailableByStatus
+          ) {
+            label += ' - OCUPADA EN FECHA'
           }
 
           return {
             id: m.cod_maquina.toString(),
             label,
             disabled: isDisabled ? true : undefined,
-            warning: warning
-          };
+            warning: warning,
+          }
         })}
         selectedItems={selectedMaquinaria}
         onClose={() => setIsMaquinariaModalOpen(false)}
