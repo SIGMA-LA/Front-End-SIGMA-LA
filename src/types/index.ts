@@ -2,9 +2,13 @@ import { number } from 'valibot'
 
 export interface Cliente {
   cuil: string
-  razon_social: string
+  razon_social?: string
   telefono: string
   mail: string
+  apellido?: string
+  nombre?: string
+  sexo?: string
+  tipo_cliente: 'PERSONA' | 'EMPRESA'
 }
 
 export interface Documento {
@@ -77,7 +81,7 @@ export interface Empleado {
 
 export interface Obra {
   cod_obra: number
-  cod_postal: number
+  cod_localidad: number
   cuil_cliente: string
   estado:
     | 'EN ESPERA DE PAGO'
@@ -101,9 +105,19 @@ export interface Obra {
   pagos?: Pago[]
 }
 
+export interface Provincia {
+  cod_provincia: number
+  nombre_provincia: string
+  localidades?: Localidad[]
+}
+
 export interface Localidad {
-  cod_postal: number
+  cod_localidad: number
   nombre_localidad: string
+  cod_provincia: number
+  provincia: Provincia
+  obras?: Obra[]
+  visitas?: Visita[]
 }
 
 export interface UsoMaquinaria {
@@ -316,8 +330,10 @@ export interface VehiculosListProps {
 }
 
 export interface Localidad {
-  cod_postal: number
+  cod_localidad: number
   nombre_localidad: string
+  cod_provincia: number
+  provincia: Provincia
 }
 
 export interface TabNavigationProduccionProps {

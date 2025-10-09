@@ -32,7 +32,7 @@ interface BackendEntrega {
   detalle: string
   obra: {
     cod_obra: number
-    cod_postal: number
+    cod_localidad: number
     cuil: string
     fecha_ini: string
     estado:
@@ -54,7 +54,7 @@ interface BackendEntrega {
       mail: string
     }
     localidad: {
-      cod_postal: number
+      cod_localidad: number
       nombre_localidad: string
     }
   }
@@ -75,7 +75,7 @@ interface BackendEntregaEmpleado {
     detalle: string
     obra: {
       cod_obra: number
-      cod_postal: number
+      cod_localidad: number
       cuil: string
       fecha_ini: string
       estado:
@@ -97,14 +97,14 @@ interface BackendEntregaEmpleado {
         mail: string
       }
       localidad: {
-        cod_postal: number
+        cod_localidad: number
         nombre_localidad: string
       }
     }
   }
   obra: {
     cod_obra: number
-    cod_postal: number
+    cod_localidad: number
     cuil: string
     fecha_ini: string
     estado:
@@ -120,7 +120,7 @@ interface BackendEntregaEmpleado {
     direccion: string
     nota_fabrica: string
     localidad: {
-      cod_postal: number
+      cod_localidad: number
       nombre_localidad: string
     }
     cliente: {
@@ -219,7 +219,7 @@ const mapToFrontend = (
     rol_entrega: backendEntregaEmpleado.rol_entrega,
     obra: {
       cod_obra: backendEntregaEmpleado.obra.cod_obra,
-      cod_postal: backendEntregaEmpleado.obra.cod_postal,
+      cod_localidad: backendEntregaEmpleado.obra.cod_localidad,
       cuil_cliente: backendEntregaEmpleado.obra.cuil,
       fecha_ini: backendEntregaEmpleado.obra.fecha_ini,
       estado: backendEntregaEmpleado.obra.estado,
@@ -247,7 +247,7 @@ const mapToFrontend = (
       cod_obra: backendEntregaEmpleado.entrega.cod_obra,
       obra: {
         cod_obra: backendEntregaEmpleado.entrega.obra.cod_obra,
-        cod_postal: backendEntregaEmpleado.entrega.obra.cod_postal,
+        cod_localidad: backendEntregaEmpleado.entrega.obra.cod_localidad,
         cuil_cliente: backendEntregaEmpleado.entrega.obra.cuil,
         fecha_ini: backendEntregaEmpleado.entrega.obra.fecha_ini,
         estado: backendEntregaEmpleado.entrega.obra.estado,
