@@ -1,50 +1,15 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { Empleado } from '@/types'
+import { getAccessToken } from './auth'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
-
-async function getAccessToken(): Promise<string> {
-  const cookieStore = await cookies()
-  let accessToken = cookieStore.get('accessToken')?.value
-
-  if (accessToken) {
-    return accessToken
-  }
-  const refreshToken = cookieStore.get('refreshToken')?.value
-
-  if (!refreshToken) {
-    throw new Error(
-      'No hay tokens disponibles. Por favor, inicia sesión nuevamente.'
-    )
-  }
-
-  try {
-    const response = await fetch(`${baseUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-    })
-
-    if (!response.ok) {
-      throw new Error('Error al renovar el token de acceso')
-    }
-
-    const data = await response.json()
-    return data.token || data.accessToken
-  } catch (error) {
-    console.error('Error renovando token:', error)
-    throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.')
-  }
-}
+const baseUrl =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/empleados'
 
 export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/empleados/me`, {
+    const response = await fetch(`${baseUrl}/me`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -62,5 +27,77 @@ export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
   } catch (error) {
     console.error('Error obteniendo empleado actual:', error)
     return null
+  }
+}
+
+export async function obtenerVisitadores(): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/visitadores`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return []
+    }
+
+    const visitadores: Empleado[] = await response.json()
+    return visitadores
+  } catch (error) {
+    console.error('Error obteniendo visitadores:', error)
+    return []
+  }
+}
+
+export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/disponibles-entrega`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return []
+    }
+
+    const empleados: Empleado[] = await response.json()
+    return empleados
+  } catch (error) {
+    console.error('Error al obtener empleados disponibles para entrega:', error)
+    throw error
+  }
+}
+
+export async function buscarFiltrados(query: string): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/buscar/?query=${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return []
+    }
+
+    const empleados: Empleado[] = await response.json()
+    return empleados
+  } catch (error) {
+    console.error('Error al buscar acompañantes:', error)
+    throw error
   }
 }

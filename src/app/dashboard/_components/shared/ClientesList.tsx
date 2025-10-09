@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Users, Plus, Search, Mail, Phone, Loader2, AlertCircle } from 'lucide-react'
+import {
+  Users,
+  Plus,
+  Search,
+  Mail,
+  Phone,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
 import clienteService from '@/services/cliente.service'
 import type { Cliente } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
@@ -14,7 +22,9 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedClienteCuil, setSelectedClienteCuil] = useState<string | null>(null)
+  const [selectedClienteCuil, setSelectedClienteCuil] = useState<string | null>(
+    null
+  )
 
   const { usuario } = useAuth()
 
@@ -37,19 +47,23 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
   }
 
   const handleDeleteCliente = (cuil: string) => {
-    setClientes(prev => prev.filter(c => c.cuil !== cuil))
+    setClientes((prev) => prev.filter((c) => c.cuil !== cuil))
   }
 
   const handleEditCliente = (clienteActualizado: Cliente) => {
-    setClientes(prev => 
-      prev.map(c => c.cuil === clienteActualizado.cuil ? clienteActualizado : c)
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.cuil === clienteActualizado.cuil ? clienteActualizado : c
+      )
     )
   }
 
   const filteredClientes = clientes.filter((cliente) => {
     const search = searchTerm.toLowerCase()
     return (
-      cliente.razon_social.toLowerCase().includes(search) ||
+      cliente.razon_social?.toLowerCase().includes(search) ||
+      cliente.nombre?.toLowerCase().includes(search) ||
+      cliente.apellido?.toLowerCase().includes(search) ||
       cliente.cuil.includes(search) ||
       cliente.mail.toLowerCase().includes(search) ||
       cliente.telefono.includes(search)
@@ -75,7 +89,9 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
             <div className="flex items-start gap-3">
               <AlertCircle className="h-6 w-6 text-red-600" />
               <div>
-                <h3 className="font-semibold text-red-900">Error al cargar clientes</h3>
+                <h3 className="font-semibold text-red-900">
+                  Error al cargar clientes
+                </h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
                   onClick={loadClientes}
@@ -109,25 +125,25 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
             </div>
           </div>
           {usuario?.rol_actual === 'VENTAS' && (
-          <button
-            onClick={onCreateClick}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
-          >
-            <Plus className="h-5 w-5" />
-            Nuevo Cliente
-          </button>
+            <button
+              onClick={onCreateClick}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              <Plus className="h-5 w-5" />
+              Nuevo Cliente
+            </button>
           )}
         </div>
 
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar por razón social, CUIL, email o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
             />
           </div>
         </div>
@@ -136,7 +152,9 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
             <Users className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              {searchTerm ? 'No se encontraron clientes' : 'No hay clientes registrados'}
+              {searchTerm
+                ? 'No se encontraron clientes'
+                : 'No hay clientes registrados'}
             </h3>
             <p className="mt-2 text-gray-600">
               {searchTerm
@@ -160,27 +178,29 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
                 className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition-shadow hover:shadow-md"
               >
                 <h3 className="mb-3 text-lg font-semibold text-gray-900">
-                  {cliente.razon_social}
+                  {cliente.razon_social
+                    ? cliente.razon_social
+                    : `${cliente.nombre} ${cliente.apellido}`}
                 </h3>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <span className="font-medium">CUIL:</span>
                     <span>{cliente.cuil}</span>
                   </div>
-                  
+
                   <div className="flex items-start gap-2 text-sm text-gray-600">
                     <Mail className="mt-0.5 h-4 w-4 flex-shrink-0" />
                     <span className="break-all">{cliente.mail}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Phone className="h-4 w-4 flex-shrink-0" />
                     <span>{cliente.telefono}</span>
                   </div>
                 </div>
 
-                <button 
+                <button
                   onClick={() => setSelectedClienteCuil(cliente.cuil)}
                   className="mt-4 font-medium text-blue-600 hover:text-blue-800"
                 >

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { getAccessToken } from './auth'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
@@ -69,7 +70,7 @@ export async function crearOrdenProduccion(formData: FormData) {
     }
 
     const { secure_url, public_id } = await uploadToCloudinary(file)
-
+    const token = await getAccessToken()
     const response = await fetch(`${baseUrl}/ordenes-produccion`, {
       method: 'POST',
       headers: {

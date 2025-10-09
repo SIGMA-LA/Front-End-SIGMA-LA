@@ -11,8 +11,7 @@ interface BackendObra {
     mail: string
     nombre?: string
     apellido?: string
-    tipo_cliente: 'PERSONA' | 'EMPRESA'
-    sexo?: string
+    tipo_cliente: 'EMPRESA' | 'PERSONA'
   }
   nota_fabrica?: string
   fecha_ini: string
@@ -60,17 +59,16 @@ const mapToFrontend = (obra: BackendObra): Obra => ({
     razon_social: obra.cliente?.razon_social ?? 'No disponible',
     telefono: obra.cliente?.telefono ?? '',
     mail: obra.cliente?.mail ?? '',
-    nombre: obra.cliente?.nombre ?? '',
-    apellido: obra.cliente?.apellido ?? '',
-    sexo: obra.cliente?.sexo ?? '',
-    tipo_cliente: obra.cliente?.tipo_cliente ?? '',
+    tipo_cliente: obra.cliente?.razon_social ? 'EMPRESA' : 'PERSONA',
+    nombre: obra.cliente?.razon_social ? '' : (obra.cliente?.nombre ?? ''),
+    apellido: obra.cliente?.razon_social ? '' : (obra.cliente?.apellido ?? ''),
   },
   nota_fabrica: obra.nota_fabrica,
   fecha_ini: obra.fecha_ini,
   fecha_cancelacion: obra.fecha_cancelacion,
   estado: obra.estado,
-  localidad: obra.localidad,
-  cod_localidad: obra.localidad?.cod_localidad ?? 0,
+  localidad: obra.localidad ?? { cod_postal: 0, nombre_localidad: '' },
+  cod_postal: obra.localidad?.cod_postal ?? 0,
   cuil_cliente: obra.cliente?.cuil ?? '',
   presupuesto: obra.presupuesto || [],
 })

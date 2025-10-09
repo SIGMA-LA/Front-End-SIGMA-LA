@@ -11,7 +11,7 @@ import { User as UserIcon, Package, Menu, X } from 'lucide-react'
 // Componentes existentes
 import TabNavigation from './TabNavigation'
 import SidebarVisitas from './SidebarVisitas'
-import VisitaDetails from './VisitaDetails'
+import VisitaDetailsVisitador from './VisitaDetailsVisitador'
 import EntregaDetails from '../planta/EntregaDetails'
 import ConfirmModal from './ConfirmModal'
 import EntregasSidebar from '../planta/EntregasSidebar'
@@ -434,7 +434,7 @@ export default function VisitadorDashboard() {
         <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
           {activeTab === 'visitas' ? (
             selectedVisita ? (
-              <VisitaDetails
+              <VisitaDetailsVisitador
                 visita={selectedVisita}
                 onFinalizarVisita={() => {
                   if (

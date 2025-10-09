@@ -3,6 +3,9 @@ import { number } from 'valibot'
 export interface Cliente {
   cuil: string
   razon_social?: string
+  nombre?: string
+  apellido?: string
+  tipo_cliente: 'PERSONA' | 'EMPRESA'
   telefono: string
   mail: string
   apellido?: string
@@ -16,6 +19,26 @@ export interface Documento {
   nombre: string
   url: string
 }
+export interface CrearVisita {
+  fecha_hora_visita: string
+  motivo_visita: string
+  observaciones: string
+  direccion: string
+  contacto: string
+  localidad: string
+  cod_obra: number | null
+  vehiculo: string
+  dias_viatico: number
+  empleados_visita: string[]
+  cliente: Cliente
+}
+
+export interface EmpleadoVisita {
+  cuil: string
+  cod_visita: number
+  empleado: Empleado
+  visita: Visita
+}
 
 export interface Visita {
   cod_visita: number
@@ -27,17 +50,23 @@ export interface Visita {
     | 'REPARACION'
     | 'ASESORAMIENTO'
     | 'VISITA INICIAL'
-  estado:
+  estado?:
     | 'PROGRAMADA'
     | 'EN CURSO'
     | 'CANCELADA'
     | 'REPROGRAMADA'
     | 'COMPLETADA'
-  empleados_asignados: Empleado[]
+  empleado_visita: EmpleadoVisita[]
   observaciones?: string
   direccion_visita?: string
-  vehiculos_usados?: UsoVehiculoVisita[]
+  uso_vehiculo_visita: UsoVehiculoVisita
   fecha_cancelacion?: string
+  dias_viaticos?: number
+  nombre_cliente?: string
+  apellido_cliente?: string
+  telefono_cliente?: string
+  mail_cliente?: string
+  localidad?: Localidad
 }
 
 export interface MaquinariaSimple {
@@ -98,7 +127,7 @@ export interface Obra {
   nota_fabrica_pid?: string
   fecha_ini: string
   fecha_cancelacion: string | null
-  localidad?: Localidad
+  localidad: Localidad
   entregas?: Entrega[]
   visitas?: Visita[]
   presupuesto?: Presupuesto[]
@@ -234,11 +263,13 @@ export interface Maquinaria {
 
 export interface VisitasListProps {
   onCreateClick: () => void
+  onEditClick: (visita: Visita) => void
 }
 
 export interface VisitaDetailProps {
   visita: Visita
   onClose: () => void
+  onCancel?: () => void
 }
 
 export interface ObrasListProps {

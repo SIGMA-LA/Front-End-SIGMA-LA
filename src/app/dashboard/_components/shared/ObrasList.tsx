@@ -213,50 +213,37 @@ export default function ObrasList({
 
         <div className="grid gap-4 sm:gap-6">
           {obrasFiltradas.length > 0 ? (
-            obrasFiltradas.map((obra) => {
-              const isCancelada = obra.estado === 'CANCELADA'
-              return (
-                <div
-                  key={obra.cod_obra}
-                  className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {obra.direccion}
-                      </h3>
-                      <p className="text-gray-600">
-                        Cliente: {obra.cliente?.razon_social || 'No asignado'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Inicio:{' '}
-                        {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
-                          timeZone: 'UTC',
-                        })}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-start gap-3 sm:items-end">
-                      <EstadoObraBadge estado={obra.estado} />
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                        <button
-                          onClick={() => onEditClick(obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800"
-                        >
-                          <Edit className="h-4 w-4" /> Editar
-                        </button>
-                        <button
-                          onClick={() => handleEliminar(obra.cod_obra)}
-                          className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                          disabled={isCancelada}
-                          title={
-                            isCancelada
-                              ? 'La obra ya está cancelada'
-                              : 'Cancelar obra'
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />{' '}
-                          {isCancelada ? 'Cancelada' : 'Cancelar'}
-                        </button>
+            obrasFiltradas.map((obra) => (
+              <div
+                key={obra.cod_obra}
+                className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {obra.direccion}
+                    </h3>
+                    <p className="text-gray-600">
+                      Cliente:{' '}
+                      {obra.cliente
+                        ? obra.cliente.tipo_cliente === 'EMPRESA'
+                          ? obra.cliente.razon_social
+                          : `${obra.cliente.nombre ?? ''} ${obra.cliente.apellido ?? ''}`.trim() ||
+                            'No asignado'
+                        : 'No asignado'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Inicio:{' '}
+                      {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
+                        timeZone: 'UTC',
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <EstadoObraBadge estado={obra.estado} />
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
+                      {/* SOLO mostrar si NO es VENTAS */}
+                      {usuario?.rol_actual !== 'VENTAS' && onScheduleVisit && (
                         <button
                           onClick={() => setObraPagos(obra)}
                           className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-800 disabled:cursor-not-allowed disabled:text-gray-400"

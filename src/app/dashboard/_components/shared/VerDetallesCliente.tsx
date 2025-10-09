@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react'
-import { X, User, Mail, Phone, Building2, Loader2, AlertCircle, Edit2, Trash2, ArrowLeft } from 'lucide-react'
+import {
+  X,
+  User,
+  Mail,
+  Phone,
+  Building2,
+  Loader2,
+  AlertCircle,
+  Edit2,
+  Trash2,
+  ArrowLeft,
+} from 'lucide-react'
 import clienteService from '@/services/cliente.service'
 import type { Cliente } from '@/types'
 import EditarCliente from '../ventas/EditarCliente'
@@ -12,7 +23,12 @@ interface VerDetallesClienteProps {
   onDelete?: (cuil: string) => void
 }
 
-export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: VerDetallesClienteProps) {
+export default function VerDetallesCliente({
+  cuil,
+  onClose,
+  onEdit,
+  onDelete,
+}: VerDetallesClienteProps) {
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +51,10 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
       setCliente(data)
     } catch (err: any) {
       console.error('Error al cargar cliente:', err)
-      setError(err.response?.data?.message || 'Error al cargar los detalles del cliente')
+      setError(
+        err.response?.data?.message ||
+          'Error al cargar los detalles del cliente'
+      )
     } finally {
       setLoading(false)
     }
@@ -43,7 +62,7 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
 
   const handleDelete = async () => {
     if (!cliente) return
-    
+
     try {
       setDeleting(true)
       await clienteService.deleteCliente(cliente.cuil)
@@ -79,7 +98,9 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
         <div className="w-full max-w-4xl rounded-lg bg-white p-8 shadow-xl">
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-            <p className="mt-4 text-gray-600">Cargando detalles del cliente...</p>
+            <p className="mt-4 text-gray-600">
+              Cargando detalles del cliente...
+            </p>
           </div>
         </div>
       </div>
@@ -103,7 +124,9 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
             <div className="flex items-start gap-3">
               <AlertCircle className="h-6 w-6 text-red-600" />
               <div>
-                <h3 className="font-semibold text-red-900">Error al cargar detalles</h3>
+                <h3 className="font-semibold text-red-900">
+                  Error al cargar detalles
+                </h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
                   onClick={loadCliente}
@@ -121,7 +144,7 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-4xl rounded-lg bg-white shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white p-6">
           <div className="flex items-center gap-3">
@@ -135,12 +158,13 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
               <User className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Detalles del Cliente</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Detalles del Cliente
+              </h2>
               <p className="text-sm text-gray-600">Información completa</p>
             </div>
           </div>
-          <div className="hidden lg:flex items-center gap-2">
-            
+          <div className="hidden items-center gap-2 lg:flex">
             {canEdit && (
               <button
                 onClick={handleEditClick}
@@ -169,7 +193,7 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 p-6">
           {/* Información Principal */}
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
             <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -179,10 +203,14 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-600">
-                  Razón Social
+                  {cliente.tipo_cliente === 'EMPRESA'
+                    ? 'Razón Social'
+                    : 'Nombre y Apellido'}
                 </label>
                 <p className="text-base font-semibold text-gray-900">
-                  {cliente.razon_social}
+                  {cliente.tipo_cliente === 'EMPRESA'
+                    ? cliente.razon_social
+                    : `${cliente.nombre} ${cliente.apellido}`}
                 </p>
               </div>
               <div>
@@ -208,7 +236,7 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
                   <label className="block text-sm font-medium text-gray-600">
                     Email
                   </label>
-                  <p className="break-all text-base text-gray-900">
+                  <p className="text-base break-all text-gray-900">
                     {cliente.mail}
                   </p>
                 </div>
@@ -219,9 +247,7 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
                   <label className="block text-sm font-medium text-gray-600">
                     Teléfono
                   </label>
-                  <p className="text-base text-gray-900">
-                    {cliente.telefono}
-                  </p>
+                  <p className="text-base text-gray-900">{cliente.telefono}</p>
                 </div>
               </div>
             </div>
@@ -282,7 +308,9 @@ export default function VerDetallesCliente({ cuil, onClose, onEdit, onDelete }: 
                   </h3>
                   <p className="mt-1 text-sm text-gray-600">
                     Esta acción no se puede deshacer. El cliente{' '}
-                    <span className="font-semibold">{cliente.razon_social}</span>{' '}
+                    <span className="font-semibold">
+                      {cliente.razon_social}
+                    </span>{' '}
                     será eliminado permanentemente.
                   </p>
                 </div>
