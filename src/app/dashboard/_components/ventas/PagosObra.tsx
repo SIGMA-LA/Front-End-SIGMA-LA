@@ -2,10 +2,21 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { getPagosObra } from '@/actions/pagos'
-import PagoModal from './PagoModal'
+import PagoModal from './pagos/PagoModal'
 import { Pago, Obra } from '@/types'
 import PagoCard from './PagoCard'
 import { User, Building2, Plus } from 'lucide-react'
+
+// Helper para mostrar el nombre del cliente correctamente
+const getClienteName = (cliente: any) => {
+  if (cliente?.razon_social) {
+    return cliente.razon_social
+  }
+  if (cliente?.nombre && cliente?.apellido) {
+    return `${cliente.nombre} ${cliente.apellido}`
+  }
+  return 'Cliente no identificado'
+}
 
 interface PagosObraProps {
   obra: Obra
@@ -17,8 +28,6 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [pagoAEditar, setPagoAEditar] = useState<Pago | null>(null)
-  const [montoSugerido, setMontoSugerido] = useState<number | null>(null)
 
   const presupuestoAceptado = useMemo(
     () =>
@@ -37,21 +46,8 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
     if (!presupuestoAceptado) return false
     if (totalPagado >= presupuestoAceptado.valor - 0.01) return false
     if (pagos.length === 0) return true
-    return obra.estado === 'FINALIZADA'
+    return obra.estado === 'ENTREGADA'
   }, [pagos.length, obra.estado, presupuestoAceptado, totalPagado])
-
-  useEffect(() => {
-    if (presupuestoAceptado) {
-      if (pagos.length === 0) {
-        setMontoSugerido(presupuestoAceptado.valor * 0.7)
-      } else {
-        const restante = presupuestoAceptado.valor - totalPagado
-        setMontoSugerido(restante > 0 ? restante : 0)
-      }
-    } else {
-      setMontoSugerido(null)
-    }
-  }, [pagos, presupuestoAceptado, totalPagado])
 
   useEffect(() => {
     const fetchPagos = async () => {
@@ -82,26 +78,12 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
     }
   }
   const handleCrearPago = () => {
-    setPagoAEditar(null)
     setModalOpen(true)
   }
 
-  const handleEditarPago = (pago: Pago) => {
-    setPagoAEditar(pago)
-    setModalOpen(true)
+  const handlePagoCreado = () => {
+    refreshPagos() // Recargar todos los pagos después de crear uno nuevo
   }
-
-  const handlePagoCreado = (nuevoPago: Pago) => {
-    setPagos((prev) => [nuevoPago, ...prev])
-  }
-
-  const handlePagoEditado = (pagoEditado: Pago) => {
-    setPagos((prev) =>
-      prev.map((p) => (p.cod_pago === pagoEditado.cod_pago ? pagoEditado : p))
-    )
-  }
-
-  const isFirstPayment = pagos.length === 0
 
   return (
     <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-gray-200 bg-white p-0 shadow-lg lg:mt-16">
@@ -115,10 +97,7 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
           </div>
           <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
             <User className="h-4 w-4 text-gray-400" />
-            Cliente:{' '}
-            {obra.cliente?.razon_social ||
-              `${obra.cliente?.nombre} ${obra.cliente?.apellido}` ||
-              'No asignado'}
+            Cliente: {getClienteName(obra.cliente)}
           </div>
         </div>
         <div className="flex gap-2">
@@ -161,21 +140,16 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
                 key={pago.cod_pago}
                 pago={pago}
                 onRefresh={refreshPagos}
-                onEdit={() => handleEditarPago(pago)} // CAMBIO
               />
             ))}
+            p
           </div>
         )}
       </div>
       <PagoModal
-        codObra={obra.cod_obra}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onPagoCreado={handlePagoCreado}
-        pagoAEditar={pagoAEditar}
-        onPagoEditado={handlePagoEditado}
-        montoSugerido={montoSugerido}
-        isFirstPayment={isFirstPayment}
       />
     </div>
   )
