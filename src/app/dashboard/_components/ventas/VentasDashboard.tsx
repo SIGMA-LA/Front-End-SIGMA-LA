@@ -28,11 +28,12 @@ import { PresupuestoFormData } from '@/services/presupuesto.service'
 import PagosList from './PagosList'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
 import NotaFabricaModal from './NotaFabricaModal'
+import { getObraById } from '@/services/obra.service'
 
 export default function VentasDashboard() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [selectedObra, setSelectedObra] = useState<any>(null)
+  const [selectedObra, setSelectedObra] = useState<Obra | null>(null)
   const [usuarioActual, setUsuarioActual] = useState<Empleado | null>(null)
   const [obraParaEditar, setObraParaEditar] = useState<Obra | null>(null)
   const [isNotaModalOpen, setIsNotaModalOpen] = useState(false)
@@ -64,6 +65,11 @@ export default function VentasDashboard() {
     setNotaUrl(url)
     fetchObras()
   }
+  const handleEditObra = async (obra: Obra) => {
+    const obraCompleta = await getObraById(obra.cod_obra)
+    setObraParaEditar(obraCompleta)
+    setCurrentSection('editar-obra')
+  }
 
   const openNotaModal = (obra: Obra) => {
     console.log('Abriendo modal para obra:', obra)
@@ -92,10 +98,7 @@ export default function VentasDashboard() {
               setObraParaEditar(null)
               setCurrentSection('crear-obra')
             }}
-            onEditClick={(obra) => {
-              setObraParaEditar(obra)
-              setCurrentSection('editar-obra')
-            }}
+            onEditClick={handleEditObra}
             onScheduleVisit={(obra) => {
               setSelectedObra(obra)
               setCurrentSection('crear-visita')

@@ -1,13 +1,24 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Search, User, Plus, FileText, Edit, AlertCircle } from 'lucide-react'
+import {
+  Search,
+  User,
+  Plus,
+  FileText,
+  Edit,
+  AlertCircle,
+  MapPin,
+  Home,
+  Calendar,
+} from 'lucide-react'
 import { useGlobalContext } from '@/context/GlobalContext'
 import type { Obra, Cliente } from '@/types'
 import type { ObraFormData } from '@/services/obra.service'
 import type { PresupuestoFormData } from '@/services/presupuesto.service'
 import CrearPresupuestoModal from './CrearPresupuestoModal'
 import CrearCliente from './CrearCliente'
+import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
 
 interface CrearObraProps {
   onCancel: () => void
@@ -33,8 +44,7 @@ export default function CrearObra({
   onSubmit,
   obraExistente,
 }: CrearObraProps) {
-  const { clientes, fetchClientes, localidades, fetchLocalidades } =
-    useGlobalContext()
+  const { clientes, fetchClientes } = useGlobalContext()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
   const esModoEdicion = !!obraExistente
@@ -50,16 +60,23 @@ export default function CrearObra({
   const [presupuestoParaEditar, setPresupuestoParaEditar] =
     useState<PresupuestoFormData | null>(null)
 
-  useEffect(() => {
-    fetchLocalidades()
-  }, [fetchLocalidades])
+  // Provincias y localidades
+  const [provincias, setProvincias] = useState<
+    { cod_provincia: number; nombre: string }[]
+  >([])
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
+    number | ''
+  >('')
+  const [localidades, setLocalidades] = useState<
+    { cod_localidad: number; nombre_localidad: string }[]
+  >([])
 
+  // Setear datos al editar o limpiar al crear
   useEffect(() => {
     if (esModoEdicion && obraExistente) {
       const fecha_ini = obraExistente.fecha_ini
         ? new Date(obraExistente.fecha_ini).toISOString().split('T')[0]
         : ''
-
       setFormData({
         direccion: obraExistente.direccion || '',
         cuil_cliente: obraExistente.cliente?.cuil || '',
@@ -70,27 +87,62 @@ export default function CrearObra({
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
       })
       setClienteSeleccionado(obraExistente.cliente?.cuil || '')
-      if (obraExistente.presupuesto) {
-        setPresupuestos(obraExistente.presupuesto)
-      }
+      setProvinciaSeleccionada(obraExistente.localidad?.cod_provincia || '')
+      if (obraExistente.presupuesto) setPresupuestos(obraExistente.presupuesto)
     } else {
       setFormData(initialState)
       setClienteSeleccionado('')
+      setProvinciaSeleccionada('')
       setPresupuestos([])
     }
   }, [obraExistente, esModoEdicion, clientes])
+
+  // Cargar provincias al inicio
+  useEffect(() => {
+    obtenerProvincias().then(setProvincias)
+  }, [])
+
+  // Cargar localidades cuando cambia la provincia
+  useEffect(() => {
+    if (provinciaSeleccionada) {
+      localidadesPorProvincia(Number(provinciaSeleccionada)).then((locs) => {
+        setLocalidades(locs)
+        // Si estoy editando, seteo la localidad solo si está en la obra
+        if (esModoEdicion && obraExistente?.localidad) {
+          setFormData((prev) => ({
+            ...prev,
+            cod_localidad: obraExistente.localidad.cod_localidad,
+          }))
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            cod_localidad: 0,
+          }))
+        }
+      })
+    } else {
+      setLocalidades([])
+      setFormData((prev) => ({
+        ...prev,
+        cod_localidad: 0,
+      }))
+    }
+  }, [provinciaSeleccionada, esModoEdicion, obraExistente])
 
   const clientesFiltrados = useMemo(() => {
     if (!filtroCliente) return clientes
     const filtroLower = filtroCliente.toLowerCase()
     return clientes.filter((c) => {
       const matchCuil = c.cuil.includes(filtroCliente)
-      
+
       if (c.tipo_cliente === 'EMPRESA') {
-        const matchRazonSocial = c.razon_social?.toLowerCase().includes(filtroLower)
+        const matchRazonSocial = c.razon_social
+          ?.toLowerCase()
+          .includes(filtroLower)
         return matchCuil || matchRazonSocial
       } else {
-        const nombreCompleto = `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase()
+        const nombreCompleto =
+          `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase()
         const matchNombre = nombreCompleto.includes(filtroLower)
         return matchCuil || matchNombre
       }
@@ -180,10 +232,11 @@ export default function CrearObra({
         />
       )}
 
-      <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-xl bg-white p-6 shadow-lg sm:p-8">
-            <h1 className="mb-8 text-2xl font-bold text-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-lg">
+            <h1 className="mb-8 flex items-center gap-2 text-3xl font-bold text-blue-900">
+              <Home className="h-7 w-7 text-blue-500" />
               {esModoEdicion ? 'Editar Obra' : 'Crear Nueva Obra'}
             </h1>
             {isObraCancelada && (
@@ -201,9 +254,11 @@ export default function CrearObra({
               </div>
             )}
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
+                {/* CLIENTE */}
                 <div className="space-y-4">
-                  <h3 className="mb-11 text-lg font-semibold text-gray-900">
+                  <h3 className="mb-9 flex items-center gap-2 text-lg font-semibold text-blue-800">
+                    <User className="h-5 w-5" />
                     Cliente
                   </h3>
                   <div className="relative">
@@ -217,15 +272,15 @@ export default function CrearObra({
                       disabled={isObraCancelada}
                     />
                   </div>
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200">
+                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50">
                     {clientesFiltrados.length > 0 ? (
                       clientesFiltrados.map((cliente) => (
                         <div
                           key={cliente.cuil}
-                          className={`flex cursor-pointer items-center p-3 ${
+                          className={`flex cursor-pointer items-center p-3 transition-colors ${
                             clienteSeleccionado === cliente.cuil
                               ? 'bg-blue-100'
-                              : 'hover:bg-gray-50'
+                              : 'hover:bg-blue-50'
                           }`}
                           onClick={() => handleClienteSelect(cliente.cuil)}
                         >
@@ -255,24 +310,37 @@ export default function CrearObra({
                   </button>
                 </div>
 
+                {/* DATOS DE LA OBRA */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-800">
+                    <MapPin className="h-5 w-5" />
                     Datos de la Obra
                   </h3>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Dirección *
+                      Provincia *
                     </label>
-                    <input
-                      name="direccion"
-                      type="text"
-                      placeholder="Ingrese la dirección"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
-                      value={formData.direccion}
-                      onChange={handleChange}
+                    <select
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
+                      value={provinciaSeleccionada}
+                      onChange={(e) =>
+                        setProvinciaSeleccionada(
+                          e.target.value ? Number(e.target.value) : ''
+                        )
+                      }
                       required
                       disabled={isObraCancelada}
-                    />
+                    >
+                      <option value="">Seleccione una provincia...</option>
+                      {provincias.map((prov) => (
+                        <option
+                          key={prov.cod_provincia}
+                          value={prov.cod_provincia}
+                        >
+                          {prov.nombre}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -280,11 +348,11 @@ export default function CrearObra({
                     </label>
                     <select
                       name="cod_localidad"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
                       value={formData.cod_localidad || ''}
                       onChange={handleChange}
                       required
-                      disabled={isObraCancelada}
+                      disabled={isObraCancelada || !provinciaSeleccionada}
                     >
                       <option value="">Seleccione una localidad...</option>
                       {localidades.map((loc) => (
@@ -299,12 +367,27 @@ export default function CrearObra({
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Dirección *
+                    </label>
+                    <input
+                      name="direccion"
+                      type="text"
+                      placeholder="Ingrese la dirección"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
+                      value={formData.direccion}
+                      onChange={handleChange}
+                      required
+                      disabled={isObraCancelada}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Fecha Inicio *
                     </label>
                     <input
                       name="fecha_ini"
                       type="date"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 disabled:cursor-not-allowed disabled:text-gray-400"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
                       value={formData.fecha_ini}
                       onChange={handleChange}
                       required
@@ -313,8 +396,10 @@ export default function CrearObra({
                   </div>
                 </div>
 
+                {/* PRESUPUESTOS */}
                 <div className="space-y-4">
-                  <h3 className="mb-11 text-lg font-semibold text-gray-900">
+                  <h3 className="mb-9 flex items-center gap-2 text-lg font-semibold text-blue-800">
+                    <FileText className="h-5 w-5" />
                     Historial de Presupuestos
                   </h3>
                   <div className="flex flex-col space-y-3 rounded-lg border bg-gray-50 p-4">

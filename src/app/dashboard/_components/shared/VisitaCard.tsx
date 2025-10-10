@@ -115,9 +115,7 @@ export default function VisitaCard({
                             key={ev.cuil || idx}
                             className="text-xs leading-tight text-gray-700"
                             style={idx === 0 ? { marginTop: '-2px' } : {}}
-                          >
-                            {ev.empleado.nombre} {ev.empleado.apellido}
-                          </li>
+                          ></li>
                         ) : (
                           <li
                             key={idx}
