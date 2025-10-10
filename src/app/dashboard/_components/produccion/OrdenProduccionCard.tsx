@@ -5,7 +5,7 @@ interface OrdenProduccionCardProps {
   orden: OrdenProduccion
   isSelected: boolean
   onClick: () => void
-  isAprobada: boolean // true si está aprobada, false si está en producción
+  estado: OrdenProduccion['estado']
 }
 
 const formatDate = (dateString: string) =>
@@ -19,25 +19,44 @@ export default function OrdenProduccionCard({
   orden,
   isSelected,
   onClick,
-  isAprobada,
+  estado,
 }: OrdenProduccionCardProps) {
+  const getBadgeInfo = () => {
+    switch (estado) {
+      case 'APROBADA':
+        return {
+          text: 'Aprobada',
+          color: 'bg-blue-500',
+          style: 'border-blue-400 bg-blue-50 ring-2 ring-blue-300',
+        }
+      case 'EN PRODUCCION':
+        return {
+          text: 'En Producción',
+          color: 'bg-green-500',
+          style: 'border-green-400 bg-green-50 ring-2 ring-green-300',
+        }
+      case 'FINALIZADA':
+        return {
+          text: 'Finalizada',
+          color: 'bg-purple-500',
+          style: 'border-purple-400 bg-purple-50 ring-2 ring-purple-300',
+        }
+      default:
+        return {
+          text: 'Pendiente',
+          color: 'bg-gray-400',
+          style: 'border-gray-400 bg-gray-50 ring-2 ring-gray-300',
+        }
+    }
+  }
+
+  const badgeInfo = getBadgeInfo()
+
   const getCardStyle = () => {
     if (isSelected) {
-      if (isAprobada) {
-        return 'border-blue-400 bg-blue-50 ring-2 ring-blue-300'
-      } else {
-        return 'border-green-400 bg-green-50 ring-2 ring-green-300'
-      }
+      return badgeInfo.style
     }
     return 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-  }
-
-  const getBadgeColor = () => {
-    return isAprobada ? 'bg-blue-500' : 'bg-green-500'
-  }
-
-  const getBadgeText = () => {
-    return isAprobada ? 'Aprobada' : 'En Producción'
   }
 
   return (
@@ -86,9 +105,9 @@ export default function OrdenProduccionCard({
         {/* Badge arriba a la derecha */}
         <div className="ml-3 flex flex-col items-end space-y-1">
           <span
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${getBadgeColor()}`}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${badgeInfo.color}`}
           >
-            {getBadgeText()}
+            {badgeInfo.text}
           </span>
         </div>
       </div>

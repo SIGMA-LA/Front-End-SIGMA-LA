@@ -16,7 +16,13 @@ import {
   Loader2,
 } from 'lucide-react'
 import { mockVehiculos } from '@/data/mockData'
-import { CrearEntregaProps, Obra, Empleado, OrdenProduccion } from '@/types'
+import {
+  CrearEntregaProps,
+  Obra,
+  Empleado,
+  OrdenProduccion,
+  VehiculoConDisponibilidad,
+} from '@/types'
 import { ModalEncargadoProps } from '@/types'
 import empleadoService from '@/services/empleado.service'
 import { getObras } from '@/services/obra.service'
@@ -24,6 +30,7 @@ import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
 import maquinariaService, {
   MaquinariaConDisponibilidad,
 } from '@/services/maquinaria.service'
+import * as vehiculoService from '@/services/vehiculos.service'
 import SelectionModal from '../shared/SelectionModal'
 import AsignarPersonalModal from '../shared/AsignarPersonalModal'
 import parametroService from '@/services/parametro.service'
@@ -134,7 +141,6 @@ export default function CrearEntrega({
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEmpleados, setSelectedEmpleados] = useState<string[]>([])
   const [selectedVehiculos, setSelectedVehiculos] = useState<string[]>([])
-  const [showModalEncargado, setShowModalEncargado] = useState(false)
 
   const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
   const [isMaquinariaModalOpen, setIsMaquinariaModalOpen] = useState(false)
@@ -166,9 +172,10 @@ export default function CrearEntrega({
   const [loadingOrdenes, setLoadingOrdenes] = useState(false)
   const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
 
+  const [vehiculos, setVehiculos] = useState<VehiculoConDisponibilidad[]>([])
+
   const isFromObra = !!preloadedObra
 
-  // FUSIONADO: Se incluyen todos los useEffect de ambas versiones
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -203,35 +210,51 @@ export default function CrearEntrega({
         setLoadingDisponibilidad(true)
         try {
           const fechaInicio = new Date(`${formData.fecha}T${formData.hora}`)
-          const fechaFin = new Date(fechaInicio.getTime() + 8 * 60 * 60 * 1000)
+          const dias = Number(diasViaticos) > 0 ? Number(diasViaticos) : 1
+          const horasDeUsoEnMs = dias * 24 * 60 * 60 * 1000
+          const fechaFin = new Date(fechaInicio.getTime() + horasDeUsoEnMs)
 
-          const maquinariasConDisponibilidad =
-            await maquinariaService.getDisponibilidadPorFecha(
+          const [maquinariasData, vehiculosData] = await Promise.all([
+            maquinariaService.getDisponibilidadPorFecha(
               fechaInicio.toISOString(),
               fechaFin.toISOString()
-            )
-          setMaquinarias(maquinariasConDisponibilidad)
+            ),
+            vehiculoService.getDisponibilidadPorFecha(
+              fechaInicio.toISOString(),
+              fechaFin.toISOString()
+            ),
+          ])
+
+          setMaquinarias(maquinariasData)
+          setVehiculos(vehiculosData)
         } catch (error) {
-          console.error(
-            'Error al verificar disponibilidad de maquinaria:',
-            error
-          )
-          setError('No se pudo verificar la disponibilidad de las maquinarias.')
+          console.error('Error al verificar disponibilidad:', error)
+          setError('No se pudo verificar la disponibilidad de los recursos.')
         } finally {
           setLoadingDisponibilidad(false)
         }
       } else if (!loading) {
-        const todasLasMaquinarias = await maquinariaService.getAllMaquinarias()
+        // Si no hay fecha, cargar todos sin estado de disponibilidad
+        const [todasLasMaquinarias, todosLosVehiculos] = await Promise.all([
+          maquinariaService.getAllMaquinarias(),
+          vehiculoService.getVehiculos(),
+        ])
         setMaquinarias(
           todasLasMaquinarias.map((m) => ({
             ...m,
             availabilityStatus: 'DISPONIBLE' as const,
           }))
         )
+        setVehiculos(
+          todosLosVehiculos.map((v) => ({
+            ...v,
+            availabilityStatus: 'DISPONIBLE' as const,
+          }))
+        )
       }
     }
     verificarDisponibilidad()
-  }, [formData.fecha, formData.hora, loading])
+  }, [formData.fecha, formData.hora, loading, diasViaticos])
 
   useEffect(() => {
     const fetchOrdenes = async () => {
@@ -240,9 +263,10 @@ export default function CrearEntrega({
         setErrorOrdenes(null)
         setSelectedOrden(null)
         try {
-          const data = await ordenProduccionService.getOrdenesByObra(
-            Number(formData.obraId)
-          )
+          const data =
+            await ordenProduccionService.getOrdenesByObraAndFinalizada(
+              Number(formData.obraId)
+            )
           setOrdenesProduccion(data)
         } catch (err) {
           console.error('Error al cargar órdenes de producción:', err)
@@ -258,7 +282,6 @@ export default function CrearEntrega({
     fetchOrdenes()
   }, [formData.obraId])
 
-  // FUSIONADO: Se incluyen todas las funciones helper de ambas versiones
   const totalViaticos = useMemo(() => {
     const dias = Number(diasViaticos) || 0
     const cantidadPersonas = encargado ? 1 + acompanantes.length : 0
@@ -286,23 +309,6 @@ export default function CrearEntrega({
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase())
   )
-
-  const handleEmpleadoToggle = (empleadoCuil: string) => {
-    setSelectedEmpleados((prev) =>
-      prev.includes(empleadoCuil)
-        ? prev.filter((cuil) => cuil !== empleadoCuil)
-        : [...prev, empleadoCuil]
-    )
-  }
-
-  const handleVehiculoToggle = (vehiculoPatente: string) => {
-    setSelectedVehiculos((prev) =>
-      prev.includes(vehiculoPatente)
-        ? prev.filter((patente) => patente !== vehiculoPatente)
-        : [...prev, vehiculoPatente]
-    )
-  }
-
   const handleObraSelect = (obra: Obra) => {
     if (obra.cod_obra === formData.obraId) {
       setShowObraSearch(false)
@@ -332,6 +338,25 @@ export default function CrearEntrega({
     if (!formData.obraId) {
       alert('Debe seleccionar una obra.')
       return
+    }
+
+    if (selectedVehiculos.length > 0) {
+      const vehiculosSeleccionados = vehiculos.filter((v) =>
+        selectedVehiculos.includes(v.patente)
+      )
+      const vehiculosEnConflicto = vehiculosSeleccionados.filter(
+        (v) =>
+          v.estado !== 'DISPONIBLE' || v.availabilityStatus === 'NO_DISPONIBLE'
+      )
+      if (vehiculosEnConflicto.length > 0) {
+        const nombresVehiculos = vehiculosEnConflicto
+          .map((v) => `${v.tipo_vehiculo} (${v.patente})`)
+          .join(', ')
+        setError(
+          `No se puede crear la entrega. Los siguientes vehículos no están disponibles en la fecha seleccionada: ${nombresVehiculos}. Por favor, ajuste la fecha o deseleccione los vehículos.`
+        )
+        return
+      }
     }
 
     await crearEntregaEnBackend()
@@ -389,6 +414,7 @@ export default function CrearEntrega({
         dias_viaticos:
           diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
         maquinarias: selectedMaquinaria.map((id) => parseInt(id, 10)),
+        vehiculos: selectedVehiculos,
         cod_op: selectedOrden?.cod_op,
       }
 
@@ -627,7 +653,7 @@ export default function CrearEntrega({
                           orden={orden}
                           isSelected={selectedOrden?.cod_op === orden.cod_op}
                           onClick={() => setSelectedOrden(orden)}
-                          isAprobada={orden.estado === 'APROBADA'}
+                          estado={orden.estado}
                         />
                       ))}
                     </div>
@@ -703,7 +729,7 @@ export default function CrearEntrega({
                 </div>
               </div>
 
-              {/* Vehículos/Maquinaria especial */}
+              {/* Vehículos */}
               <div>
                 <label className="mb-3 block text-sm font-medium text-gray-700">
                   <Truck className="mr-1 inline h-4 w-4" />
@@ -724,14 +750,15 @@ export default function CrearEntrega({
                     <button
                       type="button"
                       onClick={() => setIsVehiculoModalOpen(true)}
-                      className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      className="flex-shrink-0 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                      Seleccionar
+                      {loadingDisponibilidad ? 'Verificando...' : 'Seleccionar'}
                     </button>
                   </div>
                 </div>
               </div>
 
+              {/* Maquinaria */}
               <div>
                 <label className="mb-3 block text-sm font-medium text-gray-700">
                   <Wrench className="mr-1 inline h-4 w-4" />
@@ -828,10 +855,28 @@ export default function CrearEntrega({
       <SelectionModal
         isOpen={isVehiculoModalOpen}
         title="Seleccionar Vehículos"
-        items={mockVehiculos.map((v) => ({
-          id: v.patente,
-          label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
-        }))}
+        items={vehiculos.map((v) => {
+          const isNotAvailableByStatus = v.estado !== 'DISPONIBLE'
+          const isDisabled =
+            isNotAvailableByStatus || v.availabilityStatus === 'NO_DISPONIBLE'
+          const warning =
+            v.availabilityStatus === 'ADVERTENCIA' && !isNotAvailableByStatus
+              ? v.warningMessage
+              : undefined
+          let label = `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`
+          if (
+            v.availabilityStatus === 'NO_DISPONIBLE' &&
+            !isNotAvailableByStatus
+          ) {
+            label += ' - OCUPADO EN FECHA'
+          }
+          return {
+            id: v.patente,
+            label: label,
+            disabled: isDisabled,
+            warning: warning,
+          }
+        })}
         selectedItems={selectedVehiculos}
         onClose={() => setIsVehiculoModalOpen(false)}
         onConfirm={setSelectedVehiculos}

@@ -3,19 +3,36 @@ import type { OrdenProduccion } from '@/types'
 
 /* Obtiene órdenes de producción activas (aprobadas por coordinación)*/
 export const getOrdenesValidadas = async (): Promise<OrdenProduccion[]> => {
-  const { data } = await api.get<OrdenProduccion[]>('/ordenes-produccion/validadas')
+  const { data } = await api.get<OrdenProduccion[]>(
+    '/ordenes-produccion/validadas'
+  )
   return data
 }
 
 /* Obtiene órdenes de producción en produccion*/
 export const getOrdenesEnProduccion = async (): Promise<OrdenProduccion[]> => {
-  const { data } = await api.get<OrdenProduccion[]>('/ordenes-produccion/en-produccion')
+  const { data } = await api.get<OrdenProduccion[]>(
+    '/ordenes-produccion/en-produccion'
+  )
   return data
 }
 
 /*Obtiene todas las órdenes de producción de una obra*/
-export const getOrdenesByObra = async (cod_obra: number): Promise<OrdenProduccion[]> => {
-  const { data } = await api.get<OrdenProduccion[]>(`/ordenes-produccion/obra/${cod_obra}`)
+export const getOrdenesByObra = async (
+  cod_obra: number
+): Promise<OrdenProduccion[]> => {
+  const { data } = await api.get<OrdenProduccion[]>(
+    `/ordenes-produccion/obra/${cod_obra}`
+  )
+  return data
+}
+
+export const getOrdenesByObraAndFinalizada = async (
+  cod_obra: number
+): Promise<OrdenProduccion[]> => {
+  const { data } = await api.get<OrdenProduccion[]>(
+    `/ordenes-produccion/obra/${cod_obra}/finalizada`
+  )
   return data
 }
 
@@ -33,6 +50,7 @@ export default {
   getOrdenesValidadas,
   getOrdenesEnProduccion,
   getOrdenesByObra,
+  getOrdenesByObraAndFinalizada,
   iniciarProduccion,
   finalizarProduccion,
 }
