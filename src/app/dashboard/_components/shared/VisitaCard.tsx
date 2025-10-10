@@ -3,6 +3,7 @@ import { Calendar, Clock, User, Eye, Pencil, XCircle } from 'lucide-react'
 import { Visita } from '@/types'
 import VisitaDetail from './VisitaDetails'
 import { cancelarVisita } from '@/actions/visitas'
+import { useEmpleado } from '@/hooks/useEmpleado'
 
 export function getStatusColor(estado: string) {
   switch (estado) {
@@ -66,6 +67,8 @@ export default function VisitaCard({
   const [cancelLoading, setCancelLoading] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
 
+  const { empleado, isLoading, error } = useEmpleado(visita.empleado_visita?.[0]?.cuil || '');
+
   const handleCancelarVisita = async () => {
     setCancelLoading(true)
     try {
@@ -116,7 +119,7 @@ export default function VisitaCard({
                             className="text-xs leading-tight text-gray-700"
                             style={idx === 0 ? { marginTop: '-2px' } : {}}
                           >
-                            {ev.empleado?.nombre} {ev.empleado?.apellido}
+                            {empleado?.nombre} {empleado?.apellido}
                           </li>
                         ) : (
                           <li
