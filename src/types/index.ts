@@ -264,6 +264,12 @@ export interface VehiculoFormData {
   estado: VehiculoEstado
 }
 
+export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
+export interface VehiculoConDisponibilidad extends Vehiculo {
+  availabilityStatus: AvailabilityStatus
+  warningMessage?: string
+}
+
 // El tipo Vehiculo puede seguir teniendo más campos si la API GET los devuelve
 export interface Vehiculo {
   patente: string

@@ -11,6 +11,7 @@ interface NotaFabricaModalProps {
   codObra: number
   onUploadSuccess?: (url: string) => void
   rolActual?: string
+  onDeleteClick?: () => void
 }
 
 export default function NotaFabricaModal({
@@ -20,6 +21,7 @@ export default function NotaFabricaModal({
   codObra,
   onUploadSuccess,
   rolActual = '',
+  onDeleteClick,
 }: NotaFabricaModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -120,7 +122,7 @@ export default function NotaFabricaModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-6">
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-4 lg:p-6">
       <div
         className="bg-opacity-50 absolute inset-0 bg-transparent backdrop-blur-sm"
         onClick={handleClose}
@@ -158,7 +160,7 @@ export default function NotaFabricaModal({
                 </button>
                 <button
                   type="button"
-                  onClick={handleEliminar}
+                  onClick={onDeleteClick}
                   disabled={loading}
                   className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
                 >

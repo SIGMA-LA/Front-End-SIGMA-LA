@@ -16,7 +16,6 @@ export default function ObrasList({
   onScheduleVisit,
   onScheduleEntrega,
   onEditClick,
-  onNotaFabricaClick,
 }: ObrasListProps) {
   const { usuario } = useAuth()
   const [cargando, setCargando] = useState(true)
@@ -50,9 +49,10 @@ export default function ObrasList({
       setLocalidades([])
       setFiltroLocalidad('')
     }
+    // No refrescar obras acá
   }, [filtroProvincia])
 
-  // Traer obras solo cuando cambia localidad o estado
+  // Refrescar obras cuando cambia localidad o estado
   useEffect(() => {
     const fetchObrasFiltradas = async () => {
       setCargando(true)
@@ -70,6 +70,7 @@ export default function ObrasList({
         setCargando(false)
       }
     }
+    // Si no hay localidad ni estado ni provincia, traer todas
     if (
       filtroLocalidad ||
       filtroEstado ||
@@ -80,19 +81,21 @@ export default function ObrasList({
     // Si solo cambia provincia, no hace fetch de obras
   }, [filtroLocalidad, filtroEstado])
 
-  const handleEliminar = async (id: number) => {
-    if (
-      window.confirm(
-        '¿Estás seguro de que deseas eliminar esta obra? Esta acción no se puede deshacer.'
-      )
-    ) {
-      try {
-        await deleteObra(id)
-        alert('Obra eliminada con éxito.')
-        setObras((prev) => prev.filter((o) => o.cod_obra !== id))
-      } catch (err) {
-        alert('Ocurrió un error al intentar eliminar la obra.')
-      }
+  // Cuando se selecciona "Todas las localidades", limpiar filtros y refrescar obras
+  const handleLocalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    setFiltroLocalidad(value)
+    if (value === '') {
+      setFiltroProvincia('')
+      setFiltroEstado('')
+      setTimeout(() => {
+        setCargando(true)
+        setError(null)
+        filtrarObras({})
+          .then(setObras)
+          .catch(() => setError('No se pudieron cargar las obras.'))
+          .finally(() => setCargando(false))
+      }, 0)
     }
   }
 
@@ -104,6 +107,28 @@ export default function ObrasList({
   const handleClosePagoModal = () => {
     setShowPagoModal(false)
     setObraPagos(null)
+  // Esta función sí se pasa a cada ObraCard, pero solo hace la eliminación real y refresca el listado
+  const eliminarObra = async (id: number) => {
+    try {
+      await deleteObra(id)
+      setObras((prev) => prev.filter((o) => o.cod_obra !== id))
+    } catch (err) {
+      alert('Ocurrió un error al intentar cancelar la obra.')
+    }
+  }
+  const refrescarObras = () => {
+    setCargando(true)
+    filtrarObras({
+      estado: filtroEstado || undefined,
+      cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
+    })
+      .then(setObras)
+      .catch(() => setError('No se pudieron cargar las obras.'))
+      .finally(() => setCargando(false))
+  }
+
+  if (obraPagos) {
+    return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
   }
 
   return (
@@ -177,8 +202,8 @@ export default function ObrasList({
               <select
                 id="filtro-localidad"
                 value={filtroLocalidad}
-                onChange={(e) => setFiltroLocalidad(e.target.value)}
-                className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                onChange={handleLocalidadChange}
+                className={`w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!filtroProvincia ? 'cursor-not-allowed bg-gray-200' : ''}`}
                 disabled={!filtroProvincia}
               >
                 <option value="">Todas las localidades</option>
@@ -227,12 +252,14 @@ export default function ObrasList({
               <ObraCard
                 key={obra.cod_obra}
                 obra={obra}
+                provincias={provincias}
                 usuarioRol={usuario?.rol_actual}
                 onScheduleVisit={onScheduleVisit}
                 onScheduleEntrega={onScheduleEntrega}
                 onPagosClick={handlePagosClick}
                 onEditClick={onEditClick}
-                onDeleteClick={handleEliminar}
+                onDeleteClick={eliminarObra}
+                onNotaFabricaChange={refrescarObras}
               />
             ))
           ) : (
