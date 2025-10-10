@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, Info } from 'lucide-react'
+import { Save, Info, AlertTriangle } from 'lucide-react'
 
 import { Vehiculo, VehiculoFormData } from '@/types' // Asegúrate que tu tipo Vehiculo coincida con el nuevo esquema
 import { useUpdateVehiculo } from '@/hooks/useUpdateVehiculo';
@@ -33,8 +33,8 @@ export default function EditarVehiculo({ vehiculo, onCancel, onSubmit }: EditarV
     estado?: string
   }>({})
 
-  const { isPending, error, handleUpdate } = useUpdateVehiculo({
-    onSuccess: onSubmit,
+  const { isPending, error: apiError, handleUpdate, setError: setApiError } = useUpdateVehiculo({
+    onSuccess: onSubmit, // Al tener éxito, simplemente llamamos a la prop onSubmit
   });
 
   // CORRECCIÓN: Definimos las opciones con sus tipos correctos
@@ -51,11 +51,14 @@ export default function EditarVehiculo({ vehiculo, onCancel, onSubmit }: EditarV
     return Object.keys(newErrors).length === 0
   }
 
-const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Limpiamos cualquier error previo de la API al intentar guardar de nuevo
+    setApiError(null);
+
     if (!validateForm()) return;
 
-    // Ahora este objeto tiene los tipos correctos y es compatible con `Partial<VehiculoFormData>`
     const vehiculoDataToUpdate: Partial<VehiculoFormData> = {
       tipo_vehiculo: tipoVehiculo,
       estado: estado,
@@ -64,17 +67,14 @@ const handleSubmit = (e: React.FormEvent) => {
     handleUpdate(vehiculo.patente, vehiculoDataToUpdate);
   }
   
-  // Sincroniza el estado si el objeto `vehiculo` de las props cambia.
+  // useEffect para sincronizar el estado (sin cambios)
   useEffect(() => {
     if (vehiculo) {
-        setTipoVehiculo(vehiculo.tipo_vehiculo || 'CAMIONETA');
+        setTipoVehiculo(vehiculo.tipo_vehiculo || '');
         setEstado(vehiculo.estado || 'DISPONIBLE');
-        // También reseteamos los campos futuros por si acaso
-        setMarca((vehiculo as any).marca || '');
-        setModelo((vehiculo as any).modelo || '');
-        setAnio((vehiculo as any).anio?.toString() || '');
     }
   }, [vehiculo]);
+
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -144,6 +144,17 @@ const handleSubmit = (e: React.FormEvent) => {
              </div>
           </div>
 
+          {apiError && (
+            <div className="rounded-lg border border-red-300 bg-red-50 p-3">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600" />
+                <div>
+                  <h4 className="font-semibold text-red-800">Error al actualizar</h4>
+                  <p className="text-sm text-red-700">{apiError}</p>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Botones */}
           <div className="flex flex-col gap-3 pt-4 sm:flex-row">
             <button type="button" onClick={onCancel} className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50">
@@ -154,7 +165,6 @@ const handleSubmit = (e: React.FormEvent) => {
               {isPending ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
-          {error && <p className="mt-2 text-sm text-red-600 text-center">{error}</p>}
         </form>
       </div>
     </div>
