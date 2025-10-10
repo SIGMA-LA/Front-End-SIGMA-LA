@@ -16,7 +16,6 @@ export default function ObrasList({
   onScheduleVisit,
   onScheduleEntrega,
   onEditClick,
-  onNotaFabricaClick,
 }: ObrasListProps) {
   const { usuario } = useAuth()
   const [cargando, setCargando] = useState(true)
@@ -107,6 +106,16 @@ export default function ObrasList({
     } catch (err) {
       alert('Ocurrió un error al intentar cancelar la obra.')
     }
+  }
+  const refrescarObras = () => {
+    setCargando(true)
+    filtrarObras({
+      estado: filtroEstado || undefined,
+      cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
+    })
+      .then(setObras)
+      .catch(() => setError('No se pudieron cargar las obras.'))
+      .finally(() => setCargando(false))
   }
 
   if (obraPagos) {
@@ -241,6 +250,7 @@ export default function ObrasList({
                 onPagosClick={setObraPagos}
                 onEditClick={onEditClick}
                 onDeleteClick={eliminarObra}
+                onNotaFabricaChange={refrescarObras}
               />
             ))
           ) : (
