@@ -1,19 +1,30 @@
 import api from './api/api'
-import { Visita } from '@/types'
+import { Visita, Empleado, UsoVehiculoVisita } from '@/types'
 
 interface EmpleadoAsignadoVisita {
-  cuil: string
+cuil: string
   cod_visita: number
-  empleado: {
+  empleado:{
     cuil: string
-    nombre: string
-    apellido: string
-    rol_actual: string
-    // area_trabajo y contrasenia no vienen en el select del backend
+  nombre: string
+  apellido: string
+  rol_actual: string
+  area_trabajo: string
+  contrasenia?: string
   }
+  visita: Visita
 }
 
-// Interfaz ajustada según lo que devuelve el backend
+interface BackendCliente {
+  cuil?: string
+  razon_social?: string
+  telefono: string
+  mail: string
+  nombre?: string
+  apellido?: string
+  tipo_cliente: 'PERSONA' | 'EMPRESA'
+}
+
 interface BackendVisita {
   cod_visita: number
   fecha_hora_visita: string
@@ -37,17 +48,24 @@ interface BackendVisita {
   obra?: {
     cod_obra: number
     direccion: string
-    cliente: {
-      razon_social: string
-      telefono: string
-      mail: string
-    }
+    cliente: BackendCliente
+localidad: {
+    cod_localidad: number
+    nombre_localidad: string
+    cod_provincia: number
+  }
   }
   localidad: {
     cod_localidad: number
     nombre_localidad: string
+    cod_provincia: number
+    provincia:{
+      cod_provincia: number
+      nombre: string
+    }
   }
   empleado_visita: EmpleadoAsignadoVisita[]
+  uso_vehiculo_visita: UsoVehiculoVisita
 }
 
 // Mapea la estructura del backend a la estructura del frontend
@@ -64,38 +82,62 @@ const mapToFrontend = (backendVisita: BackendVisita): Visita => {
       ? {
           cod_obra: backendVisita.obra.cod_obra,
           cod_localidad: backendVisita.cod_localidad || 0,
-          cuil_cliente: '',
-          fecha_ini: '', // No viene del backend limitado
-          estado: 'EN ESPERA DE PAGO' as const, // No viene del backend limitado
+          cuil_cliente: backendVisita.obra.cliente?.cuil || '',
+          fecha_ini: '',
+          estado: 'EN ESPERA DE PAGO' as const,
           fecha_cancelacion: backendVisita.fecha_cancelacion || null,
           direccion: backendVisita.obra.direccion,
-          nota_fabrica: '', // No viene del backend limitado
+          nota_fabrica: '',
           cliente: {
-            cuil: '',
-            razon_social: backendVisita.obra.cliente?.razon_social || '',
+            cuil: backendVisita.obra.cliente?.cuil || '',
+            tipo_cliente: backendVisita.obra.cliente?.tipo_cliente || 'EMPRESA',
+            razon_social: backendVisita.obra.cliente?.razon_social,
             telefono: backendVisita.obra.cliente?.telefono || '',
             mail: backendVisita.obra.cliente?.mail || '',
+            nombre: backendVisita.obra.cliente?.nombre,
+            apellido: backendVisita.obra.cliente?.apellido,
           },
-          localidad: backendVisita.localidad,
+          localidad:{
+            cod_localidad: backendVisita.obra.localidad.cod_localidad,
+            nombre_localidad: backendVisita.obra.localidad.nombre_localidad,
+            cod_provincia: backendVisita.obra.localidad.cod_provincia,
+            provincia:{
+              cod_provincia: backendVisita.localidad.provincia.cod_provincia,
+              nombre: backendVisita.localidad.provincia.nombre,
+            }
+          },
         }
       : undefined,
-    empleados_asignados:
+      localidad:{
+            cod_localidad: backendVisita.localidad.cod_localidad,
+            nombre_localidad: backendVisita.localidad.nombre_localidad,
+            cod_provincia: backendVisita.localidad.cod_provincia,
+            provincia:{
+              cod_provincia: backendVisita.localidad.provincia.cod_provincia,
+              nombre: backendVisita.localidad.provincia.nombre,
+            }
+          },
+    empleado_visita:
       backendVisita.empleado_visita?.map((ev) => ({
-        cuil: ev.empleado?.cuil || ev.cuil,
-        nombre: ev.empleado?.nombre || '',
-        apellido: ev.empleado?.apellido || '',
-        rol_actual: ev.empleado?.rol_actual || '',
-        area_trabajo: '',
-        contrasenia: undefined,
+        cuil: ev.cuil,
+        cod_visita: ev.cod_visita,
+        empleado: {
+        cuil: ev.empleado.cuil,
+        nombre: ev.empleado.nombre,
+        apellido: ev.empleado.nombre,
+        rol_actual: ev.empleado.rol_actual,
+        area_trabajo: ev.empleado.area_trabajo,
+        contrasenia: undefined
+        },
+        visita: ev.visita,
       })) || [],
-    vehiculos_usados: [],
+    uso_vehiculo_visita: backendVisita.uso_vehiculo_visita
   }
 }
 
 class VisitasService {
   private baseURL = '/visitas'
 
-  // Obtiene todas las visitas (con estructura completa)
   async getAllVisitas(): Promise<Visita[]> {
     try {
       const response = await api.get<BackendVisita[]>(this.baseURL)
@@ -106,7 +148,6 @@ class VisitasService {
     }
   }
 
-  // Obtiene una visita específica por ID (con estructura completa)
   async getVisitaById(cod_visita: number): Promise<Visita> {
     try {
       const response = await api.get<BackendVisita>(
@@ -119,7 +160,6 @@ class VisitasService {
     }
   }
 
-  // Crea una nueva visita
   async createVisita(data: {
     fecha_hora_visita: string
     cod_obra?: number
@@ -138,7 +178,6 @@ class VisitasService {
     }
   }
 
-  // Actualiza una visita existente
   async updateVisita(
     cod_visita: number,
     data: {
@@ -164,7 +203,6 @@ class VisitasService {
     }
   }
 
-  // Elimina una visita
   async deleteVisita(cod_visita: number): Promise<Visita> {
     try {
       const response = await api.delete<BackendVisita>(
@@ -177,7 +215,6 @@ class VisitasService {
     }
   }
 
-  // Marca una visita como completada con observaciones opcionales
   async finalizarVisita(
     cod_visita: number,
     observaciones?: string
@@ -194,7 +231,6 @@ class VisitasService {
     }
   }
 
-  // Obtiene visitas de un empleado filtradas por estado - ESTRUCTURA LIMITADA
   async getVisitasByEmpleadoAndEstado(
     cuil: string,
     estado:
@@ -218,7 +254,6 @@ class VisitasService {
     }
   }
 
-  // Obtiene todas las visitas de un empleado - ESTRUCTURA LIMITADA
   async getVisitasByEmpleado(cuil: string): Promise<Visita[]> {
     try {
       const response = await api.get<BackendVisita[]>(
@@ -231,7 +266,6 @@ class VisitasService {
     }
   }
 
-  // Obtiene visitas asociadas a una obra - ESTRUCTURA LIMITADA
   async getVisitasByObra(cod_obra: number): Promise<Visita[]> {
     try {
       const response = await api.get<BackendVisita[]>(
@@ -244,7 +278,6 @@ class VisitasService {
     }
   }
 
-  // Cancela una visita con un motivo opcional
   async cancelarVisita(cod_visita: number, motivo?: string): Promise<Visita> {
     try {
       const response = await api.patch<BackendVisita>(

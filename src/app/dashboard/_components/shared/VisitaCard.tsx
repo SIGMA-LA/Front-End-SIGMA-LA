@@ -116,7 +116,7 @@ export default function VisitaCard({
                             className="text-xs leading-tight text-gray-700"
                             style={idx === 0 ? { marginTop: '-2px' } : {}}
                           >
-                            {ev.empleado.nombre} {ev.empleado.apellido}
+                            {ev.empleado?.nombre} {ev.empleado?.apellido}
                           </li>
                         ) : (
                           <li

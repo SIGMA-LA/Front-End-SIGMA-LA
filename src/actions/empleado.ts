@@ -4,7 +4,7 @@ import { Empleado } from '@/types'
 import { getAccessToken } from './auth'
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/empleados'
+  process.env.NEXT_PUBLIC_API_URL + '/empleados'
 
 export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
   try {
@@ -41,6 +41,8 @@ export async function obtenerVisitadores(): Promise<Empleado[]> {
       },
       cache: 'no-store',
     })
+
+    console.log(response)
 
     if (!response.ok) {
       return []
