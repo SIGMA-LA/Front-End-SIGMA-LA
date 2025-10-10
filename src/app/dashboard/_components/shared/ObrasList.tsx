@@ -49,7 +49,6 @@ export default function ObrasList({
       setLocalidades([])
       setFiltroLocalidad('')
     }
-    // No refrescar obras acá
   }, [filtroProvincia])
 
   // Refrescar obras cuando cambia localidad o estado
@@ -70,7 +69,6 @@ export default function ObrasList({
         setCargando(false)
       }
     }
-    // Si no hay localidad ni estado ni provincia, traer todas
     if (
       filtroLocalidad ||
       filtroEstado ||
@@ -78,24 +76,13 @@ export default function ObrasList({
     ) {
       fetchObrasFiltradas()
     }
-    // Si solo cambia provincia, no hace fetch de obras
-  }, [filtroLocalidad, filtroEstado])
+  }, [filtroLocalidad, filtroEstado, filtroProvincia])
 
-  // Cuando se selecciona "Todas las localidades", limpiar filtros y refrescar obras
   const handleLocalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setFiltroLocalidad(value)
     if (value === '') {
       setFiltroProvincia('')
-      setFiltroEstado('')
-      setTimeout(() => {
-        setCargando(true)
-        setError(null)
-        filtrarObras({})
-          .then(setObras)
-          .catch(() => setError('No se pudieron cargar las obras.'))
-          .finally(() => setCargando(false))
-      }, 0)
     }
   }
 
@@ -107,15 +94,8 @@ export default function ObrasList({
   const handleClosePagoModal = () => {
     setShowPagoModal(false)
     setObraPagos(null)
-  // Esta función sí se pasa a cada ObraCard, pero solo hace la eliminación real y refresca el listado
-  const eliminarObra = async (id: number) => {
-    try {
-      await deleteObra(id)
-      setObras((prev) => prev.filter((o) => o.cod_obra !== id))
-    } catch (err) {
-      alert('Ocurrió un error al intentar cancelar la obra.')
-    }
   }
+
   const refrescarObras = () => {
     setCargando(true)
     filtrarObras({
@@ -127,8 +107,17 @@ export default function ObrasList({
       .finally(() => setCargando(false))
   }
 
-  if (obraPagos) {
-    return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
+  const eliminarObra = async (id: number) => {
+    try {
+      const result = await deleteObra(id)
+      if (result.success) {
+        refrescarObras() // Refresca la lista para mostrar el estado "CANCELADA"
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (err) {
+      alert('Ocurrió un error al intentar cancelar la obra.')
+    }
   }
 
   return (
@@ -203,7 +192,9 @@ export default function ObrasList({
                 id="filtro-localidad"
                 value={filtroLocalidad}
                 onChange={handleLocalidadChange}
-                className={`w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!filtroProvincia ? 'cursor-not-allowed bg-gray-200' : ''}`}
+                className={`w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  !filtroProvincia ? 'cursor-not-allowed bg-gray-200' : ''
+                }`}
                 disabled={!filtroProvincia}
               >
                 <option value="">Todas las localidades</option>
@@ -283,14 +274,17 @@ export default function ObrasList({
           onClose={handleClosePagoModal}
           onPagoCreado={() => {
             handleClosePagoModal()
-            // Opcionalmente recargar la lista de obras
+            refrescarObras()
           }}
           obraPreseleccionada={(() => {
             const presupuestoAceptado =
-              obraPagos.presupuesto?.find((p) => p.fecha_aceptacion) ||
+              obraPagos.presupuesto?.find((p: any) => p.fecha_aceptacion) ||
               obraPagos.presupuesto?.[0]
             const totalPagado =
-              obraPagos.pagos?.reduce((sum, pago) => sum + pago.monto, 0) || 0
+              obraPagos.pagos?.reduce(
+                (sum: number, pago: any) => sum + pago.monto,
+                0
+              ) || 0
             const valorPresupuesto = presupuestoAceptado?.valor || 0
             const saldoPendiente = valorPresupuesto - totalPagado
             const porcentajePagado =
@@ -302,18 +296,14 @@ export default function ObrasList({
               estado: obraPagos.estado,
               cliente: obraPagos.cliente,
               presupuesto: presupuestoAceptado
-                ? {
+                ? ({
                     nro_presupuesto: presupuestoAceptado.nro_presupuesto,
                     valor: presupuestoAceptado.valor,
                     fecha_aceptacion:
                       presupuestoAceptado.fecha_aceptacion ||
                       new Date().toISOString(),
-                  }
-                : {
-                    nro_presupuesto: 0,
-                    valor: 0,
-                    fecha_aceptacion: new Date().toISOString(),
-                  },
+                  } as any)
+                : undefined,
               totalPagado,
               saldoPendiente,
               porcentajePagado,
