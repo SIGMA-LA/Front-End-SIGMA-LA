@@ -195,6 +195,33 @@ export interface PagoFormData {
   monto: number
 }
 
+// Filtros para búsqueda de pagos (nombres de la API)
+export interface PagosFilter {
+  cliente?: string
+  fechaDesde?: string
+  fechaHasta?: string
+  obra?: string
+  montoMin?: number
+  montoMax?: number
+}
+
+// Obra con información de presupuesto y pagos para selección
+export interface ObraConPresupuesto {
+  cod_obra: number
+  direccion: string
+  estado: string
+  cliente: Cliente
+  presupuesto: {
+    nro_presupuesto: number
+    valor: number
+    fecha_aceptacion: string
+  }
+  totalPagado: number
+  saldoPendiente: number
+  porcentajePagado: number
+  cantidad_pagos: number
+}
+
 export interface ReporteVentas {
   id: number
   mes: string
@@ -235,6 +262,12 @@ export interface VehiculoFormData {
   patente: string
   tipo_vehiculo: VehiculoTipo
   estado: VehiculoEstado
+}
+
+export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
+export interface VehiculoConDisponibilidad extends Vehiculo {
+  availabilityStatus: AvailabilityStatus
+  warningMessage?: string
 }
 
 // El tipo Vehiculo puede seguir teniendo más campos si la API GET los devuelve

@@ -91,7 +91,7 @@ export default function SidebarOrdenesProduccion({
                 orden={orden}
                 isSelected={selectedOrden?.cod_op === orden.cod_op}
                 onClick={() => onSelectOrden(orden)}
-                isAprobada={true}
+                estado={orden.estado}
               />
             ))
           )}
@@ -135,7 +135,7 @@ export default function SidebarOrdenesProduccion({
                 orden={orden}
                 isSelected={selectedOrden?.cod_op === orden.cod_op}
                 onClick={() => onSelectOrden(orden)}
-                isAprobada={false}
+                estado={orden.estado}
               />
             ))
           )}

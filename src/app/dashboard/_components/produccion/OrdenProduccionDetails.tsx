@@ -26,16 +26,14 @@ const formatDate = (dateString: string) =>
     year: 'numeric',
   })
 
-const getEstadoBadge = (estado: string) => {
+const getEstadoBadge = (estado: OrdenProduccion['estado']) => {
   const badges = {
-    ACTIVA: 'bg-blue-100 text-blue-800',
+    PENDIENTE: 'bg-gray-100 text-gray-800',
+    APROBADA: 'bg-blue-100 text-blue-800',
     'EN PRODUCCION': 'bg-yellow-100 text-yellow-800',
     FINALIZADA: 'bg-green-100 text-green-800',
-    ENTREGADA: 'bg-purple-100 text-purple-800',
-    CANCELADA: 'bg-red-100 text-red-800',
-    'EN ESPERA DE STOCK': 'bg-orange-100 text-orange-800',
   }
-  return badges[estado as keyof typeof badges] || 'bg-gray-100 text-gray-800'
+  return badges[estado] || 'bg-gray-100 text-gray-800'
 }
 
 export default function OrdenProduccionDetails({
@@ -68,9 +66,9 @@ export default function OrdenProduccionDetails({
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span
-                className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold lg:px-5 lg:text-base ${getEstadoBadge(orden.obra.estado)}`}
+                className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold lg:px-5 lg:text-base ${getEstadoBadge(orden.estado)}`}
               >
-                {orden.obra.estado}
+                {orden.estado}
               </span>
               {orden.fecha_validacion && (
                 <span className="text-sm text-gray-500 lg:text-base">
@@ -101,7 +99,8 @@ export default function OrdenProduccionDetails({
             <MapPin className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
             <span className="break-words">
               {orden.obra.direccion}
-              {orden.obra.localidad && `, ${orden.obra.localidad.nombre_localidad}`}
+              {orden.obra.localidad &&
+                `, ${orden.obra.localidad.nombre_localidad}`}
             </span>
           </div>
           <div className="col-span-1 flex items-center space-x-3 rounded-lg bg-gray-50 p-3 sm:col-span-2 lg:space-x-4">
@@ -129,7 +128,7 @@ export default function OrdenProduccionDetails({
                   onError={() => setPdfLoading(false)}
                 />
                 {pdfLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90">
+                  <div className="bg-opacity-90 absolute inset-0 flex items-center justify-center bg-white">
                     <div className="text-center">
                       <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
                       <p className="text-sm text-gray-500 lg:text-base">
@@ -151,30 +150,28 @@ export default function OrdenProduccionDetails({
         )}
 
         {/* Botones para iniciar/finalizar producción */}
-{(canIniciar || canFinalizar) && (
-  <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-4 lg:pt-8">
-    {canIniciar && onIniciarProduccion && (
-      <Button
-        onClick={onIniciarProduccion}
-        className="flex-1 cursor-pointer bg-green-600 py-4 text-base text-white hover:bg-green-700 lg:py-5 lg:text-lg"
-      >
-        <Play className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-        <span>Iniciar Producción</span>
-      </Button>
-    )}
-    {canFinalizar && onFinalizarProduccion && (
-      <Button
-        onClick={onFinalizarProduccion}
-        className="flex-1 cursor-pointer bg-blue-600 py-4 text-base text-white hover:bg-blue-700 lg:py-5 lg:text-lg"
-      >
-        <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-        <span>Finalizar Producción</span>
-      </Button>
-    )}
-  </div>
-)}
-
-
+        {(canIniciar || canFinalizar) && (
+          <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-4 lg:pt-8">
+            {canIniciar && onIniciarProduccion && (
+              <Button
+                onClick={onIniciarProduccion}
+                className="flex-1 cursor-pointer bg-green-600 py-4 text-base text-white hover:bg-green-700 lg:py-5 lg:text-lg"
+              >
+                <Play className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+                <span>Iniciar Producción</span>
+              </Button>
+            )}
+            {canFinalizar && onFinalizarProduccion && (
+              <Button
+                onClick={onFinalizarProduccion}
+                className="flex-1 cursor-pointer bg-blue-600 py-4 text-base text-white hover:bg-blue-700 lg:py-5 lg:text-lg"
+              >
+                <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+                <span>Finalizar Producción</span>
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )

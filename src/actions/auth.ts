@@ -4,7 +4,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 export async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
-  let accessToken = cookieStore.get('accessToken')?.value
+  const accessToken = cookieStore.get('accessToken')?.value
 
   if (accessToken) {
     return accessToken

@@ -178,3 +178,27 @@ export const updateObra = async (
   )
   return mapToFrontend(obraActualizadaBackend)
 }
+
+/**
+ * Obtiene obras de empresas con estado 'PAGADA PARCIALMENTE'
+ */
+export const getObrasParaPedidoStock = async (): Promise<Obra[]> => {
+  const { data } = await api.get<BackendObra[]>('/obras/para-pedido-stock')
+  return data.map(mapToFrontend)
+}
+
+/**
+ * Cambia el estado de una obra a 'EN ESPERA DE STOCK'
+ */
+export const solicitarStockObra = async (id: number): Promise<Obra> => {
+  const { data } = await api.patch<BackendObra>(`/obras/${id}/solicitar-stock`)
+  return mapToFrontend(data)
+}
+
+/**
+ * Cambia el estado de una obra a 'EN PRODUCCION'
+ */
+export const recibirStockObra = async (id: number): Promise<Obra> => {
+  const { data } = await api.patch<BackendObra>(`/obras/${id}/recibir-stock`)
+  return mapToFrontend(data)
+}

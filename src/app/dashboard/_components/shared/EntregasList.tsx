@@ -45,15 +45,15 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
   const getStatusColor = (estado: string) => {
     switch (estado) {
       case 'PENDIENTE':
-        return 'bg-yellow-500'
+        return 'text-yellow-500'
       case 'EN CURSO':
-        return 'bg-blue-500'
+        return 'text-blue-500'
       case 'ENTREGADO':
-        return 'bg-green-500'
+        return 'text-green-500'
       case 'CANCELADO':
-        return 'bg-red-500'
+        return 'text-red-500'
       default:
-        return 'bg-gray-500'
+        return 'text-gray-500'
     }
   }
 
@@ -83,7 +83,7 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
 
   const getEncargado = (entrega: Entrega) => {
     const encargado = entrega.empleados_asignados?.find(
-      (e) => e.rol_entrega === 'ENCARGADO',
+      (e) => e.rol_entrega === 'ENCARGADO'
     )
     return encargado
       ? `${encargado.empleado.nombre} ${encargado.empleado.apellido}`
@@ -149,11 +149,8 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
               </div>
             ) : (
               entregas.map((entrega) => (
-                <div key={entrega.cod_entrega} className="flex items-center space-x-4">
-                  <div
-                    className={`h-6 w-6 rounded-full ${getStatusColor(entrega.estado)}`}
-                  />
-                  <div className="flex-1 rounded-xl border border-blue-200 bg-blue-50 p-6 transition-shadow hover:shadow-md">
+                <div key={entrega.cod_entrega}>
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 transition-shadow hover:shadow-md">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h3 className="mb-2 text-lg font-semibold text-gray-800">
@@ -162,11 +159,15 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
                         <div className="mb-3 grid grid-cols-2 gap-4 text-sm text-gray-600">
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4" />
-                            <span>{formatDate(entrega.fecha_hora_entrega)}</span>
+                            <span>
+                              {formatDate(entrega.fecha_hora_entrega)}
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Clock className="h-4 w-4" />
-                            <span>{formatTime(entrega.fecha_hora_entrega)}</span>
+                            <span>
+                              {formatTime(entrega.fecha_hora_entrega)}
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <User className="h-4 w-4" />
@@ -174,7 +175,9 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
                           </div>
                           <div className="flex items-center space-x-2">
                             <PackageOpen className="h-4 w-4" />
-                            <span className="font-medium">
+                            <span
+                              className={`font-medium ${getStatusColor(entrega.estado)}`}
+                            >
                               {getStatusText(entrega.estado)}
                             </span>
                           </div>
@@ -185,18 +188,18 @@ export default function EntregasList({ onCreateClick }: EntregasListProps) {
                       </div>
 
                       <div className="ml-4">
-                          <button
-                            onClick={() => setSelectedEntrega(entrega)}
-                            className="flex items-center space-x-2 rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
-                          >
-                            <Eye className="h-4 w-4" />
-                            <span>
-                              Ver
-                              <br />
-                              Detalles
-                            </span>
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setSelectedEntrega(entrega)}
+                          className="flex items-center space-x-2 rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span>
+                            Ver
+                            <br />
+                            Detalles
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
