@@ -6,6 +6,7 @@ interface ConfirmDeleteModalProps {
   onConfirm: () => void
   loading?: boolean
   message?: string
+  title?: string // <-- Nuevo prop para personalizar el título
   monto?: number
   fecha_pago?: string
 }
@@ -16,6 +17,7 @@ export default function ConfirmDeleteModal({
   onConfirm,
   loading = false,
   message = '¿Seguro que deseas eliminar este pago?',
+  title = 'Confirmar eliminación de pago', // <-- Valor por defecto
   monto,
   fecha_pago,
 }: ConfirmDeleteModalProps) {
@@ -24,9 +26,7 @@ export default function ConfirmDeleteModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-2xl">
-        <h3 className="mb-4 text-xl font-semibold text-gray-900">
-          Confirmar eliminación de pago
-        </h3>
+        <h3 className="mb-4 text-xl font-semibold text-gray-900">{title}</h3>
         <p className="mb-4 text-gray-700">{message}</p>
         {(monto !== undefined || fecha_pago) && (
           <div className="mb-6 rounded bg-blue-50 px-4 py-3 text-gray-800">

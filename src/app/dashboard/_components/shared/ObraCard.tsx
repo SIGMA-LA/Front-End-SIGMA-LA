@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { Obra, Provincia } from '@/types'
 import EstadoObraBadge from './EstadoObraBadge'
-import { Calendar, Edit, Trash2, DollarSign } from 'lucide-react'
-import EliminarObraModal from '../ventas/EliminarObraModal'
+import { Calendar, Edit, Trash2, DollarSign, FileText } from 'lucide-react'
+import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
+import NotaFabricaModal from '../ventas/NotaFabricaModal'
 
 interface ObraCardProps {
   obra: Obra
@@ -13,6 +14,7 @@ interface ObraCardProps {
   onPagosClick?: (obra: Obra) => void
   onEditClick?: (obra: Obra) => void
   onDeleteClick?: (obraId: number) => void
+  onNotaFabricaChange?: () => void
 }
 
 export default function ObraCard({
@@ -24,8 +26,15 @@ export default function ObraCard({
   onPagosClick,
   onEditClick,
   onDeleteClick,
+  onNotaFabricaChange,
 }: ObraCardProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [notaModalOpen, setNotaModalOpen] = useState(false)
+  const [notaUrl, setNotaUrl] = useState<string | null | undefined>(
+    obra.nota_fabrica
+  )
+  const [openEliminarNota, setOpenEliminarNota] = useState(false)
+  const [eliminandoNota, setEliminandoNota] = useState(false)
 
   const provincia = useMemo(() => {
     if (obra.localidad && provincias.length > 0) {
@@ -47,13 +56,63 @@ export default function ObraCard({
 
   const isCancelada = obra.estado === 'CANCELADA'
 
+  // Permisos para el botón de nota de fábrica
+  const puedeVerNota =
+    usuarioRol === 'VENTAS' ||
+    (usuarioRol === 'COORDINACION' && !!obra.nota_fabrica)
+
+  const puedeEditarNota = usuarioRol === 'VENTAS'
+  const tieneNota = !!notaUrl
+
+  // Handler para eliminar la nota de fábrica
+  const handleEliminarNota = async () => {
+    setEliminandoNota(true)
+    try {
+      // Aquí deberías llamar a tu endpoint para eliminar la nota de fábrica
+      // await eliminarNotaFabrica(obra.cod_obra)
+      setNotaUrl(null)
+      setOpenEliminarNota(false)
+      if (onNotaFabricaChange) onNotaFabricaChange()
+    } catch (e) {
+      alert('Ocurrió un error al eliminar la nota de fábrica.')
+    } finally {
+      setEliminandoNota(false)
+    }
+  }
+
   return (
     <>
-      <EliminarObraModal
+      {/* Modal para eliminar obra */}
+      <ConfirmDeleteModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onCancel={() => setModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        direccion={obra.direccion}
+        title="Eliminar Obra"
+        message={`¿Está seguro que desea eliminar la obra "${obra.direccion}"? Pasará a estado "CANCELADA".`}
+      />
+      {/* Modal para eliminar nota de fábrica */}
+      <ConfirmDeleteModal
+        open={openEliminarNota}
+        onCancel={() => setOpenEliminarNota(false)}
+        onConfirm={handleEliminarNota}
+        loading={eliminandoNota}
+        title="Eliminar Nota de Fábrica"
+        message={`¿Seguro que deseas eliminar la nota de fábrica de la obra "${obra.direccion}"?`}
+      />
+      {/* Modal para ver/subir nota de fábrica */}
+      <NotaFabricaModal
+        isOpen={notaModalOpen}
+        onClose={() => setNotaModalOpen(false)}
+        notaUrl={notaUrl}
+        codObra={obra.cod_obra}
+        onUploadSuccess={(url) => {
+          setNotaUrl(url)
+          if (onNotaFabricaChange) onNotaFabricaChange()
+        }}
+        rolActual={usuarioRol}
+        onDeleteClick={
+          puedeEditarNota ? () => setOpenEliminarNota(true) : undefined
+        }
       />
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -79,6 +138,28 @@ export default function ObraCard({
           <div className="flex flex-col items-start gap-3 sm:items-end">
             <EstadoObraBadge estado={obra.estado} />
             <div className="flex flex-wrap gap-2 sm:gap-4">
+              {puedeVerNota && (
+                <button
+                  onClick={() => setNotaModalOpen(true)}
+                  className={`flex items-center gap-1 font-medium ${
+                    puedeEditarNota
+                      ? tieneNota
+                        ? 'text-orange-600 hover:text-orange-800'
+                        : 'text-gray-400 hover:text-orange-600'
+                      : tieneNota
+                        ? 'text-gray-600 hover:text-gray-800'
+                        : 'cursor-not-allowed text-gray-400'
+                  }`}
+                  disabled={!puedeEditarNota && !tieneNota}
+                  tabIndex={tieneNota || puedeEditarNota ? 0 : -1}
+                >
+                  <FileText className="h-4 w-4" />
+                  Nota de Fábrica
+                  {!tieneNota && (
+                    <span className="ml-1 text-gray-400">(vacío)</span>
+                  )}
+                </button>
+              )}
               {/* SOLO mostrar si NO es VENTAS */}
               {usuarioRol !== 'VENTAS' && onScheduleVisit && (
                 <button
