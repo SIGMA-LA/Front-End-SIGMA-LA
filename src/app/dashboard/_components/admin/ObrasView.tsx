@@ -42,7 +42,10 @@ export default function ObrasView() {
                     </h3>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm text-gray-600 sm:grid-cols-2">
                       <p>
-                        <strong>Cliente:</strong> {obra.cliente.razon_social}
+                        <strong>Cliente:</strong>{' '}
+                        {obra.cliente.tipo_cliente === 'EMPRESA'
+                          ? obra.cliente.razon_social
+                          : `${obra.cliente.apellido}, ${obra.cliente.nombre}`}
                       </p>
                       <p>
                         <strong>Fecha Inicio:</strong>{' '}
