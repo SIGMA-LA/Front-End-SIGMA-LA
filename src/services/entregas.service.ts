@@ -151,6 +151,7 @@ export interface CreateEntregaDTO {
     rol_entrega: 'ENCARGADO' | 'AYUDANTE'
   }[]
   maquinarias?: number[]
+  vehiculos?: string[]
   cod_op?: number
 }
 
