@@ -123,3 +123,44 @@ export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
     throw new Error('Error al eliminar la nota de fábrica.')
   }
 }
+
+// Función para traer obras con datos completos incluyendo presupuesto y pagos
+export async function obtenerObrasCompletas({
+  estado,
+  cod_localidad,
+}: {
+  estado?: string
+  cod_localidad?: number
+}): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const params = new URLSearchParams()
+    if (estado) params.append('estado', estado)
+    if (cod_localidad) params.append('localidad', cod_localidad.toString())
+
+    // Usamos un endpoint específico que incluye presupuesto y pagos
+    const response = await fetch(`${baseUrl}/completas?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      // Si el endpoint no existe, fallback a filtrar obras
+      console.log('Endpoint /completas no disponible, usando /filtrar')
+      return await filtrarObras({ estado, cod_localidad })
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error(
+      'Error al obtener obras completas, usando filtrar como fallback:',
+      error
+    )
+    // Fallback a la función original
+    return await filtrarObras({ estado, cod_localidad })
+  }
+}
