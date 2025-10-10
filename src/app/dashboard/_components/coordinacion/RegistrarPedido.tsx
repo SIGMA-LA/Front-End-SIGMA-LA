@@ -6,27 +6,30 @@ import {
   Phone,
   Mail,
   Building2,
-  Calendar,
   FileText,
   AlertTriangle,
-  CheckCircle,
+  Loader2,
   X,
 } from 'lucide-react'
+import { solicitarStockObra } from '@/services/obra.service'
+import type { Obra } from '@/types'
 
 interface RegistrarPedidoProps {
   onCancel: () => void
-  onSubmit: (pedidoData: any) => void
-  preloadedObra?: any | null
+  onSubmit: (obraActualizada: Obra) => void
+  preloadedObra?: Obra | null
 }
 
 interface ModalConfirmacionProps {
   isOpen: boolean
-  pedidoData: any
+  obra: Obra
   onConfirm: () => void
   onCancel: () => void
+  loading: boolean
+  error: string | null
 }
 
-// Texto de materiales hardcodeado
+// --- CONSTANTES ---
 const materialesTexto = `• PERFILES DE ALUMINIO - MARCO: Perfiles principales para marcos de ventanas y puertas Serie 4000 anodizado natural, aproximadamente 450 metros lineales. PRIORIDAD ALTA.
 
 • PERFILES DE ALUMINIO - HOJA: Perfiles para hojas móviles y fijas Serie 4000 anodizado natural, aproximadamente 320 metros lineales. PRIORIDAD ALTA.
@@ -39,9 +42,11 @@ const materialesTexto = `• PERFILES DE ALUMINIO - MARCO: Perfiles principales 
 
 function ModalConfirmacion({
   isOpen,
-  pedidoData,
+  obra,
   onConfirm,
   onCancel,
+  loading,
+  error,
 }: ModalConfirmacionProps) {
   if (!isOpen) return null
 
@@ -65,38 +70,57 @@ function ModalConfirmacion({
         <div className="mb-6 space-y-3 rounded-lg bg-gray-50 p-4">
           <div className="flex justify-between">
             <span className="font-medium text-gray-700">Obra:</span>
-            <span className="text-gray-900">{pedidoData.obra?.direccion}</span>
+            <span className="text-right text-gray-900">{obra.direccion}</span>
           </div>
           <div className="flex justify-between">
             <span className="font-medium text-gray-700">Cliente:</span>
-            <span className="text-gray-900">
-              {pedidoData.obra?.cliente?.nombre} {pedidoData.obra?.cliente?.apellido}
+            <span className="text-right text-gray-900">
+              {obra.cliente.razon_social}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Fecha de solicitud:</span>
-            <span className="text-gray-900">{new Date().toLocaleDateString()}</span>
+            <span className="font-medium text-gray-700">
+              Fecha de solicitud:
+            </span>
+            <span className="text-gray-900">
+              {new Date().toLocaleDateString('es-AR')}
+            </span>
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
         <div className="mb-4 rounded-lg bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
-            Al confirmar, se registrará la obra en estado 'A producir'. El cambio es irreversible.
+            Al confirmar, la obra pasará al estado "EN ESPERA DE STOCK".
           </p>
         </div>
 
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+            disabled={loading}
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed"
           >
             Cancelar
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-lg bg-orange-600 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-700"
+            disabled={loading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-400"
           >
-            Confirmar Pedido
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Confirmando...
+              </>
+            ) : (
+              'Confirmar Pedido'
+            )}
           </button>
         </div>
       </div>
@@ -110,18 +134,28 @@ export default function RegistrarPedido({
   preloadedObra,
 }: RegistrarPedidoProps) {
   const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleConfirm = () => {
-    const pedidoData = {
-      id: Date.now(),
-      obra: preloadedObra,
-      fechaPedido: new Date().toISOString().split('T')[0],
-      materialesTexto: materialesTexto,
-      estado: 'stock_solicitado',
+  const handleConfirm = async () => {
+    if (!preloadedObra) return
+
+    setLoading(true)
+    setError(null)
+    try {
+      const obraActualizada = await solicitarStockObra(preloadedObra.cod_obra)
+
+      setShowModal(false)
+      onSubmit(obraActualizada)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Ocurrió un error al solicitar el stock.'
+      )
+    } finally {
+      setLoading(false)
     }
-
-    setShowModal(false)
-    onSubmit(pedidoData)
   }
 
   return (
@@ -135,18 +169,27 @@ export default function RegistrarPedido({
               </h1>
               {preloadedObra && (
                 <div className="mt-3 rounded-lg bg-blue-50 p-4">
-                  <h3 className="font-semibold text-blue-800 mb-2">Detalles de la Obra:</h3>
+                  <h3 className="mb-2 font-semibold text-blue-800">
+                    Detalles de la Obra:
+                  </h3>
                   <div className="space-y-1 text-sm">
-                    <p><span className="font-medium">Dirección:</span> {preloadedObra.direccion}</p>
-                    <p><span className="font-medium">Cliente:</span> {`${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}</p>
-                    <p><span className="font-medium">Presupuesto:</span> ${preloadedObra.presupuesto?.toLocaleString()}</p>
-                    <p><span className="font-medium">Estado actual:</span> {preloadedObra.estado}</p>
+                    <p>
+                      <span className="font-medium">Dirección:</span>{' '}
+                      {preloadedObra.direccion}
+                    </p>
+                    <p>
+                      <span className="font-medium">Cliente:</span>{' '}
+                      {preloadedObra.cliente.razon_social}
+                    </p>
+                    <p>
+                      <span className="font-medium">Estado actual:</span>{' '}
+                      {preloadedObra.estado}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Información de contacto ALUAR */}
             <div className="mb-8 rounded-lg border border-orange-200 bg-orange-50 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-orange-600" />
@@ -178,40 +221,53 @@ export default function RegistrarPedido({
               </div>
             </div>
 
-            {/* Detalle de materiales */}
             <div className="mb-8">
               <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
                 <Package className="h-5 w-5 text-orange-600" />
                 Materiales requeridos para la obra
               </h3>
-              
+
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
-                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
+                <pre className="font-mono text-sm whitespace-pre-wrap text-gray-800">
                   {materialesTexto}
                 </pre>
               </div>
             </div>
 
-            {/* Instrucciones */}
             <div className="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
+                <FileText className="mt-0.5 h-5 w-5 text-blue-600" />
                 <div>
-                  <h4 className="font-medium text-blue-800 mb-2">Instrucciones para el pedido:</h4>
-                  <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-                    <li>Contacte a ALUAR usando los datos de contacto proporcionados arriba</li>
-                    <li>Envíe el detalle completo de materiales mostrado arriba</li>
-                    <li>Coordine fecha de entrega según cronograma de la obra</li>
+                  <h4 className="mb-2 font-medium text-blue-800">
+                    Instrucciones para el pedido:
+                  </h4>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-blue-700">
+                    <li>
+                      Contacte a ALUAR usando los datos de contacto
+                      proporcionados arriba.
+                    </li>
+                    <li>
+                      Envíe el detalle completo de materiales mostrado en esta
+                      pantalla.
+                    </li>
+                    <li>
+                      Coordine la fecha de entrega según el cronograma de la
+                      obra.
+                    </li>
+                    <li>
+                      Una vez realizado el pedido, marque esta obra como
+                      "Solicitado".
+                    </li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            {/* Botones */}
             <div className="flex flex-col gap-3 pt-4 sm:flex-row">
               <button
                 type="button"
                 onClick={onCancel}
+                disabled={loading}
                 className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50"
               >
                 Volver
@@ -219,22 +275,34 @@ export default function RegistrarPedido({
               <button
                 type="button"
                 onClick={() => setShowModal(true)}
-                className="rounded-lg bg-orange-600 px-6 py-2 font-medium text-white transition-colors hover:bg-orange-700"
+                disabled={loading}
+                className="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-6 py-2 font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-400"
               >
-                Marcar como Solicitado
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Procesando...</span>
+                  </>
+                ) : (
+                  'Marcar como Solicitado'
+                )}
               </button>
             </div>
+            {error && <p className="mt-4 text-center text-red-600">{error}</p>}
           </div>
         </div>
       </div>
 
-      {/* Modal de confirmación */}
-      <ModalConfirmacion
-        isOpen={showModal}
-        pedidoData={{obra: preloadedObra }}
-        onConfirm={handleConfirm}
-        onCancel={() => setShowModal(false)}
-      />
+      {preloadedObra && (
+        <ModalConfirmacion
+          isOpen={showModal}
+          obra={preloadedObra}
+          onConfirm={handleConfirm}
+          onCancel={() => setShowModal(false)}
+          loading={loading}
+          error={error}
+        />
+      )}
     </>
   )
 }
