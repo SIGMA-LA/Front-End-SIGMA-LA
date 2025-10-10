@@ -5,7 +5,7 @@ import { Building2, Plus, Filter } from 'lucide-react'
 import type { ObrasListProps, Obra, Provincia, Localidad } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import EstadoObraBadge from './EstadoObraBadge'
-import PagosObra from '../ventas/PagosObra'
+import PagoModal from '../ventas/pagos/PagoModal'
 import { deleteObra, filtrarObras } from '@/actions/obras'
 import ObraSearchWrapper from './ObraSearchWrapper'
 import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
@@ -22,6 +22,7 @@ export default function ObrasList({
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [obraPagos, setObraPagos] = useState<Obra | null>(null)
+  const [showPagoModal, setShowPagoModal] = useState(false)
   const [obras, setObras] = useState<Obra[]>([])
 
   // Filtros
@@ -95,8 +96,14 @@ export default function ObrasList({
     }
   }
 
-  if (obraPagos) {
-    return <PagosObra obra={obraPagos} onClose={() => setObraPagos(null)} />
+  const handlePagosClick = (obra: Obra) => {
+    setObraPagos(obra)
+    setShowPagoModal(true)
+  }
+
+  const handleClosePagoModal = () => {
+    setShowPagoModal(false)
+    setObraPagos(null)
   }
 
   return (
@@ -223,7 +230,7 @@ export default function ObrasList({
                 usuarioRol={usuario?.rol_actual}
                 onScheduleVisit={onScheduleVisit}
                 onScheduleEntrega={onScheduleEntrega}
-                onPagosClick={setObraPagos}
+                onPagosClick={handlePagosClick}
                 onEditClick={onEditClick}
                 onDeleteClick={handleEliminar}
               />
@@ -241,6 +248,53 @@ export default function ObrasList({
           )}
         </div>
       </div>
+
+      {/* Modal de pagos mejorado */}
+      {showPagoModal && obraPagos && (
+        <PagoModal
+          open={showPagoModal}
+          onClose={handleClosePagoModal}
+          onPagoCreado={() => {
+            handleClosePagoModal()
+            // Opcionalmente recargar la lista de obras
+          }}
+          obraPreseleccionada={(() => {
+            const presupuestoAceptado =
+              obraPagos.presupuesto?.find((p) => p.fecha_aceptacion) ||
+              obraPagos.presupuesto?.[0]
+            const totalPagado =
+              obraPagos.pagos?.reduce((sum, pago) => sum + pago.monto, 0) || 0
+            const valorPresupuesto = presupuestoAceptado?.valor || 0
+            const saldoPendiente = valorPresupuesto - totalPagado
+            const porcentajePagado =
+              valorPresupuesto > 0 ? (totalPagado / valorPresupuesto) * 100 : 0
+
+            return {
+              cod_obra: obraPagos.cod_obra,
+              direccion: obraPagos.direccion,
+              estado: obraPagos.estado,
+              cliente: obraPagos.cliente,
+              presupuesto: presupuestoAceptado
+                ? {
+                    nro_presupuesto: presupuestoAceptado.nro_presupuesto,
+                    valor: presupuestoAceptado.valor,
+                    fecha_aceptacion:
+                      presupuestoAceptado.fecha_aceptacion ||
+                      new Date().toISOString(),
+                  }
+                : {
+                    nro_presupuesto: 0,
+                    valor: 0,
+                    fecha_aceptacion: new Date().toISOString(),
+                  },
+              totalPagado,
+              saldoPendiente,
+              porcentajePagado,
+              cantidad_pagos: obraPagos.pagos?.length || 0,
+            }
+          })()}
+        />
+      )}
     </div>
   )
 }

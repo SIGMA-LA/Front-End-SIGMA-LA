@@ -33,6 +33,45 @@ export default function ObraCard({
     }
   }, [obra])
 
+  // Función para determinar si la obra puede tener pagos
+  const puedeCrearPagos = () => {
+    // Estados que definitivamente NO pueden tener pagos
+    const estadosNoPermitidos = ['CANCELADA', 'PAGADA TOTALMENTE', 'ENTREGADA']
+    if (estadosNoPermitidos.includes(obra.estado)) {
+      return false
+    }
+
+    // Si tenemos datos de presupuesto, usar la lógica completa
+    if (obra.presupuesto && obra.presupuesto.length > 0) {
+      const presupuestoAceptado =
+        obra.presupuesto.find((p) => p.fecha_aceptacion) || obra.presupuesto[0]
+
+      if (!presupuestoAceptado || presupuestoAceptado.valor <= 0) {
+        return false
+      }
+
+      const totalPagado =
+        obra.pagos?.reduce((sum, pago) => sum + pago.monto, 0) || 0
+      const saldoPendiente = presupuestoAceptado.valor - totalPagado
+
+      return saldoPendiente > 0
+    }
+
+    // Si NO tenemos datos de presupuesto (datos incompletos del API),
+    // permitir pagos basándose solo en el estado
+    const estadosPermitidosParaPagos = [
+      'EN ESPERA DE PAGO',
+      'PAGADA PARCIALMENTE',
+      'EN ESPERA DE STOCK',
+      'EN PRODUCCION',
+      'PRODUCCION FINALIZADA',
+    ]
+
+    return estadosPermitidosParaPagos.includes(obra.estado)
+  }
+
+  const esValidoParaPagos = puedeCrearPagos()
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -80,8 +119,18 @@ export default function ObraCard({
               <>
                 {onPagosClick && (
                   <button
-                    onClick={() => onPagosClick(obra)}
-                    className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
+                    onClick={() => esValidoParaPagos && onPagosClick(obra)}
+                    disabled={!esValidoParaPagos}
+                    className={`flex items-center gap-1 font-medium transition-colors ${
+                      esValidoParaPagos
+                        ? 'cursor-pointer text-green-600 hover:text-green-800'
+                        : 'cursor-not-allowed text-gray-400'
+                    }`}
+                    title={
+                      !esValidoParaPagos
+                        ? 'No se pueden crear pagos: falta presupuesto aceptado o ya está totalmente pagado'
+                        : 'Crear pago para esta obra'
+                    }
                   >
                     <DollarSign className="h-4 w-4" /> Pagos
                   </button>
