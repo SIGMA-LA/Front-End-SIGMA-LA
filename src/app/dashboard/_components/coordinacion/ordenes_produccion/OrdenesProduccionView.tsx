@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Plus, Filter } from 'lucide-react'
+import { Package, Filter } from 'lucide-react'
 import type { OrdenProduccion, Cliente } from '@/types'
 import {
   obtenerOrdenesProduccion,
@@ -9,6 +9,7 @@ import {
 } from '@/actions/ordenes'
 import OrdenProduccionCard from './OrdenProduccionCard'
 import OrdenProduccionDetailsModal from './OrdenProduccionDetailsModal'
+import OPConfirmModal from './OPConfirmModal'
 
 export default function OrdenesProduccionView() {
   const [ordenes, setOrdenes] = useState<OrdenProduccion[]>([])
@@ -20,6 +21,13 @@ export default function OrdenesProduccionView() {
     null
   )
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+
+  // Estados de Modal de Confirmación
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [ordenToApprove, setOrdenToApprove] = useState<OrdenProduccion | null>(
+    null
+  )
+  const [isApproving, setIsApproving] = useState(false)
 
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState<string>('PENDIENTE')
@@ -92,19 +100,18 @@ export default function OrdenesProduccionView() {
     fetchOrdenes()
   }, [filtroEstado])
 
-  const handleAprobar = async (orden: OrdenProduccion) => {
-    if (!confirm('¿Está seguro que desea aprobar esta orden de producción?')) {
-      return
-    }
+  const handleConfirmAprobar = async () => {
+    if (!ordenToApprove) return
 
+    setIsApproving(true)
     try {
-      const result = await aprobarOrdenProduccion(orden.cod_op)
+      const result = await aprobarOrdenProduccion(ordenToApprove.cod_op)
 
       if (result.success) {
-        // Mostrar mensaje de éxito
         alert(result.message || 'Orden aprobada exitosamente')
-        // Recargar las órdenes
-        fetchOrdenes()
+        setIsConfirmModalOpen(false)
+        setOrdenToApprove(null)
+        await fetchOrdenes()
       } else {
         alert('Error: ' + (result.error || 'No se pudo aprobar la orden'))
       }
@@ -113,7 +120,14 @@ export default function OrdenesProduccionView() {
         'Error al aprobar la orden: ' +
           (err instanceof Error ? err.message : 'Error desconocido')
       )
+    } finally {
+      setIsApproving(false)
     }
+  }
+
+  const handleAprobar = async (orden: OrdenProduccion) => {
+    setOrdenToApprove(orden)
+    setIsConfirmModalOpen(true)
   }
 
   const handleVerDetalles = (orden: OrdenProduccion) => {
@@ -187,7 +201,7 @@ export default function OrdenesProduccionView() {
                 id="filtro-estado"
                 value={filtroEstado}
                 onChange={(e) => setFiltroEstado(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todos los estados</option>
                 <option value="PENDIENTE">Pendiente</option>
@@ -209,12 +223,14 @@ export default function OrdenesProduccionView() {
                 id="filtro-cliente"
                 value={filtroCliente}
                 onChange={(e) => setFiltroCliente(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todos los clientes</option>
                 {clientes.map((cliente) => (
                   <option key={cliente.cuil} value={cliente.cuil}>
-                    {cliente.razon_social}
+                    {cliente.tipo_cliente === 'EMPRESA'
+                      ? cliente.razon_social
+                      : `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()}
                   </option>
                 ))}
               </select>
@@ -264,6 +280,18 @@ export default function OrdenesProduccionView() {
         isOpen={isDetailsModalOpen}
         orden={selectedOrden}
         onClose={handleCloseModal}
+      />
+
+      {/* Modal de Confirmación */}
+      <OPConfirmModal
+        isOpen={isConfirmModalOpen}
+        orden={ordenToApprove}
+        onConfirm={handleConfirmAprobar}
+        onCancel={() => {
+          setIsConfirmModalOpen(false)
+          setOrdenToApprove(null)
+        }}
+        loading={isApproving}
       />
     </div>
   )
