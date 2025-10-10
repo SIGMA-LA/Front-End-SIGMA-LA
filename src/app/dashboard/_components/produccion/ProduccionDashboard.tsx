@@ -15,6 +15,8 @@ import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
 import NotaFabricaDetails from './NotaFabricaDetails'
 import OrdenProduccionDetails from './OrdenProduccionDetails'
 import CrearOrdenModal from './CrearOrdenModal'
+import IniciarProduccionModal from './IniciarProduccionModal'
+import FinalizarProduccionModal from './FinalizarProduccionModal'
 
 export default function ProduccionDashboard() {
   const { usuario } = useAuth()
@@ -43,6 +45,9 @@ export default function ProduccionDashboard() {
   >([])
   const [loadingOrdenes, setLoadingOrdenes] = useState(true)
   const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
+  const [isIniciarModalOpen, setIsIniciarModalOpen] = useState(false)
+  const [isFinalizarModalOpen, setIsFinalizarModalOpen] = useState(false)
+  const [isProduccionLoading, setIsProduccionLoading] = useState(false)
 
   // Cargar obras con nota de fábrica al montar el componente
   useEffect(() => {
@@ -131,42 +136,56 @@ export default function ProduccionDashboard() {
     setSelectedObra(null)
   }
 
-  const handleIniciarProduccion = async () => {
-    if (!selectedOrden) return
+const handleIniciarProduccion = async () => {
+  setIsIniciarModalOpen(true)
+}
 
-    try {
-      await ordenProduccionService.iniciarProduccion(selectedOrden.cod_op)
+const handleFinalizarProduccion = async () => {
+  setIsFinalizarModalOpen(true)
+}
 
-      await loadOrdenesProduccion()
+const handleConfirmIniciar = async () => {
+  if (!selectedOrden) return
 
-      const ordenActualizada = {
-        ...selectedOrden,
+  setIsProduccionLoading(true)
+  try {
+    await ordenProduccionService.iniciarProduccion(selectedOrden.cod_op)
+    await loadOrdenesProduccion()
+
+    const ordenActualizada = {
+      ...selectedOrden,
+      estado: 'EN PRODUCCION' as const,
+      obra: {
+        ...selectedOrden.obra,
         estado: 'EN PRODUCCION' as const,
-        obra: {
-          ...selectedOrden.obra,
-          estado: 'EN PRODUCCION' as const,
-        },
-      }
-      setSelectedOrden(ordenActualizada)
-    } catch (error) {
-      console.error('Error al iniciar producción:', error)
-      // TODO: Agregar notificación toast aquí
+      },
     }
+    setSelectedOrden(ordenActualizada)
+    setIsIniciarModalOpen(false)
+  } catch (error) {
+    console.error('Error al iniciar producción:', error)
+    alert('Error al iniciar la producción. Intente nuevamente.')
+  } finally {
+    setIsProduccionLoading(false)
   }
+}
 
-  const handleFinalizarProduccion = async () => {
-    if (!selectedOrden) return
+const handleConfirmFinalizar = async () => {
+  if (!selectedOrden) return
 
-    try {
-      await ordenProduccionService.finalizarProduccion(selectedOrden.cod_op)
-
-      await loadOrdenesProduccion()
-
-      setSelectedOrden(null)
-    } catch (error) {
-      console.error('Error al finalizar producción:', error)
-    }
+  setIsProduccionLoading(true)
+  try {
+    await ordenProduccionService.finalizarProduccion(selectedOrden.cod_op)
+    await loadOrdenesProduccion()
+    setSelectedOrden(null)
+    setIsFinalizarModalOpen(false)
+  } catch (error) {
+    console.error('Error al finalizar producción:', error)
+    alert('Error al finalizar la producción. Intente nuevamente.')
+  } finally {
+    setIsProduccionLoading(false)
   }
+}
 
   if (!usuario) {
     return (
@@ -363,6 +382,31 @@ export default function ProduccionDashboard() {
         onClose={() => setShowCrearOrdenModal(false)}
         obraCodigo={selectedObra?.cod_obra}
         onSuccess={handleOrdenCreated}
+      />
+      {/* Modal para crear orden de producción */}
+      <CrearOrdenModal
+        isOpen={showCrearOrdenModal}
+        onClose={() => setShowCrearOrdenModal(false)}
+        obraCodigo={selectedObra?.cod_obra}
+        onSuccess={handleOrdenCreated}
+      />
+
+      {/* Modal para iniciar producción */}
+      <IniciarProduccionModal
+        isOpen={isIniciarModalOpen}
+        orden={selectedOrden}
+        onConfirm={handleConfirmIniciar}
+        onCancel={() => setIsIniciarModalOpen(false)}
+        loading={isProduccionLoading}
+      />
+
+      {/* Modal para finalizar producción */}
+      <FinalizarProduccionModal
+        isOpen={isFinalizarModalOpen}
+        orden={selectedOrden}
+        onConfirm={handleConfirmFinalizar}
+        onCancel={() => setIsFinalizarModalOpen(false)}
+        loading={isProduccionLoading}
       />
     </div>
   )
