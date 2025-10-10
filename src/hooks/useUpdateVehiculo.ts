@@ -18,10 +18,12 @@ export function useUpdateVehiculo({ onSuccess }: UseUpdateVehiculoProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const handleUpdate = (patente: string, data: Partial<VehiculoFormData>) => {
-    setError(null);
+  const handleUpdate = (patente: string, vehiculoData: Partial<VehiculoFormData>) => {
+    setError(null); // Limpiar errores previos
+    
     startTransition(async () => {
-      const result = await updateVehiculoAction(patente, data);
+      const result = await updateVehiculoAction(patente, vehiculoData);
+      
       if (result.success) {
         onSuccess();
       } else {
@@ -30,5 +32,6 @@ export function useUpdateVehiculo({ onSuccess }: UseUpdateVehiculoProps) {
     });
   };
 
-  return { isPending, error, handleUpdate };
+  // Exponemos setError para que el componente pueda limpiar el error
+  return { isPending, error, handleUpdate, setError };
 }

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Car, CheckCircle} from 'lucide-react'
+import { AlertTriangle, Car, CheckCircle} from 'lucide-react'
 import { useCreateVehiculo } from '@/hooks/useCreateVehiculo'
-import { VehiculoFormData } from '@/types';
+import { Vehiculo, VehiculoFormData, VehiculoTipo } from '@/types';
 
 interface CrearVehiculoProps {
   onCancel: () => void;
@@ -11,18 +11,14 @@ interface CrearVehiculoProps {
   onSubmit: () => void;
 }
 
+// ... (El componente ModalConfirmacion no necesita cambios)
 interface ModalConfirmacionProps {
   isOpen: boolean
-  vehiculoData: {
-    tipoVehiculo: string
-    marca: string
-    modelo: string
-    anio: number
-    patente: string
-    estado: string
-  }
+  vehiculoData: any // Mantenemos any por simplicidad aquí
   onConfirm: () => void
   onCancel: () => void
+  isPending: boolean // <-- Añadimos isPending para deshabilitar el botón
+  apiError: string | null // <-- Añadimos el error de la API para mostrarlo
 }
 
 function ModalConfirmacion({
@@ -30,12 +26,15 @@ function ModalConfirmacion({
   vehiculoData,
   onConfirm,
   onCancel,
+  isPending,
+  apiError
 }: ModalConfirmacionProps) {
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-6 w-6 text-green-600" />
@@ -85,20 +84,36 @@ function ModalConfirmacion({
           </p>
         </div>
 
-        <div className="flex gap-3">
+                {/* --- CAMBIO: Mostrar el error de la API DENTRO del modal --- */}
+        {apiError && (
+          <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600" />
+              <div>
+                <h4 className="font-semibold text-red-800">Error al registrar</h4>
+                <p className="text-sm text-red-700">{apiError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+       <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+            disabled={isPending}
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700"
+            disabled={isPending}
+            className="flex-1 rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
-            Confirmar Registro
+            {isPending ? 'Registrando...' : 'Confirmar Registro'}
           </button>
         </div>
+
       </div>
     </div>
   )
@@ -119,8 +134,11 @@ export default function CrearVehiculo({ onCancel, onSubmit }: CrearVehiculoProps
     patente?: string 
   }>({})
 
-    const { isPending, error, handleCreate } = useCreateVehiculo({
-    onSuccess: onSubmit,
+  const { isPending, error: apiError, handleCreate, setError: setApiError } = useCreateVehiculo({
+    onSuccess: () => {
+      setShowModal(false);
+      onSubmit();
+    },
   });
 
   const tiposVehiculo = [
@@ -134,9 +152,9 @@ export default function CrearVehiculo({ onCancel, onSubmit }: CrearVehiculoProps
     // Formato argentino: ABC123, AB123CD, A123BCD
     const patternOld = /^[A-Z]{3}[0-9]{3}$/ // ABC123
     const patternNew = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/ // AB123CD
-    const patternMoto = /^[A-Z][0-9]{3}[A-Z]{3}$/ // A123BCD
+
     
-    return patternOld.test(patente) || patternNew.test(patente) || patternMoto.test(patente)
+    return patternOld.test(patente) || patternNew.test(patente) 
   }
 
   const formatPatente = (value: string) => {
@@ -192,25 +210,32 @@ export default function CrearVehiculo({ onCancel, onSubmit }: CrearVehiculoProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // ¡AQUÍ ESTÁ LA MAGIA!
+    // Limpiamos cualquier error de la API anterior ANTES de hacer nada más.
+    setApiError(null);
     
+    // Luego, continuamos con la validación del formulario.
     if (!validateForm()) {
       return
     }
-
+    
+    // Si el formulario es válido, mostramos el modal de confirmación (ya sin el error viejo).
     setShowModal(true)
   }
 
+    // --- CAMBIO CLAVE: La confirmación ahora es más simple ---
   const handleConfirm = () => {
-    // 3. AJUSTAR EL OBJETO DE DATOS A ENVIAR
     const vehiculoData: VehiculoFormData = {
-      tipo_vehiculo: tipoVehiculo,
+      tipo_vehiculo: tipoVehiculo as VehiculoTipo,
       patente: patente.trim(),
-      estado: 'DISPONIBLE' // El estado inicial es 'DISPONIBLE' según el esquema
+      estado: 'DISPONIBLE',
     };
     
+    // Simplemente llamamos a handleCreate. El hook se encargará del resto.
     handleCreate(vehiculoData);
-    setShowModal(false);
-  }
+  };
+
 
   const handlePatenteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPatente(e.target.value)
@@ -431,9 +456,11 @@ export default function CrearVehiculo({ onCancel, onSubmit }: CrearVehiculoProps
       {/* Modal de confirmación */}
       <ModalConfirmacion
         isOpen={showModal}
-        vehiculoData={vehiculoPreview}
+        vehiculoData={{ tipoVehiculo, marca, modelo, anio: parseInt(anio) || 0, patente, estado: 'Disponible' }}
         onConfirm={handleConfirm}
         onCancel={() => setShowModal(false)}
+        isPending={isPending}
+        apiError={apiError}
       />
     </>
   )
