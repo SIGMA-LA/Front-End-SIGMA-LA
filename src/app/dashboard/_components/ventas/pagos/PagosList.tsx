@@ -1,52 +1,64 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { getPagos } from '@/actions/pagos'
+import { getPagos, hayObrasPendientes, deletePago } from '@/actions/pagos'
 import { Pago, PagosFilter } from '@/types'
+import PagoModal from './PagoModal'
+import PagosFilters from './PagosFilters'
 
-// Helper para mostrar el nombre del cliente
-const getClienteName = (obra: any) => {
+const getClienteName = (
+  obra:
+    | {
+        cliente?: { razon_social?: string; nombre?: string; apellido?: string }
+      }
+    | null
+    | undefined
+) => {
   const cliente = obra?.cliente
-  if (cliente?.razon_social) {
-    return cliente.razon_social
-  }
-  if (cliente?.nombre && cliente?.apellido) {
+  if (cliente?.razon_social) return cliente.razon_social
+  if (cliente?.nombre && cliente?.apellido)
     return `${cliente.nombre} ${cliente.apellido}`
-  }
   return 'Cliente no identificado'
 }
 
-interface PagosListProps {
-  // props si las necesitas
-}
-
-export default function PagosList({}: PagosListProps) {
-  // Estados principales
+export default function PagosList() {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Estados del modal
   const [modalOpen, setModalOpen] = useState(false)
-  const [pagoAEditar, setPagoAEditar] = useState<Pago | null>(null)
 
-  // Estados de filtros y estadísticas
   const [filters, setFilters] = useState<PagosFilter>({})
   const [totalPagos, setTotalPagos] = useState(0)
   const [totalMonto, setTotalMonto] = useState(0)
+  const [hayPendientes, setHayPendientes] = useState(true)
+  const [loadingPendientes, setLoadingPendientes] = useState(true)
 
-  // Cargar pagos inicialmente
   useEffect(() => {
     loadPagos()
+    checkObrasPendientes()
   }, [])
 
-  // Recargar pagos cuando cambien los filtros
   useEffect(() => {
     loadPagos()
   }, [filters])
+
+  const checkObrasPendientes = async () => {
+    try {
+      setLoadingPendientes(true)
+      const pendientes = await hayObrasPendientes()
+      setHayPendientes(pendientes)
+    } catch (err: unknown) {
+      console.error('Error al verificar obras pendientes:', err)
+      // En caso de error, permitir crear pagos
+      setHayPendientes(true)
+    } finally {
+      setLoadingPendientes(false)
+    }
+  }
 
   const loadPagos = async () => {
     try {
@@ -56,11 +68,10 @@ export default function PagosList({}: PagosListProps) {
       const data = await getPagos(filters)
       setPagos(data)
 
-      // Calcular totales
       setTotalPagos(data.length)
       setTotalMonto(data.reduce((sum, pago) => sum + pago.monto, 0))
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar los pagos')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar los pagos')
       setPagos([])
       setTotalPagos(0)
       setTotalMonto(0)
@@ -77,9 +88,26 @@ export default function PagosList({}: PagosListProps) {
     setFilters({})
   }
 
+  const handleDeletePago = async (codPago: number) => {
+    if (
+      !confirm(
+        '¿Estás seguro de que deseas eliminar este pago? Esta acción no se puede deshacer.'
+      )
+    ) {
+      return
+    }
+
+    try {
+      await deletePago(codPago)
+      loadPagos() // Recargar la lista después de eliminar
+      checkObrasPendientes() // Verificar si aún hay obras pendientes
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar el pago')
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestión de Pagos</h1>
@@ -88,26 +116,31 @@ export default function PagosList({}: PagosListProps) {
             {totalMonto.toLocaleString()})
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setPagoAEditar(null)
-            setModalOpen(true)
-          }}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Crear Pago
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+          <Button
+            onClick={() => {
+              setModalOpen(true)
+            }}
+            className="flex items-center gap-2"
+            disabled={loadingPendientes || !hayPendientes}
+          >
+            <Plus className="h-4 w-4" />
+            Crear Pago
+          </Button>
+          {!loadingPendientes && !hayPendientes && (
+            <p className="text-xs text-gray-500">
+              No hay obras con pagos pendientes
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* Filtros */}
       <PagosFilters
         filters={filters}
         onFiltersChange={handleFiltersChange}
         onClearFilters={handleClearFilters}
       />
 
-      {/* Lista de pagos */}
       <Card>
         <div className="p-6">
           {loading ? (
@@ -163,12 +196,10 @@ export default function PagosList({}: PagosListProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setPagoAEditar(pago)
-                          setModalOpen(true)
-                        }}
+                        onClick={() => handleDeletePago(pago.cod_pago)}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -179,23 +210,16 @@ export default function PagosList({}: PagosListProps) {
         </div>
       </Card>
 
-      {/* Modal */}
       {modalOpen && (
         <PagoModal
           open={modalOpen}
           onClose={() => {
             setModalOpen(false)
-            setPagoAEditar(null)
           }}
-          onPagoCreado={(nuevoPago: Pago) => {
-            loadPagos() // Recargar toda la lista para mantener filtros
+          onPagoCreado={() => {
+            loadPagos()
+            checkObrasPendientes() // Actualizar estado de obras pendientes
             setModalOpen(false)
-          }}
-          pagoAEditar={pagoAEditar}
-          onPagoEditado={(pagoEditado: Pago) => {
-            loadPagos() // Recargar toda la lista para mantener filtros
-            setModalOpen(false)
-            setPagoAEditar(null)
           }}
         />
       )}

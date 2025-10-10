@@ -1,5 +1,5 @@
 import { Pago, Obra } from '@/types'
-import { Calendar, Trash2, Pencil } from 'lucide-react'
+import { Calendar, Trash2 } from 'lucide-react'
 import { deletePago } from '@/actions/pagos'
 import { useState } from 'react'
 import ConfirmDeleteModal from './ConfirmDeleteModal'
@@ -7,16 +7,10 @@ import ConfirmDeleteModal from './ConfirmDeleteModal'
 interface PagoCardProps {
   pago: Pago
   onRefresh: () => void
-  onEdit: () => void
   obra?: Obra
 }
 
-export default function PagoCard({
-  pago,
-  onRefresh,
-  onEdit,
-  obra,
-}: PagoCardProps) {
+export default function PagoCard({ pago, onRefresh, obra }: PagoCardProps) {
   const [loading, setLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -44,7 +38,11 @@ export default function PagoCard({
                   {obra.direccion}
                 </div>
                 <div className="truncate text-sm text-gray-500">
-                  Cliente: {obra.cliente?.razon_social || 'Sin cliente'}
+                  {obra.cliente.razon_social
+                    ? obra.cliente.razon_social
+                    : obra.cliente.nombre
+                      ? `${obra.cliente.nombre} ${obra.cliente.apellido}`
+                      : 'No asignado'}
                 </div>
               </div>
               <hr className="my-2 border-blue-200 sm:my-3" />
@@ -63,14 +61,6 @@ export default function PagoCard({
           </div>
         </div>
         <div className="mt-3 flex gap-2 lg:mt-0">
-          <button
-            onClick={onEdit}
-            className="rounded border-1 border-yellow-700 bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
-            title="Editar"
-            disabled={loading}
-          >
-            <Pencil className="h-5 w-5" />
-          </button>
           <button
             onClick={() => setShowConfirm(true)}
             className="rounded border-1 border-red-700 bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
