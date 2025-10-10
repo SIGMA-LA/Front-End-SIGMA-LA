@@ -1,8 +1,8 @@
 'use client'
 
-import { X, Upload, FileText } from 'lucide-react'
-import { useState } from 'react'
-import api from '@/services/api/api'
+import { X, Upload, FileText, Loader2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { crearOrdenProduccion } from '@/actions/ordenes'
 
 interface CrearOrdenModalProps {
   isOpen: boolean
@@ -18,9 +18,9 @@ export default function CrearOrdenModal({
   onSuccess,
 }: CrearOrdenModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [observaciones, setObservaciones] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [isPending, startTransition] = useTransition()
 
   if (!isOpen) return null
 
@@ -55,40 +55,27 @@ export default function CrearOrdenModal({
       return
     }
 
-    try {
-      setLoading(true)
-      setError(null)
+    const formData = new FormData()
+    formData.append('cod_obra', obraCodigo.toString())
+    formData.append('file', selectedFile)
 
-      const formData = new FormData()
-      formData.append('cod_obra', obraCodigo.toString())
-      formData.append('file', selectedFile)
-      if (observaciones.trim()) {
-        formData.append('observaciones', observaciones.trim())
+    setError(null)
+
+    startTransition(async () => {
+      const result = await crearOrdenProduccion(formData)
+      if (result.success) {
+        setSelectedFile(null)
+        onSuccess?.()
+        onClose()
+      } else {
+        setError(result.error || 'Ocurrió un error inesperado.')
       }
-
-      // Llamar al endpoint del backend
-      await api.post('/ordenes-produccion', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-
-      setSelectedFile(null)
-      setObservaciones('')
-      onSuccess?.()
-      onClose()
-    } catch (error: any) {
-      console.error('Error al crear orden:', error)
-      setError(error.response?.data?.message || 'Error al crear la orden de producción')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const handleClose = () => {
-    if (!loading) {
+    if (!isPending) {
       setSelectedFile(null)
-      setObservaciones('')
       setError(null)
       onClose()
     }
@@ -108,7 +95,7 @@ export default function CrearOrdenModal({
           </h3>
           <button
             onClick={handleClose}
-            disabled={loading}
+            disabled={isPending}
             className="text-gray-400 transition-colors hover:text-gray-600 disabled:cursor-not-allowed"
           >
             <X className="h-6 w-6 lg:h-7 lg:w-7" />
@@ -119,8 +106,9 @@ export default function CrearOrdenModal({
           <div className="space-y-5 p-5 lg:space-y-6 lg:p-7">
             <div className="rounded-lg bg-blue-50 p-4">
               <p className="text-sm text-gray-700 lg:text-base">
-                Al crear una orden de producción se confirmará que la nota de fábrica es válida. Se
-                solicitará a Coordinación que habilite esta Orden de Producción.
+                Al crear una orden de producción se confirmará que la nota de
+                fábrica es válida. Se solicitará a Coordinación que habilite
+                esta Orden de Producción.
               </p>
             </div>
 
@@ -131,20 +119,23 @@ export default function CrearOrdenModal({
               >
                 Subir Orden de Producción (PDF) *
               </label>
-              <div className="flex items-center justify-center w-full">
+              <div className="relative flex w-full items-center justify-center">
+                {' '}
+                {/* 1. Contenedor relativo */}
                 <label
                   htmlFor="orden-file"
-                  className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors lg:h-64 ${
+                  className={`flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors lg:h-64 ${
                     selectedFile
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${isPending ? 'opacity-50' : ''}`}
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    {/* ... (contenido interno del label sin cambios) ... */}
                     {selectedFile ? (
                       <>
-                        <FileText className="w-10 h-10 mb-3 text-green-600 lg:w-12 lg:h-12" />
-                        <p className="mb-2 text-sm text-green-700 lg:text-base font-semibold">
+                        <FileText className="mb-3 h-10 w-10 text-green-600 lg:h-12 lg:w-12" />
+                        <p className="mb-2 text-sm font-semibold text-green-700 lg:text-base">
                           {selectedFile.name}
                         </p>
                         <p className="text-xs text-green-600 lg:text-sm">
@@ -153,10 +144,12 @@ export default function CrearOrdenModal({
                       </>
                     ) : (
                       <>
-                        <Upload className="w-10 h-10 mb-3 text-gray-400 lg:w-12 lg:h-12" />
+                        <Upload className="mb-3 h-10 w-10 text-gray-400 lg:h-12 lg:w-12" />
                         <p className="mb-2 text-sm text-gray-500 lg:text-base">
-                          <span className="font-semibold">Click para subir</span> o
-                          arrastra el archivo
+                          <span className="font-semibold">
+                            Click para subir
+                          </span>{' '}
+                          o arrastra el archivo
                         </p>
                         <p className="text-xs text-gray-500 lg:text-sm">
                           Solo PDF (MAX. 10MB)
@@ -164,20 +157,23 @@ export default function CrearOrdenModal({
                       </>
                     )}
                   </div>
-                  <input
-                    id="orden-file"
-                    type="file"
-                    className="hidden"
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                    disabled={loading}
-                  />
                 </label>
+                {/* 2. CORRECCIÓN CLAVE AQUÍ */}
+                <input
+                  id="orden-file"
+                  type="file"
+                  // ANTERIORMENTE: className="hidden"
+                  // CORRECCIÓN: Hacemos el input invisible pero funcional
+                  className="absolute h-full w-full cursor-pointer opacity-0"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  disabled={isPending}
+                />
               </div>
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <p className="text-sm text-red-800 lg:text-base">
                   <span className="font-semibold">Error:</span> {error}
                 </p>
@@ -189,19 +185,19 @@ export default function CrearOrdenModal({
             <button
               type="button"
               onClick={handleClose}
-              disabled={loading}
+              disabled={isPending}
               className="flex-1 rounded-md border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:px-6 lg:py-4 lg:text-base"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={loading || !selectedFile}
+              disabled={isPending || !selectedFile}
               className="flex-1 rounded-md border border-transparent bg-green-600 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:px-6 lg:py-4 lg:text-base"
             >
-              {loading ? (
+              {isPending ? (
                 <div className="flex items-center justify-center">
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent lg:h-5 lg:w-5"></div>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Creando orden...
                 </div>
               ) : (

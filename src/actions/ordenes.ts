@@ -5,55 +5,13 @@ import { getAccessToken } from './auth'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
-interface CloudinaryUploadResponse {
-  secure_url: string
-  public_id: string
-}
-
-interface CrearOrdenData {
-  cod_obra: number
-  file: File
-  observaciones?: string
-}
-
-/**
- * Sube un PDF a Cloudinary
- */
-async function uploadToCloudinary(
-  file: File
-): Promise<CloudinaryUploadResponse> {
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('upload_preset', process.env.CLOUDINARY_UPLOAD_PRESET!)
-  formData.append('folder', 'ordenes_produccion')
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/upload`,
-    {
-      method: 'POST',
-      body: formData,
-    }
-  )
-
-  if (!response.ok) {
-    throw new Error('Error al subir archivo a Cloudinary')
-  }
-
-  const data = await response.json()
-  return {
-    secure_url: data.secure_url,
-    public_id: data.public_id,
-  }
-}
-
 /**
  * Crea una nueva orden de producción
  */
 export async function crearOrdenProduccion(formData: FormData) {
   try {
-    const cod_obra = parseInt(formData.get('cod_obra') as string)
+    const cod_obra = formData.get('cod_obra') as string
     const file = formData.get('file') as File
-    const observaciones = formData.get('observaciones') as string | null
 
     if (!file || file.size === 0) {
       return {
@@ -69,24 +27,26 @@ export async function crearOrdenProduccion(formData: FormData) {
       }
     }
 
-    const { secure_url, public_id } = await uploadToCloudinary(file)
+    // Crear FormData para enviar al backend
+    const backendFormData = new FormData()
+    backendFormData.append('cod_obra', cod_obra)
+    backendFormData.append('file', file)
+
     const token = await getAccessToken()
+
+    // Enviar directamente al backend que ya tiene Multer + Cloudinary configurado
     const response = await fetch(`${baseUrl}/ordenes-produccion`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        // NO incluir Content-Type cuando envías FormData
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: JSON.stringify({
-        cod_obra,
-        fecha_confeccion: new Date().toISOString().split('T')[0],
-        fecha_validacion: null,
-        url: secure_url,
-        public_id: public_id,
-      }),
+      body: backendFormData,
     })
 
     if (!response.ok) {
-      throw new Error('Error al crear orden de producción')
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Error al crear orden de producción')
     }
 
     const ordenCreada = await response.json()
@@ -127,10 +87,13 @@ export async function obtenerOrdenesProduccion(
     if (cod_obra) {
       url = `${baseUrl}/ordenes-produccion/obra/${cod_obra}`
     }
+
+    const token = await getAccessToken()
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       cache: 'no-store',
     })
@@ -173,10 +136,12 @@ export async function obtenerOrdenesProduccion(
  */
 export async function aprobarOrdenProduccion(cod_op: number) {
   try {
+    const token = await getAccessToken()
     const response = await fetch(`${baseUrl}/ordenes-produccion/${cod_op}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         estado: 'APROBADA',
@@ -211,10 +176,12 @@ export async function aprobarOrdenProduccion(cod_op: number) {
  */
 export async function obtenerOrdenProduccion(cod_op: number) {
   try {
+    const token = await getAccessToken()
     const response = await fetch(`${baseUrl}/ordenes-produccion/${cod_op}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       cache: 'no-store',
     })
