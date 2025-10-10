@@ -8,7 +8,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
-  let accessToken = cookieStore.get('accessToken')?.value
+  const accessToken = cookieStore.get('accessToken')?.value
 
   if (accessToken) {
     return accessToken
@@ -127,7 +127,9 @@ export async function getMaquinariaById(id: number): Promise<Maquinaria> {
         throw new Error('Maquinaria no encontrada')
       }
       const errorText = await response.text()
-      throw new Error(`Error al obtener la maquinaria: ${response.status} - ${errorText}`)
+      throw new Error(
+        `Error al obtener la maquinaria: ${response.status} - ${errorText}`
+      )
     }
 
     const data = await response.json()
@@ -159,7 +161,9 @@ export async function createMaquinaria(
         throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
       }
       const errorText = await response.text()
-      throw new Error(`Error al crear la maquinaria: ${response.status} - ${errorText}`)
+      throw new Error(
+        `Error al crear la maquinaria: ${response.status} - ${errorText}`
+      )
     }
 
     const data = await response.json()
@@ -196,7 +200,9 @@ export async function updateMaquinaria(
         throw new Error('Maquinaria no encontrada')
       }
       const errorText = await response.text()
-      throw new Error(`Error al actualizar la maquinaria: ${response.status} - ${errorText}`)
+      throw new Error(
+        `Error al actualizar la maquinaria: ${response.status} - ${errorText}`
+      )
     }
 
     const data = await response.json()
@@ -233,7 +239,9 @@ export async function updateEstadoMaquinaria(
         throw new Error('Maquinaria no encontrada')
       }
       const errorText = await response.text()
-      throw new Error(`Error al actualizar el estado: ${response.status} - ${errorText}`)
+      throw new Error(
+        `Error al actualizar el estado: ${response.status} - ${errorText}`
+      )
     }
 
     const data = await response.json()
@@ -266,7 +274,9 @@ export async function deleteMaquinaria(id: number): Promise<void> {
         throw new Error('Maquinaria no encontrada')
       }
       const errorText = await response.text()
-      throw new Error(`Error al eliminar la maquinaria: ${response.status} - ${errorText}`)
+      throw new Error(
+        `Error al eliminar la maquinaria: ${response.status} - ${errorText}`
+      )
     }
 
     revalidatePath('/dashboard')

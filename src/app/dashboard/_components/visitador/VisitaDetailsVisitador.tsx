@@ -34,14 +34,14 @@ const formatDateTime = (dateString: string) =>
   })
 
 const getEstadoBadge = (estado: Visita['estado']) => {
-  const badges = {
+  const badges: Record<string, string> = {
     PROGRAMADA: 'bg-blue-100 text-blue-800',
     'EN CURSO': 'bg-yellow-100 text-yellow-800',
     COMPLETADA: 'bg-green-100 text-green-800',
     CANCELADA: 'bg-red-100 text-red-800',
     REPROGRAMADA: 'bg-purple-100 text-purple-800',
   }
-  return badges[estado] || 'bg-gray-100 text-gray-800'
+  return (estado && badges[estado]) || 'bg-gray-100 text-gray-800'
 }
 
 const getMotivoText = (motivo: Visita['motivo_visita']) => {
