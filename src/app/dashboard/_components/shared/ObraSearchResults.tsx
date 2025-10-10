@@ -21,7 +21,7 @@ export default function ObraSearchResults({
     }
     setLoading(true)
     fetch(
-      `http://localhost:4000/api/obras/buscar?q=${encodeURIComponent(filtro)}`
+      `http://localhost:4000/api/obras/buscar?${encodeURIComponent(filtro)}`
     )
       .then((res) => res.json())
       .then((data) => {

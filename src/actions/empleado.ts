@@ -83,7 +83,7 @@ export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
 export async function buscarFiltrados(query: string): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/buscar/?query=${query}`, {
+    const response = await fetch(`${baseUrl}/buscar?${query}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
