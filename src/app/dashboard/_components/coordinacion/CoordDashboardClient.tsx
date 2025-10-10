@@ -83,8 +83,10 @@ export default function CoordDashboard() {
             }}
             onCreateClick={() => setCurrentSection('obras')}
             onScheduleVisit={(obra) => {
-              setSelectedObra(obra)
-              setCurrentSection('crear-visita')
+              // 1. Guardas la obra seleccionada en el estado del Dashboard.
+              setSelectedObra(obra);
+              // 2. Cambias a la sección de creación de visita.
+              setCurrentSection('crear-visita');
             }}
             onScheduleEntrega={(obra) => {
               setSelectedObra(obra)

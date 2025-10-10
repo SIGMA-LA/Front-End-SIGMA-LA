@@ -3,8 +3,7 @@
 import { getAccessToken } from './auth'
 import { Visita, CrearVisita } from '@/types'
 
-const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/visitas'
+const baseUrl = process.env.NEXT_PUBLIC_API_URL +'/visitas'
 
 export async function obtenerVisitaPorId(id: number): Promise<Visita | null> {
   try {

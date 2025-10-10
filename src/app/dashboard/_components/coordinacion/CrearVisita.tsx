@@ -30,6 +30,12 @@ import {
 import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
 import parametroService from '../../../../services/parametro.service'
 import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
+import { useVehiculos } from '@/hooks/useVehiculos'
+import { useVisitadores } from '@/hooks/useVisitadores'
+import SeccionEmpleados from './visitas/SeccionEmpleados'
+import SeccionDatosVisita from './visitas/SeccionDatosVisita'
+import SeccionVisitaInicial from './visitas/SeccionVisitaInicial'
+import SeccionSeleccionObra from './visitas/SeccionSeleccionarObra'
 
 export default function CrearVisita({
   onCancel,
@@ -64,17 +70,12 @@ export default function CrearVisita({
   const [selectedAcompanantes, setSelectedAcompanantes] = useState<string[]>([])
   const [visitadores, setVisitadores] = useState<Empleado[]>([])
   const [acompanantes, setAcompanantes] = useState<Empleado[]>([])
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
+  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]) //refactorizar por el useVehiculos
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [formError, setFormError] = useState<string | null>(null)
   const [costoViatico, setCostoViatico] = useState<number>(0)
   const [diasViatico, setDiasViatico] = useState<number>(1)
   const [costoTotalViatico, setCostoTotalViatico] = useState<number>(0)
-  const [acompananteQuery, setAcompananteQuery] = useState('')
-  const [acompananteResultados, setAcompananteResultados] = useState<
-    Empleado[]
-  >([])
-  const [loadingAcompanantes, setLoadingAcompanantes] = useState(false)
   const [obraSeleccionada, setObraSeleccionada] = useState<string>('')
   const [provincias, setProvincias] = useState<Provincia[]>([])
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
@@ -85,11 +86,46 @@ export default function CrearVisita({
 
   const tiposVisita = [
     { value: 'VISITA INICIAL', label: 'Visita inicial', disabled: isFromObra },
-    { value: 'REPARACION', label: 'Reparación' },
-    { value: 'ASESORAMIENTO', label: 'Asesoramiento' },
-    { value: 'MEDICION', label: 'Medición' },
-    { value: 'RE-MEDICION', label: 'Re-Medición' },
+    { value: 'REPARACION', label: 'Reparación', disabled: false },
+    { value: 'ASESORAMIENTO', label: 'Asesoramiento', disabled: false },
+    { value: 'MEDICION', label: 'Medición', disabled: false },
+    { value: 'RE-MEDICION', label: 'Re-Medición', disabled: false },
   ]
+
+
+  const {vehiculos:vehiculoBack, isLoading, error} = useVehiculos();
+  const { visitadores:visitadoresBack, isLoading: isLoadingVisitadores, error: errorVisitadores } = useVisitadores();
+
+
+  console.log(visitadoresBack)
+
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  
+  // Lógica especial para la fecha de inicio, para que la fecha fin se actualice automáticamente
+  if (name === 'fecha') {
+    setFormData(prev => ({
+      ...prev,
+      fecha: value,
+      fechaHasta: value, // O podrías decidir no hacer esto y dejar que el usuario elija
+    }));
+  } else {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
+
+const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const value = e.target.value ? Number(e.target.value) : '';
+  setProvinciaSeleccionada(value);
+  setFormData((prev) => ({
+    ...prev,
+    localidad: '', // Resetea la localidad al cambiar de provincia
+  }));
+};
 
   // Precarga datos si es edición
   useEffect(() => {
@@ -208,29 +244,7 @@ export default function CrearVisita({
     }
   }, [formData.fecha, formData.fechaHasta, costoViatico])
 
-  useEffect(() => {
-    let ignore = false
-    if (acompananteQuery.length > 1) {
-      setLoadingAcompanantes(true)
-      buscarFiltrados(acompananteQuery).then((res) => {
-        if (!ignore) {
-          setAcompananteResultados(
-            res.filter(
-              (a) =>
-                !selectedAcompanantes.includes(a.cuil) &&
-                a.cuil !== visitadorPrincipal
-            )
-          )
-          setLoadingAcompanantes(false)
-        }
-      })
-    } else {
-      setAcompananteResultados([])
-    }
-    return () => {
-      ignore = true
-    }
-  }, [acompananteQuery, selectedAcompanantes, visitadorPrincipal])
+
 
   const filteredVisitadores = visitadores
 
@@ -380,462 +394,45 @@ export default function CrearVisita({
 
             {/* VISITA INICIAL O BUSCAR OBRA */}
             {!isFromObra && (
-              <section className="mb-8">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowObraSearch(!showObraSearch)}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-2 shadow-sm transition-colors ${
-                      isVisitaInicial
-                        ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-                        : 'border-gray-300 bg-white text-blue-700 hover:bg-blue-50'
-                    } `}
-                    disabled={isVisitaInicial}
-                  >
-                    <Building2 className="h-4 w-4" />
-                    {obraSeleccionada || 'Buscar obra existente...'}
-                  </button>
-                  <div className="ml-4 flex items-center">
-                    <button
-                      type="button"
-                      onClick={handleVisitaInicialToggle}
-                      className={`flex items-center gap-2 rounded-full px-4 py-2 font-semibold shadow transition-colors ${
-                        isVisitaInicial
-                          ? 'bg-blue-600 text-white'
-                          : 'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50'
-                      } `}
-                    >
-                      <Info className="h-4 w-4" />
-                      Visita sin obra
-                    </button>
-                  </div>
-                </div>
-                {showObraSearch && !isVisitaInicial && (
-                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                    <ObraSearchWrapper onSelectObra={handleObraSelect} />
-                  </div>
-                )}
-              </section>
+              <SeccionSeleccionObra
+                isVisitaInicial={isVisitaInicial}
+                onVisitaInicialToggle={handleVisitaInicialToggle}
+                showObraSearch={showObraSearch}
+                onShowObraSearchToggle={() => setShowObraSearch(!showObraSearch)}
+                obraSeleccionada={obraSeleccionada}
+                onSelectObra={handleObraSelect}
+              />
             )}
 
             {/* SOLO mostrar datos de contacto y dirección si es visita inicial */}
-            {isVisitaInicial && (
-              <>
-                {/* DATOS DE CONTACTO */}
-                <section className="mb-8">
-                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <User2 className="h-5 w-5" /> Datos de Contacto
-                  </h2>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Nombre
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          formData.nombre ||
-                          preloadedObra?.cliente?.nombre ||
-                          ''
-                        }
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            nombre: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Apellido
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          formData.apellido ||
-                          preloadedObra?.cliente?.apellido ||
-                          ''
-                        }
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            apellido: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Teléfono
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          formData.clienteTelefono ||
-                          preloadedObra?.cliente?.telefono ||
-                          ''
-                        }
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            clienteTelefono: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* DATOS DE LA DIRECCIÓN */}
-                <section className="mb-8">
-                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <Building2 className="h-5 w-5" /> Datos de la Dirección
-                  </h2>
-                  <div className="mb-2 grid grid-cols-1 gap-6 md:grid-cols-3">
-                    {/* Provincia */}
-                    <div>
-                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                        Provincia
-                      </label>
-                      <select
-                        value={provinciaSeleccionada}
-                        onChange={(e) => {
-                          const value = e.target.value
-                            ? Number(e.target.value)
-                            : ''
-                          setProvinciaSeleccionada(value)
-                          setFormData((prev) => ({
-                            ...prev,
-                            localidad: '',
-                          }))
-                        }}
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      >
-                        <option value="">Seleccionar provincia...</option>
-                        {provincias.map((prov) => (
-                          <option
-                            key={prov.cod_provincia}
-                            value={prov.cod_provincia}
-                          >
-                            {prov.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {/* Localidad */}
-                    <div>
-                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                        Localidad
-                      </label>
-                      <select
-                        value={formData.localidad || ''}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            localidad: e.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                        disabled={!provinciaSeleccionada}
-                      >
-                        <option value="">Seleccionar localidad...</option>
-                        {localidades.map((loc) => (
-                          <option
-                            key={loc.cod_localidad}
-                            value={loc.nombre_localidad}
-                          >
-                            {loc.nombre_localidad}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {/* Dirección */}
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Dirección
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.direccion}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            direccion: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-              </>
+               {isVisitaInicial && (
+            <SeccionVisitaInicial
+                formData={formData}
+                onFormChange={handleFormChange}
+                provincias={provincias}
+                localidades={localidades}
+                provinciaSeleccionada={provinciaSeleccionada}
+                onProvinciaChange={handleProvinciaChange} // Necesitarás crear esta función
+              />
             )}
 
-            {/* DATOS DE LA VISITA */}
-            <section className="mb-8">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                <Info className="h-5 w-5" /> Datos de la Visita
-              </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Calendar className="h-4 w-4" />
-                    Fecha Inicio
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        fecha: e.target.value,
-                        fechaHasta: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Calendar className="h-4 w-4" />
-                    Fecha Fin
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.fechaHasta}
-                    min={formData.fecha}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        fechaHasta: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Hora
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.hora}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, hora: e.target.value }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    Días viático
-                  </label>
-                  <div className="mt-1 flex items-center gap-3">
-                    <input
-                      type="number"
-                      value={diasViatico}
-                      readOnly
-                      className="w-16 rounded-md border border-gray-300 bg-gray-100 px-3 py-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Costo total:{' '}
-                      <span className="font-semibold">
-                        ${costoTotalViatico}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Car className="h-4 w-4" />
-                    Vehículo
-                  </label>
-                  <select
-                    value={formData.vehiculo || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        vehiculo: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  >
-                    <option value="">Seleccionar vehículo...</option>
-                    {vehiculos.map((vehiculo: Vehiculo) => (
-                      <option key={vehiculo.patente} value={vehiculo.patente}>
-                        {vehiculo.patente} - {vehiculo.tipo_vehiculo}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    Tipo de Visita
-                  </label>
-                  <select
-                    value={formData.tipo}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        tipo: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  >
-                    <option value="">Seleccionar tipo...</option>
-                    {tiposVisita.map((tipo) => (
-                      <option
-                        key={tipo.value}
-                        value={tipo.value}
-                        disabled={tipo.disabled}
-                      >
-                        {tipo.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
+            <SeccionDatosVisita
+              formData={formData}
+              onFormChange={handleFormChange} // Necesitarás crear esta función
+              vehiculosDisponibles={vehiculoBack}
+              tiposVisita={tiposVisita}
+              diasViatico={diasViatico}
+              costoTotalViatico={costoTotalViatico}
+            />
 
-            {/* Empleados asignados y observaciones */}
-            <section className="mb-8">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                <Users className="h-5 w-5" /> Empleados asignados
-              </h2>
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div>
-                  <label className="mb-3 flex items-center gap-1 text-sm font-medium text-blue-700">
-                    <User className="inline h-4 w-4" />
-                    Visitador <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-1 gap-3">
-                    {filteredVisitadores.length === 0 && (
-                      <span className="text-sm text-gray-400">
-                        No hay visitadores disponibles.
-                      </span>
-                    )}
-                    {filteredVisitadores.map((visitador) => (
-                      <label
-                        key={visitador.cuil}
-                        className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                          visitadorPrincipal === visitador.cuil
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="visitadorPrincipal"
-                          value={visitador.cuil}
-                          checked={visitadorPrincipal === visitador.cuil}
-                          onChange={() => setVisitadorPrincipal(visitador.cuil)}
-                          className="mr-2"
-                          required
-                        />
-                        <span className="text-sm">
-                          {visitador.nombre} {visitador.apellido}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-3 flex items-center gap-1 text-sm font-medium text-blue-700">
-                    <Users className="inline h-4 w-4" />
-                    Acompañantes
-                  </label>
-                  <input
-                    type="text"
-                    value={acompananteQuery}
-                    onChange={(e) => setAcompananteQuery(e.target.value)}
-                    placeholder="Buscar por nombre, apellido o CUIL..."
-                    className="mb-2 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                  {loadingAcompanantes && (
-                    <div className="text-sm text-gray-400">Buscando...</div>
-                  )}
-                  {acompananteResultados.length > 0 && (
-                    <div className="mb-2 max-h-40 overflow-y-auto rounded-md border bg-gray-50 p-2">
-                      {acompananteResultados.map((a) => (
-                        <div
-                          key={a.cuil}
-                          className="flex cursor-pointer items-center justify-between rounded px-2 py-1 hover:bg-blue-50"
-                          onClick={() => {
-                            if (!selectedAcompanantes.includes(a.cuil)) {
-                              setSelectedAcompanantes((prev) => [
-                                ...prev,
-                                a.cuil,
-                              ])
-                              setAcompanantes((prev) =>
-                                prev.some((ac) => ac.cuil === a.cuil)
-                                  ? prev
-                                  : [...prev, a]
-                              )
-                            }
-                            setAcompananteQuery('')
-                            setAcompananteResultados([])
-                          }}
-                        >
-                          <span>
-                            {a.nombre} {a.apellido}{' '}
-                            <span className="text-xs text-gray-500">
-                              ({a.cuil})
-                            </span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {acompanantes
-                      .filter(
-                        (a) =>
-                          selectedAcompanantes.includes(a.cuil) &&
-                          a.cuil !== visitadorPrincipal
-                      )
-                      .map((a) => (
-                        <div
-                          key={a.cuil}
-                          className="flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 shadow"
-                        >
-                          <span>
-                            {a.nombre} {a.apellido}
-                          </span>
-                          <button
-                            type="button"
-                            className="ml-2 text-blue-500 hover:text-red-500"
-                            onClick={() =>
-                              setSelectedAcompanantes((prev) =>
-                                prev.filter((cuil) => cuil !== a.cuil)
-                              )
-                            }
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </div>
-            </section>
+             <SeccionEmpleados
+              visitadoresDisponibles={visitadoresBack} // Usamos los datos del hook
+              acompanantesDisponibles={acompanantes} // Necesitarás crear un hook para esto
+              visitadorPrincipal={visitadorPrincipal}
+              onVisitadorChange={setVisitadorPrincipal}
+              acompanantesSeleccionados={selectedAcompanantes}
+              onAcompanantesChange={setSelectedAcompanantes}
+            />
 
             <section>
               <div>

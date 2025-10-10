@@ -16,6 +16,7 @@ import EntregaDetails from '../planta/EntregaDetails'
 import ConfirmModal from './ConfirmModal'
 import EntregasSidebar from '../planta/EntregasSidebar'
 import FinalizarEntregaModal from '../planta/FinalizarEntregaModal'
+import { useVisitasEmpleado } from '@/hooks/useVisitasEmpleado'
 
 export default function VisitadorDashboard() {
   const { usuario } = useAuth()
@@ -25,14 +26,20 @@ export default function VisitadorDashboard() {
   const [activeTab, setActiveTab] = useState<'visitas' | 'entregas'>('visitas')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+    const { 
+    visitasPendientes, 
+    setVisitasPendientes,
+    visitasRealizadas, 
+    setVisitasRealizadas,
+    isLoading: loadingVisitas, 
+    error: errorVisitas, 
+    reloadVisitas 
+  } = useVisitasEmpleado(usuario?.cuil);
   // Estados para Visitas
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
   const [showVisitaModal, setShowVisitaModal] = useState(false)
   const [observacionesVisita, setObservacionesVisita] = useState('')
-  const [visitasPendientes, setVisitasPendientes] = useState<Visita[]>([])
-  const [visitasRealizadas, setVisitasRealizadas] = useState<Visita[]>([])
-  const [loadingVisitas, setLoadingVisitas] = useState(true)
-  const [errorVisitas, setErrorVisitas] = useState<string | null>(null)
+
   const [finalizandoVisita, setFinalizandoVisita] = useState(false)
 
   // Estados para Entregas
@@ -50,12 +57,7 @@ export default function VisitadorDashboard() {
   const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
   const [finalizandoEntrega, setFinalizandoEntrega] = useState(false)
 
-  // Cargar visitas al montar el componente
-  useEffect(() => {
-    if (usuario?.cuil && activeTab === 'visitas') {
-      loadVisitas()
-    }
-  }, [usuario?.cuil, activeTab])
+
 
   // Cargar entregas al cambiar a la tab de entregas
   useEffect(() => {
@@ -64,34 +66,7 @@ export default function VisitadorDashboard() {
     }
   }, [usuario?.cuil, activeTab])
 
-  const loadVisitas = async () => {
-    if (!usuario?.cuil) return
-
-    try {
-      setLoadingVisitas(true)
-      setErrorVisitas(null)
-
-      const [pendientes, completadas] = await Promise.all([
-        visitasService.getVisitasByEmpleadoAndEstado(
-          usuario.cuil,
-          'PROGRAMADA'
-        ),
-        visitasService.getVisitasByEmpleadoAndEstado(
-          usuario.cuil,
-          'COMPLETADA'
-        ),
-      ])
-
-      setVisitasPendientes(pendientes)
-      setVisitasRealizadas(completadas)
-    } catch (error) {
-      console.error('Error al cargar visitas:', error)
-      setErrorVisitas('Error al cargar las visitas')
-    } finally {
-      setLoadingVisitas(false)
-    }
-  }
-
+ 
   const loadEntregas = async () => {
     if (!usuario?.cuil) return
 
@@ -138,9 +113,7 @@ export default function VisitadorDashboard() {
     setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
   }
 
-  const handleRetryVisitas = async () => {
-    await loadVisitas()
-  }
+
 
   const handleRetryEntregas = async () => {
     await loadEntregas()
@@ -158,8 +131,9 @@ export default function VisitadorDashboard() {
         setSelectedVisita(visitaActualizada)
         setVisitasPendientes((prev) =>
           prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
-        )
-        setVisitasRealizadas((prev) => [...prev, visitaActualizada])
+        );
+        setVisitasRealizadas((prev) => [...prev, visitaActualizada]);
+
 
         setShowVisitaModal(false)
         setObservacionesVisita('')
@@ -392,7 +366,7 @@ export default function VisitadorDashboard() {
                         {errorVisitas}
                       </p>
                       <button
-                        onClick={handleRetryVisitas}
+                        onClick={reloadVisitas}
                         className="rounded-md bg-blue-600 px-4 py-3 text-sm text-white transition-colors hover:bg-blue-700 lg:px-6 lg:text-base"
                       >
                         Reintentar

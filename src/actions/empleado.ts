@@ -4,7 +4,7 @@ import { Empleado } from '@/types'
 import { getAccessToken } from './auth'
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/empleados'
+  process.env.NEXT_PUBLIC_API_URL + '/empleados'
 
 export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
   try {
@@ -41,6 +41,8 @@ export async function obtenerVisitadores(): Promise<Empleado[]> {
       },
       cache: 'no-store',
     })
+
+    console.log(response)
 
     if (!response.ok) {
       return []
@@ -81,7 +83,7 @@ export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
 export async function buscarFiltrados(query: string): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/buscar/?query=${query}`, {
+    const response = await fetch(`${baseUrl}/buscar?${query}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -99,5 +101,38 @@ export async function buscarFiltrados(query: string): Promise<Empleado[]> {
   } catch (error) {
     console.error('Error al buscar acompañantes:', error)
     throw error
+  }
+}
+
+export async function obtenerEmpleadoPorCuil(cuil: string): Promise<Empleado | null> {
+  // Validamos que el CUIL no esté vacío para no hacer una llamada innecesaria.
+  if (!cuil) {
+    console.warn('Se intentó obtener un empleado sin CUIL.');
+    return null;
+  }
+
+  try {
+    const token = await getAccessToken();
+    // La URL debe coincidir con tu endpoint de la API para obtener un solo empleado.
+    // Usualmente sigue el patrón RESTful: /empleados/:cuil
+    const response = await fetch(`${baseUrl}/${cuil}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      // Si el empleado no se encuentra (404) o hay otro error, devolvemos null.
+      return null;
+    }
+
+    const empleado: Empleado = await response.json();
+    return empleado;
+  } catch (error) {
+    console.error(`Error obteniendo empleado con CUIL ${cuil}:`, error);
+    return null; // En caso de error de red, también devolvemos null.
   }
 }

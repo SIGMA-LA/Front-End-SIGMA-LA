@@ -4,7 +4,7 @@ import { Empleado, Localidad, Provincia } from '@/types'
 import { getAccessToken } from './auth'
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/provincias'
+  process.env.NEXT_PUBLIC_API_URL + '/provincias'
 
 export async function obtenerProvincias(): Promise<Provincia[]> {
   try {

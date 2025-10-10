@@ -4,7 +4,7 @@ import { Obra } from '@/types'
 import { getAccessToken } from './auth'
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/obras'
+  'http://localhost:4000/api/obras'
 
 export async function filtrarObras({
   estado,
