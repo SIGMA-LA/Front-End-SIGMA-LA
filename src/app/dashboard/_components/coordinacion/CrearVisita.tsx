@@ -34,6 +34,7 @@ import { useVehiculos } from '@/hooks/useVehiculos'
 import { useVisitadores } from '@/hooks/useVisitadores'
 import SeccionEmpleados from './visitas/SeccionEmpleados'
 import SeccionDatosVisita from './visitas/SeccionDatosVisita'
+import SeccionVisitaInicial from './visitas/SeccionVisitaInicial'
 
 export default function CrearVisita({
   onCancel,
@@ -115,6 +116,16 @@ export default function CrearVisita({
     }));
   }
 };
+
+const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const value = e.target.value ? Number(e.target.value) : '';
+  setProvinciaSeleccionada(value);
+  setFormData((prev) => ({
+    ...prev,
+    localidad: '', // Resetea la localidad al cambiar de provincia
+  }));
+};
+
   // Precarga datos si es edición
   useEffect(() => {
     if (visitaEditar) {
@@ -421,166 +432,15 @@ export default function CrearVisita({
             )}
 
             {/* SOLO mostrar datos de contacto y dirección si es visita inicial */}
-            {isVisitaInicial && (
-              <>
-                {/* DATOS DE CONTACTO */}
-                <section className="mb-8">
-                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <User2 className="h-5 w-5" /> Datos de Contacto
-                  </h2>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Nombre
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          formData.nombre ||
-                          preloadedObra?.cliente?.nombre ||
-                          ''
-                        }
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            nombre: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Apellido
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          formData.apellido ||
-                          preloadedObra?.cliente?.apellido ||
-                          ''
-                        }
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            apellido: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Teléfono
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          formData.clienteTelefono ||
-                          preloadedObra?.cliente?.telefono ||
-                          ''
-                        }
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            clienteTelefono: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* DATOS DE LA DIRECCIÓN */}
-                <section className="mb-8">
-                  <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <Building2 className="h-5 w-5" /> Datos de la Dirección
-                  </h2>
-                  <div className="mb-2 grid grid-cols-1 gap-6 md:grid-cols-3">
-                    {/* Provincia */}
-                    <div>
-                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                        Provincia
-                      </label>
-                      <select
-                        value={provinciaSeleccionada}
-                        onChange={(e) => {
-                          const value = e.target.value
-                            ? Number(e.target.value)
-                            : ''
-                          setProvinciaSeleccionada(value)
-                          setFormData((prev) => ({
-                            ...prev,
-                            localidad: '',
-                          }))
-                        }}
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      >
-                        <option value="">Seleccionar provincia...</option>
-                        {provincias.map((prov) => (
-                          <option
-                            key={prov.cod_provincia}
-                            value={prov.cod_provincia}
-                          >
-                            {prov.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {/* Localidad */}
-                    <div>
-                      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                        Localidad
-                      </label>
-                      <select
-                        value={formData.localidad || ''}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            localidad: e.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                        disabled={!provinciaSeleccionada}
-                      >
-                        <option value="">Seleccionar localidad...</option>
-                        {localidades.map((loc) => (
-                          <option
-                            key={loc.cod_localidad}
-                            value={loc.nombre_localidad}
-                          >
-                            {loc.nombre_localidad}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {/* Dirección */}
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Dirección
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.direccion}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            direccion: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-              </>
+               {isVisitaInicial && (
+            <SeccionVisitaInicial
+                formData={formData}
+                onFormChange={handleFormChange}
+                provincias={provincias}
+                localidades={localidades}
+                provinciaSeleccionada={provinciaSeleccionada}
+                onProvinciaChange={handleProvinciaChange} // Necesitarás crear esta función
+              />
             )}
 
             <SeccionDatosVisita
