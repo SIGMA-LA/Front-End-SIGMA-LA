@@ -33,6 +33,7 @@ import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
 import { useVehiculos } from '@/hooks/useVehiculos'
 import { useVisitadores } from '@/hooks/useVisitadores'
 import SeccionEmpleados from './visitas/SeccionEmpleados'
+import SeccionDatosVisita from './visitas/SeccionDatosVisita'
 
 export default function CrearVisita({
   onCancel,
@@ -83,10 +84,10 @@ export default function CrearVisita({
 
   const tiposVisita = [
     { value: 'VISITA INICIAL', label: 'Visita inicial', disabled: isFromObra },
-    { value: 'REPARACION', label: 'Reparación' },
-    { value: 'ASESORAMIENTO', label: 'Asesoramiento' },
-    { value: 'MEDICION', label: 'Medición' },
-    { value: 'RE-MEDICION', label: 'Re-Medición' },
+    { value: 'REPARACION', label: 'Reparación', disabled: false },
+    { value: 'ASESORAMIENTO', label: 'Asesoramiento', disabled: false },
+    { value: 'MEDICION', label: 'Medición', disabled: false },
+    { value: 'RE-MEDICION', label: 'Re-Medición', disabled: false },
   ]
 
 
@@ -95,6 +96,25 @@ export default function CrearVisita({
 
 
   console.log(visitadoresBack)
+
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  
+  // Lógica especial para la fecha de inicio, para que la fecha fin se actualice automáticamente
+  if (name === 'fecha') {
+    setFormData(prev => ({
+      ...prev,
+      fecha: value,
+      fechaHasta: value, // O podrías decidir no hacer esto y dejar que el usuario elija
+    }));
+  } else {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
   // Precarga datos si es edición
   useEffect(() => {
     if (visitaEditar) {
@@ -563,139 +583,14 @@ export default function CrearVisita({
               </>
             )}
 
-            {/* DATOS DE LA VISITA */}
-            <section className="mb-8">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                <Info className="h-5 w-5" /> Datos de la Visita
-              </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Calendar className="h-4 w-4" />
-                    Fecha Inicio
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        fecha: e.target.value,
-                        fechaHasta: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Calendar className="h-4 w-4" />
-                    Fecha Fin
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.fechaHasta}
-                    min={formData.fecha}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        fechaHasta: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Hora
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.hora}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, hora: e.target.value }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    Días viático
-                  </label>
-                  <div className="mt-1 flex items-center gap-3">
-                    <input
-                      type="number"
-                      value={diasViatico}
-                      readOnly
-                      className="w-16 rounded-md border border-gray-300 bg-gray-100 px-3 py-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Costo total:{' '}
-                      <span className="font-semibold">
-                        ${costoTotalViatico}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    <Car className="h-4 w-4" />
-                    Vehículo
-                  </label>
-                  <select
-                    value={formData.vehiculo || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        vehiculo: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  >
-                    <option value="">Seleccionar vehículo...</option>
-                    {vehiculoBack.map((vehiculo: Vehiculo) => (
-                      <option key={vehiculo.patente} value={vehiculo.patente}>
-                        {vehiculo.patente} - {vehiculo.tipo_vehiculo}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                    Tipo de Visita
-                  </label>
-                  <select
-                    value={formData.tipo}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        tipo: e.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  >
-                    <option value="">Seleccionar tipo...</option>
-                    {tiposVisita.map((tipo) => (
-                      <option
-                        key={tipo.value}
-                        value={tipo.value}
-                        disabled={tipo.disabled}
-                      >
-                        {tipo.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
+            <SeccionDatosVisita
+              formData={formData}
+              onFormChange={handleFormChange} // Necesitarás crear esta función
+              vehiculosDisponibles={vehiculoBack}
+              tiposVisita={tiposVisita}
+              diasViatico={diasViatico}
+              costoTotalViatico={costoTotalViatico}
+            />
 
              <SeccionEmpleados
               visitadoresDisponibles={visitadoresBack} // Usamos los datos del hook
