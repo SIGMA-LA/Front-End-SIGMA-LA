@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@/context/AuthContext'
 import React, {
   createContext,
   useContext,
@@ -64,6 +65,7 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [currentSection, setCurrentSection] = useState('dashboard')
+  const { usuario } = useAuth()
 
   // --- FUNCIONES DE CARGA DE DATOS (MEMORIZADAS CON useCallback) ---
 
@@ -93,6 +95,12 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error al cargar localidades:', error)
     }
   }, [])
+  useEffect(() => {
+    if (usuario) {
+      fetchClientes()
+      fetchEmpleados()
+    }
+  }, [usuario, fetchClientes, fetchEmpleados])
 
   const fetchObras = useCallback(async () => {
     try {
@@ -104,11 +112,9 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  // Efecto para la carga inicial de datos
   useEffect(() => {
     fetchClientes()
     fetchEmpleados()
-    // `fetchObras` y `fetchLocalidades` se llaman bajo demanda desde los componentes
   }, [fetchClientes, fetchEmpleados])
 
   // --- FUNCIONES CRUD (MEMORIZADAS CON useCallback) ---

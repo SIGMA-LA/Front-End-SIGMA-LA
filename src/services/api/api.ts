@@ -7,19 +7,32 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 })
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token_sigma')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+// Interceptor para manejar 401 y refrescar el token
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+    if (
+      error.response &&
+      error.response.status === 400 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/auth/refresh') &&
+      !originalRequest.url.includes('/auth/login') &&
+      !originalRequest.url.includes('/login')
+    ) {
+      originalRequest._retry = true
+      try {
+        await api.post('/auth/refresh')
+        return api(originalRequest)
+      } catch (refreshError) {
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
+      }
     }
-    return config
-  },
-  (error) => {
     return Promise.reject(error)
   }
 )
-
 export default api
