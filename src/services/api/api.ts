@@ -15,23 +15,41 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    const isAuthRefresh = originalRequest.url.includes('/auth/refresh')
+    const isAuthLogin = originalRequest.url.includes('/auth/login')
+    const isAuthProfile = originalRequest.url.includes('/auth/profile')
+    const isOnLoginPage = window.location.pathname === '/login'
+
     if (
       error.response &&
-      error.response.status === 400 &&
+      error.response.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes('/auth/refresh') &&
-      !originalRequest.url.includes('/auth/login') &&
-      !originalRequest.url.includes('/login')
+      !isAuthRefresh &&
+      !isAuthLogin &&
+      !isAuthProfile
     ) {
       originalRequest._retry = true
       try {
         await api.post('/auth/refresh')
         return api(originalRequest)
       } catch (refreshError) {
-        window.location.href = '/login'
+        // Solo redirigí si NO estás ya en /login
+        if (!isOnLoginPage) {
+          window.location.href = '/login'
+        }
         return Promise.reject(refreshError)
       }
     }
+
+    // Si el error viene de /auth/refresh, /auth/login o /auth/profile, solo rechazá sin redirigir
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      (isAuthRefresh || isAuthLogin || isAuthProfile)
+    ) {
+      return Promise.reject(error)
+    }
+
     return Promise.reject(error)
   }
 )
