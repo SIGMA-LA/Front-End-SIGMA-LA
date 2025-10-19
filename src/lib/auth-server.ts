@@ -29,13 +29,13 @@ export async function getValidAccessToken(): Promise<string> {
   }
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
     if (!baseUrl) throw new Error('La URL de la API no está configurada.')
 
     const response = await fetch(`${baseUrl}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      credentials: 'include',
     })
 
     if (!response.ok) {
