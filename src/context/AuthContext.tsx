@@ -9,6 +9,7 @@ import {
 } from 'react'
 import api from '@/services/api/api'
 import { Empleado } from '@/types'
+import { redirect } from 'next/navigation'
 
 interface AuthContextType {
   usuario: Empleado | null
@@ -56,8 +57,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const logout = async () => {
-    setUsuario(null)
-    await api.post(`${BASE_URL}/logout`)
+    try {
+      await api.post(`${BASE_URL}/logout`)
+    } catch (error) {
+      console.error('Error en logout:', error)
+    } finally {
+      setUsuario(null)
+      redirect('/login')
+    }
   }
   return (
     <AuthContext.Provider value={{ usuario, cargando, login, logout }}>

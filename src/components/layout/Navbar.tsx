@@ -3,25 +3,18 @@ import { Empleado } from '@/types'
 import { useState } from 'react'
 import { LogOut, Sigma } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { redirect } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 
 type NavbarProps = {
   usuario: Empleado | null
-  onLogout?: () => void
 }
 
-export default function Navbar({ usuario, onLogout }: NavbarProps) {
+export default function Navbar({ usuario }: NavbarProps) {
   const [showModal, setShowModal] = useState(false)
   const { logout } = useAuth()
 
   const handleLogout = () => {
-    if (onLogout) {
-      logout()
-      onLogout()
-    } else {
-      redirect('/login')
-    }
+    logout()
   }
 
   if (!usuario) {
