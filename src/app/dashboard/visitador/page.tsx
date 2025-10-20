@@ -2,39 +2,37 @@
 
 import { useState, useEffect } from 'react'
 import type { Visita, EntregaEmpleado } from '@/types'
-import { useGlobalContext } from '@/context/GlobalContext'
 import { useAuth } from '@/context/AuthContext'
 import entregasService from '@/services/entregas.service'
 import visitasService from '@/services/visitas.service'
 import { User as UserIcon, Package, Menu, X } from 'lucide-react'
 
 // Componentes existentes
-import TabNavigation from './TabNavigation'
-import SidebarVisitas from './SidebarVisitas'
-import VisitaDetailsVisitador from './VisitaDetailsVisitador'
-import EntregaDetails from '../planta/EntregaDetails'
-import ConfirmModal from './ConfirmModal'
-import EntregasSidebar from '../planta/EntregasSidebar'
-import FinalizarEntregaModal from '../planta/FinalizarEntregaModal'
+import TabNavigation from '@/components/visitador/TabNavigation'
+import SidebarVisitas from '@/components/visitador/SidebarVisitas'
+import VisitaDetailsVisitador from '@/components/visitador/VisitaDetailsVisitador'
+import EntregaDetails from '@/components/planta/EntregaDetails'
+import ConfirmModal from '@/components/visitador/ConfirmModal'
+import EntregasSidebar from '@/components/planta/EntregasSidebar'
+import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
 import { useVisitasEmpleado } from '@/hooks/useVisitasEmpleado'
 
-export default function VisitadorDashboard() {
+export default function Page() {
   const { usuario } = useAuth()
-  const { finalizarVisita: finalizarVisitaContext } = useGlobalContext()
 
   // Tab activa
   const [activeTab, setActiveTab] = useState<'visitas' | 'entregas'>('visitas')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-    const { 
-    visitasPendientes, 
+  const {
+    visitasPendientes,
     setVisitasPendientes,
-    visitasRealizadas, 
+    visitasRealizadas,
     setVisitasRealizadas,
-    isLoading: loadingVisitas, 
-    error: errorVisitas, 
-    reloadVisitas 
-  } = useVisitasEmpleado(usuario?.cuil);
+    isLoading: loadingVisitas,
+    error: errorVisitas,
+    reloadVisitas,
+  } = useVisitasEmpleado(usuario?.cuil)
   // Estados para Visitas
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
   const [showVisitaModal, setShowVisitaModal] = useState(false)
@@ -57,8 +55,6 @@ export default function VisitadorDashboard() {
   const [errorEntregas, setErrorEntregas] = useState<string | null>(null)
   const [finalizandoEntrega, setFinalizandoEntrega] = useState(false)
 
-
-
   // Cargar entregas al cambiar a la tab de entregas
   useEffect(() => {
     if (usuario?.cuil && activeTab === 'entregas') {
@@ -66,7 +62,6 @@ export default function VisitadorDashboard() {
     }
   }, [usuario?.cuil, activeTab])
 
- 
   const loadEntregas = async () => {
     if (!usuario?.cuil) return
 
@@ -113,8 +108,6 @@ export default function VisitadorDashboard() {
     setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
   }
 
-
-
   const handleRetryEntregas = async () => {
     await loadEntregas()
   }
@@ -131,9 +124,8 @@ export default function VisitadorDashboard() {
         setSelectedVisita(visitaActualizada)
         setVisitasPendientes((prev) =>
           prev.filter((v) => v.cod_visita !== selectedVisita.cod_visita)
-        );
-        setVisitasRealizadas((prev) => [...prev, visitaActualizada]);
-
+        )
+        setVisitasRealizadas((prev) => [...prev, visitaActualizada])
 
         setShowVisitaModal(false)
         setObservacionesVisita('')

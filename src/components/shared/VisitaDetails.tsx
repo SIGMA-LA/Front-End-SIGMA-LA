@@ -14,7 +14,7 @@ import { Visita, VisitaDetailProps } from '@/types'
 import { obtenerVisitaPorId, cancelarVisita } from '@/actions/visitas'
 import { getStatusColor, getTipoText } from './VisitaCard'
 import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
-import EmpleadoListItem from '../coordinacion/visitas/EmpleadoListItem'
+import EmpleadoListItem from '../coordinacion/visita/EmpleadoListItem'
 
 export default function VisitaDetail({
   visita: visitaProp,
@@ -169,7 +169,8 @@ export default function VisitaDetail({
           {/* Empleados asignados */}
           <div>
             <h3 className="mb-2 text-lg font-semibold">Empleados asignados</h3>
-            {Array.isArray(visita.empleado_visita) && visita.empleado_visita.length > 0 ? (
+            {Array.isArray(visita.empleado_visita) &&
+            visita.empleado_visita.length > 0 ? (
               <ul className="space-y-2 text-sm text-gray-700">
                 {/* 
                   Iteramos sobre la tabla intermedia y por cada entrada,

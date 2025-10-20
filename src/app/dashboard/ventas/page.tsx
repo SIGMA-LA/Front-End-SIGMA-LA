@@ -16,21 +16,21 @@ import {
 import { useGlobalContext } from '@/context/GlobalContext'
 import type { Empleado, Obra } from '@/types'
 
-import CrearCliente from './CrearCliente'
-import CrearObra from './CrearObra'
-import Configuraciones from './Configuraciones'
-import EntregasList from '../shared/EntregasList'
-import VisitasList from '../shared/VisitasList'
-import ObrasList from '../shared/ObrasList'
-import ClientesList from '../shared/ClientesList'
+import CrearCliente from '@/components/ventas/CrearCliente'
+import CrearObra from '@/components/ventas/CrearObra'
+import Configuraciones from '@/components/ventas/Configuraciones'
+import EntregasList from '@/components/shared/EntregasList'
+import VisitasList from '@/components/shared/VisitasList'
+import ObrasList from '@/components/shared/ObrasList'
+import ClientesList from '@/components/shared/ClientesList'
 import { ObraFormData } from '@/services/obra.service'
 import { PresupuestoFormData } from '@/services/presupuesto.service'
-import PagosList from './pagos/PagosList'
+import PagosList from '@/components/ventas/pagos/PagosList'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
-import NotaFabricaModal from './NotaFabricaModal'
+import NotaFabricaModal from '@/components/ventas/NotaFabricaModal'
 import { getObraById } from '@/services/obra.service'
 
-export default function VentasDashboard() {
+export default function Page() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null)

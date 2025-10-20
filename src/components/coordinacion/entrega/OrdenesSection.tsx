@@ -2,7 +2,7 @@
 
 import { Package, Loader2 } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
-import OrdenProduccionCard from '../../produccion/OrdenProduccionCard'
+import OrdenProduccionCard from '@/components/produccion/OrdenProduccionCard'
 
 interface OrdenesSectionProps {
   obraId: number | null

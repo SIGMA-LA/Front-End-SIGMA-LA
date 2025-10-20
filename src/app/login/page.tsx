@@ -2,16 +2,17 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import LoginForm from './_components/LoginForm'
+import LoginForm from '@/components/login/LoginForm'
 import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
   const { login, usuario } = useAuth()
+  const rol = usuario?.rol_actual || null
 
   useEffect(() => {
     if (usuario) {
-      router.push('/dashboard')
+      router.push(`/dashboard/${rol?.toLowerCase()}`)
     }
   }, [usuario, router])
 

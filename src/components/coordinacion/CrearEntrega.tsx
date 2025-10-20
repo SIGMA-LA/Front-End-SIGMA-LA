@@ -2,21 +2,21 @@
 
 import { Loader2 } from 'lucide-react'
 import { CrearEntregaProps } from '@/types'
-import { useCrearEntrega } from './hooks/useCrearEntrega'
+import { useCrearEntrega } from '@/hooks/useCrearEntrega'
 
 // Componentes de UI modulares
-import ObraSelection from './crear-entrega/ObraSelection'
-import DateTimeSelection from './crear-entrega/DateTimeSelection'
-import PersonalSelection from './crear-entrega/PersonalSelection'
-import OrdenesSection from './crear-entrega/OrdenesSection'
-import ViaticosSection from './crear-entrega/ViaticosSection'
-import RecursosSelection from './crear-entrega/RecursosSelection'
-import Observaciones from './crear-entrega/Observaciones'
-import ActionButtons from './crear-entrega/ActionButtons'
+import ObraSelection from './entrega/ObraSelection'
+import DateTimeSelection from './entrega/DateTimeSelection'
+import PersonalSelection from './entrega/PersonalSelection'
+import OrdenesSection from './entrega/OrdenesSection'
+import ViaticosSection from './entrega/ViaticosSection'
+import RecursosSelection from './entrega/RecursosSelection'
+import Observaciones from './entrega/Observaciones'
+import ActionButtons from './entrega/ActionButtons'
 
 // Modales
-import AsignarPersonalModal from '../shared/AsignarPersonalModal'
-import SelectionModal from '../shared/SelectionModal'
+import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
+import SelectionModal from '@/components/shared/SelectionModal'
 
 // Componente principal refactorizado
 export default function CrearEntrega(props: CrearEntregaProps) {

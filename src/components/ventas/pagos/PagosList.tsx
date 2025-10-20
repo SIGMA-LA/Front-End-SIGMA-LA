@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { getPagos, hayObrasPendientes, deletePago } from '@/actions/pagos'
 import { Pago, PagosFilter } from '@/types'
-import PagoModal from './PagoModal'
+import PagoModal from '@/components/ventas/pagos/PagoModal'
 import PagosFilters from './PagosFilters'
 
 const getClienteName = (

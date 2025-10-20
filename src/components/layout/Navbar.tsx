@@ -1,20 +1,30 @@
 'use client'
-
+import { Empleado } from '@/types'
 import { useState } from 'react'
 import { LogOut, Sigma } from 'lucide-react'
 import { Button } from '../ui/Button'
+import { redirect } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 
-export default function Navbar() {
-  const { usuario, cargando, logout } = useAuth()
-  const [showModal, setShowModal] = useState(false)
+type NavbarProps = {
+  usuario: Empleado | null
+  onLogout?: () => void
+}
 
-  const onLogout = () => {
-    logout()
-    window.location.href = '/login'
+export default function Navbar({ usuario, onLogout }: NavbarProps) {
+  const [showModal, setShowModal] = useState(false)
+  const { logout } = useAuth()
+
+  const handleLogout = () => {
+    if (onLogout) {
+      logout()
+      onLogout()
+    } else {
+      redirect('/login')
+    }
   }
 
-  if (cargando || !usuario) {
+  if (!usuario) {
     return null
   }
 
@@ -74,7 +84,7 @@ export default function Navbar() {
               </Button>
               <Button
                 variant="destructive"
-                onClick={onLogout}
+                onClick={handleLogout}
                 className="w-full sm:w-auto"
               >
                 Cerrar sesión

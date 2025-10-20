@@ -28,14 +28,14 @@ import {
   buscarFiltrados,
 } from '@/actions/empleado'
 import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
-import parametroService from '../../../../services/parametro.service'
+import parametroService from '../../services/parametro.service'
 import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
 import { useVehiculos } from '@/hooks/useVehiculos'
 import { useVisitadores } from '@/hooks/useVisitadores'
-import SeccionEmpleados from './visitas/SeccionEmpleados'
-import SeccionDatosVisita from './visitas/SeccionDatosVisita'
-import SeccionVisitaInicial from './visitas/SeccionVisitaInicial'
-import SeccionSeleccionObra from './visitas/SeccionSeleccionarObra'
+import SeccionEmpleados from './visita/SeccionEmpleados'
+import SeccionDatosVisita from './visita/SeccionDatosVisita'
+import SeccionVisitaInicial from './visita/SeccionVisitaInicial'
+import SeccionSeleccionObra from './visita/SeccionSeleccionarObra'
 
 export default function CrearVisita({
   onCancel,
@@ -92,40 +92,43 @@ export default function CrearVisita({
     { value: 'RE-MEDICION', label: 'Re-Medición', disabled: false },
   ]
 
-
-  const {vehiculos:vehiculoBack, isLoading, error} = useVehiculos();
-  const { visitadores:visitadoresBack, isLoading: isLoadingVisitadores, error: errorVisitadores } = useVisitadores();
-
+  const { vehiculos: vehiculoBack, isLoading, error } = useVehiculos()
+  const {
+    visitadores: visitadoresBack,
+    isLoading: isLoadingVisitadores,
+    error: errorVisitadores,
+  } = useVisitadores()
 
   console.log(visitadoresBack)
 
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, value } = e.target;
-  
-  // Lógica especial para la fecha de inicio, para que la fecha fin se actualice automáticamente
-  if (name === 'fecha') {
-    setFormData(prev => ({
-      ...prev,
-      fecha: value,
-      fechaHasta: value, // O podrías decidir no hacer esto y dejar que el usuario elija
-    }));
-  } else {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    // Lógica especial para la fecha de inicio, para que la fecha fin se actualice automáticamente
+    if (name === 'fecha') {
+      setFormData((prev) => ({
+        ...prev,
+        fecha: value,
+        fechaHasta: value, // O podrías decidir no hacer esto y dejar que el usuario elija
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
   }
-};
 
-const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  const value = e.target.value ? Number(e.target.value) : '';
-  setProvinciaSeleccionada(value);
-  setFormData((prev) => ({
-    ...prev,
-    localidad: '', // Resetea la localidad al cambiar de provincia
-  }));
-};
+  const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value ? Number(e.target.value) : ''
+    setProvinciaSeleccionada(value)
+    setFormData((prev) => ({
+      ...prev,
+      localidad: '', // Resetea la localidad al cambiar de provincia
+    }))
+  }
 
   // Precarga datos si es edición
   useEffect(() => {
@@ -243,8 +246,6 @@ const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       setCostoTotalViatico(costoViatico)
     }
   }, [formData.fecha, formData.fechaHasta, costoViatico])
-
-
 
   const filteredVisitadores = visitadores
 
@@ -398,15 +399,17 @@ const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
                 isVisitaInicial={isVisitaInicial}
                 onVisitaInicialToggle={handleVisitaInicialToggle}
                 showObraSearch={showObraSearch}
-                onShowObraSearchToggle={() => setShowObraSearch(!showObraSearch)}
+                onShowObraSearchToggle={() =>
+                  setShowObraSearch(!showObraSearch)
+                }
                 obraSeleccionada={obraSeleccionada}
                 onSelectObra={handleObraSelect}
               />
             )}
 
             {/* SOLO mostrar datos de contacto y dirección si es visita inicial */}
-               {isVisitaInicial && (
-            <SeccionVisitaInicial
+            {isVisitaInicial && (
+              <SeccionVisitaInicial
                 formData={formData}
                 onFormChange={handleFormChange}
                 provincias={provincias}
@@ -425,7 +428,7 @@ const handleProvinciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
               costoTotalViatico={costoTotalViatico}
             />
 
-             <SeccionEmpleados
+            <SeccionEmpleados
               visitadoresDisponibles={visitadoresBack} // Usamos los datos del hook
               acompanantesDisponibles={acompanantes} // Necesitarás crear un hook para esto
               visitadorPrincipal={visitadorPrincipal}

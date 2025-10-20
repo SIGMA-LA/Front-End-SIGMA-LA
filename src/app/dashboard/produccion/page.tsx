@@ -9,16 +9,16 @@ import {
   getNotasSinOrdenAprobada,
 } from '@/services/obra.service'
 import ordenProduccionService from '@/services/ordenProduccion.service'
-import TabNavigation from './TabNavigation'
-import SidebarNotasFabrica from './SidebarNotasFabrica'
-import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
-import NotaFabricaDetails from './NotaFabricaDetails'
-import OrdenProduccionDetails from './OrdenProduccionDetails'
-import CrearOrdenModal from './CrearOrdenModal'
-import IniciarProduccionModal from './IniciarProduccionModal'
-import FinalizarProduccionModal from './FinalizarProduccionModal'
+import TabNavigation from '../../../components/produccion/TabNavigation'
+import SidebarNotasFabrica from '../../../components/produccion/SidebarNotasFabrica'
+import SidebarOrdenesProduccion from '../../../components/produccion/SidebarOrdenesProduccion'
+import NotaFabricaDetails from '../../../components/produccion/NotaFabricaDetails'
+import OrdenProduccionDetails from '../../../components/produccion/OrdenProduccionDetails'
+import CrearOrdenModal from '../../../components/produccion/CrearOrdenModal'
+import IniciarProduccionModal from '../../../components/produccion/IniciarProduccionModal'
+import FinalizarProduccionModal from '../../../components/produccion/FinalizarProduccionModal'
 
-export default function ProduccionDashboard() {
+export default function Page() {
   const { usuario } = useAuth()
 
   // Tab activa
@@ -136,56 +136,56 @@ export default function ProduccionDashboard() {
     setSelectedObra(null)
   }
 
-const handleIniciarProduccion = async () => {
-  setIsIniciarModalOpen(true)
-}
+  const handleIniciarProduccion = async () => {
+    setIsIniciarModalOpen(true)
+  }
 
-const handleFinalizarProduccion = async () => {
-  setIsFinalizarModalOpen(true)
-}
+  const handleFinalizarProduccion = async () => {
+    setIsFinalizarModalOpen(true)
+  }
 
-const handleConfirmIniciar = async () => {
-  if (!selectedOrden) return
+  const handleConfirmIniciar = async () => {
+    if (!selectedOrden) return
 
-  setIsProduccionLoading(true)
-  try {
-    await ordenProduccionService.iniciarProduccion(selectedOrden.cod_op)
-    await loadOrdenesProduccion()
+    setIsProduccionLoading(true)
+    try {
+      await ordenProduccionService.iniciarProduccion(selectedOrden.cod_op)
+      await loadOrdenesProduccion()
 
-    const ordenActualizada = {
-      ...selectedOrden,
-      estado: 'EN PRODUCCION' as const,
-      obra: {
-        ...selectedOrden.obra,
+      const ordenActualizada = {
+        ...selectedOrden,
         estado: 'EN PRODUCCION' as const,
-      },
+        obra: {
+          ...selectedOrden.obra,
+          estado: 'EN PRODUCCION' as const,
+        },
+      }
+      setSelectedOrden(ordenActualizada)
+      setIsIniciarModalOpen(false)
+    } catch (error) {
+      console.error('Error al iniciar producción:', error)
+      alert('Error al iniciar la producción. Intente nuevamente.')
+    } finally {
+      setIsProduccionLoading(false)
     }
-    setSelectedOrden(ordenActualizada)
-    setIsIniciarModalOpen(false)
-  } catch (error) {
-    console.error('Error al iniciar producción:', error)
-    alert('Error al iniciar la producción. Intente nuevamente.')
-  } finally {
-    setIsProduccionLoading(false)
   }
-}
 
-const handleConfirmFinalizar = async () => {
-  if (!selectedOrden) return
+  const handleConfirmFinalizar = async () => {
+    if (!selectedOrden) return
 
-  setIsProduccionLoading(true)
-  try {
-    await ordenProduccionService.finalizarProduccion(selectedOrden.cod_op)
-    await loadOrdenesProduccion()
-    setSelectedOrden(null)
-    setIsFinalizarModalOpen(false)
-  } catch (error) {
-    console.error('Error al finalizar producción:', error)
-    alert('Error al finalizar la producción. Intente nuevamente.')
-  } finally {
-    setIsProduccionLoading(false)
+    setIsProduccionLoading(true)
+    try {
+      await ordenProduccionService.finalizarProduccion(selectedOrden.cod_op)
+      await loadOrdenesProduccion()
+      setSelectedOrden(null)
+      setIsFinalizarModalOpen(false)
+    } catch (error) {
+      console.error('Error al finalizar producción:', error)
+      alert('Error al finalizar la producción. Intente nuevamente.')
+    } finally {
+      setIsProduccionLoading(false)
+    }
   }
-}
 
   if (!usuario) {
     return (

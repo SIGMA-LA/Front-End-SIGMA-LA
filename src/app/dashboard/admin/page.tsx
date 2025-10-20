@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { Users, Building, BarChart3, Home, Menu, X } from 'lucide-react'
-import DashboardView from './DashboardView'
-import EmpleadosView from './EmpleadosView'
-import ReportesView from './ReportesView'
-import ObrasView from './ObrasView'
+import DashboardView from '@/components/admin/DashboardView'
+import EmpleadosView from '@/components/admin/EmpleadosView'
+import ReportesView from '@/components/admin/ReportesView'
+import ObrasView from '@/components/admin/ObrasView'
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -14,7 +14,7 @@ const menuItems = [
   { id: 'obras', label: 'Obras', icon: Building },
 ]
 
-export default function AdminDashboardClient() {
+export default function Page() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

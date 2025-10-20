@@ -16,26 +16,26 @@ import {
   ClipboardList,
 } from 'lucide-react'
 
-import Configuraciones from './Configuraciones'
-import EntregasList from '../shared/EntregasList'
-import VisitasList from '../shared/VisitasList'
-import ObrasList from '../shared/ObrasList'
-import ClientesList from '../shared/ClientesList'
-import CrearVisita from './CrearVisita'
-import CrearEntrega from './CrearEntrega'
-import PedidosList from './PedidosList'
-import RegistrarPedido from './RegistrarPedido'
-import MaquinariaList from './maquinaria/MaquinariaList'
-import VehículosList from './VehiculosList'
-import CrearVehiculo from './CrearVehiculo'
-import EditarVehiculo from './EditarVehiculo'
+import Configuraciones from '@/components/coordinacion/Configuraciones'
+import EntregasList from '../../../components/shared/EntregasList'
+import VisitasList from '../../../components/shared/VisitasList'
+import ObrasList from '../../../components/shared/ObrasList'
+import ClientesList from '../../../components/shared/ClientesList'
+import CrearVisita from '@/components/coordinacion/CrearVisita'
+import CrearEntrega from '@/components/coordinacion/CrearEntrega'
+import PedidosList from '@/components/coordinacion/PedidosList'
+import RegistrarPedido from '@/components/coordinacion/RegistrarPedido'
+import MaquinariaList from '@/components/coordinacion/maquinaria/MaquinariaList'
+import VehículosList from '@/components/coordinacion/VehiculosList'
+import CrearVehiculo from '@/components/coordinacion/CrearVehiculo'
+import EditarVehiculo from '@/components/coordinacion/EditarVehiculo'
 import { Vehiculo } from '@/types'
-import OrdenesProduccionView from './ordenes_produccion/OrdenesProduccionView'
+import OrdenesProduccionView from '@/components/coordinacion/orden_produccion/OrdenesProduccionView'
 
 import type { Empleado, Visita } from '@/types'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
 
-export default function CoordDashboard() {
+export default function Page() {
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedObra, setSelectedObra] = useState<any>(null)
@@ -84,9 +84,9 @@ export default function CoordDashboard() {
             onCreateClick={() => setCurrentSection('obras')}
             onScheduleVisit={(obra) => {
               // 1. Guardas la obra seleccionada en el estado del Dashboard.
-              setSelectedObra(obra);
+              setSelectedObra(obra)
               // 2. Cambias a la sección de creación de visita.
-              setCurrentSection('crear-visita');
+              setCurrentSection('crear-visita')
             }}
             onScheduleEntrega={(obra) => {
               setSelectedObra(obra)

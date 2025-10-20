@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import type { EntregaEmpleado } from '@/types'
 import entregasService from '@/services/entregas.service'
 import { useAuth } from '@/context/AuthContext'
-import EntregasSidebar from './EntregasSidebar'
-import EntregaDetails from './EntregaDetails'
-import FinalizarEntregaModal from './FinalizarEntregaModal'
-import EmptyState from './EmptyState'
-import { Menu, X, Package } from 'lucide-react'
+import EntregasSidebar from '@/components/planta/EntregasSidebar'
+import EntregaDetails from '@/components/planta/EntregaDetails'
+import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
+import EmptyState from '@/components/planta/EmptyState'
+import { Menu, X } from 'lucide-react'
 
-export default function PlantaDashboardClient() {
+export default function Page() {
   const { usuario } = useAuth()
   const [selectedEntrega, setSelectedEntrega] =
     useState<EntregaEmpleado | null>(null)

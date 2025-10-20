@@ -220,23 +220,23 @@ export default function ObraCard({
               {usuarioRol === 'VENTAS' && (
                 <>
                   {onPagosClick && (
-                  <button
-                    onClick={() => esValidoParaPagos && onPagosClick(obra)}
-                    disabled={!esValidoParaPagos}
-                    className={`flex items-center gap-1 font-medium transition-colors ${
-                      esValidoParaPagos
-                        ? 'cursor-pointer text-green-600 hover:text-green-800'
-                        : 'cursor-not-allowed text-gray-400'
-                    }`}
-                    title={
-                      !esValidoParaPagos
-                        ? 'No se pueden crear pagos: falta presupuesto aceptado o ya está totalmente pagado'
-                        : 'Crear pago para esta obra'
-                    }
-                  >
-                    <DollarSign className="h-4 w-4" /> Pagos
-                  </button>
-                )}
+                    <button
+                      onClick={() => esValidoParaPagos && onPagosClick(obra)}
+                      disabled={!esValidoParaPagos}
+                      className={`flex items-center gap-1 font-medium transition-colors ${
+                        esValidoParaPagos
+                          ? 'cursor-pointer text-green-600 hover:text-green-800'
+                          : 'cursor-not-allowed text-gray-400'
+                      }`}
+                      title={
+                        !esValidoParaPagos
+                          ? 'No se pueden crear pagos: falta presupuesto aceptado o ya está totalmente pagado'
+                          : 'Crear pago para esta obra'
+                      }
+                    >
+                      <DollarSign className="h-4 w-4" /> Pagos
+                    </button>
+                  )}
                   {onEditClick && (
                     <button
                       onClick={() => onEditClick(obra)}
