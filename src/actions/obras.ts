@@ -3,8 +3,31 @@
 import { Obra } from '@/types'
 import { getAccessToken } from './auth'
 
-const baseUrl =
-  'http://localhost:4000/api/obras'
+const baseUrl = 'http://localhost:4000/api/obras'
+
+export async function obtenerObra(id: number): Promise<Obra> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+      }
+      throw new Error('Error al obtener la obra.')
+    }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error al obtener la obra:', error)
+    throw new Error('Error al obtener la obra.')
+  }
+}
 
 export async function filtrarObras({
   estado,

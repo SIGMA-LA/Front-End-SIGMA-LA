@@ -9,14 +9,14 @@ import {
   getNotasSinOrdenAprobada,
 } from '@/services/obra.service'
 import ordenProduccionService from '@/services/ordenProduccion.service'
-import TabNavigation from '../../../components/produccion/TabNavigation'
-import SidebarNotasFabrica from '../../../components/produccion/SidebarNotasFabrica'
-import SidebarOrdenesProduccion from '../../../components/produccion/SidebarOrdenesProduccion'
-import NotaFabricaDetails from '../../../components/produccion/NotaFabricaDetails'
-import OrdenProduccionDetails from '../../../components/produccion/OrdenProduccionDetails'
-import CrearOrdenModal from '../../../components/produccion/CrearOrdenModal'
-import IniciarProduccionModal from '../../../components/produccion/IniciarProduccionModal'
-import FinalizarProduccionModal from '../../../components/produccion/FinalizarProduccionModal'
+import TabNavigation from '../../components/produccion/TabNavigation'
+import SidebarNotasFabrica from '../../components/produccion/SidebarNotasFabrica'
+import SidebarOrdenesProduccion from '../../components/produccion/SidebarOrdenesProduccion'
+import NotaFabricaDetails from '../../components/produccion/NotaFabricaDetails'
+import OrdenProduccionDetails from '../../components/produccion/OrdenProduccionDetails'
+import CrearOrdenModal from '../../components/produccion/CrearOrdenModal'
+import IniciarProduccionModal from '../../components/produccion/IniciarProduccionModal'
+import FinalizarProduccionModal from '../../components/produccion/FinalizarProduccionModal'
 
 export default function Page() {
   const { usuario } = useAuth()

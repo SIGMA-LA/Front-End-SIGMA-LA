@@ -111,7 +111,7 @@ export default function ObrasList({
     try {
       const result = await deleteObra(id)
       if (result.success) {
-        refrescarObras() // Refresca la lista para mostrar el estado "CANCELADA"
+        refrescarObras()
       } else {
         throw new Error(result.error)
       }

@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (usuario) {
-      router.push(`/dashboard/${rol?.toLowerCase()}`)
+      router.push(`/${rol?.toLowerCase()}`)
     }
   }, [usuario, router])
 
