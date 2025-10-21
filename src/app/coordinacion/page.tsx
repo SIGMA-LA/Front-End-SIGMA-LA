@@ -1,8 +1,7 @@
-'use client'
-
-import { useAuth } from '@/context/AuthContext'
-export default function DashboardPage() {
-  const { usuario: usuarioActual } = useAuth()
+import { getUsuarioFromCookies } from '@/lib/auth-server'
+import { Empleado } from '@/types'
+export default async function DashboardPage() {
+  const usuario: Empleado = await getUsuarioFromCookies()
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-2xl">
@@ -11,9 +10,7 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-semibold text-gray-800">
               Bienvenido,{' '}
               <span className="text-blue-600">
-                {usuarioActual
-                  ? `${usuarioActual.nombre} ${usuarioActual.apellido}`
-                  : ''}
+                {usuario ? `${usuario.nombre} ${usuario.apellido}` : ''}
               </span>
               !
             </h1>
