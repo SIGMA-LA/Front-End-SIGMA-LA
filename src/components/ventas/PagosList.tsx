@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { getPagos } from '@/actions/pagos'
 import { Pago, PagosFilter } from '@/types'
+import PagosFilters from './pagos/PagosFilters'
+import PagoModal from './pagos/PagoModal'
 
 // Helper para mostrar el nombre del cliente
 const getClienteName = (obra: any) => {

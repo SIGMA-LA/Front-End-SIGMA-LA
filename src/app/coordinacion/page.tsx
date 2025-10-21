@@ -1,20 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Empleado } from '@/types'
-import { obtenerEmpleadoActual } from '@/actions/empleado'
-
+import { useAuth } from '@/context/AuthContext'
 export default function DashboardPage() {
-  const [usuarioActual, setUsuarioActual] = useState<Empleado | null>(null)
-
-  useEffect(() => {
-    async function fetchUsuario() {
-      const empleado = await obtenerEmpleadoActual()
-      setUsuarioActual(empleado)
-    }
-    fetchUsuario()
-  }, [])
-
+  const { usuario: usuarioActual } = useAuth()
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-2xl">

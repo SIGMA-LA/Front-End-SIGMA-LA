@@ -9,6 +9,7 @@ import EntregaDetails from '@/components/planta/EntregaDetails'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
 import EmptyState from '@/components/planta/EmptyState'
 import { Menu, X } from 'lucide-react'
+import Navbar from '@/components/layout/Navbar'
 
 export default function Page() {
   const { usuario } = useAuth()
@@ -67,7 +68,7 @@ export default function Page() {
 
   const handleSelectEntrega = (entrega: EntregaEmpleado) => {
     setSelectedEntrega(entrega)
-    setSidebarOpen(false) // Cerrar sidebar en móvil al seleccionar
+    setSidebarOpen(false)
   }
 
   const handleFinalizarEntrega = async () => {
@@ -75,13 +76,11 @@ export default function Page() {
       try {
         setFinalizandoEntrega(true)
 
-        // Llamar al servicio para actualizar en la base de datos
         await entregasService.finalizarEntrega(
           selectedEntrega.cod_entrega,
           observacionesFinal || undefined
         )
 
-        // Actualizar el estado local después de la actualización exitosa
         const entregaActualizada = {
           ...selectedEntrega,
           entrega: {
@@ -148,125 +147,128 @@ export default function Page() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
-      {/* Header mejorado para móvil y desktop */}
-      <div className="border-b bg-white px-2 py-4 sm:px-5 lg:px-8 lg:py-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-full items-center justify-between sm:justify-start">
-            {/* Botón hamburguesa para móvil */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
-            >
-              {sidebarOpen ? (
-                <X className="h-8 w-8" />
-              ) : (
-                <Menu className="h-8 w-8" />
-              )}
-            </button>
-            {/* Info dashboard + nombre */}
-            <div className="flex flex-1 flex-col items-center sm:ml-3 sm:items-start">
-              <h1 className="text-center text-base font-bold text-gray-900 sm:text-left sm:text-2xl lg:text-3xl">
-                Dashboard de Entregas
-              </h1>
-              <span className="mt-1 text-center text-xs text-gray-600 sm:text-left sm:text-base lg:text-base">
-                {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
-              </span>
+    <>
+      <Navbar usuario={usuario} />
+      <div className="flex h-screen flex-col">
+        {/* Header mejorado para móvil y desktop */}
+        <div className="border-b bg-white px-2 py-4 sm:px-5 lg:px-8 lg:py-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full items-center justify-between sm:justify-start">
+              {/* Botón hamburguesa para móvil */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+              >
+                {sidebarOpen ? (
+                  <X className="h-8 w-8" />
+                ) : (
+                  <Menu className="h-8 w-8" />
+                )}
+              </button>
+              {/* Info dashboard + nombre */}
+              <div className="flex flex-1 flex-col items-center sm:ml-3 sm:items-start">
+                <h1 className="text-center text-base font-bold text-gray-900 sm:text-left sm:text-2xl lg:text-3xl">
+                  Dashboard de Entregas
+                </h1>
+                <span className="mt-1 text-center text-xs text-gray-600 sm:text-left sm:text-base lg:text-base">
+                  {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
+                </span>
+              </div>
+              {/* Contadores en mobile */}
+              <div className="flex gap-2 sm:hidden">
+                <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
+                  <div className="text-base font-semibold text-blue-600">
+                    {entregasPendientes.length}
+                  </div>
+                  <div className="text-xs text-gray-600">Pendientes</div>
+                </div>
+                <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
+                  <div className="text-base font-semibold text-green-600">
+                    {entregasRealizadas.length}
+                  </div>
+                  <div className="text-xs text-gray-600">Entregadas</div>
+                </div>
+              </div>
             </div>
-            {/* Contadores en mobile */}
-            <div className="flex gap-2 sm:hidden">
-              <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
-                <div className="text-base font-semibold text-blue-600">
+            {/* Contadores en desktop */}
+            <div className="hidden gap-6 sm:flex">
+              <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
+                <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                   {entregasPendientes.length}
                 </div>
-                <div className="text-xs text-gray-600">Pendientes</div>
+                <div className="text-sm text-gray-600 lg:text-base">
+                  Pendientes
+                </div>
               </div>
-              <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
-                <div className="text-base font-semibold text-green-600">
+              <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
+                <div className="text-lg font-semibold text-green-600 lg:text-xl">
                   {entregasRealizadas.length}
                 </div>
-                <div className="text-xs text-gray-600">Entregadas</div>
-              </div>
-            </div>
-          </div>
-          {/* Contadores en desktop */}
-          <div className="hidden gap-6 sm:flex">
-            <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
-              <div className="text-lg font-semibold text-blue-600 lg:text-xl">
-                {entregasPendientes.length}
-              </div>
-              <div className="text-sm text-gray-600 lg:text-base">
-                Pendientes
-              </div>
-            </div>
-            <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-              <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                {entregasRealizadas.length}
-              </div>
-              <div className="text-sm text-gray-600 lg:text-base">
-                Entregadas
+                <div className="text-sm text-gray-600 lg:text-base">
+                  Entregadas
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar responsivo */}
-        <div
-          className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
-        >
-          <EntregasSidebar
-            entregasPendientes={entregasPendientes}
-            entregasRealizadas={entregasRealizadas}
-            selectedEntrega={selectedEntrega}
-            onSelectEntrega={handleSelectEntrega}
-            loadingEntregas={loading}
-            errorEntregas={error}
-            onRetry={handleRetry}
-          />
-        </div>
-
-        {/* Overlay para móvil */}
-        {sidebarOpen && (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar responsivo */}
           <div
-            className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Contenido principal */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
-          {selectedEntrega ? (
-            <EntregaDetails
-              entrega={selectedEntrega}
-              onFinalizarEntrega={() => setShowConfirmModal(true)}
+            className={` ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
+          >
+            <EntregasSidebar
+              entregasPendientes={entregasPendientes}
+              entregasRealizadas={entregasRealizadas}
+              selectedEntrega={selectedEntrega}
+              onSelectEntrega={handleSelectEntrega}
+              loadingEntregas={loading}
+              errorEntregas={error}
+              onRetry={handleRetry}
             />
-          ) : (
-            <EmptyState
-              message="Selecciona una entrega del panel lateral para ver los detalles"
-              totalPendientes={entregasPendientes.length}
-              totalRealizadas={entregasRealizadas.length}
+          </div>
+
+          {/* Overlay para móvil */}
+          {sidebarOpen && (
+            <div
+              className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
+              onClick={() => setSidebarOpen(false)}
             />
           )}
-        </main>
-      </div>
 
-      <FinalizarEntregaModal
-        isOpen={showConfirmModal}
-        observaciones={observacionesFinal}
-        onObservacionesChange={setObservacionesFinal}
-        onConfirm={handleFinalizarEntrega}
-        onCancelDelivery={handleCancelarEntrega}
-        onCancel={() => {
-          if (!finalizandoEntrega) {
-            setShowConfirmModal(false)
-            setObservacionesFinal('')
-          }
-        }}
-        entregaSeleccionada={selectedEntrega}
-        loading={finalizandoEntrega}
-      />
-    </div>
+          {/* Contenido principal */}
+          <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
+            {selectedEntrega ? (
+              <EntregaDetails
+                entrega={selectedEntrega}
+                onFinalizarEntrega={() => setShowConfirmModal(true)}
+              />
+            ) : (
+              <EmptyState
+                message="Selecciona una entrega del panel lateral para ver los detalles"
+                totalPendientes={entregasPendientes.length}
+                totalRealizadas={entregasRealizadas.length}
+              />
+            )}
+          </main>
+        </div>
+
+        <FinalizarEntregaModal
+          isOpen={showConfirmModal}
+          observaciones={observacionesFinal}
+          onObservacionesChange={setObservacionesFinal}
+          onConfirm={handleFinalizarEntrega}
+          onCancelDelivery={handleCancelarEntrega}
+          onCancel={() => {
+            if (!finalizandoEntrega) {
+              setShowConfirmModal(false)
+              setObservacionesFinal('')
+            }
+          }}
+          entregaSeleccionada={selectedEntrega}
+          loading={finalizandoEntrega}
+        />
+      </div>
+    </>
   )
 }

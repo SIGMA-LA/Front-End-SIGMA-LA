@@ -15,9 +15,13 @@ import { useAuth } from '@/context/AuthContext'
 
 interface ClientesListProps {
   onCreateClick: () => void
+  onEditClick: (cliente: Cliente) => void
 }
 
-export default function ClientesList({ onCreateClick }: ClientesListProps) {
+export default function ClientesList({
+  onCreateClick,
+  onEditClick,
+}: ClientesListProps) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -205,6 +209,12 @@ export default function ClientesList({ onCreateClick }: ClientesListProps) {
                   className="mt-4 font-medium text-blue-600 hover:text-blue-800"
                 >
                   Ver detalles
+                </button>
+                <button
+                  onClick={() => onEditClick(cliente)}
+                  className="ml-2 font-medium text-green-600 hover:text-green-800"
+                >
+                  Editar
                 </button>
               </div>
             ))}

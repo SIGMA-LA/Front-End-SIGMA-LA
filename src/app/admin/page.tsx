@@ -6,6 +6,8 @@ import DashboardView from '@/components/admin/DashboardView'
 import EmpleadosView from '@/components/admin/EmpleadosView'
 import ReportesView from '@/components/admin/ReportesView'
 import ObrasView from '@/components/admin/ObrasView'
+import Navbar from '@/components/layout/Navbar'
+import { useAuth } from '@/context/AuthContext'
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -15,6 +17,7 @@ const menuItems = [
 ]
 
 export default function Page() {
+  const { usuario } = useAuth()
   const [currentSection, setCurrentSection] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -61,57 +64,60 @@ export default function Page() {
   )
 
   return (
-    <div className="flex min-h-[calc(100vh-68px)]">
-      <aside className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white md:flex md:flex-col">
-        <SidebarContent />
-      </aside>
+    <>
+      <Navbar usuario={usuario} />
+      <div className="flex min-h-[calc(100vh-68px)]">
+        <aside className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white md:flex md:flex-col">
+          <SidebarContent />
+        </aside>
 
-      <div
-        className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
-      >
         <div
-          className="absolute inset-0 bg-black opacity-50"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-        <div className="relative flex h-full w-64 max-w-xs flex-1 flex-col bg-white">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full text-white focus:outline-none"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto pt-5 pb-4">
-            <div className="mb-6 flex flex-shrink-0 items-center px-4">
-              <h1 className="text-xl font-bold text-blue-600">Admin Panel</h1>
+          className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+        >
+          <div
+            className="absolute inset-0 bg-black opacity-50"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+          <div className="relative flex h-full w-64 max-w-xs flex-1 flex-col bg-white">
+            <div className="absolute top-0 right-0 -mr-12 pt-2">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="ml-1 flex h-10 w-10 items-center justify-center rounded-full text-white focus:outline-none"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
-            <SidebarContent />
+            <div className="flex-1 overflow-y-auto pt-5 pb-4">
+              <div className="mb-6 flex flex-shrink-0 items-center px-4">
+                <h1 className="text-xl font-bold text-blue-600">Admin Panel</h1>
+              </div>
+              <SidebarContent />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm md:hidden">
-          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-1 text-gray-600 hover:text-gray-900 focus:outline-none"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {menuItems.find((item) => currentSection === item.id)?.label ||
-                'Dashboard'}
-            </h1>
-            <div className="w-6"></div>
-          </div>
-        </header>
+        <div className="flex flex-1 flex-col">
+          <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm md:hidden">
+            <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-1 text-gray-600 hover:text-gray-900 focus:outline-none"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {menuItems.find((item) => currentSection === item.id)?.label ||
+                  'Dashboard'}
+              </h1>
+              <div className="w-6"></div>
+            </div>
+          </header>
 
-        <main className="flex-1 bg-gray-50 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">{renderContent()}</div>
-        </main>
+          <main className="flex-1 bg-gray-50 p-4 sm:p-6 lg:p-8">
+            <div className="mx-auto max-w-7xl">{renderContent()}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
