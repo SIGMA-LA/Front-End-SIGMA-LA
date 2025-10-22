@@ -29,3 +29,28 @@ export async function obtenerVehiculosDisponibles(): Promise<Vehiculo[]> {
     throw error
   }
 }
+
+export async function obtenerVehiculo(
+  patente: string
+): Promise<Vehiculo | null> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetch(`${baseUrl}/${patente}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const vehiculo: Vehiculo = await response.json()
+    return vehiculo
+  } catch (error) {
+    console.error('Error al obtener vehículo:', error)
+    throw error
+  }
+}

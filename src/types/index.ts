@@ -311,7 +311,6 @@ export interface ObrasListProps {
 }
 
 export interface PedidosListProps {
-  onCreateClick: () => void
   onSchedulePedido?: (obra: Obra) => void
 }
 
