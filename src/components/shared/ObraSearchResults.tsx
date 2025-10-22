@@ -2,13 +2,14 @@
 
 import { Obra } from '@/types'
 import { useEffect, useState } from 'react'
-
 export default function ObraSearchResults({
   filtro,
   onSelectObra,
+  searchAction,
 }: {
   filtro: string
   onSelectObra: (obra: Obra) => void
+  searchAction?: (filtro: string) => Promise<Obra[]>
 }) {
   const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(false)
@@ -20,18 +21,31 @@ export default function ObraSearchResults({
       return
     }
     setLoading(true)
-    fetch(
-      `http://localhost:4000/api/obras/buscar?${encodeURIComponent(filtro)}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
+
+    const run = async () => {
+      try {
+        const data = searchAction
+          ? await searchAction(filtro)
+          : await fetch(
+              `http://localhost:4000/api/obras/buscar?${encodeURIComponent(
+                filtro
+              )}`
+            ).then((r) => r.json())
         if (!ignore) setObras(data)
-        setLoading(false)
-      })
+      } catch (err) {
+        console.error('Error buscando obras (client):', err)
+        if (!ignore) setObras([])
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    run()
+
     return () => {
       ignore = true
     }
-  }, [filtro])
+  }, [filtro, searchAction])
 
   if (loading) return <div className="text-sm text-gray-500">Buscando...</div>
 

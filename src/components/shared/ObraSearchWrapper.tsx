@@ -14,8 +14,10 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function ObraSearchWrapper({
   onSelectObra,
+  searchAction,
 }: {
   onSelectObra: (obra: any) => void
+  searchAction?: (filtro: string) => Promise<any[]>
 }) {
   const [filtro, setFiltro] = useState('')
   const debouncedFiltro = useDebounce(filtro, 400) // 400ms debounce
@@ -34,6 +36,7 @@ export default function ObraSearchWrapper({
         <ObraSearchResults
           filtro={debouncedFiltro}
           onSelectObra={onSelectObra}
+          searchAction={searchAction}
         />
       )}
     </div>
