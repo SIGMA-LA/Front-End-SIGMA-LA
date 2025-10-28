@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Building2, Plus, Filter } from 'lucide-react'
 import type { Obra, Provincia, Localidad } from '@/types'
 import PagoModal from '../ventas/pagos/PagoModal'
 import ObraSearchWrapper from './ObraSearchWrapper'
 import ObraCard from './ObraCard'
+import { useRouter } from 'next/navigation'
 
 interface ObrasListPropsClient {
   obras: Obra[]
@@ -16,14 +17,17 @@ interface ObrasListPropsClient {
   onScheduleVisit?: (obra: Obra) => void
   onScheduleEntrega?: (obra: Obra) => void
   onEditClick?: (obra: Obra) => void
-  onDeleteClick?: (id: number) => Promise<void> | void
-  onFilterChange?: (filters: {
-    estado?: string
-    cod_localidad?: number | undefined
-    cod_provincia?: number | undefined
-  }) => void
+  onDeleteClick?: (
+    id: number
+  ) => Promise<{ success: boolean; error?: string }> | void
   onRefresh?: () => void
   buscarObrasAction?: (filtro: string) => Promise<Obra[]>
+  obtenerObraAction?: (id: number) => Promise<Obra>
+  filtrarObrasAction?: (filters: {
+    estado?: string
+    cod_localidad?: number
+    cod_provincia?: number
+  }) => Promise<Obra[]>
 }
 
 export default function ObrasList({
@@ -32,14 +36,15 @@ export default function ObrasList({
   onScheduleEntrega,
   onEditClick,
   onDeleteClick,
-  onFilterChange,
   obras: initialObras,
   provincias: initialProvincias,
   localidades: initialLocalidades = [],
   usuarioRol,
   buscarObrasAction,
+  obtenerObraAction,
+  filtrarObrasAction,
 }: ObrasListPropsClient) {
-  // Local state mirrors server props; parent updates props when server refetch happens.
+  const router = useRouter()
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [obraPagos, setObraPagos] = useState<Obra | null>(null)
@@ -55,46 +60,59 @@ export default function ObrasList({
   const [filtroLocalidad, setFiltroLocalidad] = useState<string>('')
   const [filtroEstado, setFiltroEstado] = useState<string>('')
 
-  // Keep obras in sync when parent re-renders with new props
   useEffect(() => {
     setObras(initialObras ?? [])
   }, [initialObras])
 
-  // Keep localidades in sync if parent supplies updated localidades
   useEffect(() => {
     setLocalidades(initialLocalidades ?? [])
   }, [initialLocalidades])
 
-  // When filters change, delegate to parent via onFilterChange
   useEffect(() => {
-    // Debounce / guard simple: only call when parent handler exists
-    if (typeof onFilterChange !== 'function') return
+    // aplicar filtros: si hay una server action disponible, llamarla; si no, actualizar URL
+    const applyFilters = async () => {
+      setCargando(true)
+      setError(null)
 
-    setCargando(true)
-    setError(null)
-
-    try {
-      onFilterChange({
+      const payload = {
         estado: filtroEstado || undefined,
         cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
         cod_provincia: filtroProvincia ? Number(filtroProvincia) : undefined,
-      })
-    } catch (err) {
-      // parent should handle errors but capture locally as fallback
-      setError('No se pudieron aplicar los filtros.')
-    } finally {
-      // Parent will update data; keep local spinner briefly
-      setTimeout(() => setCargando(false), 300)
+      }
+
+      try {
+        if (typeof filtrarObrasAction === 'function') {
+          const resultados = await filtrarObrasAction(payload)
+          setObras(Array.isArray(resultados) ? resultados : [])
+        } else {
+          const params = new URLSearchParams()
+          if (payload.estado) params.set('estado', payload.estado)
+          if (payload.cod_localidad)
+            params.set('cod_localidad', String(payload.cod_localidad))
+          if (payload.cod_provincia)
+            params.set('cod_provincia', String(payload.cod_provincia))
+
+          const path = params.toString()
+            ? `/coordinacion/obras?${params.toString()}`
+            : '/coordinacion/obras'
+          router.replace(path)
+        }
+      } catch (err) {
+        console.error('applyFilters error:', err)
+        setError('No se pudieron aplicar los filtros.')
+      } finally {
+        setTimeout(() => setCargando(false), 100)
+      }
     }
+
+    applyFilters()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtroProvincia, filtroLocalidad, filtroEstado])
 
   const handleLocalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setFiltroLocalidad(value)
-    if (value === '') {
-      setFiltroProvincia('')
-    }
+    // no resetear provincia aquí — cambiar provincia debe limpiarla
   }
 
   const handlePagosClick = (obra: Obra) => {
@@ -107,19 +125,32 @@ export default function ObrasList({
     setObraPagos(null)
   }
 
-  const refrescarObrasLocal = () => {
-    // Prefer parent-driven refresh; if parent exposes onFilterChange or onRefresh call it.
-    if (typeof onFilterChange === 'function') {
-      onFilterChange({
-        estado: filtroEstado || undefined,
-        cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
-        cod_provincia: filtroProvincia ? Number(filtroProvincia) : undefined,
-      })
+  // centralizar selección desde el buscador
+  const handleSelectObraFromSearch = async (obra: Obra) => {
+    console.log('[ObrasList] Obra seleccionada desde búsqueda:', obra)
+    if (!obra?.cod_obra) {
+      console.error('[ObrasList] Obra sin ID válido:', obra)
+      setObras([obra])
       return
     }
-    if (typeof (window as any).location !== 'undefined') {
-      // fallback: reload page (not ideal, parent should provide handler)
-      window.location.reload()
+
+    if (typeof obtenerObraAction === 'function') {
+      try {
+        setCargando(true)
+        console.log('[ObrasList] Obteniendo detalles de obra:', obra.cod_obra)
+
+        const detalle = await obtenerObraAction(obra.cod_obra)
+        console.log('[ObrasList] Detalles obtenidos:', detalle)
+
+        setObras(detalle ? [detalle] : [obra])
+      } catch (err) {
+        console.error('[ObrasList] Error obteniendo detalles:', err)
+        setObras([obra])
+      } finally {
+        setCargando(false)
+      }
+    } else {
+      setObras([obra])
     }
   }
 
@@ -132,11 +163,17 @@ export default function ObrasList({
     }
     try {
       setCargando(true)
-      await onDeleteClick(id)
-      // parent is expected to re-render with updated obras; as fallback, trigger local refresh
-      refrescarObrasLocal()
+      const res = await onDeleteClick(id)
+      // refresco cliente para UX inmediato; la server action debería revalidar la ruta también
+      router.refresh()
+      if ((res as any)?.success === false) {
+        // opcional: mostrar error si la action lo indica
+        const errMsg = (res as any)?.error ?? 'Error eliminando obra'
+        alert(errMsg)
+      }
     } catch (err) {
       alert('Ocurrió un error al intentar cancelar la obra.')
+      console.error(err)
     } finally {
       setCargando(false)
     }
@@ -173,9 +210,7 @@ export default function ObrasList({
         {/* Buscador global de obras */}
         <div className="mb-8">
           <ObraSearchWrapper
-            onSelectObra={(obra) => {
-              setObras(obra ? [obra] : [])
-            }}
+            onSelectObra={handleSelectObraFromSearch}
             searchAction={buscarObrasAction}
           />
         </div>
@@ -195,7 +230,6 @@ export default function ObrasList({
                 value={filtroProvincia}
                 onChange={(e) => {
                   setFiltroProvincia(e.target.value)
-                  // clear localidad when province changes
                   setFiltroLocalidad('')
                 }}
                 className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -277,10 +311,20 @@ export default function ObrasList({
                 onPagosClick={handlePagosClick}
                 onEditClick={onEditClick}
                 onDeleteClick={eliminarObraLocal}
-                onNotaFabricaChange={() => {
-                  // signal parent to refresh if needed
-                  if (typeof onFilterChange === 'function') {
-                    onFilterChange({}) // parent decides what to do
+                onNotaFabricaChange={async () => {
+                  if (typeof filtrarObrasAction === 'function') {
+                    const res = await filtrarObrasAction({
+                      estado: filtroEstado || undefined,
+                      cod_localidad: filtroLocalidad
+                        ? Number(filtroLocalidad)
+                        : undefined,
+                      cod_provincia: filtroProvincia
+                        ? Number(filtroProvincia)
+                        : undefined,
+                    })
+                    setObras(Array.isArray(res) ? res : [])
+                  } else {
+                    router.refresh()
                   }
                 }}
               />
@@ -304,11 +348,10 @@ export default function ObrasList({
         <PagoModal
           open={showPagoModal}
           onClose={handleClosePagoModal}
-          onPagoCreado={() => {
+          onPagoCreado={async () => {
             handleClosePagoModal()
-            // parent should refresh data; for compatibility, call onFilterChange if provided
-            if (typeof onFilterChange === 'function') {
-              onFilterChange({
+            if (typeof filtrarObrasAction === 'function') {
+              const res = await filtrarObrasAction({
                 estado: filtroEstado || undefined,
                 cod_localidad: filtroLocalidad
                   ? Number(filtroLocalidad)
@@ -317,6 +360,9 @@ export default function ObrasList({
                   ? Number(filtroProvincia)
                   : undefined,
               })
+              setObras(Array.isArray(res) ? res : [])
+            } else {
+              router.refresh()
             }
           }}
           obraPreseleccionada={(() => {
