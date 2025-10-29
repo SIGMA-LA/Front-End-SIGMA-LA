@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import ObraSearchResults from './ObraSearchResults'
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -13,32 +12,30 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function ObraSearchWrapper({
-  onSelectObra,
-  searchAction,
+  onSearch,
+  placeholder = 'Buscar por nombre, cliente o dirección...',
+  initialValue = '',
 }: {
-  onSelectObra: (obra: any) => void
-  searchAction?: (filtro: string) => Promise<any[]>
+  onSearch: (filtro: string) => void
+  placeholder?: string
+  initialValue?: string
 }) {
-  const [filtro, setFiltro] = useState('')
-  const debouncedFiltro = useDebounce(filtro, 400) // 400ms debounce
+  const [filtro, setFiltro] = useState(initialValue)
+  const debouncedFiltro = useDebounce(filtro, 400)
+
+  useEffect(() => {
+    onSearch(String(debouncedFiltro ?? '').trim())
+  }, [debouncedFiltro])
 
   return (
     <div>
       <input
         type="text"
-        placeholder="Buscar por nombre, cliente o dirección..."
+        placeholder={placeholder}
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
         className="mb-3 w-full rounded-md border border-gray-300 px-3 py-2"
       />
-      {/* Solo buscar si hay al menos 2 caracteres */}
-      {debouncedFiltro.length >= 2 && (
-        <ObraSearchResults
-          filtro={debouncedFiltro}
-          onSelectObra={onSelectObra}
-          searchAction={searchAction}
-        />
-      )}
     </div>
   )
 }

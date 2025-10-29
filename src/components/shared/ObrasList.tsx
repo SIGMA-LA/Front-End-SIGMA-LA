@@ -20,13 +20,13 @@ interface ObrasListPropsClient {
     id: number
   ) => Promise<{ success: boolean; error?: string }> | void
   onRefresh?: () => void
-  buscarObrasAction?: (filtro: string) => Promise<Obra[]>
-  obtenerObraAction?: (id: number) => Promise<Obra>
+  buscarObrasAction: (filtro: string) => Promise<Obra[]>
+  obtenerObraAction: (id: number) => Promise<Obra>
   filtrarObrasAction: (filters: {
     estado?: string
     cod_localidad?: number
   }) => Promise<Obra[]>
-  buscarLocalidades?: (provinciaId: number) => Promise<Localidad[]>
+  buscarLocalidades: (provinciaId: number) => Promise<Localidad[]>
 }
 
 export default function ObrasList({
@@ -39,7 +39,6 @@ export default function ObrasList({
   provincias: initialProvincias,
   usuarioRol,
   buscarObrasAction,
-  obtenerObraAction,
   filtrarObrasAction,
   buscarLocalidades,
 }: ObrasListPropsClient) {
@@ -109,32 +108,24 @@ export default function ObrasList({
     setObraPagos(null)
   }
 
-  // centralizar selección desde el buscador
-  const handleSelectObraFromSearch = async (obra: Obra) => {
-    console.log('[ObrasList] Obra seleccionada desde búsqueda:', obra)
-    if (!obra?.cod_obra) {
-      console.error('[ObrasList] Obra sin ID válido:', obra)
-      setObras([obra])
-      return
-    }
+  const handleSearch = async (q: string) => {
+    try {
+      setCargando(true)
+      setError(null)
 
-    if (typeof obtenerObraAction === 'function') {
-      try {
-        setCargando(true)
-        console.log('[ObrasList] Obteniendo detalles de obra:', obra.cod_obra)
-
-        const detalle = await obtenerObraAction(obra.cod_obra)
-        console.log('[ObrasList] Detalles obtenidos:', detalle)
-
-        setObras(detalle ? [detalle] : [obra])
-      } catch (err) {
-        console.error('[ObrasList] Error obteniendo detalles:', err)
-        setObras([obra])
-      } finally {
-        setCargando(false)
+      if (!q || q.trim() === '') {
+        setObras(initialObras ?? [])
+        return
       }
-    } else {
-      setObras([obra])
+      const resultados = await buscarObrasAction(q)
+      setObras(resultados)
+      return
+    } catch (err) {
+      console.error('handleSearch error:', err)
+      setError('No se pudo buscar. Verifica backend.')
+      setObras([])
+    } finally {
+      setCargando(false)
     }
   }
 
@@ -191,10 +182,7 @@ export default function ObrasList({
 
         {/* Buscador global de obras */}
         <div className="mb-8">
-          <ObraSearchWrapper
-            onSelectObra={handleSelectObraFromSearch}
-            searchAction={buscarObrasAction}
-          />
+          <ObraSearchWrapper onSearch={handleSearch} />
         </div>
 
         {/* Filtros por provincia, localidad y estado */}
