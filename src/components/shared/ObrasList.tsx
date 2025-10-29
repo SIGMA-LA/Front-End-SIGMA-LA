@@ -1,89 +1,101 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Building2, Plus, Filter } from 'lucide-react'
-import type { ObrasListProps, Obra, Provincia, Localidad } from '@/types'
-import { useAuth } from '@/context/AuthContext'
-import EstadoObraBadge from './EstadoObraBadge'
+import type { Obra, Provincia, Localidad } from '@/types'
 import PagoModal from '../ventas/pagos/PagoModal'
-import { deleteObra, filtrarObras } from '@/actions/obras'
 import ObraSearchWrapper from './ObraSearchWrapper'
-import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
 import ObraCard from './ObraCard'
+import { useRouter } from 'next/navigation'
+
+interface ObrasListPropsClient {
+  obras: Obra[]
+  provincias: Provincia[]
+  usuarioRol?: string
+  onCreateClick?: () => void
+  onScheduleVisit?: (obra: Obra) => void
+  onScheduleEntrega?: (obra: Obra) => void
+  onEditClick?: (obra: Obra) => void
+  onDeleteClick?: (
+    id: number
+  ) => Promise<{ success: boolean; error?: string }> | void
+  onRefresh?: () => void
+  buscarObrasAction: (filtro: string) => Promise<Obra[]>
+  obtenerObraAction: (id: number) => Promise<Obra>
+  filtrarObrasAction: (filters: {
+    estado?: string
+    cod_localidad?: number
+  }) => Promise<Obra[]>
+  buscarLocalidades: (provinciaId: number) => Promise<Localidad[]>
+}
 
 export default function ObrasList({
   onCreateClick,
   onScheduleVisit,
   onScheduleEntrega,
   onEditClick,
-}: ObrasListProps) {
-  const { usuario } = useAuth()
-  const [cargando, setCargando] = useState(true)
+  onDeleteClick,
+  obras: initialObras,
+  provincias: initialProvincias,
+  usuarioRol,
+  buscarObrasAction,
+  filtrarObrasAction,
+  buscarLocalidades,
+}: ObrasListPropsClient) {
+  const router = useRouter()
+  const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [obraPagos, setObraPagos] = useState<Obra | null>(null)
   const [showPagoModal, setShowPagoModal] = useState(false)
-  const [obras, setObras] = useState<Obra[]>([])
+  const [obras, setObras] = useState<Obra[]>(initialObras ?? [])
 
-  // Filtros
-  const [provincias, setProvincias] = useState<Provincia[]>([])
+  // Filtros locales
+  const [provincias] = useState<Provincia[]>(initialProvincias ?? [])
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [filtroProvincia, setFiltroProvincia] = useState<string>('')
   const [filtroLocalidad, setFiltroLocalidad] = useState<string>('')
   const [filtroEstado, setFiltroEstado] = useState<string>('')
 
-  // Cargar provincias al inicio
   useEffect(() => {
-    obtenerProvincias()
-      .then((provs) => setProvincias(provs))
-      .catch(() => setError('No se pudieron cargar las provincias.'))
-  }, [])
+    setObras(initialObras ?? [])
+  }, [initialObras])
 
-  // Cargar localidades cuando cambia la provincia
   useEffect(() => {
-    if (filtroProvincia) {
-      localidadesPorProvincia(Number(filtroProvincia))
-        .then((locs) => setLocalidades(locs))
-        .catch(() => setError('No se pudieron cargar las localidades.'))
-      setFiltroLocalidad('')
-    } else {
-      setLocalidades([])
-      setFiltroLocalidad('')
-    }
-  }, [filtroProvincia])
-
-  // Refrescar obras cuando cambia localidad o estado
-  useEffect(() => {
-    const fetchObrasFiltradas = async () => {
-      setCargando(true)
-      setError(null)
-      try {
-        const obrasFiltradas = await filtrarObras({
-          estado: filtroEstado || undefined,
-          cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
-        })
-        setObras(obrasFiltradas)
-      } catch (err) {
-        setError('No se pudieron cargar las obras.')
-        setObras([])
-      } finally {
-        setCargando(false)
+    const fetchLocalidades = async () => {
+      if (filtroProvincia && buscarLocalidades) {
+        const localidades = await buscarLocalidades(Number(filtroProvincia))
+        setLocalidades(localidades)
       }
     }
-    if (
-      filtroLocalidad ||
-      filtroEstado ||
-      (!filtroProvincia && !filtroLocalidad && !filtroEstado)
-    ) {
-      fetchObrasFiltradas()
+    fetchLocalidades()
+  }, [filtroProvincia, buscarLocalidades])
+
+  useEffect(() => {
+    const applyFilters = async () => {
+      setCargando(true)
+      setError(null)
+      const payload = {
+        estado: filtroEstado || undefined,
+        cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
+      }
+      try {
+        const obrasFiltradas = await filtrarObrasAction(payload)
+        if (obrasFiltradas) {
+          setObras(obrasFiltradas)
+        }
+      } catch (err) {
+        console.error('applyFilters error:', err)
+        setError('No se pudieron aplicar los filtros.')
+      } finally {
+        setTimeout(() => setCargando(false), 100)
+      }
     }
-  }, [filtroLocalidad, filtroEstado, filtroProvincia])
+    applyFilters()
+  }, [filtroLocalidad, filtroEstado])
 
   const handleLocalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setFiltroLocalidad(value)
-    if (value === '') {
-      setFiltroProvincia('')
-    }
   }
 
   const handlePagosClick = (obra: Obra) => {
@@ -96,27 +108,47 @@ export default function ObrasList({
     setObraPagos(null)
   }
 
-  const refrescarObras = () => {
-    setCargando(true)
-    filtrarObras({
-      estado: filtroEstado || undefined,
-      cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
-    })
-      .then(setObras)
-      .catch(() => setError('No se pudieron cargar las obras.'))
-      .finally(() => setCargando(false))
+  const handleSearch = async (q: string) => {
+    try {
+      setCargando(true)
+      setError(null)
+
+      if (!q || q.trim() === '') {
+        setObras(initialObras ?? [])
+        return
+      }
+      const resultados = await buscarObrasAction(q)
+      setObras(resultados)
+      return
+    } catch (err) {
+      console.error('handleSearch error:', err)
+      setError('No se pudo buscar. Verifica backend.')
+      setObras([])
+    } finally {
+      setCargando(false)
+    }
   }
 
-  const eliminarObra = async (id: number) => {
+  const eliminarObraLocal = async (id: number) => {
+    if (!onDeleteClick) {
+      alert(
+        'Operación no disponible: no se proporcionó handler de eliminación.'
+      )
+      return
+    }
     try {
-      const result = await deleteObra(id)
-      if (result.success) {
-        refrescarObras()
-      } else {
-        throw new Error(result.error)
+      setCargando(true)
+      const res = await onDeleteClick(id)
+      router.refresh()
+      if ((res as any)?.success === false) {
+        const errMsg = (res as any)?.error ?? 'Error eliminando obra'
+        alert(errMsg)
       }
     } catch (err) {
       alert('Ocurrió un error al intentar cancelar la obra.')
+      console.error(err)
+    } finally {
+      setCargando(false)
     }
   }
 
@@ -137,7 +169,7 @@ export default function ObrasList({
               </p>
             </div>
           </div>
-          {usuario?.rol_actual === 'VENTAS' && (
+          {usuarioRol === 'VENTAS' && (
             <button
               onClick={onCreateClick}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-blue-700 sm:w-auto"
@@ -150,11 +182,7 @@ export default function ObrasList({
 
         {/* Buscador global de obras */}
         <div className="mb-8">
-          <ObraSearchWrapper
-            onSelectObra={(obra) => {
-              setObras(obra ? [obra] : [])
-            }}
-          />
+          <ObraSearchWrapper onSearch={handleSearch} />
         </div>
 
         {/* Filtros por provincia, localidad y estado */}
@@ -170,7 +198,10 @@ export default function ObrasList({
               <select
                 id="filtro-provincia"
                 value={filtroProvincia}
-                onChange={(e) => setFiltroProvincia(e.target.value)}
+                onChange={(e) => {
+                  setFiltroProvincia(e.target.value)
+                  setFiltroLocalidad('')
+                }}
                 className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">Todas las provincias</option>
@@ -244,13 +275,25 @@ export default function ObrasList({
                 key={obra.cod_obra}
                 obra={obra}
                 provincias={provincias}
-                usuarioRol={usuario?.rol_actual}
+                usuarioRol={usuarioRol}
                 onScheduleVisit={onScheduleVisit}
                 onScheduleEntrega={onScheduleEntrega}
                 onPagosClick={handlePagosClick}
                 onEditClick={onEditClick}
-                onDeleteClick={eliminarObra}
-                onNotaFabricaChange={refrescarObras}
+                onDeleteClick={eliminarObraLocal}
+                onNotaFabricaChange={async () => {
+                  if (typeof filtrarObrasAction === 'function') {
+                    const res = await filtrarObrasAction({
+                      estado: filtroEstado || undefined,
+                      cod_localidad: filtroLocalidad
+                        ? Number(filtroLocalidad)
+                        : undefined,
+                    })
+                    setObras(Array.isArray(res) ? res : [])
+                  } else {
+                    router.refresh()
+                  }
+                }}
               />
             ))
           ) : (
@@ -272,9 +315,19 @@ export default function ObrasList({
         <PagoModal
           open={showPagoModal}
           onClose={handleClosePagoModal}
-          onPagoCreado={() => {
+          onPagoCreado={async () => {
             handleClosePagoModal()
-            refrescarObras()
+            if (typeof filtrarObrasAction === 'function') {
+              const res = await filtrarObrasAction({
+                estado: filtroEstado || undefined,
+                cod_localidad: filtroLocalidad
+                  ? Number(filtroLocalidad)
+                  : undefined,
+              })
+              setObras(Array.isArray(res) ? res : [])
+            } else {
+              router.refresh()
+            }
           }}
           obraPreseleccionada={(() => {
             const presupuestoAceptado =

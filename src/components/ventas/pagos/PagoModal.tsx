@@ -20,8 +20,6 @@ interface PagoModalProps {
   onClose: () => void
   onPagoCreado: (pago: Pago) => void
   obraPreseleccionada?: ObraConPresupuesto
-  pagoAEditar: Pago | null
-  onPagoEditado: (pagoEditado: Pago) => void
 }
 
 type Step = 'obra' | 'pago'
@@ -31,8 +29,6 @@ export default function PagoModal({
   onClose,
   onPagoCreado,
   obraPreseleccionada,
-  pagoAEditar,
-  onPagoEditado,
 }: PagoModalProps) {
   const [currentStep, setCurrentStep] = useState<Step>('obra')
   const [selectedObra, setSelectedObra] = useState<ObraConPresupuesto | null>(
