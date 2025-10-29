@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation'
 interface ObrasListPropsClient {
   obras: Obra[]
   provincias: Provincia[]
-  localidades?: Localidad[]
   usuarioRol?: string
   onCreateClick?: () => void
   onScheduleVisit?: (obra: Obra) => void
@@ -23,11 +22,11 @@ interface ObrasListPropsClient {
   onRefresh?: () => void
   buscarObrasAction?: (filtro: string) => Promise<Obra[]>
   obtenerObraAction?: (id: number) => Promise<Obra>
-  filtrarObrasAction?: (filters: {
+  filtrarObrasAction: (filters: {
     estado?: string
     cod_localidad?: number
-    cod_provincia?: number
   }) => Promise<Obra[]>
+  buscarLocalidades?: (provinciaId: number) => Promise<Localidad[]>
 }
 
 export default function ObrasList({
@@ -38,11 +37,11 @@ export default function ObrasList({
   onDeleteClick,
   obras: initialObras,
   provincias: initialProvincias,
-  localidades: initialLocalidades = [],
   usuarioRol,
   buscarObrasAction,
   obtenerObraAction,
   filtrarObrasAction,
+  buscarLocalidades,
 }: ObrasListPropsClient) {
   const router = useRouter()
   const [cargando, setCargando] = useState(false)
@@ -53,9 +52,7 @@ export default function ObrasList({
 
   // Filtros locales
   const [provincias] = useState<Provincia[]>(initialProvincias ?? [])
-  const [localidades, setLocalidades] = useState<Localidad[]>(
-    initialLocalidades ?? []
-  )
+  const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [filtroProvincia, setFiltroProvincia] = useState<string>('')
   const [filtroLocalidad, setFiltroLocalidad] = useState<string>('')
   const [filtroEstado, setFiltroEstado] = useState<string>('')
@@ -65,37 +62,27 @@ export default function ObrasList({
   }, [initialObras])
 
   useEffect(() => {
-    setLocalidades(initialLocalidades ?? [])
-  }, [initialLocalidades])
+    const fetchLocalidades = async () => {
+      if (filtroProvincia && buscarLocalidades) {
+        const localidades = await buscarLocalidades(Number(filtroProvincia))
+        setLocalidades(localidades)
+      }
+    }
+    fetchLocalidades()
+  }, [filtroProvincia, buscarLocalidades])
 
   useEffect(() => {
-    // aplicar filtros: si hay una server action disponible, llamarla; si no, actualizar URL
     const applyFilters = async () => {
       setCargando(true)
       setError(null)
-
       const payload = {
         estado: filtroEstado || undefined,
         cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
-        cod_provincia: filtroProvincia ? Number(filtroProvincia) : undefined,
       }
-
       try {
-        if (typeof filtrarObrasAction === 'function') {
-          const resultados = await filtrarObrasAction(payload)
-          setObras(Array.isArray(resultados) ? resultados : [])
-        } else {
-          const params = new URLSearchParams()
-          if (payload.estado) params.set('estado', payload.estado)
-          if (payload.cod_localidad)
-            params.set('cod_localidad', String(payload.cod_localidad))
-          if (payload.cod_provincia)
-            params.set('cod_provincia', String(payload.cod_provincia))
-
-          const path = params.toString()
-            ? `/coordinacion/obras?${params.toString()}`
-            : '/coordinacion/obras'
-          router.replace(path)
+        const obrasFiltradas = await filtrarObrasAction(payload)
+        if (obrasFiltradas) {
+          setObras(obrasFiltradas)
         }
       } catch (err) {
         console.error('applyFilters error:', err)
@@ -104,15 +91,12 @@ export default function ObrasList({
         setTimeout(() => setCargando(false), 100)
       }
     }
-
     applyFilters()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroProvincia, filtroLocalidad, filtroEstado])
+  }, [filtroLocalidad, filtroEstado])
 
   const handleLocalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
     setFiltroLocalidad(value)
-    // no resetear provincia aquí — cambiar provincia debe limpiarla
   }
 
   const handlePagosClick = (obra: Obra) => {
@@ -164,10 +148,8 @@ export default function ObrasList({
     try {
       setCargando(true)
       const res = await onDeleteClick(id)
-      // refresco cliente para UX inmediato; la server action debería revalidar la ruta también
       router.refresh()
       if ((res as any)?.success === false) {
-        // opcional: mostrar error si la action lo indica
         const errMsg = (res as any)?.error ?? 'Error eliminando obra'
         alert(errMsg)
       }
@@ -318,9 +300,6 @@ export default function ObrasList({
                       cod_localidad: filtroLocalidad
                         ? Number(filtroLocalidad)
                         : undefined,
-                      cod_provincia: filtroProvincia
-                        ? Number(filtroProvincia)
-                        : undefined,
                     })
                     setObras(Array.isArray(res) ? res : [])
                   } else {
@@ -355,9 +334,6 @@ export default function ObrasList({
                 estado: filtroEstado || undefined,
                 cod_localidad: filtroLocalidad
                   ? Number(filtroLocalidad)
-                  : undefined,
-                cod_provincia: filtroProvincia
-                  ? Number(filtroProvincia)
                   : undefined,
               })
               setObras(Array.isArray(res) ? res : [])

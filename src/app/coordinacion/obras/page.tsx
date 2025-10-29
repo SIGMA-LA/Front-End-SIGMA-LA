@@ -1,13 +1,12 @@
 import ObrasList from '@/components/shared/ObrasList'
 import {
-  obtenerObrasCompletas,
   deleteObra,
   obtenerObras,
   obtenerObra,
   filtrarObrasAction,
 } from '@/actions/obras'
 import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
-import type { Obra, Localidad, Provincia } from '@/types'
+import type { Obra, Provincia } from '@/types'
 
 export default async function ObrasPage({
   searchParams,
@@ -24,28 +23,23 @@ export default async function ObrasPage({
 
   let obras: Obra[] = []
   let provincias: Provincia[] = []
-  let localidades: Localidad[] = []
 
   try {
-    obras = await obtenerObrasCompletas({
+    obras = await filtrarObrasAction({
       estado: filtros.estado,
       cod_localidad: filtros.cod_localidad,
     })
     provincias = await obtenerProvincias()
-    localidades = filtros.cod_provincia
-      ? await localidadesPorProvincia(filtros.cod_provincia)
-      : []
   } catch (err) {
     console.error('Error cargando datos de obras en page.tsx:', err)
     obras = []
     provincias = []
-    localidades = []
   }
   return (
     <ObrasList
       obras={obras}
       provincias={provincias}
-      localidades={localidades}
+      buscarLocalidades={localidadesPorProvincia}
       buscarObrasAction={obtenerObras}
       onDeleteClick={deleteObra}
       obtenerObraAction={obtenerObra}
