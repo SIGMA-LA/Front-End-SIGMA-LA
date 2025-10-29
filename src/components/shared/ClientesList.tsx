@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Users,
   Plus,
@@ -8,58 +8,30 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react'
-import clienteService from '@/services/cliente.service'
 import type { Cliente } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
 import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface ClientesListProps {
-  onCreateClick: () => void
-  onEditClick: (cliente: Cliente) => void
+  clientes: Cliente[]
 }
 
 export default function ClientesList({
-  onCreateClick,
-  onEditClick,
+  clientes: initialClientes,
 }: ClientesListProps) {
-  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>(initialClientes)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedClienteCuil, setSelectedClienteCuil] = useState<string | null>(
     null
   )
-
+  const router = useRouter()
   const { usuario } = useAuth()
-
-  useEffect(() => {
-    loadClientes()
-  }, [])
-
-  const loadClientes = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await clienteService.getAllClientes()
-      setClientes(data)
-    } catch (err: any) {
-      console.error('Error al cargar clientes:', err)
-      setError(err.response?.data?.message || 'Error al cargar los clientes')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDeleteCliente = (cuil: string) => {
     setClientes((prev) => prev.filter((c) => c.cuil !== cuil))
-  }
-
-  const handleEditCliente = (clienteActualizado: Cliente) => {
-    setClientes((prev) =>
-      prev.map((c) =>
-        c.cuil === clienteActualizado.cuil ? clienteActualizado : c
-      )
-    )
   }
 
   const filteredClientes = clientes.filter((cliente) => {
@@ -98,7 +70,9 @@ export default function ClientesList({
                 </h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
-                  onClick={loadClientes}
+                  onClick={() => {
+                    router.refresh()
+                  }}
                   className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
                 >
                   Reintentar
@@ -130,7 +104,7 @@ export default function ClientesList({
           </div>
           {usuario?.rol_actual === 'VENTAS' && (
             <button
-              onClick={onCreateClick}
+              onClick={() => router.push('/ventas/clientes/nuevo')}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
             >
               <Plus className="h-5 w-5" />
@@ -167,7 +141,7 @@ export default function ClientesList({
             </p>
             {!searchTerm && (
               <button
-                onClick={onCreateClick}
+                onClick={() => router.push('/ventas/clientes/nuevo')}
                 className="mt-4 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
               >
                 Agregar Cliente
@@ -211,7 +185,9 @@ export default function ClientesList({
                   Ver detalles
                 </button>
                 <button
-                  onClick={() => onEditClick(cliente)}
+                  onClick={() =>
+                    router.push(`/ventas/clientes/${cliente.cuil}/editar`)
+                  }
                   className="ml-2 font-medium text-green-600 hover:text-green-800"
                 >
                   Editar
@@ -231,7 +207,6 @@ export default function ClientesList({
         <VerDetallesCliente
           cuil={selectedClienteCuil}
           onClose={() => setSelectedClienteCuil(null)}
-          onEdit={handleEditCliente}
           onDelete={handleDeleteCliente}
         />
       )}

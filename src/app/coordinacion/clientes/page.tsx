@@ -1,7 +1,5 @@
-'use client'
+import ClientesPage from '@/app/ventas/clientes/page'
 
-import ClientesList from '@/components/shared/ClientesList'
-
-export default function ClientesPage() {
-  return <ClientesList onCreateClick={() => {}} />
+export default function CoordinacionClientesPage() {
+  return <ClientesPage />
 }

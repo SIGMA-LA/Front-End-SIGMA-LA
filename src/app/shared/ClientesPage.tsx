@@ -1,6 +1,4 @@
 import ClientesList from '@/components/shared/ClientesList'
-import CrearCliente from '@/components/ventas/CrearCliente'
-import EditarCliente from '@/components/ventas/EditarCliente'
 import {
   obtenerClientes,
   actualizarCliente,
@@ -17,11 +15,5 @@ export default async function ClientesPage({}: { searchParams?: any }) {
   } catch (err) {
     console.error('Error cargando datos de clientes en page.tsx:', err)
   }
-  return (
-    <>
-      <ClientesList clientes={clientes} />
-      <CrearCliente action={crearCliente} />
-      <EditarCliente action={actualizarCliente} />
-    </>
-  )
+  return <ClientesList clientes={clientes} onDeleteClick={eliminarCliente} />
 }
