@@ -11,16 +11,16 @@ import {
   Trash2,
   ArrowLeft,
 } from 'lucide-react'
-import clienteService from '@/services/cliente.service'
 import type { Cliente } from '@/types'
-import EditarCliente from '../ventas/EditarCliente'
 import { useAuth } from '@/context/AuthContext'
+import { obtenerCliente } from '@/actions/clientes'
 
 interface VerDetallesClienteProps {
   cuil: string
   onClose: () => void
   onEdit?: (cliente: Cliente) => void
   onDelete?: (cuil: string) => void
+  deleteAction?: (cuil: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export default function VerDetallesCliente({
@@ -28,6 +28,7 @@ export default function VerDetallesCliente({
   onClose,
   onEdit,
   onDelete,
+  deleteAction,
 }: VerDetallesClienteProps) {
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,7 +48,7 @@ export default function VerDetallesCliente({
     try {
       setLoading(true)
       setError(null)
-      const data = await clienteService.getClienteByCuil(cuil)
+      const data = await obtenerCliente(cuil)
       setCliente(data)
     } catch (err: any) {
       console.error('Error al cargar cliente:', err)
@@ -62,10 +63,10 @@ export default function VerDetallesCliente({
 
   const handleDelete = async () => {
     if (!cliente) return
-
     try {
+      if (!deleteAction) throw new Error('Acción de eliminación no definida')
       setDeleting(true)
-      await clienteService.deleteCliente(cliente.cuil)
+      await deleteAction(cliente.cuil)
       if (onDelete) {
         onDelete(cliente.cuil)
       }
@@ -76,19 +77,6 @@ export default function VerDetallesCliente({
     } finally {
       setDeleting(false)
       setShowDeleteConfirm(false)
-    }
-  }
-
-  const handleEditSuccess = (clienteActualizado: Cliente) => {
-    setCliente(clienteActualizado)
-    if (onEdit) {
-      onEdit(clienteActualizado)
-    }
-  }
-
-  const handleEditClick = () => {
-    if (cliente) {
-      setShowEditModal(true)
     }
   }
 
@@ -165,15 +153,6 @@ export default function VerDetallesCliente({
             </div>
           </div>
           <div className="hidden items-center gap-2 lg:flex">
-            {canEdit && (
-              <button
-                onClick={handleEditClick}
-                className="flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 font-medium text-blue-600 hover:bg-blue-50"
-              >
-                <Edit2 className="h-4 w-4" />
-                Editar
-              </button>
-            )}
             {canDelete && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
@@ -273,15 +252,6 @@ export default function VerDetallesCliente({
 
           {/* Botones móviles */}
           <div className="flex gap-2 lg:hidden">
-            {onEdit && (
-              <button
-                onClick={handleEditClick}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-blue-600 px-4 py-2 font-medium text-blue-600 hover:bg-blue-50"
-              >
-                <Edit2 className="h-4 w-4" />
-                Editar
-              </button>
-            )}
             {onDelete && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
@@ -299,9 +269,6 @@ export default function VerDetallesCliente({
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
               <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
-                </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     ¿Eliminar cliente?
@@ -345,15 +312,6 @@ export default function VerDetallesCliente({
           </div>
         )}
       </div>
-
-      {/* Modal de edición */}
-      {showEditModal && cliente && (
-        <EditarCliente
-          cliente={cliente}
-          onCancel={() => setShowEditModal(false)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
     </div>
   )
 }

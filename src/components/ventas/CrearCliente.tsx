@@ -1,32 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Save, AlertCircle, Loader2, User, Building } from 'lucide-react'
-import type { Cliente } from '@/types'
 import { useRouter } from 'next/navigation'
+import type { Cliente } from '@/types'
 
 export default function CrearCliente({
   action,
   cancelUrl = '/ventas/clientes',
+  cliente,
 }: {
-  action: (formData: FormData) => Promise<void>
+  action: (formData: FormData) => Promise<any>
   cancelUrl?: string
+  cliente?: Cliente
 }) {
   const [tipoCliente, setTipoCliente] = useState<'PERSONA' | 'EMPRESA'>(
-    'PERSONA'
+    cliente?.tipo_cliente ?? 'PERSONA'
   )
   const [formState, setFormState] = useState({
-    cuil: '',
-    telefono: '',
-    mail: '',
-    razon_social: '',
-    nombre: '',
-    apellido: '',
-    sexo: '',
+    cuil: cliente?.cuil ?? '',
+    telefono: cliente?.telefono ?? '',
+    mail: cliente?.mail ?? '',
+    razon_social: cliente?.razon_social ?? '',
+    nombre: cliente?.nombre ?? '',
+    apellido: cliente?.apellido ?? '',
+    sexo: cliente?.sexo ?? '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    if (cliente) {
+      setTipoCliente(cliente.tipo_cliente ?? 'PERSONA')
+      setFormState({
+        cuil: cliente.cuil ?? '',
+        telefono: cliente.telefono ?? '',
+        mail: cliente.mail ?? '',
+        razon_social: cliente.razon_social ?? '',
+        nombre: cliente.nombre ?? '',
+        apellido: cliente.apellido ?? '',
+        sexo: cliente.sexo ?? '',
+      })
+    }
+  }, [cliente])
 
   const handleTipoClienteChange = (tipo: 'PERSONA' | 'EMPRESA') => {
     setTipoCliente(tipo)
@@ -57,13 +74,19 @@ export default function CrearCliente({
     setError(null)
   }
 
+  const isEdit = Boolean(cliente)
+
   return (
     <div className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Crear cliente</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEdit ? 'Editar cliente' : 'Crear cliente'}
+          </h1>
           <p className="text-sm text-gray-600">
-            Completa el formulario para crear un cliente.
+            {isEdit
+              ? 'Modifica los datos y guarda para actualizar el cliente.'
+              : 'Completa el formulario para crear un cliente.'}
           </p>
         </div>
       </header>
@@ -73,7 +96,6 @@ export default function CrearCliente({
         onSubmit={() => {
           setLoading(true)
           setError(null)
-          router.refresh()
         }}
         className="space-y-6"
       >
@@ -84,6 +106,15 @@ export default function CrearCliente({
               <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>
+        )}
+
+        {/* oculto: original_cuil para que el server action identifique el registro si el CUIL se edita */}
+        {isEdit && (
+          <input
+            type="hidden"
+            name="original_cuil"
+            value={cliente!.cuil ?? ''}
+          />
         )}
 
         <div>
@@ -273,7 +304,7 @@ export default function CrearCliente({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Crear cliente
+                {isEdit ? 'Actualizar cliente' : 'Crear cliente'}
               </>
             )}
           </button>

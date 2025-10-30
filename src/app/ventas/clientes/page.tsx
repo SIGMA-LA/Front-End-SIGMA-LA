@@ -1,25 +1,25 @@
 import ClientesList from '@/components/shared/ClientesList'
-
-import { obtenerClientes, eliminarCliente } from '@/actions/clientes'
+import { obtenerClientes } from '@/actions/clientes'
 import type { Cliente } from '@/types'
+import { eliminarCliente } from '@/actions/clientes'
 
-export default async function ClientesPage({
+export default async function VentasClientesPage({
   searchParams,
 }: {
-  searchParams?: { q?: string }
+  searchParams?: { q?: string } | Promise<{ q?: string }>
 }) {
-  const filtro = (await searchParams?.q) ?? ''
-  let clientes: Cliente[] = []
+  const resolved = await (searchParams as
+    | Promise<{ q?: string }>
+    | { q?: string }
+    | undefined)
+  const filtro = resolved?.q ?? ''
 
+  let clientes: Cliente[] = []
   try {
     clientes = await obtenerClientes(filtro)
   } catch (err) {
-    console.error('Error cargando datos de clientes en page.tsx:', err)
+    console.error('Error cargando clientes (ventas):', err)
   }
 
-  return (
-    <>
-      <ClientesList clientes={clientes} />
-    </>
-  )
+  return <ClientesList clientes={clientes} deleteAction={eliminarCliente} />
 }

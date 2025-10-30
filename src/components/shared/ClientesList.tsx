@@ -10,10 +10,12 @@ import useDebounce from '@/hooks/useDebounce'
 
 interface ClientesListProps {
   clientes: Cliente[]
+  deleteAction?: (cuil: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export default function ClientesList({
   clientes: initialClientes,
+  deleteAction,
 }: ClientesListProps) {
   const [clientes, setClientes] = useState<Cliente[]>(initialClientes ?? [])
   const [loading, setLoading] = useState(false)
@@ -170,6 +172,7 @@ export default function ClientesList({
           cuil={selectedClienteCuil}
           onClose={() => setSelectedClienteCuil(null)}
           onDelete={handleDeleteCliente}
+          deleteAction={deleteAction}
         />
       )}
     </div>
