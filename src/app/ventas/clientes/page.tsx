@@ -1,38 +1,25 @@
-'use client'
-
-import { useState } from 'react'
 import ClientesList from '@/components/shared/ClientesList'
+import { obtenerClientes } from '@/actions/clientes'
 import type { Cliente } from '@/types'
-import CrearCliente from '@/components/ventas/CrearCliente'
-import EditarCliente from '@/components/ventas/EditarCliente'
+import { eliminarCliente } from '@/actions/clientes'
 
-export default function ClientesPage() {
-  const [showCrear, setShowCrear] = useState(false)
-  const [clienteSeleccionado, setClienteSeleccionado] =
-    useState<Cliente | null>(null)
+export default async function VentasClientesPage({
+  searchParams,
+}: {
+  searchParams?: { q?: string } | Promise<{ q?: string }>
+}) {
+  const resolved = await (searchParams as
+    | Promise<{ q?: string }>
+    | { q?: string }
+    | undefined)
+  const filtro = resolved?.q ?? ''
 
-  const handleCreate = () => setShowCrear(true)
-  const handleEdit = (cliente: Cliente) => setClienteSeleccionado(cliente)
+  let clientes: Cliente[] = []
+  try {
+    clientes = await obtenerClientes(filtro)
+  } catch (err) {
+    console.error('Error cargando clientes (ventas):', err)
+  }
 
-  return (
-    <>
-      <ClientesList onCreateClick={handleCreate} onEditClick={handleEdit} />
-      {showCrear && (
-        <CrearCliente
-          onCancel={() => setShowCrear(false)}
-          onSubmit={async (clienteData) => {
-            setShowCrear(false)
-            // refrescar lista si lo necesitás
-          }}
-        />
-      )}
-      {clienteSeleccionado && (
-        <EditarCliente
-          cliente={clienteSeleccionado}
-          onCancel={() => setClienteSeleccionado(null)}
-          onSuccess={() => setClienteSeleccionado(null)}
-        />
-      )}
-    </>
-  )
+  return <ClientesList clientes={clientes} deleteAction={eliminarCliente} />
 }

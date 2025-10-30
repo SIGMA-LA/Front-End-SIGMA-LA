@@ -20,13 +20,13 @@ interface ObrasListPropsClient {
     id: number
   ) => Promise<{ success: boolean; error?: string }> | void
   onRefresh?: () => void
-  buscarObrasAction: (filtro: string) => Promise<Obra[]>
   obtenerObraAction: (id: number) => Promise<Obra>
   filtrarObrasAction: (filters: {
     estado?: string
     cod_localidad?: number
   }) => Promise<Obra[]>
   buscarLocalidades: (provinciaId: number) => Promise<Localidad[]>
+  searchQuery?: string
 }
 
 export default function ObrasList({
@@ -38,9 +38,9 @@ export default function ObrasList({
   obras: initialObras,
   provincias: initialProvincias,
   usuarioRol,
-  buscarObrasAction,
   filtrarObrasAction,
   buscarLocalidades,
+  searchQuery,
 }: ObrasListPropsClient) {
   const router = useRouter()
   const [cargando, setCargando] = useState(false)
@@ -108,25 +108,10 @@ export default function ObrasList({
     setObraPagos(null)
   }
 
-  const handleSearch = async (q: string) => {
-    try {
-      setCargando(true)
-      setError(null)
-
-      if (!q || q.trim() === '') {
-        setObras(initialObras ?? [])
-        return
-      }
-      const resultados = await buscarObrasAction(q)
-      setObras(resultados)
-      return
-    } catch (err) {
-      console.error('handleSearch error:', err)
-      setError('No se pudo buscar. Verifica backend.')
-      setObras([])
-    } finally {
-      setCargando(false)
-    }
+  const handleSearch = (q: string) => {
+    const base = '/ventas/obras'
+    const url = q ? `${base}?q=${encodeURIComponent(q)}` : base
+    router.replace(url)
   }
 
   const eliminarObraLocal = async (id: number) => {
@@ -182,7 +167,10 @@ export default function ObrasList({
 
         {/* Buscador global de obras */}
         <div className="mb-8">
-          <ObraSearchWrapper onSearch={handleSearch} />
+          <ObraSearchWrapper
+            onSearch={handleSearch}
+            initialValue={searchQuery}
+          />
         </div>
 
         {/* Filtros por provincia, localidad y estado */}

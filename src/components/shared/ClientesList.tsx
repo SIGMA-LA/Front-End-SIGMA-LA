@@ -1,78 +1,47 @@
+'use client'
 import { useState, useEffect } from 'react'
-import {
-  Users,
-  Plus,
-  Search,
-  Mail,
-  Phone,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react'
-import clienteService from '@/services/cliente.service'
+import { Users, Plus, Search, Loader2, AlertCircle } from 'lucide-react'
 import type { Cliente } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
 import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
+import ClienteCard from './ClienteCard'
+import useDebounce from '@/hooks/useDebounce'
 
 interface ClientesListProps {
-  onCreateClick: () => void
-  onEditClick: (cliente: Cliente) => void
+  clientes: Cliente[]
+  deleteAction?: (cuil: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export default function ClientesList({
-  onCreateClick,
-  onEditClick,
+  clientes: initialClientes,
+  deleteAction,
 }: ClientesListProps) {
-  const [clientes, setClientes] = useState<Cliente[]>([])
-  const [loading, setLoading] = useState(true)
+  const [clientes, setClientes] = useState<Cliente[]>(initialClientes ?? [])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearch = useDebounce(searchTerm, 500)
   const [selectedClienteCuil, setSelectedClienteCuil] = useState<string | null>(
     null
   )
-
+  const router = useRouter()
   const { usuario } = useAuth()
 
   useEffect(() => {
-    loadClientes()
-  }, [])
-
-  const loadClientes = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await clienteService.getAllClientes()
-      setClientes(data)
-    } catch (err: any) {
-      console.error('Error al cargar clientes:', err)
-      setError(err.response?.data?.message || 'Error al cargar los clientes')
-    } finally {
-      setLoading(false)
-    }
-  }
+    setClientes(initialClientes ?? [])
+  }, [initialClientes])
 
   const handleDeleteCliente = (cuil: string) => {
     setClientes((prev) => prev.filter((c) => c.cuil !== cuil))
   }
 
-  const handleEditCliente = (clienteActualizado: Cliente) => {
-    setClientes((prev) =>
-      prev.map((c) =>
-        c.cuil === clienteActualizado.cuil ? clienteActualizado : c
-      )
-    )
-  }
-
-  const filteredClientes = clientes.filter((cliente) => {
-    const search = searchTerm.toLowerCase()
-    return (
-      cliente.razon_social?.toLowerCase().includes(search) ||
-      cliente.nombre?.toLowerCase().includes(search) ||
-      cliente.apellido?.toLowerCase().includes(search) ||
-      cliente.cuil.includes(search) ||
-      cliente.mail.toLowerCase().includes(search) ||
-      cliente.telefono.includes(search)
-    )
-  })
+  useEffect(() => {
+    const q = (debouncedSearch ?? '').trim()
+    const base = '/ventas/clientes'
+    const url = q ? `${base}?q=${encodeURIComponent(q)}` : base
+    router.replace(url)
+  }, [debouncedSearch, router])
 
   if (loading) {
     return (
@@ -98,7 +67,9 @@ export default function ClientesList({
                 </h3>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
                 <button
-                  onClick={loadClientes}
+                  onClick={() => {
+                    router.refresh()
+                  }}
                   className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
                 >
                   Reintentar
@@ -130,7 +101,7 @@ export default function ClientesList({
           </div>
           {usuario?.rol_actual === 'VENTAS' && (
             <button
-              onClick={onCreateClick}
+              onClick={() => router.push('/ventas/clientes/crear')}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
             >
               <Plus className="h-5 w-5" />
@@ -148,11 +119,12 @@ export default function ClientesList({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+              aria-label="Buscar clientes"
             />
           </div>
         </div>
 
-        {filteredClientes.length === 0 ? (
+        {clientes.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
             <Users className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-4 text-lg font-semibold text-gray-900">
@@ -167,7 +139,7 @@ export default function ClientesList({
             </p>
             {!searchTerm && (
               <button
-                onClick={onCreateClick}
+                onClick={() => router.push('/ventas/clientes/crear')}
                 className="mt-4 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
               >
                 Agregar Cliente
@@ -176,53 +148,21 @@ export default function ClientesList({
           </div>
         ) : (
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredClientes.map((cliente) => (
-              <div
+            {clientes.map((cliente) => (
+              <ClienteCard
                 key={cliente.cuil}
-                className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition-shadow hover:shadow-md"
-              >
-                <h3 className="mb-3 text-lg font-semibold text-gray-900">
-                  {cliente.razon_social
-                    ? cliente.razon_social
-                    : `${cliente.nombre} ${cliente.apellido}`}
-                </h3>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span className="font-medium">CUIL:</span>
-                    <span>{cliente.cuil}</span>
-                  </div>
-
-                  <div className="flex items-start gap-2 text-sm text-gray-600">
-                    <Mail className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <span className="break-all">{cliente.mail}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4 flex-shrink-0" />
-                    <span>{cliente.telefono}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setSelectedClienteCuil(cliente.cuil)}
-                  className="mt-4 font-medium text-blue-600 hover:text-blue-800"
-                >
-                  Ver detalles
-                </button>
-                <button
-                  onClick={() => onEditClick(cliente)}
-                  className="ml-2 font-medium text-green-600 hover:text-green-800"
-                >
-                  Editar
-                </button>
-              </div>
+                cliente={cliente}
+                onView={(cuil) => setSelectedClienteCuil(cuil)}
+                onEdit={() =>
+                  router.push(`/ventas/clientes/${cliente.cuil}/editar`)
+                }
+              />
             ))}
           </div>
         )}
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          Mostrando {filteredClientes.length} de {clientes.length} clientes
+          Mostrando {clientes.length} clientes
         </div>
       </div>
 
@@ -231,8 +171,8 @@ export default function ClientesList({
         <VerDetallesCliente
           cuil={selectedClienteCuil}
           onClose={() => setSelectedClienteCuil(null)}
-          onEdit={handleEditCliente}
           onDelete={handleDeleteCliente}
+          deleteAction={deleteAction}
         />
       )}
     </div>
