@@ -15,6 +15,7 @@ export interface CreateEmpleadoDTO {
   apellido: string
   rol_actual: string
   area_trabajo: string
+  contrasenia?: string // OPCIONAL - Solo para empleados con acceso al sistema
 }
 
 export interface UpdateEmpleadoDTO {
@@ -22,6 +23,7 @@ export interface UpdateEmpleadoDTO {
   apellido?: string
   rol_actual?: string
   area_trabajo?: string
+  contrasenia?: string // Opcional en UPDATE
 }
 
 const mapToFrontend = (empleado: BackendEmpleado): Empleado => ({
@@ -84,26 +86,55 @@ class EmpleadoService {
 
   /**
    * Crea un nuevo empleado.
+   * La contraseña es OPCIONAL. Si se proporciona, el empleado podrá acceder al sistema.
+   * Sin contraseña, el empleado solo estará registrado para información/asignación a tareas.
    */
   async createEmpleado(empleadoData: CreateEmpleadoDTO): Promise<Empleado> {
+    // Validación frontend de contraseña (solo si se proporciona)
+    if (empleadoData.contrasenia) {
+      if (empleadoData.contrasenia.length < 6) {
+        throw new Error('La contraseña debe tener al menos 6 caracteres')
+      }
+      if (empleadoData.contrasenia.length > 50) {
+        throw new Error('La contraseña no debe superar los 50 caracteres')
+      }
+    }
+
     const payload = mapToBackend(empleadoData)
-    const { data } = await api.post<BackendEmpleado>(this.baseURL, payload)
-    return mapToFrontend(data)
+    const response = await api.post<any>(this.baseURL, payload)
+    
+    // El backend retorna { success: true, message: '...', data: empleado }
+    const empleado = response.data.data || response.data
+    return mapToFrontend(empleado)
   }
 
   /**
    * Actualiza un empleado existente.
+   * La contraseña es OPCIONAL. Si se proporciona, debe tener entre 6 y 50 caracteres.
    */
   async updateEmpleado(
     cuil: string,
     empleadoData: UpdateEmpleadoDTO
   ): Promise<Empleado> {
+    // Validación frontend de contraseña (si se proporciona)
+    if (empleadoData.contrasenia !== undefined) {
+      if (empleadoData.contrasenia.trim() === '') {
+        throw new Error('La contraseña no puede estar vacía')
+      }
+      if (empleadoData.contrasenia.length < 6) {
+        throw new Error('La contraseña debe tener al menos 6 caracteres')
+      }
+      if (empleadoData.contrasenia.length > 50) {
+        throw new Error('La contraseña no debe superar los 50 caracteres')
+      }
+    }
+
     const payload = mapToBackend(empleadoData)
-    const { data } = await api.put<BackendEmpleado>(
-      `${this.baseURL}/${cuil}`,
-      payload
-    )
-    return mapToFrontend(data)
+    const response = await api.put<any>(`${this.baseURL}/${cuil}`, payload)
+    
+    // El backend retorna { success: true, message: '...', data: empleado }
+    const empleado = response.data.data || response.data
+    return mapToFrontend(empleado)
   }
 
   /**
