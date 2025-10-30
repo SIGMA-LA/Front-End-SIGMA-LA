@@ -10,10 +10,24 @@ const baseUrl = API_BASE.endsWith('/clientes')
   ? API_BASE
   : `${API_BASE}/clientes`
 
-/* Obtener todos los clientes */
-export async function obtenerClientes(): Promise<Cliente[]> {
+/* Obtener todos los clientes o por filtro */
+export async function obtenerClientes(filtro?: string): Promise<Cliente[]> {
   try {
     const token = await getAccessToken()
+    if (filtro && filtro.trim().length > 0) {
+      const res = await fetchWithErrorHandling(
+        `${baseUrl}/buscar?q=${encodeURIComponent(filtro.trim())}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+      const data = await res.json()
+      return Array.isArray(data) ? (data as Cliente[]) : []
+    }
     const res = await fetchWithErrorHandling(`${baseUrl}`, {
       method: 'GET',
       headers: {
@@ -52,28 +66,57 @@ export async function obtenerCliente(cuil: string): Promise<Cliente | null> {
 }
 
 /* Crear cliente */
-export async function crearCliente(
-  formData: FormData
-): Promise<Cliente | null> {
+export async function crearCliente(formData: FormData): Promise<any> {
   try {
     const token = await getAccessToken()
+    const raw = Object.fromEntries(formData.entries()) as Record<
+      string,
+      FormDataEntryValue
+    >
+    const dataCliente: Record<string, string> = {}
+    for (const [key, val] of Object.entries(raw)) {
+      if (typeof val === 'string') {
+        dataCliente[key] = val.trim()
+      }
+    }
+    if (!dataCliente.cuil) {
+      throw new Error('CUIL es requerido')
+    }
+    const cuilDigits = dataCliente.cuil.replace(/\D/g, '')
+    if (cuilDigits.length !== 11) {
+      throw new Error('CUIL inválido (debe tener 11 dígitos)')
+    }
+    dataCliente.cuil = cuilDigits
+
+    const payload = {
+      cuil: dataCliente.cuil,
+      tipo_cliente: dataCliente.tipo_cliente,
+      telefono: dataCliente.telefono,
+      mail: dataCliente.mail,
+      razon_social: dataCliente.razon_social,
+      nombre: dataCliente.nombre,
+      apellido: dataCliente.apellido,
+      sexo: dataCliente.sexo,
+    }
     const res = await fetchWithErrorHandling(`${baseUrl}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(payload),
     })
-    const data = await res.json()
+    const response = await res.json()
     try {
       revalidatePath('/coordinacion/clientes')
       revalidatePath('/ventas/clientes')
-    } catch (_) {}
-    return data ? (data as Cliente) : null
+    } catch (error) {
+      console.error('[crearCliente] revalidatePath error:', error)
+    }
+    return response
   } catch (error) {
     console.error('[crearCliente]', error)
-    return null
+    return
   }
 }
 
