@@ -33,7 +33,7 @@ export async function obtenerObras(filtro?: string): Promise<Obra[]> {
     const token = await getAccessToken()
     let url = baseUrl
     if (filtro && filtro.trim().length > 0) {
-      url = `${baseUrl}/buscar?${encodeURIComponent(filtro.trim())}`
+      url = `${baseUrl}/buscar?q=${encodeURIComponent(filtro.trim())}`
     }
     const res = await fetchWithErrorHandling(url, {
       method: 'GET',
@@ -83,7 +83,6 @@ export async function filtrarObras({
 export async function filtrarObrasAction(filters: {
   estado?: string
   cod_localidad?: number
-  cod_provincia?: number
 }): Promise<Obra[]> {
   try {
     return await filtrarObras({
@@ -115,40 +114,6 @@ export async function obtenerObra(id: number): Promise<Obra> {
   } catch (error) {
     console.error('[obtenerObra] ', error)
     throw new Error(`No se pudo obtener la obra #${numericId}`)
-  }
-}
-
-/* Obtener obras "completas": intenta /completas, si falla usa /filtrar */
-export async function obtenerObrasCompletas({
-  estado,
-  cod_localidad,
-}: {
-  estado?: string
-  cod_localidad?: number
-}): Promise<Obra[]> {
-  try {
-    const token = await getAccessToken()
-    const params = new URLSearchParams()
-    if (estado) params.append('estado', estado)
-    if (cod_localidad) params.append('localidad', String(cod_localidad))
-
-    const url = `${baseUrl}`
-    try {
-      const res = await fetchWithErrorHandling(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-      const data = await res.json()
-      return Array.isArray(data) ? data : []
-    } catch {
-      return await filtrarObras({ estado, cod_localidad })
-    }
-  } catch (error) {
-    console.error('[obtenerObrasCompletas] ', error)
-    return await filtrarObras({ estado, cod_localidad })
   }
 }
 
