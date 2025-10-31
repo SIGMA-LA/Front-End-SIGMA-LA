@@ -12,7 +12,10 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ObraConPresupuesto, Pago } from '@/types'
-import { createPago, getObrasConPresupuestoAceptado } from '@/actions/pagos'
+import {
+  createPagoForObra,
+  getObrasConPresupuestoAceptado,
+} from '@/actions/pagos'
 import ObraSelect, { ObraSearchResults } from './ObraSelect'
 
 interface PagoModalProps {
@@ -147,7 +150,8 @@ export default function PagoModal({
       return
     }
 
-    const montoNumerico = parseFloat(monto)
+    const montoNumerico = parseFloat(monto.replace(/\./g, '').replace(',', '.'))
+
     if (isNaN(montoNumerico) || montoNumerico <= 0) {
       setError('El monto debe ser un número mayor a 0')
       return
@@ -155,7 +159,7 @@ export default function PagoModal({
 
     if (
       selectedObra.saldoPendiente &&
-      montoNumerico > selectedObra.saldoPendiente
+      montoNumerico > selectedObra.saldoPendiente + 0.01
     ) {
       setError(
         `El monto no puede exceder el saldo pendiente de $${selectedObra.saldoPendiente.toLocaleString()}`
@@ -167,17 +171,18 @@ export default function PagoModal({
       setLoading(true)
       setError(null)
 
-      const pagoData = {
-        cod_obra: selectedObra.cod_obra,
-        monto: montoNumerico,
-        fecha_pago: fechaPago,
-      }
+      const nuevoPago = await createPagoForObra(
+        { monto: montoNumerico },
+        selectedObra.cod_obra
+      )
 
-      const nuevoPago = await createPago(pagoData)
       onPagoCreado(nuevoPago)
       handleClose()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al crear el pago')
+      const errorMessage =
+        err instanceof Error ? err.message : 'Error al crear el pago'
+      const backendError = (err as any)?.response?.data?.message
+      setError(backendError || errorMessage)
     } finally {
       setLoading(false)
     }

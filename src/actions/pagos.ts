@@ -139,40 +139,6 @@ export async function createPagoForObra(
   }
 }
 
-export async function createPago(pagoData: {
-  cod_obra: number
-  monto: number
-  fecha_pago: string
-}): Promise<Pago> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/pagos`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(pagoData),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
-      }
-      const errorText = await response.text()
-      throw new Error(
-        `Error al crear el pago: ${response.status} - ${errorText}`
-      )
-    }
-
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error('Error en crear Pago:', error)
-    throw error
-  }
-}
-
 // Obtener obras que tienen presupuesto aceptado para crear pagos
 export async function getObrasConPresupuestoAceptado(
   search?: string
