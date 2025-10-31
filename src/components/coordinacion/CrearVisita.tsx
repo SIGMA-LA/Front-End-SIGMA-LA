@@ -1,47 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  Calendar,
-  Clock,
-  User,
-  Users,
-  Car,
-  Building2,
-  User2,
-  Info,
-  X,
-} from 'lucide-react'
-import {
-  CrearVisitaProps,
-  Empleado,
-  Localidad,
-  Provincia,
-  Vehiculo,
-  Visita,
-} from '@/types'
-import ObraSearchWrapper from '../shared/ObraSearchWrapper'
+import { Calendar } from 'lucide-react'
+import { CrearVisitaProps, Empleado, Localidad, Visita } from '@/types'
 import { crearVisita, actualizarVisita } from '@/actions/visitas'
-import {
-  obtenerVisitadores,
-  getDisponiblesParaEntrega,
-  buscarFiltrados,
-} from '@/actions/empleado'
-import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
-import parametroService from '../../services/parametro.service'
-import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
-import { useVehiculos } from '@/hooks/useVehiculos'
-import { useVisitadores } from '@/hooks/useVisitadores'
 import SeccionEmpleados from './visita/SeccionEmpleados'
 import SeccionDatosVisita from './visita/SeccionDatosVisita'
 import SeccionVisitaInicial from './visita/SeccionVisitaInicial'
 import SeccionSeleccionObra from './visita/SeccionSeleccionarObra'
+import { useRouter } from 'next/navigation'
 
 export default function CrearVisita({
-  onCancel,
-  onSubmit,
   preloadedObra,
   visitaEditar,
+  buscarObras,
+  buscarLocalidades,
+  vehiculos,
+  provincias,
+  visitadores,
 }: CrearVisitaProps & { visitaEditar?: Visita | null }) {
   const [formData, setFormData] = useState({
     fecha: '',
@@ -68,19 +44,18 @@ export default function CrearVisita({
   const [showObraSearch, setShowObraSearch] = useState(false)
   const [visitadorPrincipal, setVisitadorPrincipal] = useState<string>('')
   const [selectedAcompanantes, setSelectedAcompanantes] = useState<string[]>([])
-  const [visitadores, setVisitadores] = useState<Empleado[]>([])
   const [acompanantes, setAcompanantes] = useState<Empleado[]>([])
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]) //refactorizar por el useVehiculos
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [formError, setFormError] = useState<string | null>(null)
   const [costoViatico, setCostoViatico] = useState<number>(0)
   const [diasViatico, setDiasViatico] = useState<number>(1)
   const [costoTotalViatico, setCostoTotalViatico] = useState<number>(0)
   const [obraSeleccionada, setObraSeleccionada] = useState<string>('')
-  const [provincias, setProvincias] = useState<Provincia[]>([])
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
     number | ''
   >('')
+
+  const router = useRouter()
 
   const isFromObra = !!preloadedObra
 
@@ -92,15 +67,6 @@ export default function CrearVisita({
     { value: 'RE-MEDICION', label: 'Re-Medición', disabled: false },
   ]
 
-  const { vehiculos: vehiculoBack, isLoading, error } = useVehiculos()
-  const {
-    visitadores: visitadoresBack,
-    isLoading: isLoadingVisitadores,
-    error: errorVisitadores,
-  } = useVisitadores()
-
-  console.log(visitadoresBack)
-
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -111,7 +77,7 @@ export default function CrearVisita({
       setFormData((prev) => ({
         ...prev,
         fecha: value,
-        fechaHasta: value, // O podrías decidir no hacer esto y dejar que el usuario elija
+        fechaHasta: value,
       }))
     } else {
       setFormData((prev) => ({
@@ -126,7 +92,7 @@ export default function CrearVisita({
     setProvinciaSeleccionada(value)
     setFormData((prev) => ({
       ...prev,
-      localidad: '', // Resetea la localidad al cambiar de provincia
+      localidad: '',
     }))
   }
 
@@ -183,25 +149,12 @@ export default function CrearVisita({
   }, [visitaEditar, vehiculos])
 
   useEffect(() => {
-    obtenerProvincias().then(setProvincias)
-  }, [])
-
-  useEffect(() => {
     if (provinciaSeleccionada) {
-      localidadesPorProvincia(provinciaSeleccionada).then(setLocalidades)
+      buscarLocalidades(provinciaSeleccionada).then(setLocalidades)
     } else {
       setLocalidades([])
     }
   }, [provinciaSeleccionada])
-
-  useEffect(() => {
-    obtenerVisitadores().then(setVisitadores)
-    getDisponiblesParaEntrega().then(setAcompanantes)
-    obtenerVehiculosDisponibles().then(setVehiculos)
-    parametroService
-      .getActualViatico()
-      .then((res) => setCostoViatico(res.viatico_dia_persona))
-  }, [])
 
   useEffect(() => {
     if (isVisitaInicial && !visitaEditar) {
@@ -246,8 +199,6 @@ export default function CrearVisita({
       setCostoTotalViatico(costoViatico)
     }
   }, [formData.fecha, formData.fechaHasta, costoViatico])
-
-  const filteredVisitadores = visitadores
 
   const handleVisitaInicialToggle = () => {
     setIsVisitaInicial((v) => {
@@ -325,6 +276,15 @@ export default function CrearVisita({
         return
       }
     }
+    useEffect(() => {
+      setAcompanantes(
+        visitadores.filter(
+          (v) =>
+            v.cuil !== visitadorPrincipal &&
+            !selectedAcompanantes.includes(v.cuil)
+        )
+      )
+    }, [visitadores, visitadorPrincipal, selectedAcompanantes])
 
     const fechaHoraVisita = `${formData.fecha}T${formData.hora}`
 
@@ -367,10 +327,9 @@ export default function CrearVisita({
       } else {
         visita = await crearVisita(visitaData)
       }
-      if (visita) {
-        onSubmit(visita)
-      } else {
-        setFormError('Error al guardar la visita')
+      if (!visita) {
+        setFormError('Error al guardar la visita.')
+        return
       }
     } catch (error) {
       setFormError('Error inesperado al guardar la visita')
@@ -415,22 +374,26 @@ export default function CrearVisita({
                 provincias={provincias}
                 localidades={localidades}
                 provinciaSeleccionada={provinciaSeleccionada}
-                onProvinciaChange={handleProvinciaChange} // Necesitarás crear esta función
+                onProvinciaChange={handleProvinciaChange}
               />
             )}
 
             <SeccionDatosVisita
               formData={formData}
-              onFormChange={handleFormChange} // Necesitarás crear esta función
-              vehiculosDisponibles={vehiculoBack}
+              onFormChange={handleFormChange}
+              vehiculosDisponibles={vehiculos}
               tiposVisita={tiposVisita}
               diasViatico={diasViatico}
               costoTotalViatico={costoTotalViatico}
             />
 
             <SeccionEmpleados
-              visitadoresDisponibles={visitadoresBack} // Usamos los datos del hook
-              acompanantesDisponibles={acompanantes} // Necesitarás crear un hook para esto
+              visitadoresDisponibles={
+                Array.isArray(visitadores) ? visitadores : []
+              }
+              acompanantesDisponibles={
+                Array.isArray(acompanantes) ? acompanantes : []
+              }
               visitadorPrincipal={visitadorPrincipal}
               onVisitadorChange={setVisitadorPrincipal}
               acompanantesSeleccionados={selectedAcompanantes}
@@ -465,7 +428,7 @@ export default function CrearVisita({
               <div className="flex flex-col gap-3 pt-6 sm:flex-row">
                 <button
                   type="button"
-                  onClick={onCancel}
+                  onClick={router.back}
                   className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Cancelar

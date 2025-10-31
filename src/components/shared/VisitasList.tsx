@@ -3,44 +3,19 @@
 import { Calendar, Plus } from 'lucide-react'
 import { VisitasListProps, Visita } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { useState, useEffect } from 'react'
-import { obtenerVisitas } from '@/actions/visitas'
+import { useState } from 'react'
 import VisitaCard from './VisitaCard'
+import { useRouter } from 'next/navigation'
 
 export default function VisitasList({
-  onCreateClick,
-  onEditClick,
+  visitas: initialVisitas,
+  empleadosMap,
 }: VisitasListProps) {
   const { usuario, logout } = useAuth()
-  const [visitas, setVisitas] = useState<Visita[]>([])
-  const [loading, setLoading] = useState(true)
+  const [visitas, setVisitas] = useState<Visita[]>(initialVisitas)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const fetchVisitas = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await obtenerVisitas()
-      setVisitas(data)
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Error desconocido'
-      if (
-        errorMessage.includes('sesión') ||
-        errorMessage.includes('Token expirado')
-      ) {
-        logout()
-        return
-      }
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchVisitas()
-  }, [])
+  const router = useRouter()
 
   if (loading) {
     return (
@@ -65,7 +40,7 @@ export default function VisitasList({
             <div className="text-center">
               <p className="text-red-600">Error: {error}</p>
               <button
-                onClick={fetchVisitas}
+                onClick={() => router.refresh()}
                 className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Reintentar
@@ -96,7 +71,9 @@ export default function VisitasList({
           </div>
           {usuario?.rol_actual === 'COORDINACION' && (
             <button
-              onClick={onCreateClick}
+              onClick={() => {
+                router.push('/coordinacion/visitas/crear')
+              }}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
             >
               <Plus className="h-5 w-5" />
@@ -117,8 +94,11 @@ export default function VisitasList({
                 key={visita.cod_visita}
                 visita={visita}
                 rolActual={usuario?.rol_actual}
-                refrescarVisitas={fetchVisitas}
-                onEdit={onEditClick}
+                onEdit={() =>
+                  router.push(
+                    '`/coordinacion/visitas/${visita.cod_visita}/editar`'
+                  )
+                }
               />
             ))}
           </div>
