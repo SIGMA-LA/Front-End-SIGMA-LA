@@ -21,10 +21,14 @@ export default function LoginPage() {
     contrasenia: string
   ): Promise<void> => {
     try {
-      await login(cuil, contrasenia)
+      const loggedInUser = await login(cuil, contrasenia)
+
+      if (loggedInUser && loggedInUser.rol_actual) {
+        router.push(`/${loggedInUser.rol_actual.toLowerCase()}`)
+      }
     } catch (error) {
       console.error('Fallo el intento de login:', error)
-      throw false
+      throw error
     }
   }
 

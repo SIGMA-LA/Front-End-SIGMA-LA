@@ -14,7 +14,7 @@ import { redirect } from 'next/navigation'
 interface AuthContextType {
   usuario: Empleado | null
   cargando: boolean
-  login: (cuil: string, contrasenia: string) => Promise<boolean>
+  login: (cuil: string, contrasenia: string) => Promise<Empleado>
   logout: () => void
 }
 
@@ -40,18 +40,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchProfile()
   }, [])
 
-  const login = async (cuil: string, contrasenia: string): Promise<boolean> => {
+  const login = async (
+    cuil: string,
+    contrasenia: string
+  ): Promise<Empleado> => {
     try {
       const { data } = await api.post(`${BASE_URL}/login`, {
         cuil,
         contrasenia,
       })
-      if (data.empleado) {
-        setUsuario(data.empleado)
-        return true
+      if (data.usuario) {
+        setUsuario(data.usuario)
+        return data.usuario
       }
-      return false
+      throw new Error('La respuesta de la API no contiene datos del usuario.')
     } catch (error) {
+      setUsuario(null)
       throw error
     }
   }
