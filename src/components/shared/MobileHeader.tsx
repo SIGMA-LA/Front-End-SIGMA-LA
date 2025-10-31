@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
-import Sidebar from './Sidebar'
+import Sidebar from '../layout/Sidebar'
 
 const labelMap: Record<string, string> = {
   '/ventas': 'Dashboard',

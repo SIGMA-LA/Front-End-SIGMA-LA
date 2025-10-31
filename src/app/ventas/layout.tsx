@@ -1,5 +1,5 @@
 import Navbar from '@/components/layout/Navbar'
-import Sidebar from '@/components/shared/Sidebar'
+import Sidebar from '@/components/layout/Sidebar'
 import MobileHeader from '@/components/shared/MobileHeader'
 import { ReactNode } from 'react'
 import { getUsuarioFromCookies } from '@/lib/auth-server'
