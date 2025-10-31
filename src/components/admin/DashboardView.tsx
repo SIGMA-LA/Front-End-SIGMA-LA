@@ -9,6 +9,7 @@ import {
   DollarSign,
   Calendar,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useGlobalContext } from '@/context/GlobalContext'
 import { mockReportesVentas } from '@/data/mockData'
@@ -20,11 +21,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-interface DashboardViewProps {
-  onNavigate: (section: string) => void
-}
-
-export default function DashboardView({ onNavigate }: DashboardViewProps) {
+export default function DashboardView() {
   const { obras, clientes } = useGlobalContext()
 
   return (
@@ -127,42 +124,43 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       </Card>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-lg"
-          onClick={() => onNavigate('empleados')}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <UserPlus className="mx-auto mb-4 h-10 w-10 text-blue-600" />
-            <h3 className="mb-2 text-lg font-semibold">Gestionar Empleados</h3>
-            <p className="text-sm text-gray-600">
-              Crear, editar y administrar personal
-            </p>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-lg"
-          onClick={() => onNavigate('reportes')}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <TrendingUp className="mx-auto mb-4 h-10 w-10 text-green-600" />
-            <h3 className="mb-2 text-lg font-semibold">Reportes de Ventas</h3>
-            <p className="text-sm text-gray-600">
-              Análisis detallado de la performance
-            </p>
-          </CardContent>
-        </Card>
-        <Card
-          className="cursor-pointer transition-shadow hover:shadow-lg"
-          onClick={() => onNavigate('obras')}
-        >
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            <Building className="mx-auto mb-4 h-10 w-10 text-purple-600" />
-            <h3 className="mb-2 text-lg font-semibold">Supervisar Obras</h3>
-            <p className="text-sm text-gray-600">
-              Vista general de todas las obras activas
-            </p>
-          </CardContent>
-        </Card>
+        <Link href="/admin?section=empleados">
+          <Card className="cursor-pointer transition-shadow hover:shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+              <UserPlus className="mx-auto mb-4 h-10 w-10 text-blue-600" />
+              <h3 className="mb-2 text-lg font-semibold">
+                Gestionar Empleados
+              </h3>
+              <p className="text-sm text-gray-600">
+                Crear, editar y administrar personal
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin?section=reportes">
+          <Card className="cursor-pointer transition-shadow hover:shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+              <TrendingUp className="mx-auto mb-4 h-10 w-10 text-green-600" />
+              <h3 className="mb-2 text-lg font-semibold">
+                Reportes de Ventas
+              </h3>
+              <p className="text-sm text-gray-600">
+                Análisis detallado de la performance
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin?section=obras">
+          <Card className="cursor-pointer transition-shadow hover:shadow-lg">
+            <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+              <Building className="mx-auto mb-4 h-10 w-10 text-purple-600" />
+              <h3 className="mb-2 text-lg font-semibold">Supervisar Obras</h3>
+              <p className="text-sm text-gray-600">
+                Vista general de todas las obras activas
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   )

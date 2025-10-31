@@ -15,10 +15,11 @@ const menuItems = [
 export default async function Page({
   searchParams,
 }: {
-  searchParams?: { section?: string }
+  searchParams?: Promise<{ section?: string }>
 }) {
   const usuario = await getUsuarioFromCookies()
-  const currentSection = searchParams?.section || 'dashboard'
+  const params = await searchParams
+  const currentSection = params?.section || 'dashboard'
 
   const renderContent = () => {
     switch (currentSection) {
@@ -30,7 +31,7 @@ export default async function Page({
         return <ObrasView />
       case 'dashboard':
       default:
-        return <DashboardView onNavigate={() => {}} />
+        return <DashboardView />
     }
   }
 

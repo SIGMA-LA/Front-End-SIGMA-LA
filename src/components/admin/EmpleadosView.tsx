@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { Users, Building, Plus, Eye, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
 import type { Empleado } from '@/types'
 import { useGlobalContext } from '@/context/GlobalContext'
+import CrearEmpleado, { CrearEmpleadoData } from './CrearEmpleado'
+import empleadoService from '@/services/empleado.service'
 
 const getRolDisplayName = (rol: Empleado['rol_actual']) => {
   const rolNames: Record<string, string> = {
@@ -21,74 +21,65 @@ const getRolDisplayName = (rol: Empleado['rol_actual']) => {
 }
 
 export default function EmpleadosView() {
-  const { empleados, addEmpleado, updateEmpleado, deleteEmpleado } =
-    useGlobalContext()
+  const { empleados, deleteEmpleado } = useGlobalContext()
   const [showModal, setShowModal] = useState(false)
-  const [isModalVisible, setIsModalVisible] = useState(false)
   const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null)
   const [viewingEmpleado, setViewingEmpleado] = useState<Empleado | null>(null)
-  const [newEmpleado, setNewEmpleado] = useState({
-    nombre: '',
-    apellido: '',
-    cuil: '',
-    rol_actual: 'VISITADOR' as Empleado['rol_actual'],
-    area_trabajo: '',
-    contrasenia: '123456',
-  })
+  const [empleadosList, setEmpleadosList] = useState<Empleado[]>([])
 
   useEffect(() => {
-    if (showModal) {
-      setTimeout(() => setIsModalVisible(true), 10)
-    } else {
-      setIsModalVisible(false)
-    }
-  }, [showModal])
+    setEmpleadosList(Array.isArray(empleados) ? empleados : [])
+  }, [empleados])
 
   const handleOpenModal = (empleado: Empleado | null) => {
-    if (empleado) {
-      setEditingEmpleado(empleado)
-      setNewEmpleado({
-        cuil: empleado.cuil,
-        nombre: empleado.nombre,
-        apellido: empleado.apellido,
-        rol_actual: empleado.rol_actual as Empleado['rol_actual'],
-        area_trabajo: empleado.area_trabajo,
-        contrasenia: '',
-      })
-    } else {
-      setEditingEmpleado(null)
-      setNewEmpleado({
-        nombre: '',
-        apellido: '',
-        cuil: '',
-        rol_actual: 'VISITADOR',
-        area_trabajo: '',
-        contrasenia: '123456',
-      })
-    }
+    setEditingEmpleado(empleado)
     setShowModal(true)
   }
 
-  const handleCloseModal = () => setShowModal(false)
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditingEmpleado(null)
+  }
 
-  const handleSave = async () => {
+  const handleSubmitEmpleado = async (empleadoData: CrearEmpleadoData) => {
     try {
       if (editingEmpleado) {
-        await updateEmpleado(editingEmpleado.cuil, newEmpleado)
+        // Actualizar empleado
+        const { contrasenia, ...updateData } = empleadoData
+        const dataToUpdate = contrasenia
+          ? { ...updateData, contrasenia }
+          : updateData
+
+        const empleadoActualizado = await empleadoService.updateEmpleado(
+          editingEmpleado.cuil,
+          dataToUpdate
+        )
+
+        setEmpleadosList((prev) =>
+          prev.map((emp) =>
+            emp.cuil === editingEmpleado.cuil ? empleadoActualizado : emp
+          )
+        )
       } else {
-        await addEmpleado(newEmpleado)
+        // Crear nuevo empleado
+        const nuevoEmpleado = await empleadoService.createEmpleado(empleadoData)
+        setEmpleadosList((prev) => [...prev, nuevoEmpleado])
       }
-      handleCloseModal()
     } catch (error) {
       console.error('Error al guardar empleado:', error)
-      alert('Hubo un error al guardar el empleado.')
+      throw error // Re-lanzar el error para que lo maneje CrearEmpleado
     }
   }
 
-  const handleDeleteEmpleado = async (cuil: string) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
+  const handleDeleteEmpleado = async (cuil: string, nombreCompleto: string) => {
+    if (
+      window.confirm(
+        `¿Estás seguro de que deseas eliminar al empleado ${nombreCompleto}?\n\nEsta acción desactivará la cuenta del empleado.`
+      )
+    ) {
       try {
         await deleteEmpleado(cuil)
+        setEmpleadosList((prev) => prev.filter((emp) => emp.cuil !== cuil))
       } catch (error) {
         console.error('Error al borrar empleado:', error)
         alert('Hubo un error al eliminar el empleado.')
@@ -132,7 +123,12 @@ export default function EmpleadosView() {
               <Edit className="h-4 w-4" />
             </Button>
             <Button
-              onClick={() => handleDeleteEmpleado(empleado.cuil)}
+              onClick={() =>
+                handleDeleteEmpleado(
+                  empleado.cuil,
+                  `${empleado.nombre} ${empleado.apellido}`
+                )
+              }
               variant="ghost"
               size="icon"
               className="text-red-500 hover:text-red-700"
@@ -147,11 +143,12 @@ export default function EmpleadosView() {
   )
 
   const sections = {
-    admin: empleados.filter((u) => u.rol_actual === 'ADMIN'),
-    coordinacion: empleados.filter((u) => u.rol_actual === 'COORDINACION'),
-    ventas: empleados.filter((u) => u.rol_actual === 'VENTAS'),
-    visitadores: empleados.filter((u) => u.rol_actual === 'VISITADOR'),
-    planta: empleados.filter((u) => u.rol_actual === 'PLANTA'),
+    admin: empleadosList.filter((u) => u.rol_actual === 'ADMIN'),
+    coordinacion: empleadosList.filter((u) => u.rol_actual === 'COORDINACION'),
+    ventas: empleadosList.filter((u) => u.rol_actual === 'VENTAS'),
+    visitadores: empleadosList.filter((u) => u.rol_actual === 'VISITADOR'),
+    planta: empleadosList.filter((u) => u.rol_actual === 'PLANTA'),
+    produccion: empleadosList.filter((u) => u.rol_actual === 'PRODUCCION'),
   }
 
   return (
@@ -231,7 +228,21 @@ export default function EmpleadosView() {
           </div>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <Users className="mr-3 h-6 w-6 text-indigo-500" />
+            Producción ({sections.produccion.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {sections.produccion.map(renderEmpleadoCard)}
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Modal de visualización de detalles */}
       {viewingEmpleado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
@@ -266,116 +277,13 @@ export default function EmpleadosView() {
         </div>
       )}
 
-      {/* --- INICIO DEL MODAL REDISEÑADO --- */}
+      {/* Modal de creación/edición */}
       {showModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-          onClick={handleCloseModal}
-        >
-          <div
-            className={`mx-4 w-full max-w-lg transform rounded-2xl bg-white shadow-2xl transition-all duration-300 ${isModalVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b p-6">
-              <h3 className="text-xl font-semibold text-gray-900">
-                {editingEmpleado ? 'Editar Empleado' : 'Crear Nuevo Empleado'}
-              </h3>
-            </div>
-            <div className="space-y-6 p-8">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="nombre">Nombre</Label>
-                  <Input
-                    id="nombre"
-                    value={newEmpleado.nombre}
-                    onChange={(e) =>
-                      setNewEmpleado({ ...newEmpleado, nombre: e.target.value })
-                    }
-                    placeholder="Ej: Juan"
-                    className="mt-1 w-full rounded-md"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="apellido">Apellido</Label>
-                  <Input
-                    id="apellido"
-                    value={newEmpleado.apellido}
-                    onChange={(e) =>
-                      setNewEmpleado({
-                        ...newEmpleado,
-                        apellido: e.target.value,
-                      })
-                    }
-                    placeholder="Ej: Pérez"
-                    className="mt-1 w-full rounded-md"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="cuil">CUIL</Label>
-                <Input
-                  id="cuil"
-                  value={newEmpleado.cuil}
-                  onChange={(e) =>
-                    setNewEmpleado({ ...newEmpleado, cuil: e.target.value })
-                  }
-                  placeholder="20-12345678-9"
-                  className="mt-1 w-full rounded-md"
-                  disabled={!!editingEmpleado}
-                />
-                {editingEmpleado && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    El CUIL no se puede modificar.
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="area_trabajo">Área de Trabajo</Label>
-                <Input
-                  id="area_trabajo"
-                  value={newEmpleado.area_trabajo}
-                  onChange={(e) =>
-                    setNewEmpleado({
-                      ...newEmpleado,
-                      area_trabajo: e.target.value,
-                    })
-                  }
-                  placeholder="Ej: Ventas, Producción"
-                  className="mt-1 w-full rounded-md"
-                />
-              </div>
-              <div>
-                <Label htmlFor="rol">Rol</Label>
-                <select
-                  id="rol"
-                  value={newEmpleado.rol_actual}
-                  onChange={(e) =>
-                    setNewEmpleado({
-                      ...newEmpleado,
-                      rol_actual: e.target.value as Empleado['rol_actual'],
-                    })
-                  }
-                  className="mt-1 h-11 w-full rounded-md border border-gray-300 bg-white px-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                >
-                  <option value="ADMIN">Administrador</option>
-                  <option value="COORDINACION">Coordinación</option>
-                  <option value="VENTAS">Ventas</option>
-                  <option value="VISITADOR">Visitador</option>
-                  <option value="PLANTA">Planta</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 rounded-b-2xl border-t bg-gray-50 p-4">
-              <Button onClick={handleCloseModal} variant="outline">
-                Cancelar
-              </Button>
-              <Button onClick={handleSave}>
-                {editingEmpleado ? 'Guardar Cambios' : 'Crear Empleado'}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <CrearEmpleado
+          onCancel={handleCloseModal}
+          onSubmit={handleSubmitEmpleado}
+          editingEmpleado={editingEmpleado}
+        />
       )}
     </div>
   )

@@ -71,10 +71,12 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchEmpleados = useCallback(async () => {
     try {
-      const { data } = await api.get('/empleados')
-      setEmpleados(data)
+      const response = await api.get('/empleados')
+      const empleadosData = response.data?.data || response.data || []
+      setEmpleados(Array.isArray(empleadosData) ? empleadosData : [])
     } catch (error) {
       console.error('Error al cargar empleados:', error)
+      setEmpleados([])
     }
   }, [])
 
@@ -146,12 +148,10 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const addEmpleado = useCallback(
-    async (empleadoData: Omit<Empleado, 'cuil'>) => {
+    async (empleadoData: any) => {
       try {
-        const { data: nuevoEmpleado } = await api.post<Empleado>(
-          '/empleados',
-          empleadoData
-        )
+        const response = await api.post<any>('/empleados', empleadoData)
+        const nuevoEmpleado = response.data.data || response.data
         setEmpleados((prev) => [...prev, nuevoEmpleado])
       } catch (error) {
         console.error('Error al crear empleado:', error)
@@ -162,12 +162,11 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const updateEmpleado = useCallback(
-    async (cuil: string, empleadoData: Partial<Omit<Empleado, 'cuil'>>) => {
+    async (cuil: string, empleadoData: any) => {
       try {
-        const { data: empleadoActualizado } = await api.put<Empleado>(
-          `/empleados/${cuil}`,
-          empleadoData
-        )
+        const response = await api.put<any>(`/empleados/${cuil}`, empleadoData)
+        // El backend retorna { success: true, message: '...', data: empleado }
+        const empleadoActualizado = response.data.data || response.data
         setEmpleados((prev) =>
           prev.map((u) => (u.cuil === cuil ? empleadoActualizado : u))
         )
