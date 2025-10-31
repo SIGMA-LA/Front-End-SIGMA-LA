@@ -1,5 +1,4 @@
-import DashboardView from '@/components/admin/DashboardView'
-
-export default function DashboardPage() {
-  return <DashboardView />
+import ClientesView from '@/components/admin/ClientesView'
+export default function ClientesPage() {
+  return <ClientesView />
 }

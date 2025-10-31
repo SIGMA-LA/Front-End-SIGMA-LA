@@ -1,19 +1,30 @@
-import { getUsuarioFromCookies } from '@/lib/auth-server'
 import Navbar from '@/components/layout/Navbar'
-import CoordinacionShell from '@/components/coordinacion/CoordinacionShell'
+import Sidebar from '@/components/layout/Sidebar'
+import MobileHeader from '@/components/layout/MobileHeader'
 import { ReactNode } from 'react'
+import { getUsuarioFromCookies } from '@/lib/auth-server'
 
 export default async function CoordinacionLayout({
   children,
 }: {
   children: ReactNode
 }) {
-  const usuarioActual = await getUsuarioFromCookies()
+  const usuario = await getUsuarioFromCookies()
 
   return (
     <>
-      <Navbar usuario={usuarioActual} />
-      <CoordinacionShell>{children}</CoordinacionShell>
+      <Navbar usuario={usuario} />
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Sidebar Desktop */}
+        <div className="hidden lg:flex lg:flex-shrink-0">
+          <Sidebar user={usuario} />
+        </div>
+        {/* Main Content */}
+        <div className="flex flex-1 flex-col">
+          <MobileHeader user={usuario} />
+          <main className="flex-1">{children}</main>
+        </div>
+      </div>
     </>
   )
 }

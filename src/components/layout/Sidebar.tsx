@@ -10,9 +10,17 @@ import {
   Home,
   PackageOpen,
   DollarSign,
+  Package,
+  ClipboardList,
+  Wrench,
+  Car,
+  BarChart2,
 } from 'lucide-react'
+import { Empleado } from '@/types'
 
-const menuItems = [
+type MenuItem = { path: string; label: string; icon: any }
+
+const menuItemsVentas: MenuItem[] = [
   { path: '/ventas', label: 'Dashboard', icon: Home },
   { path: '/ventas/obras', label: 'Obras', icon: Building2 },
   { path: '/ventas/clientes', label: 'Clientes', icon: Users },
@@ -22,10 +30,46 @@ const menuItems = [
   { path: '/ventas/configuraciones', label: 'Configuraciones', icon: Settings },
 ]
 
-export default function Sidebar() {
+const menuItemsCoordinacion: MenuItem[] = [
+  { path: '/coordinacion', label: 'Dashboard', icon: Home },
+  { path: '/coordinacion/obras', label: 'Obras', icon: Building2 },
+  { path: '/coordinacion/clientes', label: 'Clientes', icon: Users },
+  { path: '/coordinacion/visitas', label: 'Visitas', icon: Calendar },
+  {
+    path: '/coordinacion/ordenes-produccion',
+    label: 'Órdenes de Producción',
+    icon: Package,
+  },
+  { path: '/coordinacion/entregas', label: 'Entregas', icon: PackageOpen },
+  { path: '/coordinacion/pedidos', label: 'Pedidos', icon: ClipboardList },
+  { path: '/coordinacion/maquinarias', label: 'Maquinarias', icon: Wrench },
+  { path: '/coordinacion/vehiculos', label: 'Vehículos', icon: Car },
+  {
+    path: '/coordinacion/configuraciones',
+    label: 'Configuraciones',
+    icon: Settings,
+  },
+]
+
+const menuItemsAdmin: MenuItem[] = [
+  { path: '/admin', label: 'Dashboard', icon: Home },
+  { path: '/admin/empleados', label: 'Empleados', icon: Users },
+  { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
+  { path: '/admin/obras', label: 'Obras', icon: Building2 },
+]
+
+export default function Sidebar({ user }: { user: Empleado | null }) {
+  const menuItems =
+    user?.rol_actual === 'ADMIN'
+      ? menuItemsAdmin
+      : user?.rol_actual === 'COORDINACION'
+        ? menuItemsCoordinacion
+        : menuItemsVentas
   const pathname = usePathname()
   const isActive = (path: string) => {
-    if (path === '/ventas') return pathname === '/ventas'
+    if (path === '/admin' || path === '/ventas' || path === '/coordinacion') {
+      return pathname === path
+    }
     return pathname === path || pathname.startsWith(path + '/')
   }
 

@@ -1,7 +1,7 @@
 import { getUsuarioFromCookies } from '@/lib/auth-server'
 import { Empleado } from '@/types'
 export default async function DashboardPage() {
-  const usuario: Empleado = await getUsuarioFromCookies()
+  const usuario: Empleado | null = await getUsuarioFromCookies()
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-2xl">
