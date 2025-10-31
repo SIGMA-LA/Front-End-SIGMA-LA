@@ -3,7 +3,6 @@ import DashboardView from '@/components/admin/DashboardView'
 import EmpleadosView from '@/components/admin/EmpleadosView'
 import ReportesView from '@/components/admin/ReportesView'
 import ObrasView from '@/components/admin/ObrasView'
-import Navbar from '@/components/layout/Navbar'
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -20,24 +19,10 @@ export default async function Page({
   const usuario = await getUsuarioFromCookies()
   const params = await searchParams
   const currentSection = params?.section || 'dashboard'
-
   const renderContent = () => {
-    switch (currentSection) {
-      case 'empleados':
-        return <EmpleadosView />
-      case 'reportes':
-        return <ReportesView />
-      case 'obras':
-        return <ObrasView />
-      case 'dashboard':
-      default:
-        return <DashboardView />
-    }
-  }
-
+    
   return (
     <>
-      <Navbar usuario={usuario} />
       <div className="flex min-h-[calc(100vh-68px)]">
         {/* Sidebar */}
         <aside className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white md:flex md:flex-col">
