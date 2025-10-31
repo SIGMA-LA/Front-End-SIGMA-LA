@@ -27,16 +27,8 @@ interface ObrasListPropsClient {
   ) => Promise<{ success: boolean; error?: string }> | void
   onRefresh?: () => void
   obtenerObraAction: (id: number) => Promise<Obra>
-  filtrarObrasAction: (filters: {
-    estado?: string
-    cod_localidad?: number
-  }) => Promise<Obra[]>
   buscarLocalidades: (provinciaId: number) => Promise<Localidad[]>
   searchQuery?: string
-  currentFilters?: {
-    estado?: string
-    cod_localidad?: number
-  }
 }
 
 export default function ObrasList({
@@ -48,10 +40,8 @@ export default function ObrasList({
   obras: initialObras,
   provincias: initialProvincias,
   usuarioRol,
-  filtrarObrasAction,
   buscarLocalidades,
   searchQuery,
-  currentFilters,
 }: ObrasListPropsClient) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -259,7 +249,6 @@ export default function ObrasList({
                 value={filtroProvincia}
                 onChange={(e) => {
                   setFiltroProvincia(e.target.value)
-                  // ✅ Resetea localidad cuando cambia provincia
                   if (filtroLocalidad) {
                     updateFilters({ estado: filtroEstado, cod_localidad: '' })
                   }

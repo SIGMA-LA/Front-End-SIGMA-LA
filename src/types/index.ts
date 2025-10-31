@@ -292,8 +292,9 @@ export interface Maquinaria {
 }
 
 export interface VisitasListProps {
-  onCreateClick: () => void
-  onEditClick: (visita: Visita) => void
+  visitas: Visita[]
+  onCreateClick?: () => void
+  onEditClick?: (visita: Visita) => void
 }
 
 export interface VisitaDetailProps {

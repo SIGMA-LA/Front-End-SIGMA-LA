@@ -3,12 +3,15 @@
 import { useRouter } from 'next/navigation'
 import VisitasList from '@/components/shared/VisitasList'
 import { Visita } from '@/types'
+import { obtenerVisitas } from '@/actions/visitas'
 
-export default function VisitasPage() {
+export default async function VisitasPage() {
   const router = useRouter()
+  const visitas = await obtenerVisitas()
 
   return (
     <VisitasList
+      visitas={visitas}
       onCreateClick={() => {
         router.push('/coordinacion/visitas/crear')
       }}

@@ -3,29 +3,10 @@
 import { Obra } from '@/types'
 import { getAccessToken } from './auth'
 import { revalidatePath } from 'next/cache'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const baseUrl = API_BASE.endsWith('/obras') ? API_BASE : `${API_BASE}/obras`
-
-async function fetchWithErrorHandling(url: string, options: RequestInit) {
-  try {
-    const res = await fetch(url, {
-      ...options,
-      signal: AbortSignal.timeout(10000),
-    })
-    if (!res.ok) {
-      if (res.status === 401) throw new Error('Token expirado')
-      if (res.status === 404) throw new Error('Recurso no encontrado')
-      throw new Error(`Error HTTP: ${res.status}`)
-    }
-    return res
-  } catch (err: any) {
-    if (err?.name === 'AbortError') throw new Error('Timeout en la petición')
-    if (err?.cause?.code === 'ECONNREFUSED')
-      throw new Error('No se pudo conectar con el servidor')
-    throw err
-  }
-}
 
 /* Buscar obras por texto (GET /obras/buscar?{texto}) */
 export async function obtenerObras(filtro?: string): Promise<Obra[]> {
@@ -79,7 +60,6 @@ export async function filtrarObras({
   }
 }
 
-/* Server Action que envuelve filtrarObras para pasarla a componentes cliente */
 export async function filtrarObrasAction(filters: {
   estado?: string
   cod_localidad?: number

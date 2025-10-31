@@ -1,7 +1,8 @@
 'use client'
-
+import { obtenerVisitas } from '@/actions/visitas'
 import VisitasList from '@/components/shared/VisitasList'
 
-export default function VisitasPage() {
-  return <VisitasList onCreateClick={() => {}} onEditClick={(visita) => {}} />
+export default async function VisitasPage() {
+  const visitas = await obtenerVisitas()
+  return <VisitasList visitas={visitas} />
 }
