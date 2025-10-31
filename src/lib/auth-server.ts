@@ -1,8 +1,9 @@
 'use server'
 
+import { Empleado } from '@/types'
 import { cookies } from 'next/headers'
 
-export async function getUsuarioFromCookies(): Promise<any | null> {
+export async function getUsuarioFromCookies(): Promise<Empleado | null> {
   const cookieStore = await cookies()
   const usuarioCookie = cookieStore.get('usuario')?.value
   if (!usuarioCookie) return null

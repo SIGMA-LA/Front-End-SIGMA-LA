@@ -3,7 +3,7 @@ import { Calendar, Clock, User, Eye, Pencil, XCircle } from 'lucide-react'
 import { Visita } from '@/types'
 import VisitaDetail from './VisitaDetails'
 import { cancelarVisita } from '@/actions/visitas'
-import { useEmpleado } from '@/hooks/useEmpleado'
+import { useRouter } from 'next/navigation'
 
 export function getStatusColor(estado: string) {
   switch (estado) {
@@ -51,29 +51,23 @@ interface VisitaCardProps {
   visita: Visita
   rolActual?: string
   onEdit?: (visita: Visita) => void
-  onDelete?: (visita: Visita) => void
-  refrescarVisitas: () => void
 }
 
 export default function VisitaCard({
   visita,
   rolActual,
   onEdit,
-  onDelete,
-  refrescarVisitas,
 }: VisitaCardProps) {
   const esCoordinacion = rolActual?.trim().toUpperCase() === 'COORDINACION'
   const [showDetail, setShowDetail] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
-
-  const { empleado, isLoading, error } = useEmpleado(visita.empleado_visita?.[0]?.cuil || '');
+  const router = useRouter()
 
   const handleCancelarVisita = async () => {
     setCancelLoading(true)
     try {
       await cancelarVisita(visita.cod_visita)
-      refrescarVisitas()
       setShowCancelModal(false)
     } finally {
       setCancelLoading(false)
@@ -119,7 +113,13 @@ export default function VisitaCard({
                             className="text-xs leading-tight text-gray-700"
                             style={idx === 0 ? { marginTop: '-2px' } : {}}
                           >
-                            {empleado?.nombre} {empleado?.apellido}
+                            {
+                              /*visita.empleado_visita[idx]?.empleado.nombre*/ ''
+                            }{' '}
+                            {
+                              /*visita.empleado_visita[idx]?.empleado.apellido*/
+                              ''
+                            }
                           </li>
                         ) : (
                           <li
@@ -206,7 +206,7 @@ export default function VisitaCard({
               onClose={() => {
                 setShowDetail(false)
               }}
-              onCancel={refrescarVisitas}
+              onCancel={router.refresh}
             />
           </div>
         </div>

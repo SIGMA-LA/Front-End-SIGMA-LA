@@ -47,7 +47,6 @@ export default async function ObrasPage({
       buscarLocalidades={localidadesPorProvincia}
       onDeleteClick={deleteObra}
       obtenerObraAction={obtenerObra}
-      filtrarObrasAction={filtrarObrasAction}
       searchQuery={filtroTexto}
     />
   )

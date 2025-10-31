@@ -292,8 +292,8 @@ export interface Maquinaria {
 }
 
 export interface VisitasListProps {
-  onCreateClick: () => void
-  onEditClick: (visita: Visita) => void
+  empleadosMap: Map<string, Empleado>
+  visitas: Visita[]
 }
 
 export interface VisitaDetailProps {
@@ -330,9 +330,12 @@ export interface DashboardSwitcherProps {
 }
 
 export interface CrearVisitaProps {
-  onCancel: () => void
-  onSubmit: (visitaData: any) => void
   preloadedObra?: Obra | null
+  visitadores: Empleado[]
+  provincias: Provincia[]
+  vehiculos: Vehiculo[]
+  buscarObras: (query: string) => Promise<Obra[]>
+  buscarLocalidades: (provinciaCod: number) => Promise<Localidad[]>
 }
 
 export interface EntregasListProps {

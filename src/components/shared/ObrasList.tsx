@@ -1,12 +1,18 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from 'react'
 import { Building2, Plus, Filter } from 'lucide-react'
 import type { Obra, Provincia, Localidad } from '@/types'
 import PagoModal from '../ventas/pagos/PagoModal'
 import ObraSearchWrapper from './ObraSearchWrapper'
 import ObraCard from './ObraCard'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface ObrasListPropsClient {
   obras: Obra[]
@@ -21,10 +27,6 @@ interface ObrasListPropsClient {
   ) => Promise<{ success: boolean; error?: string }> | void
   onRefresh?: () => void
   obtenerObraAction: (id: number) => Promise<Obra>
-  filtrarObrasAction: (filters: {
-    estado?: string
-    cod_localidad?: number
-  }) => Promise<Obra[]>
   buscarLocalidades: (provinciaId: number) => Promise<Localidad[]>
   searchQuery?: string
 }
@@ -38,64 +40,80 @@ export default function ObrasList({
   obras: initialObras,
   provincias: initialProvincias,
   usuarioRol,
-  filtrarObrasAction,
   buscarLocalidades,
   searchQuery,
 }: ObrasListPropsClient) {
   const router = useRouter()
-  const [cargando, setCargando] = useState(false)
+  const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
+
   const [error, setError] = useState<string | null>(null)
   const [obraPagos, setObraPagos] = useState<Obra | null>(null)
   const [showPagoModal, setShowPagoModal] = useState(false)
-  const [obras, setObras] = useState<Obra[]>(initialObras ?? [])
 
-  // Filtros locales
-  const [provincias] = useState<Provincia[]>(initialProvincias ?? [])
+  const obras = initialObras ?? []
+  const provincias = initialProvincias ?? []
+
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [filtroProvincia, setFiltroProvincia] = useState<string>('')
-  const [filtroLocalidad, setFiltroLocalidad] = useState<string>('')
-  const [filtroEstado, setFiltroEstado] = useState<string>('')
 
-  useEffect(() => {
-    setObras(initialObras ?? [])
-  }, [initialObras])
+  const filtroLocalidad = searchParams.get('cod_localidad') || ''
+  const filtroEstado = searchParams.get('estado') || ''
 
-  useEffect(() => {
-    const fetchLocalidades = async () => {
-      if (filtroProvincia && buscarLocalidades) {
-        const localidades = await buscarLocalidades(Number(filtroProvincia))
-        setLocalidades(localidades)
-      }
-    }
-    fetchLocalidades()
-  }, [filtroProvincia, buscarLocalidades])
-
-  useEffect(() => {
-    const applyFilters = async () => {
-      setCargando(true)
-      setError(null)
-      const payload = {
-        estado: filtroEstado || undefined,
-        cod_localidad: filtroLocalidad ? Number(filtroLocalidad) : undefined,
+  const fetchLocalidades = useCallback(
+    async (provinciaId: string) => {
+      if (!provinciaId) {
+        setLocalidades([])
+        return
       }
       try {
-        const obrasFiltradas = await filtrarObrasAction(payload)
-        if (obrasFiltradas) {
-          setObras(obrasFiltradas)
-        }
+        const locs = await buscarLocalidades(Number(provinciaId))
+        setLocalidades(locs)
       } catch (err) {
-        console.error('applyFilters error:', err)
-        setError('No se pudieron aplicar los filtros.')
-      } finally {
-        setTimeout(() => setCargando(false), 100)
+        console.error('Error fetching localidades:', err)
+        setLocalidades([])
       }
-    }
-    applyFilters()
-  }, [filtroLocalidad, filtroEstado])
+    },
+    [buscarLocalidades]
+  )
+
+  useEffect(() => {
+    fetchLocalidades(filtroProvincia)
+  }, [filtroProvincia, fetchLocalidades])
+
+  const updateFilters = useCallback(
+    (newFilters: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString())
+
+      Object.entries(newFilters).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value)
+        } else {
+          params.delete(key)
+        }
+      })
+
+      startTransition(() => {
+        router.push(`?${params.toString()}`)
+      })
+    },
+    [searchParams, router]
+  )
 
   const handleLocalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
-    setFiltroLocalidad(value)
+    updateFilters({
+      cod_localidad: value,
+      estado: filtroEstado,
+    })
+  }
+
+  const handleEstadoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    updateFilters({
+      estado: value,
+      cod_localidad: filtroLocalidad,
+    })
   }
 
   const handlePagosClick = (obra: Obra) => {
@@ -109,9 +127,11 @@ export default function ObrasList({
   }
 
   const handleSearch = (q: string) => {
-    const base = '/ventas/obras'
-    const url = q ? `${base}?q=${encodeURIComponent(q)}` : base
-    router.replace(url)
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    startTransition(() => {
+      router.push(`?${params.toString()}`)
+    })
   }
 
   const eliminarObraLocal = async (id: number) => {
@@ -121,21 +141,62 @@ export default function ObrasList({
       )
       return
     }
+
+    const confirmar = confirm('¿Estás seguro de que deseas cancelar esta obra?')
+    if (!confirmar) return
+
     try {
-      setCargando(true)
       const res = await onDeleteClick(id)
-      router.refresh()
+
       if ((res as any)?.success === false) {
         const errMsg = (res as any)?.error ?? 'Error eliminando obra'
         alert(errMsg)
+      } else {
+        startTransition(() => {
+          router.refresh()
+        })
       }
     } catch (err) {
       alert('Ocurrió un error al intentar cancelar la obra.')
       console.error(err)
-    } finally {
-      setCargando(false)
     }
   }
+
+  const obraPagosData = useMemo(() => {
+    if (!obraPagos) return null
+
+    const presupuestoAceptado =
+      obraPagos.presupuesto?.find((p: any) => p.fecha_aceptacion) ||
+      obraPagos.presupuesto?.[0]
+    const totalPagado =
+      obraPagos.pagos?.reduce(
+        (sum: number, pago: any) => sum + pago.monto,
+        0
+      ) || 0
+    const valorPresupuesto = presupuestoAceptado?.valor || 0
+    const saldoPendiente = valorPresupuesto - totalPagado
+    const porcentajePagado =
+      valorPresupuesto > 0 ? (totalPagado / valorPresupuesto) * 100 : 0
+
+    return {
+      cod_obra: obraPagos.cod_obra,
+      direccion: obraPagos.direccion,
+      estado: obraPagos.estado,
+      cliente: obraPagos.cliente,
+      presupuesto: presupuestoAceptado
+        ? ({
+            nro_presupuesto: presupuestoAceptado.nro_presupuesto,
+            valor: presupuestoAceptado.valor,
+            fecha_aceptacion:
+              presupuestoAceptado.fecha_aceptacion || new Date().toISOString(),
+          } as any)
+        : undefined,
+      totalPagado,
+      saldoPendiente,
+      porcentajePagado,
+      cantidad_pagos: obraPagos.pagos?.length || 0,
+    }
+  }, [obraPagos])
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -188,7 +249,9 @@ export default function ObrasList({
                 value={filtroProvincia}
                 onChange={(e) => {
                   setFiltroProvincia(e.target.value)
-                  setFiltroLocalidad('')
+                  if (filtroLocalidad) {
+                    updateFilters({ estado: filtroEstado, cod_localidad: '' })
+                  }
                 }}
                 className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
@@ -234,7 +297,7 @@ export default function ObrasList({
               <select
                 id="filtro-estado"
                 value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
+                onChange={handleEstadoChange}
                 className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">Todos los estados</option>
@@ -251,7 +314,7 @@ export default function ObrasList({
 
         {/* Listado de obras */}
         <div className="grid gap-4 sm:gap-6">
-          {cargando ? (
+          {isPending ? (
             <div className="p-8 text-center text-lg text-gray-600">
               Cargando obras...
             </div>
@@ -269,18 +332,10 @@ export default function ObrasList({
                 onPagosClick={handlePagosClick}
                 onEditClick={onEditClick}
                 onDeleteClick={eliminarObraLocal}
-                onNotaFabricaChange={async () => {
-                  if (typeof filtrarObrasAction === 'function') {
-                    const res = await filtrarObrasAction({
-                      estado: filtroEstado || undefined,
-                      cod_localidad: filtroLocalidad
-                        ? Number(filtroLocalidad)
-                        : undefined,
-                    })
-                    setObras(Array.isArray(res) ? res : [])
-                  } else {
+                onNotaFabricaChange={() => {
+                  startTransition(() => {
                     router.refresh()
-                  }
+                  })
                 }}
               />
             ))
@@ -299,58 +354,17 @@ export default function ObrasList({
       </div>
 
       {/* Modal de pagos mejorado */}
-      {showPagoModal && obraPagos && (
+      {showPagoModal && obraPagosData && (
         <PagoModal
           open={showPagoModal}
           onClose={handleClosePagoModal}
-          onPagoCreado={async () => {
+          onPagoCreado={() => {
             handleClosePagoModal()
-            if (typeof filtrarObrasAction === 'function') {
-              const res = await filtrarObrasAction({
-                estado: filtroEstado || undefined,
-                cod_localidad: filtroLocalidad
-                  ? Number(filtroLocalidad)
-                  : undefined,
-              })
-              setObras(Array.isArray(res) ? res : [])
-            } else {
+            startTransition(() => {
               router.refresh()
-            }
+            })
           }}
-          obraPreseleccionada={(() => {
-            const presupuestoAceptado =
-              obraPagos.presupuesto?.find((p: any) => p.fecha_aceptacion) ||
-              obraPagos.presupuesto?.[0]
-            const totalPagado =
-              obraPagos.pagos?.reduce(
-                (sum: number, pago: any) => sum + pago.monto,
-                0
-              ) || 0
-            const valorPresupuesto = presupuestoAceptado?.valor || 0
-            const saldoPendiente = valorPresupuesto - totalPagado
-            const porcentajePagado =
-              valorPresupuesto > 0 ? (totalPagado / valorPresupuesto) * 100 : 0
-
-            return {
-              cod_obra: obraPagos.cod_obra,
-              direccion: obraPagos.direccion,
-              estado: obraPagos.estado,
-              cliente: obraPagos.cliente,
-              presupuesto: presupuestoAceptado
-                ? ({
-                    nro_presupuesto: presupuestoAceptado.nro_presupuesto,
-                    valor: presupuestoAceptado.valor,
-                    fecha_aceptacion:
-                      presupuestoAceptado.fecha_aceptacion ||
-                      new Date().toISOString(),
-                  } as any)
-                : undefined,
-              totalPagado,
-              saldoPendiente,
-              porcentajePagado,
-              cantidad_pagos: obraPagos.pagos?.length || 0,
-            }
-          })()}
+          obraPreseleccionada={obraPagosData}
         />
       )}
     </div>

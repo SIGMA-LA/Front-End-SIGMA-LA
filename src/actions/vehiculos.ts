@@ -2,6 +2,7 @@
 
 import { Vehiculo } from '@/types'
 import { getAccessToken } from './auth'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 
 const baseUrl =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/vehiculos'
@@ -9,21 +10,17 @@ const baseUrl =
 export async function obtenerVehiculosDisponibles(): Promise<Vehiculo[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}`, {
+    const response = await fetchWithErrorHandling(`${baseUrl}/vehiculos`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      cache: 'force-cache',
     })
 
-    if (!response.ok) {
-      return []
-    }
-
-    const empleados: Vehiculo[] = await response.json()
-    return empleados
+    const vehiculos: Vehiculo[] = await response.json()
+    return vehiculos
   } catch (error) {
     console.error('Error al obtener vehículos disponibles para entrega:', error)
     throw error
@@ -35,17 +32,13 @@ export async function obtenerVehiculo(
 ): Promise<Vehiculo | null> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/${patente}`, {
+    const response = await fetchWithErrorHandling(`${baseUrl}/${patente}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     })
-
-    if (!response.ok) {
-      return null
-    }
 
     const vehiculo: Vehiculo = await response.json()
     return vehiculo
