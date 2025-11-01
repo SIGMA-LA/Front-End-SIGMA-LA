@@ -12,7 +12,7 @@ export default async function CrearVisitaPage() {
     <CrearVisita
       provincias={provincias}
       vehiculos={vehiculos}
-      visitadores={visitadores}
+      visitadores={Array.isArray(visitadores) ? visitadores : []}
       buscarObras={obtenerObras}
       buscarLocalidades={localidadesPorProvincia}
     />

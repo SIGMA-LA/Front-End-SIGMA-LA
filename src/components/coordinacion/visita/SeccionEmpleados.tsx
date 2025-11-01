@@ -20,7 +20,6 @@ export default function SeccionEmpleados({
   acompanantesSeleccionados,
   onAcompanantesChange,
 }: SeccionEmpleadosProps) {
-  // Solo mantiene el estado local para el query de búsqueda de acompañantes
   const [acompananteQuery, setAcompananteQuery] = useState('')
   const [acompananteResultados, setAcompananteResultados] = useState<
     Empleado[]

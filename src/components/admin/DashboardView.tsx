@@ -12,7 +12,6 @@ import {
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { useGlobalContext } from '@/context/GlobalContext'
-import { mockReportesVentas } from '@/data/mockData'
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-AR', {
@@ -72,11 +71,7 @@ export default function DashboardView() {
                 <p className="text-sm font-medium text-green-100">
                   Ingresos del Mes
                 </p>
-                <p className="text-3xl font-bold">
-                  {formatCurrency(
-                    mockReportesVentas.at(-1)?.ingresosBrutos || 0
-                  )}
-                </p>
+                <p className="text-3xl font-bold"></p>
               </div>
               <DollarSign className="h-10 w-10 text-green-200" />
             </div>
@@ -93,32 +88,7 @@ export default function DashboardView() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockReportesVentas.slice(-6).map((reporte) => (
-              <div
-                key={reporte.id}
-                className="flex items-center justify-between rounded-lg bg-gray-50 p-3"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                    <Calendar className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">
-                      {reporte.mes} {reporte.año}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {reporte.ventasTotales} ventas
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-green-600">
-                    {formatCurrency(reporte.gananciaNeeta)}
-                  </p>
-                  <p className="text-sm text-gray-600">Ganancia neta</p>
-                </div>
-              </div>
-            ))}
+            {/* Aquí puedes integrar un componente de gráfico, como Chart.js o Recharts */}
           </div>
         </CardContent>
       </Card>
@@ -141,9 +111,7 @@ export default function DashboardView() {
           <Card className="cursor-pointer transition-shadow hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center p-6 text-center">
               <TrendingUp className="mx-auto mb-4 h-10 w-10 text-green-600" />
-              <h3 className="mb-2 text-lg font-semibold">
-                Reportes de Ventas
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold">Reportes de Ventas</h3>
               <p className="text-sm text-gray-600">
                 Análisis detallado de la performance
               </p>

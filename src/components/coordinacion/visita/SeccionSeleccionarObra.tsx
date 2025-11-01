@@ -1,59 +1,88 @@
-// src/components/Coord/visitas/SeccionSeleccionObra.tsx
 'use client'
-import { Building2, Info } from 'lucide-react'
-import ObraSearchWrapper from '../../shared/ObraSearchWrapper'
+
+import { Obra } from '@/types'
+import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
+import { Building2, CheckCircle2 } from 'lucide-react'
 
 interface SeccionSeleccionObraProps {
   isVisitaInicial: boolean
   onVisitaInicialToggle: () => void
-  showObraSearch: boolean
-  onShowObraSearchToggle: () => void
   obraSeleccionada: string
-  onSelectObra: (obra: any) => void
+  onSelectObra: (obra: Obra) => void
+  buscarObras: (filtro: string) => Promise<Obra[]>
 }
 
 export default function SeccionSeleccionObra({
   isVisitaInicial,
   onVisitaInicialToggle,
-  showObraSearch,
-  onShowObraSearchToggle,
   obraSeleccionada,
   onSelectObra,
+  buscarObras,
 }: SeccionSeleccionObraProps) {
   return (
     <section className="mb-8">
-      <div className="flex items-center gap-3">
+      <h2 className="mb-4 text-xl font-semibold text-blue-800">
+        Tipo de visita
+      </h2>
+
+      {/* Botón de visita inicial */}
+      <div className="mb-6">
         <button
           type="button"
-          onClick={onShowObraSearchToggle}
-          className={`flex items-center gap-2 rounded-lg border px-4 py-2 shadow-sm transition-colors ${
+          onClick={onVisitaInicialToggle}
+          className={`flex w-full items-center justify-between rounded-lg border-2 p-4 transition-all ${
             isVisitaInicial
-              ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-              : 'border-gray-300 bg-white text-blue-700 hover:bg-blue-50'
-          } `}
-          disabled={isVisitaInicial}
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-300 bg-white hover:border-blue-300 hover:bg-blue-50/50'
+          }`}
         >
-          <Building2 className="h-4 w-4" />
-          {obraSeleccionada || 'Buscar obra existente...'}
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                isVisitaInicial ? 'bg-blue-500' : 'bg-gray-200'
+              }`}
+            >
+              <Building2
+                className={`h-5 w-5 ${isVisitaInicial ? 'text-white' : 'text-gray-500'}`}
+              />
+            </div>
+            <div className="text-left">
+              <p
+                className={`font-semibold ${isVisitaInicial ? 'text-blue-900' : 'text-gray-700'}`}
+              >
+                Visita inicial
+              </p>
+              <p className="text-sm text-gray-500">Sin obra previa asignada</p>
+            </div>
+          </div>
+          {isVisitaInicial && (
+            <CheckCircle2 className="h-6 w-6 text-blue-500" />
+          )}
         </button>
-        <div className="ml-4 flex items-center">
-          <button
-            type="button"
-            onClick={onVisitaInicialToggle}
-            className={`flex items-center gap-2 rounded-full px-4 py-2 font-semibold shadow transition-colors ${
-              isVisitaInicial
-                ? 'bg-blue-600 text-white'
-                : 'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50'
-            } `}
-          >
-            <Info className="h-4 w-4" />
-            Visita sin obra
-          </button>
-        </div>
       </div>
-      {showObraSearch && !isVisitaInicial && (
-        <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <ObraSearchWrapper onSelectObra={onSelectObra} />
+
+      {/* Buscador fijo si NO es visita inicial */}
+      {!isVisitaInicial && (
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Buscar obra existente
+          </label>
+          <ObraSearchSelect
+            buscarObras={buscarObras}
+            onSelectObra={onSelectObra}
+          />
+
+          {obraSeleccionada && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
+              <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-600" />
+              <div>
+                <span className="font-semibold text-green-800">
+                  Obra seleccionada:
+                </span>{' '}
+                <span className="text-green-700">{obraSeleccionada}</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>

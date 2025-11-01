@@ -16,18 +16,19 @@ export interface Documento {
   nombre: string
   url: string
 }
-export interface CrearVisita {
+export type VisitaFormData = {
   fecha_hora_visita: string
   motivo_visita: string
   observaciones: string
-  direccion: string
-  contacto: string
-  localidad: string
+  direccion_visita: string
   cod_obra: number | null
-  vehiculo: string
+  cod_localidad: number | null
   dias_viatico: number
   empleados_visita: string[]
-  cliente: Cliente
+  vehiculo: string
+  nombre_cliente?: string | null
+  apellido_cliente?: string | null
+  telefono_cliente?: string | null
 }
 
 export interface EmpleadoVisita {

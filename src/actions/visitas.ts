@@ -1,9 +1,11 @@
 'use server'
 
 import { getAccessToken } from './auth'
-import { Visita, CrearVisita } from '@/types'
+import { Visita, VisitaFormData } from '@/types'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { redirect } from 'next/navigation'
 
+import { revalidatePath } from 'next/cache'
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/visitas'
 
 /**
@@ -67,7 +69,7 @@ export async function obtenerVisitas(): Promise<Visita[]> {
 /**
  * Crea una nueva visita
  */
-export async function crearVisita(visitaData: CrearVisita): Promise<Visita> {
+export async function crearVisita(visitaData: VisitaFormData): Promise<Visita> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}`, {
     method: 'POST',
@@ -85,7 +87,7 @@ export async function crearVisita(visitaData: CrearVisita): Promise<Visita> {
  */
 export async function actualizarVisita(
   id: number,
-  visitaData: Partial<CrearVisita>
+  visitaData: Partial<VisitaFormData>
 ): Promise<Visita> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}/${id}`, {
@@ -97,4 +99,64 @@ export async function actualizarVisita(
     body: JSON.stringify(visitaData),
   })
   return await response.json()
+}
+
+export async function crearVisitaAction(prevState: any, formData: FormData) {
+  try {
+    const visitaData: VisitaFormData = {
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}`,
+      motivo_visita: formData.get('tipo') as string,
+      observaciones: formData.get('observaciones') as string,
+      direccion_visita: formData.get('direccion') as string,
+      cod_obra: formData.get('obraId') ? Number(formData.get('obraId')) : null,
+      cod_localidad: formData.get('cod_localidad')
+        ? Number(formData.get('cod_localidad'))
+        : null,
+      dias_viatico: Number(formData.get('diasViatico')),
+      empleados_visita: JSON.parse(formData.get('empleados_visita') as string),
+      vehiculo: formData.get('vehiculo') as string,
+      nombre_cliente: (formData.get('nombre') as string) || null,
+      apellido_cliente: (formData.get('apellido') as string) || null,
+      telefono_cliente: (formData.get('clienteTelefono') as string) || null,
+    }
+
+    await crearVisita(visitaData)
+    revalidatePath('/coordinacion/visitas')
+  } catch (error) {
+    return { error: 'Error al crear la visita. Intente nuevamente.' }
+  }
+
+  redirect('/coordinacion/visitas')
+}
+
+export async function actualizarVisitaAction(
+  codVisita: number,
+  prevState: any,
+  formData: FormData
+) {
+  try {
+    const visitaData: any = {
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}`,
+      motivo_visita: formData.get('tipo') as string,
+      observaciones: formData.get('observaciones') as string,
+      direccion_visita: formData.get('direccion') as string,
+      cod_obra: formData.get('obraId') ? Number(formData.get('obraId')) : null,
+      cod_localidad: formData.get('cod_localidad')
+        ? Number(formData.get('cod_localidad'))
+        : null,
+      dias_viatico: Number(formData.get('diasViatico')),
+      empleados_visita: JSON.parse(formData.get('empleados_visita') as string),
+      vehiculo: formData.get('vehiculo') as string,
+      nombre_cliente: (formData.get('nombre') as string) || null,
+      apellido_cliente: (formData.get('apellido') as string) || null,
+      telefono_cliente: (formData.get('clienteTelefono') as string) || null,
+    }
+
+    await actualizarVisita(codVisita, visitaData)
+    revalidatePath('/coordinacion/visitas')
+  } catch (error) {
+    return { error: 'Error al actualizar la visita. Intente nuevamente.' }
+  }
+
+  redirect('/coordinacion/visitas')
 }
