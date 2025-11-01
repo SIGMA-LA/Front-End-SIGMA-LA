@@ -1,41 +1,51 @@
-'use client'
-
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import CrearEntrega from '@/components/coordinacion/CrearEntrega'
-import { Obra } from '@/types'
 import { obtenerObra } from '@/actions/obras'
+import { obtenerTodosLosEmpleados } from '@/actions/empleado'
+import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
+import { getMaquinariasDisponibles } from '@/actions/maquinarias'
+import CrearEntregaForm from '@/components/coordinacion/CrearEntregaForm'
+import { Suspense } from 'react'
+import { Loader2 } from 'lucide-react'
 
-export default function CrearEntregaPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const obraId = searchParams.get('obra')
-  const [preloadedObra, setPreloadedObra] = useState<Obra | null>(null)
-  const [loading, setLoading] = useState(!!obraId)
-
-  useEffect(() => {
-    if (obraId) {
-      const fetchObra = async () => {
-        try {
-          const data = await obtenerObra(Number(obraId))
-          setPreloadedObra(data)
-        } catch (error) {
-          console.error('Error al cargar obra:', error)
-        } finally {
-          setLoading(false)
-        }
-      }
-      fetchObra()
-    } else {
-      setLoading(false)
-    }
-  }, [obraId])
+async function CrearEntregaContent({ obraId }: { obraId: string | null }) {
+  const [obra, empleados, vehiculos, maquinarias] = await Promise.all([
+    obraId ? obtenerObra(Number(obraId)) : null,
+    obtenerTodosLosEmpleados(),
+    obtenerVehiculosDisponibles(),
+    getMaquinariasDisponibles(),
+  ])
 
   return (
-    <CrearEntrega
-      onCancel={() => router.push('/coordinacion/entregas')}
-      onSubmit={() => router.push('/coordinacion/entregas')}
-      preloadedObra={preloadedObra}
+    <CrearEntregaForm
+      preloadedObra={obra}
+      empleados={empleados}
+      vehiculos={vehiculos}
+      maquinarias={maquinarias}
     />
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <div className="text-center">
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
+        <p className="mt-4 text-gray-600">Cargando formulario...</p>
+      </div>
+    </div>
+  )
+}
+
+export default async function CrearEntregaPage({
+  searchParams,
+}: {
+  searchParams?: any
+}) {
+  const sp = await searchParams
+  const obraId = sp?.obra ?? null
+
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <CrearEntregaContent obraId={obraId} />
+    </Suspense>
   )
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Obra } from '@/types'
 import useDebounce from '@/hooks/useDebounce'
-import { Building2, MapPin, User, Search } from 'lucide-react'
+import { Building2, User, Search } from 'lucide-react'
 
 export default function ObraSearchSelect({
   onSelectObra,

@@ -1,15 +1,15 @@
 'use client'
 
 import { Truck, Wrench } from 'lucide-react'
-import { MaquinariaConDisponibilidad } from '@/services/maquinaria.service'
+import type { Maquinaria } from '@/types'
 
 interface RecursosSelectionProps {
   selectedVehiculos: string[]
   onSelectVehiculosClick: () => void
   selectedMaquinaria: string[]
   onSelectMaquinariaClick: () => void
-  maquinarias: MaquinariaConDisponibilidad[]
-  loadingDisponibilidad: boolean
+  maquinarias: Maquinaria[]
+  loadingDisponibilidad?: boolean
 }
 
 export default function RecursosSelection({
@@ -18,7 +18,7 @@ export default function RecursosSelection({
   selectedMaquinaria,
   onSelectMaquinariaClick,
   maquinarias,
-  loadingDisponibilidad,
+  loadingDisponibilidad = false,
 }: RecursosSelectionProps) {
   return (
     <>

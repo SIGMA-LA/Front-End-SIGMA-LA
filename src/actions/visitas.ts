@@ -51,9 +51,9 @@ export async function cancelarVisita(id: number): Promise<Visita> {
 }
 
 /**
- * Obtiene todas las visitas
+ * Obtiene todas las visitas con filtrado opcional
  */
-export async function obtenerVisitas(): Promise<Visita[]> {
+export async function obtenerVisitas(filtro?: string): Promise<Visita[]> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}`, {
     method: 'GET',
@@ -63,7 +63,52 @@ export async function obtenerVisitas(): Promise<Visita[]> {
     },
     cache: 'no-store',
   })
-  return await response.json()
+
+  if (!response.ok) return []
+
+  let visitas: Visita[] = await response.json()
+
+  // Filtrado en el servidor
+  if (filtro?.trim()) {
+    const filtroLower = filtro.trim().toLowerCase()
+
+    visitas = visitas.filter((visita) => {
+      const nombreCliente = visita.nombre_cliente?.toLowerCase() || ''
+      const apellidoCliente = visita.apellido_cliente?.toLowerCase() || ''
+      const direccion = visita.direccion_visita?.toLowerCase() || ''
+      const obraDireccion = visita.obra?.direccion?.toLowerCase() || ''
+      const clienteObra = visita.obra?.cliente
+      const clienteObraNombre = clienteObra?.nombre?.toLowerCase() || ''
+      const clienteObraApellido = clienteObra?.apellido?.toLowerCase() || ''
+      const clienteObraRazon = clienteObra?.razon_social?.toLowerCase() || ''
+      const motivo = visita.motivo_visita?.toLowerCase() || ''
+      const observaciones = visita.observaciones?.toLowerCase() || ''
+      const codigoVisita = String(visita.cod_visita || '')
+
+      const empleadosNombres =
+        visita.empleado_visita
+          ?.map((ev) =>
+            `${ev.empleado?.nombre} ${ev.empleado?.apellido}`.toLowerCase()
+          )
+          .join(' ') || ''
+
+      return (
+        nombreCliente.includes(filtroLower) ||
+        apellidoCliente.includes(filtroLower) ||
+        direccion.includes(filtroLower) ||
+        obraDireccion.includes(filtroLower) ||
+        clienteObraNombre.includes(filtroLower) ||
+        clienteObraApellido.includes(filtroLower) ||
+        clienteObraRazon.includes(filtroLower) ||
+        motivo.includes(filtroLower) ||
+        observaciones.includes(filtroLower) ||
+        codigoVisita.includes(filtroLower) ||
+        empleadosNombres.includes(filtroLower)
+      )
+    })
+  }
+
+  return visitas
 }
 
 /**
@@ -104,7 +149,7 @@ export async function actualizarVisita(
 export async function crearVisitaAction(formData: FormData) {
   try {
     const visitaData: any = {
-      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`, // ✅ Agregá segundos
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
       motivo_visita: formData.get('tipo') as string,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -123,7 +168,7 @@ export async function crearVisitaAction(formData: FormData) {
     await crearVisita(visitaData)
     revalidatePath('/coordinacion/visitas')
   } catch (error) {
-    console.error('❌ Error al crear visita:', error)
+    console.error('Error al crear visita:', error)
     throw error
   }
 
@@ -135,7 +180,7 @@ export async function actualizarVisitaAction(formData: FormData) {
     const codVisita = Number(formData.get('cod_visita'))
 
     const visitaData: any = {
-      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`, // ✅ Agregá segundos
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
       motivo_visita: formData.get('tipo') as string,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -153,7 +198,7 @@ export async function actualizarVisitaAction(formData: FormData) {
     await actualizarVisita(codVisita, visitaData)
     revalidatePath('/coordinacion/visitas')
   } catch (error) {
-    console.error('❌ Error al actualizar visita:', error)
+    console.error('Error al actualizar visita:', error)
     throw error
   }
 

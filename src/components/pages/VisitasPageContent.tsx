@@ -2,6 +2,7 @@ import { Calendar, Plus } from 'lucide-react'
 import { Suspense } from 'react'
 import { obtenerVisitas } from '@/actions/visitas'
 import VisitaCard from '@/components/shared/VisitaCard'
+import SearchWrapper from '@/components/shared/SearchWrapper'
 import Link from 'next/link'
 
 async function VisitasList({
@@ -11,7 +12,7 @@ async function VisitasList({
   searchQuery?: string
   rolActual?: string
 }) {
-  const visitas = await obtenerVisitas()
+  const visitas = await obtenerVisitas(searchQuery)
 
   if (visitas.length === 0) {
     return (
@@ -103,7 +104,6 @@ export default async function VisitasPageContent({
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
@@ -127,7 +127,13 @@ export default async function VisitasPageContent({
           )}
         </div>
 
-        {/* Lista con Suspense */}
+        <div className="mb-8">
+          <SearchWrapper
+            placeholder="Buscar visita por cliente, dirección, obra..."
+            initialValue={searchQuery}
+          />
+        </div>
+
         <Suspense key={searchQuery} fallback={<VisitasListSkeleton />}>
           <VisitasList searchQuery={searchQuery} rolActual={rolActual} />
         </Suspense>
