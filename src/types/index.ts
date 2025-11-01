@@ -332,7 +332,7 @@ export interface DashboardSwitcherProps {
 
 export interface CrearVisitaProps {
   preloadedObra?: Obra | null
-  visitadores: Empleado[]
+  empleados: Empleado[]
   provincias: Provincia[]
   vehiculos: Vehiculo[]
   buscarObras: (query: string) => Promise<Obra[]>

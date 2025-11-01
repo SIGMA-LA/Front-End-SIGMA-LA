@@ -1,11 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Empleado } from '@/types'
-import { buscarFiltrados } from '@/actions/empleado'
 
 interface SeccionEmpleadosProps {
-  visitadoresDisponibles: Empleado[]
-  acompanantesDisponibles: Empleado[]
+  visitadores: Empleado[]
+  empleadosDisponibles: Empleado[]
+  todosLosEmpleados: Empleado[]
   visitadorPrincipal: string
   onVisitadorChange: (cuil: string) => void
   acompanantesSeleccionados: string[]
@@ -13,49 +13,31 @@ interface SeccionEmpleadosProps {
 }
 
 export default function SeccionEmpleados({
-  visitadoresDisponibles,
-  acompanantesDisponibles,
+  visitadores,
+  empleadosDisponibles,
+  todosLosEmpleados,
   visitadorPrincipal,
   onVisitadorChange,
   acompanantesSeleccionados,
   onAcompanantesChange,
 }: SeccionEmpleadosProps) {
-  const [acompananteQuery, setAcompananteQuery] = useState('')
-  const [acompananteResultados, setAcompananteResultados] = useState<
-    Empleado[]
-  >([])
-  const [loadingAcompanantes, setLoadingAcompanantes] = useState(false)
+  const [query, setQuery] = useState('')
 
-  useEffect(() => {
-    let ignore = false
-    if (acompananteQuery.length > 1) {
-      setLoadingAcompanantes(true)
-      buscarFiltrados(acompananteQuery).then((res) => {
-        if (!ignore) {
-          setAcompananteResultados(
-            res.filter(
-              (a) =>
-                !acompanantesSeleccionados.includes(a.cuil) &&
-                a.cuil !== visitadorPrincipal
-            )
-          )
-          setLoadingAcompanantes(false)
-        }
-      })
-    } else {
-      setAcompananteResultados([])
-    }
-    return () => {
-      ignore = true
-    }
-  }, [acompananteQuery, acompanantesSeleccionados, visitadorPrincipal])
+  // Filtrar empleados por query
+  const resultadosFiltrados =
+    query.length > 1
+      ? empleadosDisponibles.filter((e) =>
+          `${e.nombre} ${e.apellido}`
+            .toLowerCase()
+            .includes(query.toLowerCase())
+        )
+      : []
 
-  const handleSelectAcompanante = (empleado: Empleado) => {
-    if (!acompanantesSeleccionados.includes(empleado.cuil)) {
-      onAcompanantesChange([...acompanantesSeleccionados, empleado.cuil])
+  const handleSelectAcompanante = (cuil: string) => {
+    if (!acompanantesSeleccionados.includes(cuil)) {
+      onAcompanantesChange([...acompanantesSeleccionados, cuil])
     }
-    setAcompananteQuery('')
-    setAcompananteResultados([])
+    setQuery('')
   }
 
   const handleRemoveAcompanante = (cuil: string) => {
@@ -67,18 +49,20 @@ export default function SeccionEmpleados({
       <h2 className="mb-4 text-xl font-semibold text-blue-800">
         Empleados asignados
       </h2>
+
       {/* Visitador principal */}
       <div className="mb-6">
         <label className="mb-2 block text-sm font-medium text-gray-700">
-          Visitador principal
+          Visitador principal *
         </label>
         <select
           value={visitadorPrincipal}
           onChange={(e) => onVisitadorChange(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          required
         >
           <option value="">Seleccionar visitador...</option>
-          {visitadoresDisponibles.map((v) => (
+          {visitadores.map((v) => (
             <option key={v.cuil} value={v.cuil}>
               {v.nombre} {v.apellido}
             </option>
@@ -89,48 +73,50 @@ export default function SeccionEmpleados({
       {/* Acompañantes */}
       <div className="mb-6">
         <label className="mb-2 block text-sm font-medium text-gray-700">
-          Acompañantes
+          Acompañantes (opcional)
         </label>
-        <div className="mb-2 flex gap-2">
+        <div className="relative mb-2">
           <input
             type="text"
-            value={acompananteQuery}
-            onChange={(e) => setAcompananteQuery(e.target.value)}
-            placeholder="Buscar acompañante..."
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre o apellido..."
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
+          {resultadosFiltrados.length > 0 && (
+            <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
+              {resultadosFiltrados.map((e) => (
+                <li key={e.cuil}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAcompanante(e.cuil)}
+                    className="w-full px-3 py-2 text-left transition-colors hover:bg-blue-50"
+                  >
+                    {e.nombre} {e.apellido}
+                    <span className="ml-2 text-xs text-gray-500">
+                      ({e.rol_actual})
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        {loadingAcompanantes && (
-          <div className="mb-2 text-xs text-gray-500">Buscando...</div>
-        )}
-        {acompananteResultados.length > 0 && (
-          <ul className="mb-2">
-            {acompananteResultados.map((a) => (
-              <li key={a.cuil}>
-                <button
-                  type="button"
-                  onClick={() => handleSelectAcompanante(a)}
-                  className="w-full rounded px-2 py-1 text-left hover:bg-blue-50"
-                >
-                  {a.nombre} {a.apellido}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+
+        {/* Chips de acompañantes seleccionados */}
         <div className="flex flex-wrap gap-2">
-          {acompanantesDisponibles
-            .filter((a) => acompanantesSeleccionados.includes(a.cuil))
-            .map((a) => (
+          {todosLosEmpleados
+            .filter((e) => acompanantesSeleccionados.includes(e.cuil))
+            .map((e) => (
               <span
-                key={a.cuil}
-                className="inline-flex items-center rounded bg-blue-100 px-2 py-1 text-xs text-blue-700"
+                key={e.cuil}
+                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700"
               >
-                {a.nombre} {a.apellido}
+                {e.nombre} {e.apellido}
                 <button
                   type="button"
-                  onClick={() => handleRemoveAcompanante(a.cuil)}
-                  className="ml-2 text-blue-500 hover:text-blue-700"
+                  onClick={() => handleRemoveAcompanante(e.cuil)}
+                  className="text-blue-500 transition-colors hover:text-blue-700"
                   title="Quitar"
                 >
                   ×

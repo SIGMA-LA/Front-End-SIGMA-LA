@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Calendar } from 'lucide-react'
-import { CrearVisitaProps, Localidad, Visita } from '@/types'
+import { CrearVisitaProps, Localidad, Visita, Empleado } from '@/types'
 import { crearVisita, actualizarVisita } from '@/actions/visitas'
 import SeccionEmpleados from './visita/SeccionEmpleados'
 import SeccionDatosVisita from './visita/SeccionDatosVisita'
@@ -17,12 +17,11 @@ export default function CrearVisita({
   buscarLocalidades,
   vehiculos,
   provincias,
-  visitadores,
+  empleados,
 }: CrearVisitaProps & { visitaEditar?: Visita | null }) {
   const router = useRouter()
   const isFromObra = !!preloadedObra
 
-  // Estados simples
   const [formData, setFormData] = useState({
     fecha: '',
     fechaHasta: '',
@@ -48,11 +47,24 @@ export default function CrearVisita({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Cálculos simples
-  const acompanantesDisponibles = useMemo(
-    () => visitadores.filter((v) => v.cuil !== visitadorPrincipal),
-    [visitadores, visitadorPrincipal]
-  )
+  const visitadores = useMemo(() => {
+    const result = Array.isArray(empleados)
+      ? empleados.filter((e) => e.rol_actual === 'VISITADOR')
+      : []
+    return result
+  }, [empleados])
+
+  const empleadosParaAcompanar = useMemo(() => {
+    const result = Array.isArray(empleados)
+      ? empleados.filter(
+          (e) =>
+            (e.rol_actual === 'VISITADOR' || e.rol_actual === 'PLANTA') &&
+            e.cuil !== visitadorPrincipal &&
+            !selectedAcompanantes.includes(e.cuil)
+        )
+      : []
+    return result
+  }, [empleados, visitadorPrincipal, selectedAcompanantes])
 
   const diasViatico = useMemo(() => {
     if (!formData.fecha || !formData.fechaHasta) return 1
@@ -91,7 +103,6 @@ export default function CrearVisita({
     }
   }, [visitaEditar])
 
-  // Actualiza localidades
   useEffect(() => {
     if (provinciaSeleccionada) {
       buscarLocalidades(provinciaSeleccionada).then(setLocalidades)
@@ -153,7 +164,6 @@ export default function CrearVisita({
                 isVisitaInicial={isVisitaInicial}
                 onVisitaInicialToggle={() => {
                   setIsVisitaInicial(!isVisitaInicial)
-                  // Limpiar obra si activa visita inicial
                   if (!isVisitaInicial) {
                     setFormData((prev) => ({
                       ...prev,
@@ -224,8 +234,9 @@ export default function CrearVisita({
             />
 
             <SeccionEmpleados
-              visitadoresDisponibles={visitadores}
-              acompanantesDisponibles={acompanantesDisponibles}
+              visitadores={visitadores}
+              empleadosDisponibles={empleadosParaAcompanar}
+              todosLosEmpleados={empleados}
               visitadorPrincipal={visitadorPrincipal}
               onVisitadorChange={setVisitadorPrincipal}
               acompanantesSeleccionados={selectedAcompanantes}

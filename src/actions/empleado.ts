@@ -2,13 +2,14 @@
 
 import { Empleado } from '@/types'
 import { getAccessToken } from './auth'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/empleados'
 
 export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/me`, {
+    const response = await fetchWithErrorHandling(`${baseUrl}/me`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -32,7 +33,7 @@ export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
 export async function obtenerVisitadores(): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/visitadores`, {
+    const response = await fetchWithErrorHandling(`${baseUrl}/visitadores`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -56,14 +57,17 @@ export async function obtenerVisitadores(): Promise<Empleado[]> {
 export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/disponibles-entrega`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/disponibles-entrega`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    )
 
     if (!response.ok) {
       return []
@@ -80,14 +84,17 @@ export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
 export async function buscarFiltrados(query: string): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/buscar?${query}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/buscar?${query}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    )
 
     if (!response.ok) {
       return []
@@ -104,7 +111,6 @@ export async function buscarFiltrados(query: string): Promise<Empleado[]> {
 export async function obtenerEmpleadoPorCuil(
   cuil: string
 ): Promise<Empleado | null> {
-  // Validamos que el CUIL no esté vacío para no hacer una llamada innecesaria.
   if (!cuil) {
     console.warn('Se intentó obtener un empleado sin CUIL.')
     return null
@@ -112,9 +118,7 @@ export async function obtenerEmpleadoPorCuil(
 
   try {
     const token = await getAccessToken()
-    // La URL debe coincidir con tu endpoint de la API para obtener un solo empleado.
-    // Usualmente sigue el patrón RESTful: /empleados/:cuil
-    const response = await fetch(`${baseUrl}/${cuil}`, {
+    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -124,7 +128,6 @@ export async function obtenerEmpleadoPorCuil(
     })
 
     if (!response.ok) {
-      // Si el empleado no se encuentra (404) o hay otro error, devolvemos null.
       return null
     }
 
@@ -132,6 +135,31 @@ export async function obtenerEmpleadoPorCuil(
     return empleado
   } catch (error) {
     console.error(`Error obteniendo empleado con CUIL ${cuil}:`, error)
-    return null // En caso de error de red, también devolvemos null.
+    return null
+  }
+}
+
+obtenerTodosLosEmpleados
+export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return []
+    }
+
+    const data = await response.json()
+    return data.data || []
+  } catch (error) {
+    console.error('Error obteniendo todos los empleados:', error)
+    return []
   }
 }
