@@ -54,14 +54,16 @@ export async function obtenerCliente(cuil: string): Promise<Cliente | null> {
     return null
   }
 }
-
-export async function crearCliente(formData: FormData): Promise<any> {
+export async function crearCliente(
+  formData: FormData
+): Promise<{ success: boolean; error?: string; data?: Cliente }> {
   try {
     const token = await getAccessToken()
     const raw = Object.fromEntries(formData.entries()) as Record<
       string,
       FormDataEntryValue
     >
+
     const dataCliente: Record<string, string> = {}
     for (const [key, val] of Object.entries(raw)) {
       if (typeof val === 'string') {
@@ -69,26 +71,43 @@ export async function crearCliente(formData: FormData): Promise<any> {
       }
     }
     if (!dataCliente.cuil) {
-      throw new Error('CUIL es requerido')
+      return { success: false, error: 'CUIL es requerido' }
     }
+
     const cuilDigits = dataCliente.cuil.replace(/\D/g, '')
     if (cuilDigits.length !== 11) {
-      throw new Error('CUIL inválido (debe tener 11 dígitos)')
+      return { success: false, error: 'CUIL inválido (debe tener 11 dígitos)' }
     }
     dataCliente.cuil = cuilDigits
+
+    if (dataCliente.tipo_cliente === 'EMPRESA' && !dataCliente.razon_social) {
+      return {
+        success: false,
+        error: 'Razón social es requerida para empresas',
+      }
+    }
+
+    if (dataCliente.tipo_cliente === 'PERSONA') {
+      if (!dataCliente.nombre || !dataCliente.apellido) {
+        return { success: false, error: 'Nombre y apellido son requeridos' }
+      }
+      if (!dataCliente.sexo) {
+        return { success: false, error: 'Sexo es requerido' }
+      }
+    }
 
     const payload = {
       cuil: dataCliente.cuil,
       tipo_cliente: dataCliente.tipo_cliente,
       telefono: dataCliente.telefono,
       mail: dataCliente.mail,
-      razon_social: dataCliente.razon_social,
-      nombre: dataCliente.nombre,
-      apellido: dataCliente.apellido,
-      sexo: dataCliente.sexo,
+      razon_social: dataCliente.razon_social || null,
+      nombre: dataCliente.nombre || null,
+      apellido: dataCliente.apellido || null,
+      sexo: dataCliente.sexo || null,
     }
 
-    const res = await fetchWithErrorHandling(`${baseUrl}`, {
+    const res = await fetch(baseUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -97,15 +116,26 @@ export async function crearCliente(formData: FormData): Promise<any> {
       body: JSON.stringify(payload),
     })
 
-    const response = await res.json()
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}))
+      return {
+        success: false,
+        error: errorData.message || `Error HTTP ${res.status}`,
+      }
+    }
+
+    const data = await res.json()
 
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
 
-    return response
-  } catch (error) {
+    return { success: true, data }
+  } catch (error: any) {
     console.error('[crearCliente]', error)
-    throw error
+    return {
+      success: false,
+      error: error?.message || 'Error al crear el cliente',
+    }
   }
 }
 

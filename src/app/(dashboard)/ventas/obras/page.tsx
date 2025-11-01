@@ -1,177 +1,23 @@
-import { Suspense } from 'react'
-import { Building2, Plus } from 'lucide-react'
-import { obtenerObras, filtrarObrasAction } from '@/actions/obras'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
+import ObrasPageContent from '@/components/pages/ObrasPageContent'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
-import ObraCard from '@/components/shared/ObraCard'
-import SearchWrapper from '@/components/shared/SearchWrapper'
-import ObrasFiltros from '@/components/shared/ObrasFiltros'
-import Link from 'next/link'
-import type { Obra, Provincia } from '@/types'
 
-// ✅ Skeleton para loading
-function ObrasListSkeleton() {
-  return (
-    <div className="grid gap-4 sm:gap-6">
-      {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex-1 space-y-3">
-              <div className="h-6 w-3/4 animate-pulse rounded bg-gray-200"></div>
-              <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
-              <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200"></div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="h-6 w-32 animate-pulse rounded-full bg-gray-200"></div>
-              <div className="flex gap-2">
-                <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
-                <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ✅ Server Component que carga las obras
-async function ObrasGrid({
-  searchQuery,
-  estado,
-  cod_localidad,
-  usuarioRol,
-  provincias,
-}: {
-  searchQuery?: string
-  estado?: string
-  cod_localidad?: number
-  usuarioRol?: string
-  provincias: Provincia[]
-}) {
-  let obras: Obra[] = []
-
-  try {
-    if (searchQuery) {
-      obras = await obtenerObras(searchQuery)
-    } else {
-      obras = await filtrarObrasAction({ estado, cod_localidad })
-    }
-  } catch (err) {
-    console.error('Error cargando obras:', err)
-  }
-
-  if (obras.length === 0) {
-    return (
-      <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-        <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">
-          No se encontraron obras
-        </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Intenta ajustar los filtros o crea una nueva obra.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid gap-4 sm:gap-6">
-      {obras.map((obra) => (
-        <ObraCard
-          key={obra.cod_obra}
-          obra={obra}
-          provincias={provincias}
-          usuarioRol={usuarioRol}
-        />
-      ))}
-    </div>
-  )
-}
-
-// ✅ Page como Server Component
-export default async function ObrasPage({
+export default async function VentasObrasPage({
   searchParams,
 }: {
   searchParams?: any
 }) {
   const sp = await searchParams
-  const [usuarioResponse, provincias] = await Promise.all([
-    obtenerEmpleadoActual(),
-    obtenerProvincias(),
-  ])
-
+  const [usuarioResponse] = await Promise.all([obtenerEmpleadoActual()])
   const usuario = usuarioResponse?.data
-  const esVentas = usuario?.rol_actual === 'VENTAS'
-
-  const filtros = {
-    searchQuery: sp?.q ?? '',
-    estado: sp?.estado ?? undefined,
-    cod_localidad: sp?.cod_localidad ? Number(sp.cod_localidad) : undefined,
-  }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <Building2 className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                Obras
-              </h1>
-              <p className="text-sm text-gray-600">
-                Visualiza, filtra y gestiona todas las obras.
-              </p>
-            </div>
-          </div>
-          {esVentas && (
-            <Link
-              href="/ventas/obras/crear"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-blue-700 sm:w-auto"
-            >
-              <Plus className="h-5 w-5" />
-              Nueva Obra
-            </Link>
-          )}
-        </div>
-
-        <SearchWrapper
-          placeholder="Buscar obra por dirección, cliente..."
-          initialValue={filtros.searchQuery}
-          clearOtherParams={['estado', 'cod_localidad']}
-        />
-
-        {/* Filtros */}
-        <div className="mb-8">
-          <ObrasFiltros
-            provincias={provincias}
-            buscarLocalidades={localidadesPorProvincia}
-            estadoInicial={filtros.estado}
-            localidadInicial={filtros.cod_localidad}
-          />
-        </div>
-
-        {/* Grid con Suspense */}
-        <Suspense
-          key={JSON.stringify(filtros)}
-          fallback={<ObrasListSkeleton />}
-        >
-          <ObrasGrid
-            searchQuery={filtros.searchQuery}
-            estado={filtros.estado}
-            cod_localidad={filtros.cod_localidad}
-            usuarioRol={usuario?.rol_actual}
-            provincias={provincias}
-          />
-        </Suspense>
-      </div>
-    </div>
+    <ObrasPageContent
+      searchQuery={sp?.q ?? ''}
+      estado={sp?.estado}
+      cod_localidad={sp?.cod_localidad ? Number(sp.cod_localidad) : undefined}
+      canCreate={usuario?.rol_actual === 'VENTAS'} // ✅ Solo Ventas crea
+      createUrl="/ventas/obras/crear"
+      usuarioRol={usuario?.rol_actual}
+    />
   )
 }
