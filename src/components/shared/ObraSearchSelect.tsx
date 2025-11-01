@@ -1,4 +1,5 @@
 'use client'
+// Componente de selección de obras con autocompletado
 
 import { useState, useEffect } from 'react'
 import { Obra } from '@/types'

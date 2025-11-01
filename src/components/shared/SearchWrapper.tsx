@@ -1,4 +1,5 @@
 'use client'
+// Componente de buscador con debounce y limpieza de otros parámetros
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -8,18 +9,8 @@ import { useDebouncedCallback } from 'use-debounce'
 interface SearchWrapperProps {
   placeholder?: string
   initialValue?: string
-  /**
-   * Parámetro de búsqueda en la URL (default: 'q')
-   * @example 'search', 'query', 'filter'
-   */
   paramName?: string
-  /**
-   * Delay del debounce en ms (default: 500)
-   */
   debounceMs?: number
-  /**
-   * Si al buscar se deben limpiar otros params
-   */
   clearOtherParams?: string[]
 }
 

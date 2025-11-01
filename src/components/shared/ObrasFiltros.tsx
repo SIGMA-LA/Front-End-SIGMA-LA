@@ -1,4 +1,5 @@
 'use client'
+// Componente de filtros de estado y localidad para la página de obras
 
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -51,7 +52,6 @@ export default function ObrasFiltros({
     (newFilters: Record<string, string>) => {
       const params = new URLSearchParams(searchParams.toString())
 
-      // ✅ Solo limpiar búsqueda si hay filtros activos
       const tieneNuevosFiltros = Object.values(newFilters).some((v) => v !== '')
       if (tieneNuevosFiltros) {
         params.delete('q')

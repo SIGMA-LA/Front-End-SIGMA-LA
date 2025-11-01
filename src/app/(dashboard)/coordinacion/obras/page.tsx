@@ -15,7 +15,7 @@ export default async function CoordinacionObrasPage({
       searchQuery={sp?.q ?? ''}
       estado={sp?.estado}
       cod_localidad={sp?.cod_localidad ? Number(sp.cod_localidad) : undefined}
-      canCreate={false} // ✅ Coordinación NO crea obras
+      canCreate={false}
       usuarioRol={usuario?.rol_actual}
       title="Obras"
       subtitle="Consulta de obras y asignación de visitas"

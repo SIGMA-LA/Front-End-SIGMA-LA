@@ -13,7 +13,7 @@ export default async function VentasVisitasPage({
   return (
     <VisitasPageContent
       searchQuery={sp?.q ?? ''}
-      canCreate={false} // ✅ Ventas NO crea visitas
+      canCreate={false}
       rolActual={usuario?.rol_actual}
       title="Visitas"
       subtitle="Consulta de visitas programadas"

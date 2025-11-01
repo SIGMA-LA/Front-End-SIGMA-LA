@@ -15,7 +15,7 @@ export default async function VentasObrasPage({
       searchQuery={sp?.q ?? ''}
       estado={sp?.estado}
       cod_localidad={sp?.cod_localidad ? Number(sp.cod_localidad) : undefined}
-      canCreate={usuario?.rol_actual === 'VENTAS'} // ✅ Solo Ventas crea
+      canCreate={usuario?.rol_actual === 'VENTAS'}
       createUrl="/ventas/obras/crear"
       usuarioRol={usuario?.rol_actual}
     />

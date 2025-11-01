@@ -13,7 +13,7 @@ export default async function CoordinacionVisitasPage({
   return (
     <VisitasPageContent
       searchQuery={sp?.q ?? ''}
-      canCreate={true} // ✅ Coordinación SÍ crea visitas
+      canCreate={true}
       createUrl="/coordinacion/visitas/crear"
       rolActual={usuario?.rol_actual}
     />
