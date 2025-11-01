@@ -6,11 +6,15 @@ import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/empleados'
 
-export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+}
+
+export async function obtenerEmpleadoActual(): Promise<ApiResponse<Empleado> | null> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}/me`, {
-      method: 'GET',
+    const response = await fetch(`${baseUrl}/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -19,13 +23,12 @@ export async function obtenerEmpleadoActual(): Promise<Empleado | null> {
     })
 
     if (!response.ok) {
-      return null
+      throw new Error('Error al obtener empleado actual')
     }
 
-    const empleado: Empleado = await response.json()
-    return empleado
+    return await response.json()
   } catch (error) {
-    console.error('Error obteniendo empleado actual:', error)
+    console.error('Error al obtener empleado actual:', error)
     return null
   }
 }
@@ -139,7 +142,6 @@ export async function obtenerEmpleadoPorCuil(
   }
 }
 
-obtenerTodosLosEmpleados
 export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
@@ -156,7 +158,7 @@ export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
       return []
     }
 
-    const data = await response.json()
+    const data: ApiResponse<Empleado[]> = await response.json()
     return data.data || []
   } catch (error) {
     console.error('Error obteniendo todos los empleados:', error)

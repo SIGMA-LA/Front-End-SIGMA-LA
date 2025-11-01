@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Calendar } from 'lucide-react'
-import { CrearVisitaProps, Localidad, Visita, Empleado } from '@/types'
-import { crearVisita, actualizarVisita } from '@/actions/visitas'
+import { CrearVisitaProps, Localidad, Visita } from '@/types'
+import { crearVisitaAction, actualizarVisitaAction } from '@/actions/visitas'
 import SeccionEmpleados from './visita/SeccionEmpleados'
 import SeccionDatosVisita from './visita/SeccionDatosVisita'
 import SeccionVisitaInicial from './visita/SeccionVisitaInicial'
 import SeccionSeleccionObra from './visita/SeccionSeleccionarObra'
-import { useRouter } from 'next/navigation'
 
 export default function CrearVisita({
   preloadedObra,
@@ -19,7 +18,6 @@ export default function CrearVisita({
   provincias,
   empleados,
 }: CrearVisitaProps & { visitaEditar?: Visita | null }) {
-  const router = useRouter()
   const isFromObra = !!preloadedObra
 
   const [formData, setFormData] = useState({
@@ -44,18 +42,16 @@ export default function CrearVisita({
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
     number | ''
   >('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
+  // Filtros de empleados
   const visitadores = useMemo(() => {
-    const result = Array.isArray(empleados)
+    return Array.isArray(empleados)
       ? empleados.filter((e) => e.rol_actual === 'VISITADOR')
       : []
-    return result
   }, [empleados])
 
   const empleadosParaAcompanar = useMemo(() => {
-    const result = Array.isArray(empleados)
+    return Array.isArray(empleados)
       ? empleados.filter(
           (e) =>
             (e.rol_actual === 'VISITADOR' || e.rol_actual === 'PLANTA') &&
@@ -63,7 +59,6 @@ export default function CrearVisita({
             !selectedAcompanantes.includes(e.cuil)
         )
       : []
-    return result
   }, [empleados, visitadorPrincipal, selectedAcompanantes])
 
   const diasViatico = useMemo(() => {
@@ -79,10 +74,20 @@ export default function CrearVisita({
   // Precarga datos si es edición
   useEffect(() => {
     if (visitaEditar) {
+      const fechaVisita = visitaEditar.fecha_hora_visita
+        ? new Date(visitaEditar.fecha_hora_visita)
+        : null
+
+      const fechaLocal = fechaVisita
+        ? new Date(
+            fechaVisita.getTime() - fechaVisita.getTimezoneOffset() * 60000
+          )
+        : null
+
       setFormData({
-        fecha: visitaEditar.fecha_hora_visita?.slice(0, 10) || '',
-        fechaHasta: visitaEditar.fecha_hora_visita?.slice(0, 10) || '',
-        hora: visitaEditar.fecha_hora_visita?.slice(11, 16) || '',
+        fecha: fechaLocal?.toISOString().slice(0, 10) || '',
+        fechaHasta: fechaLocal?.toISOString().slice(0, 10) || '',
+        hora: fechaLocal?.toISOString().slice(11, 16) || '',
         tipo: visitaEditar.motivo_visita || '',
         observaciones: visitaEditar.observaciones || '',
         direccion: visitaEditar.direccion_visita || '',
@@ -109,48 +114,12 @@ export default function CrearVisita({
     }
   }, [provinciaSeleccionada, buscarLocalidades])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    try {
-      const visitaData: any = {
-        fecha_hora_visita: `${formData.fecha}T${formData.hora}`,
-        motivo_visita: formData.tipo,
-        observaciones: formData.observaciones,
-        direccion_visita: formData.direccion,
-        cod_obra: formData.obraId || null,
-        cod_localidad:
-          localidades.find((l) => l.nombre_localidad === formData.localidad)
-            ?.cod_localidad || null,
-        dias_viatico: diasViatico,
-        empleados_visita: [visitadorPrincipal, ...selectedAcompanantes],
-        vehiculo: formData.vehiculo,
-        nombre_cliente: formData.nombre || null,
-        apellido_cliente: formData.apellido || null,
-        telefono_cliente: formData.clienteTelefono || null,
-      }
-
-      if (visitaEditar) {
-        await actualizarVisita(visitaEditar.cod_visita, visitaData)
-      } else {
-        await crearVisita(visitaData)
-      }
-
-      router.push('/coordinacion/visitas')
-      router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'Error al guardar la visita')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const formAction = visitaEditar ? actualizarVisitaAction : crearVisitaAction
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-4xl">
-        <form onSubmit={handleSubmit}>
+        <form action={formAction}>
           <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-lg">
             <div className="mb-8 border-b pb-4">
               <h1 className="flex items-center gap-2 text-3xl font-bold text-blue-900">
@@ -158,6 +127,58 @@ export default function CrearVisita({
                 {visitaEditar ? 'Editar Visita' : 'Nueva Visita'}
               </h1>
             </div>
+            {visitaEditar && (
+              <input
+                type="hidden"
+                name="cod_visita"
+                value={visitaEditar.cod_visita}
+              />
+            )}
+
+            <input type="hidden" name="fecha" value={formData.fecha} />
+            <input type="hidden" name="hora" value={formData.hora} />
+            <input type="hidden" name="tipo" value={formData.tipo} />
+            <input type="hidden" name="direccion" value={formData.direccion} />
+            <input
+              type="hidden"
+              name="observaciones"
+              value={formData.observaciones}
+            />
+            <input type="hidden" name="vehiculo" value={formData.vehiculo} />
+            <input type="hidden" name="diasViatico" value={diasViatico} />
+            <input
+              type="hidden"
+              name="empleados_visita"
+              value={JSON.stringify([
+                visitadorPrincipal,
+                ...selectedAcompanantes,
+              ])}
+            />
+            <input
+              type="hidden"
+              name="cod_localidad"
+              value={
+                localidades.find(
+                  (l) => l.nombre_localidad === formData.localidad
+                )?.cod_localidad ?? ''
+              }
+            />
+            {formData.obraId && (
+              <input type="hidden" name="obraId" value={formData.obraId} />
+            )}
+            {formData.nombre && (
+              <input type="hidden" name="nombre" value={formData.nombre} />
+            )}
+            {formData.apellido && (
+              <input type="hidden" name="apellido" value={formData.apellido} />
+            )}
+            {formData.clienteTelefono && (
+              <input
+                type="hidden"
+                name="clienteTelefono"
+                value={formData.clienteTelefono}
+              />
+            )}
 
             {!isFromObra && (
               <SeccionSeleccionObra
@@ -259,28 +280,19 @@ export default function CrearVisita({
                 className="w-full rounded-md border px-3 py-2"
               />
 
-              {error && (
-                <div className="mt-4 text-sm text-red-600">{error}</div>
-              )}
-
               <div className="flex gap-3 pt-6">
                 <button
                   type="button"
-                  onClick={() => router.back()}
+                  onClick={() => window.history.back()}
                   className="rounded-lg border px-6 py-2"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="rounded-lg bg-blue-600 px-6 py-2 text-white disabled:opacity-50"
+                  className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
                 >
-                  {loading
-                    ? 'Guardando...'
-                    : visitaEditar
-                      ? 'Guardar'
-                      : 'Crear'}
+                  {visitaEditar ? 'Guardar' : 'Crear'}
                 </button>
               </div>
             </section>

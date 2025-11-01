@@ -4,8 +4,8 @@ import { getAccessToken } from './auth'
 import { Visita, VisitaFormData } from '@/types'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { redirect } from 'next/navigation'
-
 import { revalidatePath } from 'next/cache'
+
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/visitas'
 
 /**
@@ -34,10 +34,7 @@ export async function cancelarVisita(id: number): Promise<Visita> {
 
   const updatePayload = {
     estado: 'CANCELADA',
-    fecha_hora_visita: new Date(visita.fecha_hora_visita)
-      .toISOString()
-      .replace(/\.\d{3}Z$/, 'Z'),
-    fecha_cancelacion: new Date().toISOString().slice(0, 10),
+    fecha_cancelacion: new Date().toISOString().split('T')[0],
   }
 
   const response = await fetchWithErrorHandling(`${baseUrl}/${id}`, {
@@ -48,7 +45,9 @@ export async function cancelarVisita(id: number): Promise<Visita> {
     },
     body: JSON.stringify(updatePayload),
   })
-  return await response.json()
+
+  const result = await response.json()
+  return result
 }
 
 /**
@@ -62,6 +61,7 @@ export async function obtenerVisitas(): Promise<Visita[]> {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
+    cache: 'no-store',
   })
   return await response.json()
 }
@@ -101,10 +101,10 @@ export async function actualizarVisita(
   return await response.json()
 }
 
-export async function crearVisitaAction(prevState: any, formData: FormData) {
+export async function crearVisitaAction(formData: FormData) {
   try {
-    const visitaData: VisitaFormData = {
-      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}`,
+    const visitaData: any = {
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`, // ✅ Agregá segundos
       motivo_visita: formData.get('tipo') as string,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -123,20 +123,19 @@ export async function crearVisitaAction(prevState: any, formData: FormData) {
     await crearVisita(visitaData)
     revalidatePath('/coordinacion/visitas')
   } catch (error) {
-    return { error: 'Error al crear la visita. Intente nuevamente.' }
+    console.error('❌ Error al crear visita:', error)
+    throw error
   }
 
   redirect('/coordinacion/visitas')
 }
 
-export async function actualizarVisitaAction(
-  codVisita: number,
-  prevState: any,
-  formData: FormData
-) {
+export async function actualizarVisitaAction(formData: FormData) {
   try {
+    const codVisita = Number(formData.get('cod_visita'))
+
     const visitaData: any = {
-      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}`,
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`, // ✅ Agregá segundos
       motivo_visita: formData.get('tipo') as string,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -151,11 +150,11 @@ export async function actualizarVisitaAction(
       apellido_cliente: (formData.get('apellido') as string) || null,
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
     }
-
     await actualizarVisita(codVisita, visitaData)
     revalidatePath('/coordinacion/visitas')
   } catch (error) {
-    return { error: 'Error al actualizar la visita. Intente nuevamente.' }
+    console.error('❌ Error al actualizar visita:', error)
+    throw error
   }
 
   redirect('/coordinacion/visitas')
