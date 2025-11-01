@@ -1,14 +1,69 @@
 import { Calendar, Plus } from 'lucide-react'
+import { Suspense } from 'react'
 import { obtenerVisitas } from '@/actions/visitas'
 import { obtenerEmpleadoActual } from '@/actions/empleado'
 import VisitaCard from '@/components/shared/VisitaCard'
 import Link from 'next/link'
 
+// Componente que carga las visitas
+async function VisitasList({ rolActual }: { rolActual?: string }) {
+  const visitas = await obtenerVisitas()
+
+  if (visitas.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+        <p className="mt-4 text-gray-600">No hay visitas registradas</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {visitas.map((visita) => (
+        <VisitaCard
+          key={visita.cod_visita}
+          visita={visita}
+          rolActual={rolActual}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Loading component
+function VisitasListSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+        >
+          <div className="border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+            <div className="h-5 w-64 animate-pulse rounded bg-gray-200"></div>
+          </div>
+          <div className="p-6">
+            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="flex items-start gap-3">
+                  <div className="h-10 w-10 animate-pulse rounded-lg bg-gray-200"></div>
+                  <div>
+                    <div className="mb-2 h-3 w-16 animate-pulse rounded bg-gray-200"></div>
+                    <div className="h-5 w-24 animate-pulse rounded bg-gray-200"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default async function VisitasPage() {
-  const [visitas, usuarioResponse] = await Promise.all([
-    obtenerVisitas(),
-    obtenerEmpleadoActual(),
-  ])
+  const usuarioResponse = await obtenerEmpleadoActual()
   const usuario = usuarioResponse?.data
 
   const esCoordinacion =
@@ -43,22 +98,9 @@ export default async function VisitasPage() {
           )}
         </div>
 
-        {visitas.length === 0 ? (
-          <div className="py-12 text-center">
-            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-gray-600">No hay visitas registradas</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {visitas.map((visita) => (
-              <VisitaCard
-                key={visita.cod_visita}
-                visita={visita}
-                rolActual={usuario?.rol_actual}
-              />
-            ))}
-          </div>
-        )}
+        <Suspense fallback={<VisitasListSkeleton />}>
+          <VisitasList rolActual={usuario?.rol_actual} />
+        </Suspense>
       </div>
     </div>
   )

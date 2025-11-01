@@ -1,40 +1,36 @@
-import { useState, useMemo } from 'react'
+'use client'
+
+import { useState, useMemo, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Obra, Provincia } from '@/types'
 import EstadoObraBadge from './EstadoObraBadge'
-import { Calendar, Edit, Trash2, DollarSign, FileText } from 'lucide-react'
+import {
+  Calendar,
+  Edit,
+  Trash2,
+  DollarSign,
+  MapPin,
+  User,
+  Building2,
+} from 'lucide-react'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
-import NotaFabricaModal from '../ventas/NotaFabricaModal'
+import Link from 'next/link'
+import { deleteObra } from '@/actions/obras'
 
 interface ObraCardProps {
   obra: Obra
   usuarioRol: string | undefined
   provincias: Provincia[]
-  onScheduleVisit?: (obra: Obra) => void
-  onScheduleEntrega?: (obra: Obra) => void
-  onPagosClick?: (obra: Obra) => void
-  onEditClick?: (obra: Obra) => void
-  onDeleteClick?: (obraId: number) => void
-  onNotaFabricaChange?: () => void
 }
 
 export default function ObraCard({
   obra,
   usuarioRol,
   provincias,
-  onScheduleVisit,
-  onScheduleEntrega,
-  onPagosClick,
-  onEditClick,
-  onDeleteClick,
-  onNotaFabricaChange,
 }: ObraCardProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
-  const [notaModalOpen, setNotaModalOpen] = useState(false)
-  const [notaUrl, setNotaUrl] = useState<string | null | undefined>(
-    obra.nota_fabrica
-  )
-  const [openEliminarNota, setOpenEliminarNota] = useState(false)
-  const [eliminandoNota, setEliminandoNota] = useState(false)
 
   const provincia = useMemo(() => {
     if (obra.localidad && provincias.length > 0) {
@@ -46,216 +42,134 @@ export default function ObraCard({
   }, [obra.localidad, provincias])
 
   const handleDelete = () => {
-    setModalOpen(true)
+    startTransition(async () => {
+      try {
+        await deleteObra(obra.cod_obra)
+        setModalOpen(false)
+        router.refresh()
+      } catch (error) {
+        console.error('Error al eliminar obra:', error)
+        alert('Error al eliminar la obra')
+      }
+    })
   }
 
-  const handleConfirmDelete = () => {
-    setModalOpen(false)
-    if (onDeleteClick) onDeleteClick(obra.cod_obra)
-  }
-
+  const esVentas = usuarioRol === 'VENTAS'
   const isCancelada = obra.estado === 'CANCELADA'
 
-  // Permisos para el botón de nota de fábrica
-  const puedeVerNota =
-    usuarioRol === 'VENTAS' ||
-    (usuarioRol === 'COORDINACION' && !!obra.nota_fabrica)
-
-  const puedeEditarNota = usuarioRol === 'VENTAS'
-  const tieneNota = !!notaUrl
-
-  // Handler para eliminar la nota de fábrica
-  const handleEliminarNota = async () => {
-    setEliminandoNota(true)
-    try {
-      // Aquí deberías llamar a tu endpoint para eliminar la nota de fábrica
-      // await eliminarNotaFabrica(obra.cod_obra)
-      setNotaUrl(null)
-      setOpenEliminarNota(false)
-      if (onNotaFabricaChange) onNotaFabricaChange()
-    } catch (e) {
-      alert('Ocurrió un error al eliminar la nota de fábrica.')
-    } finally {
-      setEliminandoNota(false)
-    }
-  }
-
-  // Función para determinar si la obra puede tener pagos
-  const puedeCrearPagos = () => {
-    // Estados que definitivamente NO pueden tener pagos
-    const estadosNoPermitidos = ['CANCELADA', 'PAGADA TOTALMENTE', 'ENTREGADA']
-    if (estadosNoPermitidos.includes(obra.estado)) {
-      return false
-    }
-
-    // Si tenemos datos de presupuesto, usar la lógica completa
-    if (obra.presupuesto && obra.presupuesto.length > 0) {
-      const presupuestoAceptado =
-        obra.presupuesto.find((p) => p.fecha_aceptacion) || obra.presupuesto[0]
-
-      if (!presupuestoAceptado || presupuestoAceptado.valor <= 0) {
-        return false
-      }
-
-      const totalPagado =
-        obra.pagos?.reduce((sum, pago) => sum + pago.monto, 0) || 0
-      const saldoPendiente = presupuestoAceptado.valor - totalPagado
-
-      return saldoPendiente > 0
-    }
-
-    // Si NO tenemos datos de presupuesto (datos incompletos del API),
-    // permitir pagos basándose solo en el estado
-    const estadosPermitidosParaPagos = [
-      'EN ESPERA DE PAGO',
-      'PAGADA PARCIALMENTE',
-      'EN ESPERA DE STOCK',
-      'EN PRODUCCION',
-      'PRODUCCION FINALIZADA',
-    ]
-
-    return estadosPermitidosParaPagos.includes(obra.estado)
-  }
-
-  const esValidoParaPagos = puedeCrearPagos()
+  const nombreCliente =
+    obra.cliente?.tipo_cliente === 'EMPRESA'
+      ? obra.cliente.razon_social
+      : `${obra.cliente?.nombre ?? ''} ${obra.cliente?.apellido ?? ''}`.trim() ||
+        'N/A'
 
   return (
     <>
-      {/* Modal para eliminar obra */}
       <ConfirmDeleteModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleDelete}
+        loading={isPending}
         title="Eliminar Obra"
         message={`¿Está seguro que desea eliminar la obra "${obra.direccion}"? Pasará a estado "CANCELADA".`}
       />
-      {/* Modal para eliminar nota de fábrica */}
-      <ConfirmDeleteModal
-        open={openEliminarNota}
-        onCancel={() => setOpenEliminarNota(false)}
-        onConfirm={handleEliminarNota}
-        loading={eliminandoNota}
-        title="Eliminar Nota de Fábrica"
-        message={`¿Seguro que deseas eliminar la nota de fábrica de la obra "${obra.direccion}"?`}
-      />
-      {/* Modal para ver/subir nota de fábrica */}
-      <NotaFabricaModal
-        isOpen={notaModalOpen}
-        onClose={() => setNotaModalOpen(false)}
-        notaUrl={notaUrl}
-        codObra={obra.cod_obra}
-        onUploadSuccess={(url) => {
-          setNotaUrl(url)
-          if (onNotaFabricaChange) onNotaFabricaChange()
-        }}
-        rolActual={usuarioRol}
-        onDeleteClick={
-          puedeEditarNota ? () => setOpenEliminarNota(true) : undefined
-        }
-      />
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {obra.direccion}, {obra.localidad?.nombre_localidad || 'N/A'},{' '}
-              {provincia?.nombre || 'N/A'}
-            </h3>
-            <p className="text-gray-600">
-              Cliente:{' '}
-              {obra.cliente?.tipo_cliente === 'EMPRESA'
-                ? obra.cliente.razon_social
-                : `${obra.cliente?.nombre ?? ''} ${obra.cliente?.apellido ?? ''}` ||
-                  'N/A'}
-            </p>
-            <p className="text-sm text-gray-500">
-              Inicio:{' '}
-              {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
-                timeZone: 'UTC',
-              })}
-            </p>
+
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
+        {/* Header con dirección y estado */}
+        <div className="flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <Building2 className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">{obra.direccion}</h3>
           </div>
-          <div className="flex flex-col items-start gap-3 sm:items-end">
-            <EstadoObraBadge estado={obra.estado} />
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              {puedeVerNota && (
-                <button
-                  onClick={() => setNotaModalOpen(true)}
-                  className={`flex items-center gap-1 font-medium ${
-                    puedeEditarNota
-                      ? tieneNota
-                        ? 'text-orange-600 hover:text-orange-800'
-                        : 'text-gray-400 hover:text-orange-600'
-                      : tieneNota
-                        ? 'text-gray-600 hover:text-gray-800'
-                        : 'cursor-not-allowed text-gray-400'
-                  }`}
-                  disabled={!puedeEditarNota && !tieneNota}
-                  tabIndex={tieneNota || puedeEditarNota ? 0 : -1}
-                >
-                  <FileText className="h-4 w-4" />
-                  Nota de Fábrica
-                  {!tieneNota && (
-                    <span className="ml-1 text-gray-400">(vacío)</span>
-                  )}
-                </button>
-              )}
-              {/* SOLO mostrar si NO es VENTAS */}
-              {usuarioRol !== 'VENTAS' && onScheduleVisit && (
-                <button
-                  onClick={() => onScheduleVisit(obra)}
-                  className="flex items-center gap-1 font-medium text-green-600 hover:text-green-800"
-                >
-                  <Calendar className="h-4 w-4" /> Agendar Visita
-                </button>
-              )}
-              {usuarioRol !== 'VENTAS' && onScheduleEntrega && (
-                <button
-                  onClick={() => onScheduleEntrega(obra)}
-                  className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
-                >
-                  <Calendar className="h-4 w-4" /> Agendar Entrega
-                </button>
-              )}
-              {/* SOLO mostrar si ES VENTAS */}
-              {usuarioRol === 'VENTAS' && (
-                <>
-                  {onPagosClick && (
-                    <button
-                      onClick={() => esValidoParaPagos && onPagosClick(obra)}
-                      disabled={!esValidoParaPagos}
-                      className={`flex items-center gap-1 font-medium transition-colors ${
-                        esValidoParaPagos
-                          ? 'cursor-pointer text-green-600 hover:text-green-800'
-                          : 'cursor-not-allowed text-gray-400'
-                      }`}
-                      title={
-                        !esValidoParaPagos
-                          ? 'No se pueden crear pagos: falta presupuesto aceptado o ya está totalmente pagado'
-                          : 'Crear pago para esta obra'
-                      }
-                    >
-                      <DollarSign className="h-4 w-4" /> Pagos
-                    </button>
-                  )}
-                  {onEditClick && (
-                    <button
-                      onClick={() => onEditClick(obra)}
-                      className="flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800"
-                    >
-                      <Edit className="h-4 w-4" /> Editar
-                    </button>
-                  )}
-                  {onDeleteClick && !isCancelada && (
-                    <button
-                      onClick={handleDelete}
-                      className="flex items-center gap-1 font-medium text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="h-4 w-4" /> Eliminar
-                    </button>
-                  )}
-                </>
-              )}
+          <EstadoObraBadge estado={obra.estado} />
+        </div>
+
+        {/* Contenido */}
+        <div className="p-6">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Ubicación */}
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <MapPin className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Ubicación</p>
+                <p className="font-semibold text-gray-900">
+                  {obra.localidad?.nombre_localidad || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {provincia?.nombre || 'N/A'}
+                </p>
+              </div>
             </div>
+
+            {/* Cliente */}
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <User className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Cliente</p>
+                <p className="font-semibold text-gray-900">{nombreCliente}</p>
+                <p className="text-sm text-gray-600">
+                  Inicio:{' '}
+                  {new Date(obra.fecha_ini).toLocaleDateString('es-AR', {
+                    timeZone: 'UTC',
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="flex flex-wrap gap-2">
+            {!esVentas && (
+              <>
+                <Link
+                  href={`/coordinacion/visitas/crear?obraId=${obra.cod_obra}`}
+                  className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Agendar Visita
+                </Link>
+                <Link
+                  href={`/coordinacion/entregas/crear?obraId=${obra.cod_obra}`}
+                  className="flex items-center gap-2 rounded-lg border border-purple-300 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 transition-colors hover:bg-purple-100"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Agendar Entrega
+                </Link>
+              </>
+            )}
+
+            {esVentas && (
+              <>
+                <Link
+                  href={`/ventas/obras/${obra.cod_obra}/pagos`}
+                  className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Pagos
+                </Link>
+                <Link
+                  href={`/ventas/obras/${obra.cod_obra}/editar`}
+                  className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"
+                >
+                  <Edit className="h-4 w-4" />
+                  Editar
+                </Link>
+                {!isCancelada && (
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    disabled={isPending}
+                    className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {isPending ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
