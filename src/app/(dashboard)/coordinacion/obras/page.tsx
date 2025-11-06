@@ -1,53 +1,24 @@
-import ObrasList from '@/components/shared/ObrasList'
-import {
-  deleteObra,
-  obtenerObras,
-  obtenerObra,
-  filtrarObrasAction,
-} from '@/actions/obras'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
-import type { Obra, Provincia } from '@/types'
+import ObrasPageContent from '@/components/pages/ObrasPageContent'
+import { obtenerEmpleadoActual } from '@/actions/empleado'
 
-export default async function ObrasPage({
+export default async function CoordinacionObrasPage({
   searchParams,
 }: {
   searchParams?: any
 }) {
-  const sp = await (searchParams ?? {})
-
-  const filtros = {
-    estado: sp?.estado ?? undefined,
-    cod_localidad: sp?.cod_localidad ? Number(sp.cod_localidad) : undefined,
-  }
-
-  const filtroTexto = sp?.q ?? ''
-  let obras: Obra[] = []
-  let provincias: Provincia[] = []
-
-  try {
-    if (filtroTexto) {
-      obras = await obtenerObras(filtroTexto)
-    } else {
-      obras = await filtrarObrasAction({
-        estado: filtros.estado,
-        cod_localidad: filtros.cod_localidad,
-      })
-    }
-    provincias = await obtenerProvincias()
-  } catch (err) {
-    console.error('Error cargando datos de obras en page.tsx:', err)
-    obras = []
-    provincias = []
-  }
+  const sp = await searchParams
+  const [usuarioResponse] = await Promise.all([obtenerEmpleadoActual()])
+  const usuario = usuarioResponse?.data
 
   return (
-    <ObrasList
-      obras={obras}
-      provincias={provincias}
-      buscarLocalidades={localidadesPorProvincia}
-      onDeleteClick={deleteObra}
-      obtenerObraAction={obtenerObra}
-      searchQuery={filtroTexto}
+    <ObrasPageContent
+      searchQuery={sp?.q ?? ''}
+      estado={sp?.estado}
+      cod_localidad={sp?.cod_localidad ? Number(sp.cod_localidad) : undefined}
+      canCreate={false}
+      usuarioRol={usuario?.rol_actual}
+      title="Obras"
+      subtitle="Consulta de obras y asignación de visitas"
     />
   )
 }

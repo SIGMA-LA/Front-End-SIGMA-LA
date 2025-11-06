@@ -1,48 +1,22 @@
-import VisitasList from '@/components/shared/VisitasList'
-import { Visita, Empleado } from '@/types'
-import { obtenerVisitas } from '@/actions/visitas'
-import { obtenerEmpleadoPorCuil } from '@/actions/empleado'
-import { cache } from 'react'
+import VisitasPageContent from '@/components/pages/VisitasPageContent'
+import { obtenerEmpleadoActual } from '@/actions/empleado'
 
-const getVisitasCache = cache(async () => {
-  return await obtenerVisitas()
-})
+export default async function VentasVisitasPage({
+  searchParams,
+}: {
+  searchParams?: any
+}) {
+  const sp = await searchParams
+  const [usuarioResponse] = await Promise.all([obtenerEmpleadoActual()])
+  const usuario = usuarioResponse?.data
 
-async function getEmpleadosDeVisitas(visitas: Visita[]) {
-  const cuilsUnicos = new Set<string>()
-
-  visitas.forEach((visita) => {
-    if (Array.isArray(visita.empleado_visita)) {
-      visita.empleado_visita.forEach((ev) => {
-        if (ev?.cuil) {
-          cuilsUnicos.add(ev.cuil)
-        }
-      })
-    }
-  })
-
-  const empleadosPromises = Array.from(cuilsUnicos).map((cuil) =>
-    obtenerEmpleadoPorCuil(cuil).catch(() => null)
+  return (
+    <VisitasPageContent
+      searchQuery={sp?.q ?? ''}
+      canCreate={false}
+      rolActual={usuario?.rol_actual}
+      title="Visitas"
+      subtitle="Consulta de visitas programadas"
+    />
   )
-
-  const empleadosArray = await Promise.all(empleadosPromises)
-
-  const empleadosMap = new Map<string, Empleado>()
-  empleadosArray.forEach((emp, idx) => {
-    if (emp) {
-      empleadosMap.set(Array.from(cuilsUnicos)[idx], emp)
-    }
-  })
-
-  return empleadosMap
 }
-
-export default async function VisitasPage() {
-  const visitas = await getVisitasCache()
-
-  const empleadosMap = await getEmpleadosDeVisitas(visitas)
-
-  return <VisitasList visitas={visitas} empleadosMap={empleadosMap} />
-}
-
-export const revalidate = 30

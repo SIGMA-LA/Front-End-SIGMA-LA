@@ -1,25 +1,20 @@
-import ClientesList from '@/components/shared/ClientesList'
-import { obtenerClientes } from '@/actions/clientes'
-import type { Cliente } from '@/types'
-import { eliminarCliente } from '@/actions/clientes'
+import ClientesPageContent from '@/components/pages/ClientesPageContent'
+import { obtenerEmpleadoActual } from '@/actions/empleado'
 
 export default async function VentasClientesPage({
   searchParams,
 }: {
-  searchParams?: { q?: string } | Promise<{ q?: string }>
+  searchParams?: any
 }) {
-  const resolved = await (searchParams as
-    | Promise<{ q?: string }>
-    | { q?: string }
-    | undefined)
-  const filtro = resolved?.q ?? ''
+  const sp = await searchParams
+  const [usuarioResponse] = await Promise.all([obtenerEmpleadoActual()])
+  const usuario = usuarioResponse?.data
 
-  let clientes: Cliente[] = []
-  try {
-    clientes = await obtenerClientes(filtro)
-  } catch (err) {
-    console.error('Error cargando clientes (ventas):', err)
-  }
-
-  return <ClientesList clientes={clientes} deleteAction={eliminarCliente} />
+  return (
+    <ClientesPageContent
+      searchQuery={sp?.q ?? ''}
+      canCreate={usuario?.rol_actual === 'VENTAS'}
+      createUrl="/ventas/clientes/crear"
+    />
+  )
 }

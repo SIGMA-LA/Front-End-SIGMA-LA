@@ -1,15 +1,34 @@
-import CrearCliente from '@/components/ventas/CrearCliente'
+import CrearClienteForm from '@/components/ventas/CrearCliente'
 import { crearCliente } from '@/actions/clientes'
-import { redirect } from 'next/dist/client/components/navigation'
+import { redirect } from 'next/navigation'
 
-export default function Page() {
-  const action = async (formData: FormData) => {
-    const cliente = await crearCliente(formData)
-    if (!cliente) {
-      throw new Error('No se pudo crear el cliente')
+export default function CrearClientePage() {
+  async function handleCrear(formData: FormData) {
+    'use server'
+    try {
+      const result = await crearCliente(formData)
+
+      if (!result || result.error) {
+        return {
+          success: false,
+          error: result?.error || 'No se pudo crear el cliente',
+        }
+      }
+      redirect('/ventas/clientes')
+    } catch (error: any) {
+      console.error('[handleCrear]', error)
+      return {
+        success: false,
+        error: error?.message || 'Error al crear el cliente',
+      }
     }
-    redirect('/ventas/clientes')
   }
 
-  return <CrearCliente action={action} cancelUrl="/ventas/clientes" />
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-3xl">
+        <CrearClienteForm action={handleCrear} />
+      </div>
+    </div>
+  )
 }

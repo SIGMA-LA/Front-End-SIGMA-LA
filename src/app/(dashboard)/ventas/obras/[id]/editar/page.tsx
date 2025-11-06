@@ -28,7 +28,6 @@ export default function EditarObraPage() {
       obraExistente={obra}
       onCancel={() => router.push('/ventas/obras')}
       onSubmit={async (obraData, presupuestos) => {
-        // lógica para actualizar obra y presupuestos
         router.push('/ventas/obras')
       }}
     />

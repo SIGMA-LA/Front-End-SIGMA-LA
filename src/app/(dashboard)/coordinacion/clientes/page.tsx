@@ -1,24 +1,11 @@
-import ClientesList from '@/components/shared/ClientesList'
-import { obtenerClientes } from '@/actions/clientes'
-import type { Cliente } from '@/types'
+import ClientesPageContent from '@/components/pages/ClientesPageContent'
 
 export default async function CoordinacionClientesPage({
   searchParams,
 }: {
-  searchParams?: { q?: string } | Promise<{ q?: string }>
+  searchParams?: any
 }) {
-  const resolved = await (searchParams as
-    | Promise<{ q?: string }>
-    | { q?: string }
-    | undefined)
-  const filtro = resolved?.q ?? ''
+  const sp = await searchParams
 
-  let clientes: Cliente[] = []
-  try {
-    clientes = await obtenerClientes(filtro)
-  } catch (err) {
-    console.error('Error cargando clientes (coordinacion):', err)
-  }
-
-  return <ClientesList clientes={clientes} />
+  return <ClientesPageContent searchQuery={sp?.q ?? ''} canCreate={false} />
 }

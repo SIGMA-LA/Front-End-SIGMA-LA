@@ -1,19 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Save, AlertCircle, Loader2, User, Building } from 'lucide-react'
+import { useState, useActionState } from 'react'
+import {
+  Save,
+  AlertCircle,
+  Loader2,
+  User,
+  Building,
+  ArrowLeft,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Cliente } from '@/types'
+import Link from 'next/link'
+
+interface CrearClienteFormProps {
+  action: (prevState: any, formData: FormData) => Promise<any>
+  cliente?: Cliente
+  cancelUrl?: string
+}
 
 export default function CrearCliente({
   action,
-  cancelUrl = '/ventas/clientes',
   cliente,
-}: {
-  action: (formData: FormData) => Promise<any>
-  cancelUrl?: string
-  cliente?: Cliente
-}) {
+  cancelUrl = '/ventas/clientes',
+}: CrearClienteFormProps) {
+  const router = useRouter()
   const [tipoCliente, setTipoCliente] = useState<'PERSONA' | 'EMPRESA'>(
     cliente?.tipo_cliente ?? 'PERSONA'
   )
@@ -26,24 +37,14 @@ export default function CrearCliente({
     apellido: cliente?.apellido ?? '',
     sexo: cliente?.sexo ?? '',
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
-  useEffect(() => {
-    if (cliente) {
-      setTipoCliente(cliente.tipo_cliente ?? 'PERSONA')
-      setFormState({
-        cuil: cliente.cuil ?? '',
-        telefono: cliente.telefono ?? '',
-        mail: cliente.mail ?? '',
-        razon_social: cliente.razon_social ?? '',
-        nombre: cliente.nombre ?? '',
-        apellido: cliente.apellido ?? '',
-        sexo: cliente.sexo ?? '',
-      })
-    }
-  }, [cliente])
+  // ✅ useActionState para manejar el estado de la acción
+  const [state, formAction, isPending] = useActionState(action, {
+    success: true,
+    error: null,
+  })
+
+  const isEdit = Boolean(cliente)
 
   const handleTipoClienteChange = (tipo: 'PERSONA' | 'EMPRESA') => {
     setTipoCliente(tipo)
@@ -54,7 +55,6 @@ export default function CrearCliente({
       apellido: tipo === 'PERSONA' ? prev.apellido : '',
       sexo: tipo === 'PERSONA' ? prev.sexo : '',
     }))
-    setError(null)
   }
 
   const formatCUIL = (value: string) => {
@@ -71,66 +71,77 @@ export default function CrearCliente({
     } else {
       setFormState((prev) => ({ ...prev, [field]: value }))
     }
-    setError(null)
   }
 
-  const isEdit = Boolean(cliente)
-
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isEdit ? 'Editar cliente' : 'Crear cliente'}
-          </h1>
-          <p className="text-sm text-gray-600">
-            {isEdit
-              ? 'Modifica los datos y guarda para actualizar el cliente.'
-              : 'Completa el formulario para crear un cliente.'}
-          </p>
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <Link
+          href={cancelUrl}
+          className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver a clientes
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+            {tipoCliente === 'EMPRESA' ? (
+              <Building className="h-6 w-6 text-blue-600" />
+            ) : (
+              <User className="h-6 w-6 text-blue-600" />
+            )}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEdit ? 'Editar Cliente' : 'Crear Cliente'}
+            </h1>
+            <p className="text-sm text-gray-600">
+              {isEdit
+                ? 'Modifica los datos del cliente'
+                : 'Completa el formulario para registrar un nuevo cliente'}
+            </p>
+          </div>
         </div>
-      </header>
+      </div>
 
-      <form
-        action={action}
-        onSubmit={() => {
-          setLoading(true)
-          setError(null)
-        }}
-        className="space-y-6"
-      >
-        {error && (
+      {/* Formulario */}
+      <form action={formAction} className="space-y-6">
+        {/* Error Alert */}
+        {state?.error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-              <p className="text-sm text-red-700">{error}</p>
+              <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Error al {isEdit ? 'actualizar' : 'crear'} el cliente
+                </p>
+                <p className="mt-1 text-sm text-red-700">{state.error}</p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* oculto: original_cuil para que el server action identifique el registro si el CUIL se edita */}
+        {/* Hidden fields para edición */}
         {isEdit && (
-          <input
-            type="hidden"
-            name="original_cuil"
-            value={cliente!.cuil ?? ''}
-          />
+          <input type="hidden" name="original_cuil" value={cliente!.cuil} />
         )}
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+        {/* Tipo de Cliente */}
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+          <label className="mb-3 block text-sm font-medium text-gray-700">
             Tipo de Cliente <span className="text-red-500">*</span>
           </label>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => handleTipoClienteChange('PERSONA')}
-              disabled={loading}
-              className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-all ${
+              disabled={isPending}
+              className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
                 tipoCliente === 'PERSONA'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-              }`}
+              } disabled:opacity-50`}
             >
               <User className="h-5 w-5" />
               <span className="font-medium">Persona</span>
@@ -138,12 +149,12 @@ export default function CrearCliente({
             <button
               type="button"
               onClick={() => handleTipoClienteChange('EMPRESA')}
-              disabled={loading}
-              className={`flex items-center justify-center gap-2 rounded-lg border-2 p-3 transition-all ${
+              disabled={isPending}
+              className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 transition-all ${
                 tipoCliente === 'EMPRESA'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-              }`}
+              } disabled:opacity-50`}
             >
               <Building className="h-5 w-5" />
               <span className="font-medium">Empresa</span>
@@ -151,160 +162,195 @@ export default function CrearCliente({
           </div>
         </div>
 
-        <div className="grid gap-4">
+        {/* Campos del formulario */}
+        <div className="space-y-4">
+          {/* CUIL */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="cuil"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               CUIL/CUIT <span className="text-red-500">*</span>
             </label>
             <input
+              id="cuil"
               name="cuil"
               type="text"
               value={formState.cuil}
               onChange={(e) => handleChange('cuil', e.target.value)}
               placeholder="20-12345678-9"
               maxLength={13}
-              disabled={loading}
+              disabled={isPending || isEdit}
               required
-              pattern="^\d{2}-?\d{8}-?\d{1}$"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
             />
+            {isEdit && (
+              <p className="mt-1 text-xs text-gray-500">
+                El CUIL/CUIT no puede modificarse
+              </p>
+            )}
           </div>
 
+          {/* Campos según tipo */}
           {tipoCliente === 'EMPRESA' ? (
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="razon_social"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
                 Razón Social <span className="text-red-500">*</span>
               </label>
               <input
+                id="razon_social"
                 name="razon_social"
                 type="text"
                 value={formState.razon_social}
                 onChange={(e) => handleChange('razon_social', e.target.value)}
                 placeholder="Empresa S.A."
                 maxLength={100}
-                disabled={loading}
+                disabled={isPending}
                 required
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
               />
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="nombre"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
                     Nombre <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="nombre"
                     name="nombre"
                     type="text"
                     value={formState.nombre}
                     onChange={(e) => handleChange('nombre', e.target.value)}
                     placeholder="Juan"
                     maxLength={50}
-                    disabled={loading}
+                    disabled={isPending}
                     required
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="apellido"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
                     Apellido <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="apellido"
                     name="apellido"
                     type="text"
                     value={formState.apellido}
                     onChange={(e) => handleChange('apellido', e.target.value)}
                     placeholder="Pérez"
                     maxLength={50}
-                    disabled={loading}
+                    disabled={isPending}
                     required
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
                   />
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="sexo"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
                   Sexo <span className="text-red-500">*</span>
                 </label>
                 <select
+                  id="sexo"
                   name="sexo"
                   value={formState.sexo}
                   onChange={(e) => handleChange('sexo', e.target.value)}
-                  disabled={loading}
+                  disabled={isPending}
                   required
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
                 >
                   <option value="">Seleccione...</option>
-                  <option value="Masculino">Masculino</option>
-                  <option value="Femenino">Femenino</option>
-                  <option value="Otro">Otro</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
                 </select>
               </div>
             </>
           )}
 
+          {/* Teléfono */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="telefono"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Teléfono <span className="text-red-500">*</span>
             </label>
             <input
+              id="telefono"
               name="telefono"
               type="tel"
               value={formState.telefono}
               onChange={(e) => handleChange('telefono', e.target.value)}
               placeholder="+54 341 1234567"
               maxLength={20}
-              disabled={loading}
+              disabled={isPending}
               required
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
             />
           </div>
 
+          {/* Email */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="mail"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Email <span className="text-red-500">*</span>
             </label>
             <input
+              id="mail"
               name="mail"
               type="email"
               value={formState.mail}
               onChange={(e) => handleChange('mail', e.target.value)}
               placeholder="contacto@empresa.com"
               maxLength={100}
-              disabled={loading}
+              disabled={isPending}
               required
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none disabled:bg-gray-100"
             />
           </div>
 
           <input type="hidden" name="tipo_cliente" value={tipoCliente} />
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.push(cancelUrl)}
-            disabled={loading}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        {/* Botones */}
+        <div className="flex items-center justify-end gap-3 border-t pt-6">
+          <Link
+            href={cancelUrl}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             Cancelar
-          </button>
+          </Link>
 
           <button
             type="submit"
-            disabled={loading}
-            className="ml-auto flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            disabled={isPending}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? (
+            {isPending ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Enviando...
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {isEdit ? 'Actualizando...' : 'Creando...'}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                {isEdit ? 'Actualizar cliente' : 'Crear cliente'}
+                {isEdit ? 'Actualizar Cliente' : 'Crear Cliente'}
               </>
             )}
           </button>

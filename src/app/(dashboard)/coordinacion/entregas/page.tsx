@@ -1,16 +1,17 @@
-'use client'
+import EntregasPageContent from '@/components/pages/EntregasPageContent'
 
-import { useRouter } from 'next/navigation'
-import EntregasList from '@/components/shared/EntregasList'
-
-export default function EntregasPage() {
-  const router = useRouter()
+export default async function CoordinacionEntregasPage({
+  searchParams,
+}: {
+  searchParams?: any
+}) {
+  const sp = await searchParams
 
   return (
-    <EntregasList
-      onCreateClick={() => {
-        router.push('/coordinacion/entregas/crear')
-      }}
+    <EntregasPageContent
+      searchQuery={sp?.q ?? ''}
+      canCreate={true}
+      createUrl="/coordinacion/entregas/crear"
     />
   )
 }

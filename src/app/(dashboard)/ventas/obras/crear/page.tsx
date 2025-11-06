@@ -10,7 +10,6 @@ export default function CrearObraPage() {
     <CrearObra
       onCancel={() => router.push('/ventas/obras')}
       onSubmit={async (obraData, presupuesto) => {
-        // lógica para crear obra y presupuesto
         router.push('/ventas/obras')
       }}
     />

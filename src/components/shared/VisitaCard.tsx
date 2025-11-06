@@ -1,47 +1,64 @@
-import { useState } from 'react'
-import { Calendar, Clock, User, Eye, Pencil, XCircle } from 'lucide-react'
+'use client'
+
+import { useState, useTransition } from 'react'
+import {
+  Calendar,
+  Clock,
+  User,
+  Eye,
+  Pencil,
+  XCircle,
+  MapPin,
+  Briefcase,
+} from 'lucide-react'
 import { Visita } from '@/types'
 import VisitaDetail from './VisitaDetails'
 import { cancelarVisita } from '@/actions/visitas'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export function getStatusColor(estado: string) {
   switch (estado) {
     case 'PROGRAMADA':
-      return 'bg-yellow-200 text-yellow-800 border border-yellow-300'
+      return 'bg-blue-100 text-blue-800 border-blue-200'
+    case 'EN CURSO':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200'
     case 'COMPLETADA':
-      return 'bg-green-100 text-green-800 border border-green-200'
+      return 'bg-green-100 text-green-800 border-green-200'
     case 'CANCELADA':
-      return 'bg-red-100 text-red-700 border border-red-200'
+      return 'bg-red-100 text-red-800 border-red-200'
+    case 'REPROGRAMADA':
+      return 'bg-purple-100 text-purple-800 border-purple-200'
     default:
-      return 'bg-gray-100 text-gray-700 border border-gray-200'
+      return 'bg-gray-100 text-gray-800 border-gray-200'
   }
 }
 
 export function getTipoText(tipo: string) {
-  switch (tipo) {
-    case 'VISITA INICIAL':
-      return 'Visita Inicial'
-    case 'MEDICION':
-      return 'Medición'
-    case 'RE-MEDICION':
-      return 'Re-Medición'
-    case 'REPARACION':
-      return 'Reparación'
-    case 'ASESORAMIENTO':
-      return 'Asesoramiento'
-    default:
-      return tipo
+  const tipos: Record<string, string> = {
+    'VISITA INICIAL': 'Visita Inicial',
+    MEDICION: 'Medición',
+    'RE-MEDICION': 'Re-Medición',
+    REPARACION: 'Reparación',
+    ASESORAMIENTO: 'Asesoramiento',
   }
+  return tipos[tipo] || tipo
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('es-AR')
+  const date = new Date(dateString)
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return localDate.toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 }
 
 function formatTime(dateString: string) {
   const date = new Date(dateString)
-  return date.toLocaleTimeString('es-AR', {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return localDate.toLocaleTimeString('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
   })
@@ -50,192 +67,202 @@ function formatTime(dateString: string) {
 interface VisitaCardProps {
   visita: Visita
   rolActual?: string
-  onEdit?: (visita: Visita) => void
 }
 
-export default function VisitaCard({
-  visita,
-  rolActual,
-  onEdit,
-}: VisitaCardProps) {
+export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
   const esCoordinacion = rolActual?.trim().toUpperCase() === 'COORDINACION'
   const [showDetail, setShowDetail] = useState(false)
-  const [cancelLoading, setCancelLoading] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
-  const handleCancelarVisita = async () => {
-    setCancelLoading(true)
-    try {
-      await cancelarVisita(visita.cod_visita)
-      setShowCancelModal(false)
-    } finally {
-      setCancelLoading(false)
-    }
+  const handleCancelarVisita = () => {
+    startTransition(async () => {
+      try {
+        await cancelarVisita(visita.cod_visita)
+        setShowCancelModal(false)
+        router.refresh()
+      } catch (error) {
+        console.error('❌ Error al cancelar:', error)
+        alert('Error al cancelar la visita')
+      }
+    })
   }
 
   return (
     <>
-      <div className="flex items-center">
-        <div className="flex flex-1 flex-col rounded-xl border border-blue-200 bg-blue-50 p-6 transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            <h3 className="mb-1 text-lg font-semibold text-gray-800">
-              {visita.obra?.direccion || visita.direccion_visita}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <MapPin className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">
+              {visita.obra?.direccion ||
+                visita.direccion_visita ||
+                'Sin dirección'}
             </h3>
-            <div className="mb-2 grid grid-cols-4 items-start gap-x-2 gap-y-1">
-              <div className="flex items-center gap-1">
-                <Calendar className="hidden h-4 w-4 text-blue-600 sm:inline" />
-                <span className="text-sm text-gray-700">
-                  {formatDate(visita.fecha_hora_visita)}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="hidden h-4 w-4 text-blue-600 sm:inline" />
-                <span className="text-sm text-gray-700">
-                  {formatTime(visita.fecha_hora_visita)}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="rounded bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
-                  {getTipoText(visita.motivo_visita)}
-                </span>
-              </div>
-              <div className="flex items-start gap-1">
-                <User className="mt-[2px] hidden h-4 w-4 text-blue-600 sm:inline" />
-                <div className="flex flex-col">
-                  {Array.isArray(visita.empleado_visita) &&
-                  visita.empleado_visita.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {visita.empleado_visita.map((ev, idx) =>
-                        ev ? (
-                          <li
-                            key={ev.cuil || idx}
-                            className="text-xs leading-tight text-gray-700"
-                            style={idx === 0 ? { marginTop: '-2px' } : {}}
-                          >
-                            {
-                              /*visita.empleado_visita[idx]?.empleado.nombre*/ ''
-                            }{' '}
-                            {
-                              /*visita.empleado_visita[idx]?.empleado.apellido*/
-                              ''
-                            }
-                          </li>
-                        ) : (
-                          <li
-                            key={idx}
-                            className="text-xs leading-tight text-gray-400 italic"
-                            style={idx === 0 ? { marginTop: '-2px' } : {}}
-                          >
-                            Empleado no disponible
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  ) : (
-                    <span className="text-xs text-gray-400">Sin asignar</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <label className="text-sm font-medium text-gray-700">
-              Observaciones:{' '}
-            </label>
-            <p className="pr-4 text-sm font-medium text-gray-500">
-              {visita.observaciones || '(vacío)'}
-            </p>
           </div>
-          <div className="mt-4 flex w-full flex-col items-end gap-2 sm:mt-0 sm:ml-4 sm:w-auto">
-            <span
-              className={`mb-2 inline-flex items-center justify-center rounded-md px-3 py-1 text-xs font-bold tracking-wide uppercase ${getStatusColor(
-                visita.estado ? visita.estado : 'PROGRAMADA'
-              )} shadow`}
-              style={{ minWidth: 110 }}
-            >
-              {visita.estado ? visita.estado : 'PROGRAMADA'}
-            </span>
-            <div className="block" style={{ width: 300, minHeight: 44 }}>
-              <div className="flex w-full justify-end gap-2">
-                <button
-                  className="flex h-11 w-32 items-center justify-center space-x-2 rounded-md bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
-                  onClick={() => setShowDetail(true)}
-                >
-                  <Eye className="hidden h-5 w-5 sm:inline" />
-                  <span>Ver Detalles</span>
-                </button>
-                {esCoordinacion && visita.estado === 'PROGRAMADA' && (
-                  <>
-                    <button
-                      onClick={() => onEdit?.(visita)}
-                      className="flex h-11 w-32 items-center justify-center space-x-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm font-medium text-yellow-700 hover:bg-yellow-100"
-                      title="Editar"
-                    >
-                      <Pencil className="hidden h-4 w-4 sm:inline" />
-                      <span>Editar</span>
-                    </button>
-                    <button
-                      onClick={() => setShowCancelModal(true)}
-                      disabled={cancelLoading}
-                      className="flex h-11 w-32 items-center justify-center space-x-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
-                      title="Cancelar"
-                    >
-                      <XCircle className="hidden h-4 w-4 sm:inline" />
-                      <span>
-                        {cancelLoading ? 'Cancelando...' : 'Cancelar'}
-                      </span>
-                    </button>
-                  </>
-                )}
+          <span
+            className={`rounded-full border px-3 py-1 text-xs font-bold tracking-wide uppercase ${getStatusColor(
+              visita.estado || 'PROGRAMADA'
+            )}`}
+          >
+            {visita.estado || 'PROGRAMADA'}
+          </span>
+        </div>
+
+        {/* Contenido */}
+        <div className="p-6">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {/* Fecha */}
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Fecha</p>
+                <p className="font-semibold text-gray-900">
+                  {formatDate(visita.fecha_hora_visita)}
+                </p>
               </div>
             </div>
+
+            {/* Hora */}
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <Clock className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Hora</p>
+                <p className="font-semibold text-gray-900">
+                  {formatTime(visita.fecha_hora_visita)}
+                </p>
+              </div>
+            </div>
+
+            {/* Tipo */}
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-blue-100 p-2">
+                <Briefcase className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">Tipo</p>
+                <p className="font-semibold text-gray-900">
+                  {getTipoText(visita.motivo_visita)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Empleados */}
+          <div className="mb-4">
+            <div className="mb-2 flex items-center gap-2">
+              <User className="h-4 w-4 text-gray-500" />
+              <p className="text-sm font-medium text-gray-700">
+                Empleados asignados
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {visita.empleado_visita?.length > 0 ? (
+                visita.empleado_visita.map((ev, idx) => (
+                  <span
+                    key={ev.cuil || idx}
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      idx === 0
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {ev.empleado?.nombre} {ev.empleado?.apellido}
+                    {idx === 0 && ' (Principal)'}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-gray-400 italic">
+                  Sin asignar
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Observaciones */}
+          {visita.observaciones && (
+            <div className="mb-4 rounded-lg bg-gray-50 p-3">
+              <p className="text-xs font-medium text-gray-500">Observaciones</p>
+              <p className="mt-1 text-sm text-gray-700">
+                {visita.observaciones}
+              </p>
+            </div>
+          )}
+
+          {/* Botones */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setShowDetail(true)}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              <Eye className="h-4 w-4" />
+              Ver Detalles
+            </button>
+
+            {esCoordinacion && visita.estado === 'PROGRAMADA' && (
+              <>
+                <Link
+                  href={`/coordinacion/visitas/${visita.cod_visita}/editar`}
+                  className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Link>
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  disabled={isPending}
+                  className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                >
+                  <XCircle className="h-4 w-4" />
+                  {isPending ? 'Cancelando...' : 'Cancelar'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Modal de detalles */}
       {showDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="relative w-full max-w-2xl">
-            <button
-              className="absolute top-2 right-2 z-10 rounded-full bg-white p-2 shadow hover:bg-gray-100"
-              onClick={() => setShowDetail(false)}
-              aria-label="Cerrar"
-            >
-              <span className="text-xl font-bold">&times;</span>
-            </button>
-            <VisitaDetail
-              visita={visita}
-              onClose={() => {
-                setShowDetail(false)
-              }}
-              onCancel={router.refresh}
-            />
-          </div>
-        </div>
+        <VisitaDetail visita={visita} onClose={() => setShowDetail(false)} />
       )}
+
+      {/* Modal de confirmación */}
       {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="flex w-full max-w-sm flex-col items-center rounded-xl border border-gray-200 bg-white p-8 shadow-2xl">
-            <div className="mb-4 flex flex-col items-center">
-              <XCircle className="mb-2 h-12 w-12 text-red-500" />
-              <h2 className="mb-1 text-lg font-bold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex flex-col items-center text-center">
+              <div className="mb-3 rounded-full bg-red-100 p-3">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h2 className="mb-2 text-xl font-bold text-gray-900">
                 Cancelar visita
               </h2>
-              <p className="text-center text-sm text-gray-600">
-                ¿Seguro que deseas cancelar la visita?
+              <p className="text-sm text-gray-600">
+                ¿Estás seguro de que deseas cancelar esta visita? Esta acción no
+                se puede deshacer.
               </p>
             </div>
-            <div className="mt-4 flex w-full gap-4">
-              <button
-                onClick={handleCancelarVisita}
-                disabled={cancelLoading}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-red-700 disabled:opacity-50"
-              >
-                {cancelLoading ? 'Cancelando...' : 'Confirmar'}
-              </button>
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 font-semibold text-gray-700 shadow transition hover:bg-gray-200"
+                disabled={isPending}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 Volver
+              </button>
+              <button
+                onClick={handleCancelarVisita}
+                disabled={isPending}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {isPending ? 'Cancelando...' : 'Confirmar'}
               </button>
             </div>
           </div>

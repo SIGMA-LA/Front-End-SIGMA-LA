@@ -6,16 +6,16 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react'
-import { mockVehiculos } from '@/data/mockData'
 import { VehiculosListProps } from '@/types'
-import { useVehiculos } from '@/hooks/useVehiculos';
+import { useVehiculos } from '@/hooks/useVehiculos'
 
 // Mock data de vehículos
 
-export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosListProps) {
-  /* const vehiculos = mockVehiculos */
-
-  const { vehiculos, isLoading, error } = useVehiculos();
+export default function VehiculosList({
+  onCreateClick,
+  onEditClick,
+}: VehiculosListProps) {
+  const { vehiculos, isLoading, error } = useVehiculos()
   /* const vehiculos = await getVehiculos(); */ // Llama a la función para obtener los vehículos
 
   const getEstadoIcon = (estado: string) => {
@@ -71,8 +71,6 @@ export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosLi
         return 'bg-gray-100 text-gray-800'
     }
   }
-
-
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -195,12 +193,12 @@ export default function VehiculosList({ onCreateClick,onEditClick }: VehiculosLi
                   <button className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current">
                     Ver Detalles
                   </button>
-            <button
-              onClick={() => onEditClick(vehiculo)} // Llama a la función pasada por props
-              className="flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current hover:bg-opacity-10"
-            >
-              Editar
-            </button>
+                  <button
+                    onClick={() => onEditClick(vehiculo)} // Llama a la función pasada por props
+                    className="hover:bg-opacity-10 flex-1 rounded-lg border border-current px-3 py-2 text-sm font-medium transition-colors hover:bg-current"
+                  >
+                    Editar
+                  </button>
                 </div>
               </div>
             ))}
