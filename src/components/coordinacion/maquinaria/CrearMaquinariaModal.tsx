@@ -31,26 +31,16 @@ export default function CrearMaquinariaModal({
       setLoading(true)
       setError('')
 
-      console.log(
-        '➕ [DEBUG] CrearMaquinariaModal - Creando maquinaria con datos:',
-        {
-          descripcion: descripcion.trim(),
-          estado,
-        }
-      )
-
       await createMaquinaria({
         descripcion: descripcion.trim(),
         estado,
       })
 
-      console.log('➕ [DEBUG] Maquinaria creada exitosamente')
       setDescripcion('')
       setEstado('DISPONIBLE')
       onSuccess()
       onClose()
     } catch (err) {
-      console.log('➕ [DEBUG] Error al crear maquinaria:', err)
       setError(
         err instanceof Error ? err.message : 'Error al crear la maquinaria'
       )

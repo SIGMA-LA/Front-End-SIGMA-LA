@@ -102,8 +102,6 @@ export default function Page() {
         // Cerrar modal
         setShowConfirmModal(false)
         setObservacionesFinal('')
-
-        console.log('Entrega finalizada exitosamente')
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
         alert('Error al finalizar la entrega. Inténtalo de nuevo.')

@@ -83,7 +83,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
         setShowCancelModal(false)
         router.refresh()
       } catch (error) {
-        console.error('❌ Error al cancelar:', error)
+        console.error('Error al cancelar:', error)
         alert('Error al cancelar la visita')
       }
     })

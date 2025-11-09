@@ -3,6 +3,7 @@
 import { Empleado } from '@/types'
 import { getAccessToken } from './auth'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { logError } from '@/lib/logger'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/empleados'
 
@@ -30,7 +31,7 @@ export async function obtenerVisitadores(): Promise<Empleado[]> {
     const visitadores: Empleado[] = await response.json()
     return visitadores
   } catch (error) {
-    console.error('Error obteniendo visitadores:', error)
+    logError(error, 'obtenerVisitadores')
     return []
   }
 }
@@ -57,7 +58,7 @@ export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
     const empleados: Empleado[] = await response.json()
     return empleados
   } catch (error) {
-    console.error('Error al obtener empleados disponibles para entrega:', error)
+    logError(error, 'obtenerEmpleadosDisponiblesParaEntrega')
     throw error
   }
 }
@@ -84,7 +85,7 @@ export async function buscarFiltrados(query: string): Promise<Empleado[]> {
     const empleados: Empleado[] = await response.json()
     return empleados
   } catch (error) {
-    console.error('Error al buscar acompañantes:', error)
+    logError(error, 'buscarFiltrados')
     throw error
   }
 }
@@ -93,7 +94,10 @@ export async function obtenerEmpleadoPorCuil(
   cuil: string
 ): Promise<Empleado | null> {
   if (!cuil) {
-    console.warn('Se intentó obtener un empleado sin CUIL.')
+    logError(
+      new Error('Se intentó obtener un empleado sin CUIL'),
+      'obtenerEmpleadoPorCuil'
+    )
     return null
   }
 
@@ -115,7 +119,7 @@ export async function obtenerEmpleadoPorCuil(
     const empleado: Empleado = await response.json()
     return empleado
   } catch (error) {
-    console.error(`Error obteniendo empleado con CUIL ${cuil}:`, error)
+    logError(error, `obtenerEmpleadoPorCuil:${cuil}`)
     return null
   }
 }
@@ -139,7 +143,7 @@ export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
     const data: ApiResponse<Empleado[]> = await response.json()
     return data.data || []
   } catch (error) {
-    console.error('Error obteniendo todos los empleados:', error)
+    logError(error, 'obtenerTodosLosEmpleados')
     return []
   }
 }
@@ -171,7 +175,7 @@ export async function crearEmpleado(empleadoData: {
     const empleado: Empleado = await response.json()
     return { success: true, data: empleado }
   } catch (error) {
-    console.error('[crearEmpleado]', error)
+    logError(error, 'crearEmpleado')
     return { success: false, error: 'Error al crear empleado' }
   }
 }
@@ -205,7 +209,7 @@ export async function actualizarEmpleado(
     const empleado: Empleado = await response.json()
     return { success: true, data: empleado }
   } catch (error) {
-    console.error('[actualizarEmpleado]', error)
+    logError(error, 'actualizarEmpleado')
     return { success: false, error: 'Error al actualizar empleado' }
   }
 }
@@ -230,7 +234,7 @@ export async function eliminarEmpleado(
 
     return { success: true }
   } catch (error) {
-    console.error('[eliminarEmpleado]', error)
+    logError(error, 'eliminarEmpleado')
     return { success: false, error: 'Error al eliminar empleado' }
   }
 }
