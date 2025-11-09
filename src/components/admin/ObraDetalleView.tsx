@@ -39,8 +39,10 @@ export default function ObraDetalleView({
 
   const totalPagado =
     pagos?.reduce((sum, pago) => sum + (pago.monto || 0), 0) || 0
-  const visitasProgramadas = visitas?.length
-  const entregasEntregadas = entregas?.length || 0
+  const visitasProgramadas =
+    visitas?.filter((v) => v.estado === 'PROGRAMADA').length || 0
+  const entregasEntregadas =
+    entregas?.filter((e) => e.estado === 'ENTREGADO').length || 0
 
   const nombreCliente =
     obra.cliente?.tipo_cliente === 'EMPRESA'
