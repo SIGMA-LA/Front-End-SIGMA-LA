@@ -117,16 +117,32 @@ export default function CrearVisita({
   const formAction = visitaEditar ? actualizarVisitaAction : crearVisitaAction
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-4xl">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+            <Calendar className="h-6 w-6 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {visitaEditar
+                ? 'Editar Visita'
+                : isFromObra && preloadedObra
+                  ? `Nueva Visita - ${preloadedObra.direccion}`
+                  : 'Nueva Visita'}
+            </h1>
+            {isFromObra && preloadedObra && (
+              <p className="text-sm text-gray-600">
+                Cliente:{' '}
+                {preloadedObra.cliente.razon_social ||
+                  `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
+              </p>
+            )}
+          </div>
+        </div>
+
         <form action={formAction}>
-          <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-lg">
-            <div className="mb-8 border-b pb-4">
-              <h1 className="flex items-center gap-2 text-3xl font-bold text-blue-900">
-                <Calendar className="h-7 w-7 text-blue-500" />
-                {visitaEditar ? 'Editar Visita' : 'Nueva Visita'}
-              </h1>
-            </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             {visitaEditar && (
               <input
                 type="hidden"

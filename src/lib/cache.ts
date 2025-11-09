@@ -32,7 +32,7 @@ export const getProvincias = cache(async (): Promise<Provincia[]> => {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 3600 }, // 1 hora - Next.js Data Cache
+      next: { revalidate: 3600 },
     })
 
     if (!res.ok) return []
@@ -55,7 +55,7 @@ export const getEmpleadoActual = cache(async () => {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 300 }, // 5 minutos
+      next: { revalidate: 300 },
     })
 
     if (!res.ok) return null

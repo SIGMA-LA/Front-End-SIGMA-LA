@@ -4,10 +4,11 @@ import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Truck, AlertCircle } from 'lucide-react'
 import { crearEntregaAction } from '@/actions/entregas'
+import { obtenerObras } from '@/actions/obras'
 import type { Obra, Empleado, Vehiculo, Maquinaria } from '@/types'
 
 // Componentes
-import ObraSelection from './entrega/ObraSelection'
+import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
 import DateTimeSelection from './entrega/DateTimeSelection'
 import PersonalSelection from './entrega/PersonalSelection'
 import ViaticosSection from './entrega/ViaticosSection'
@@ -45,11 +46,6 @@ export default function CrearEntregaForm({
     observaciones: '',
   })
 
-  // Estado de búsqueda de obra
-  const [showObraSearch, setShowObraSearch] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [obras, setObras] = useState<Obra[]>([])
-
   // Estado de personal
   const [encargado, setEncargado] = useState<string | null>(null)
   const [acompanantes, setAcompanantes] = useState<string[]>([])
@@ -70,16 +66,6 @@ export default function CrearEntregaForm({
     return diasViaticos * totalPersonas * viaticoPorDia
   }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
 
-  // Filtrar obras
-  const filteredObras = obras.filter((obra) => {
-    const searchLower = searchTerm.toLowerCase()
-    return (
-      obra.direccion.toLowerCase().includes(searchLower) ||
-      obra.cliente.razon_social?.toLowerCase().includes(searchLower) ||
-      obra.cliente.nombre?.toLowerCase().includes(searchLower)
-    )
-  })
-
   const getEmpleadoNombre = (cuil: string) => {
     const emp = empleados.find((e) => e.cuil === cuil)
     return emp ? `${emp.nombre} ${emp.apellido}` : cuil
@@ -91,7 +77,6 @@ export default function CrearEntregaForm({
       obraId: obra.cod_obra,
       direccion: obra.direccion,
     }))
-    setShowObraSearch(false)
   }
 
   const handleConfirmPersonal = (
@@ -195,16 +180,39 @@ export default function CrearEntregaForm({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <ObraSelection
-                isFromObra={isFromObra}
-                direccion={formData.direccion}
-                showObraSearch={showObraSearch}
-                setShowObraSearch={setShowObraSearch}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filteredObras={filteredObras}
-                handleObraSelect={handleObraSelect}
-              />
+              {!isFromObra && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Obra *
+                  </label>
+                  {formData.direccion ? (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                      <p className="font-medium text-green-900">
+                        {formData.direccion}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            obraId: null,
+                            direccion: '',
+                          }))
+                        }
+                        className="mt-2 text-sm text-green-700 hover:text-green-900"
+                      >
+                        Cambiar obra
+                      </button>
+                    </div>
+                  ) : (
+                    <ObraSearchSelect
+                      onSelectObra={handleObraSelect}
+                      buscarObras={obtenerObras}
+                      placeholder="Buscar obra por dirección o cliente..."
+                    />
+                  )}
+                </div>
+              )}
 
               <DateTimeSelection
                 fecha={formData.fecha}

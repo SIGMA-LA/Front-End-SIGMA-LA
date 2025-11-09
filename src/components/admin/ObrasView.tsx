@@ -1,32 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
-import { useGlobalContext } from '@/context/GlobalContext'
 import EstadoObraBadge from '../shared/EstadoObraBadge'
 import { ExternalLink, FileX } from 'lucide-react'
+import type { Obra } from '@/types'
 
-export default function ObrasView() {
-  const { obras, fetchObras } = useGlobalContext()
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface ObrasViewProps {
+  obras: Obra[]
+}
 
-  useEffect(() => {
-    const cargarObras = async () => {
-      try {
-        await fetchObras()
-      } catch (err) {
-        setError('No se pudieron cargar las obras.')
-      } finally {
-        setCargando(false)
-      }
-    }
-    cargarObras()
-  }, [fetchObras])
-
-  if (cargando) return <div className="p-8 text-center">Cargando obras...</div>
-  if (error) return <div className="p-8 text-center text-red-600">{error}</div>
-
+export default function ObrasView({ obras }: ObrasViewProps) {
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold text-gray-800">Supervisión de Obras</h2>

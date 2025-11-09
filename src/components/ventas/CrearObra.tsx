@@ -11,16 +11,15 @@ import {
   MapPin,
   Home,
 } from 'lucide-react'
-import { useGlobalContext } from '@/context/GlobalContext'
 import type { Obra, Cliente } from '@/types'
 import type { ObraFormData } from '@/services/obra.service'
 import type { PresupuestoFormData } from '@/services/presupuesto.service'
 import CrearPresupuestoModal from './CrearPresupuestoModal'
-import { localidadesPorProvincia } from '@/actions/localidad'
-import { getProvincias } from '@/lib/cache'
+import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
 import Link from 'next/link'
 
 interface CrearObraProps {
+  clientes: Cliente[]
   onCancel: () => void
   onSubmit: (
     obraData: ObraFormData,
@@ -40,11 +39,11 @@ const initialState: ObraFormData = {
 }
 
 export default function CrearObra({
+  clientes,
   onCancel,
   onSubmit,
   obraExistente,
 }: CrearObraProps) {
-  const { clientes, fetchClientes } = useGlobalContext()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
   const esModoEdicion = !!obraExistente
@@ -98,7 +97,7 @@ export default function CrearObra({
 
   // Cargar provincias al inicio
   useEffect(() => {
-    getProvincias().then(setProvincias)
+    obtenerProvincias().then(setProvincias)
   }, [])
 
   // Cargar localidades cuando cambia la provincia

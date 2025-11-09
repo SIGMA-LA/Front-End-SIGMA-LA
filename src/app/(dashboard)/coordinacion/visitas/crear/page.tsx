@@ -3,12 +3,23 @@ import { localidadesPorProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
 import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
 import { obtenerTodosLosEmpleados } from '@/actions/empleado'
-import { obtenerObras } from '@/actions/obras'
+import { obtenerObras, obtenerObra } from '@/actions/obras'
 
-export default async function CrearVisitaPage() {
-  const provincias = await getProvincias()
-  const vehiculos = await obtenerVehiculosDisponibles()
-  const empleados = await obtenerTodosLosEmpleados()
+export default async function CrearVisitaPage({
+  searchParams,
+}: {
+  searchParams?: any
+}) {
+  const sp = await searchParams
+  const obraId = sp?.obraId ?? null
+
+  const [provincias, vehiculos, empleados, obraPreseleccionada] =
+    await Promise.all([
+      getProvincias(),
+      obtenerVehiculosDisponibles(),
+      obtenerTodosLosEmpleados(),
+      obraId ? obtenerObra(Number(obraId)) : null,
+    ])
 
   return (
     <CrearVisita
@@ -17,6 +28,7 @@ export default async function CrearVisitaPage() {
       empleados={Array.isArray(empleados) ? empleados : []}
       buscarObras={obtenerObras}
       buscarLocalidades={localidadesPorProvincia}
+      preloadedObra={obraPreseleccionada}
     />
   )
 }

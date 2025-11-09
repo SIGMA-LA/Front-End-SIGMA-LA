@@ -143,3 +143,94 @@ export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
     return []
   }
 }
+
+/* Crear empleado (POST /empleados) */
+export async function crearEmpleado(empleadoData: {
+  cuil: string
+  nombre: string
+  apellido: string
+  rol_actual: string
+  area_trabajo: string
+  contrasenia?: string
+}): Promise<{ success: boolean; data?: Empleado; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(empleadoData),
+    })
+
+    if (!response.ok) {
+      return { success: false, error: 'Error al crear empleado' }
+    }
+
+    const empleado: Empleado = await response.json()
+    return { success: true, data: empleado }
+  } catch (error) {
+    console.error('[crearEmpleado]', error)
+    return { success: false, error: 'Error al crear empleado' }
+  }
+}
+
+/* Actualizar empleado (PUT /empleados/:cuil) */
+export async function actualizarEmpleado(
+  cuil: string,
+  empleadoData: {
+    nombre?: string
+    apellido?: string
+    rol_actual?: string
+    area_trabajo?: string
+    contrasenia?: string
+  }
+): Promise<{ success: boolean; data?: Empleado; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(empleadoData),
+    })
+
+    if (!response.ok) {
+      return { success: false, error: 'Error al actualizar empleado' }
+    }
+
+    const empleado: Empleado = await response.json()
+    return { success: true, data: empleado }
+  } catch (error) {
+    console.error('[actualizarEmpleado]', error)
+    return { success: false, error: 'Error al actualizar empleado' }
+  }
+}
+
+/* Eliminar empleado (DELETE /empleados/:cuil) */
+export async function eliminarEmpleado(
+  cuil: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      return { success: false, error: 'Error al eliminar empleado' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('[eliminarEmpleado]', error)
+    return { success: false, error: 'Error al eliminar empleado' }
+  }
+}

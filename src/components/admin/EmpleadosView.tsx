@@ -1,13 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Users, Building, Plus, Eye, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import type { Empleado } from '@/types'
-import { useGlobalContext } from '@/context/GlobalContext'
 import CrearEmpleado, { CrearEmpleadoData } from './CrearEmpleado'
-import empleadoService from '@/services/empleado.service'
+import {
+  crearEmpleado,
+  actualizarEmpleado,
+  eliminarEmpleado,
+} from '@/actions/empleado'
 
 const getRolDisplayName = (rol: Empleado['rol_actual']) => {
   const rolNames: Record<string, string> = {
@@ -20,16 +24,22 @@ const getRolDisplayName = (rol: Empleado['rol_actual']) => {
   return rolNames[rol] || rol
 }
 
-export default function EmpleadosView() {
-  const { empleados, deleteEmpleado } = useGlobalContext()
+interface EmpleadosViewProps {
+  empleados: Empleado[]
+}
+
+export default function EmpleadosView({
+  empleados: initialEmpleados,
+}: EmpleadosViewProps) {
+  const router = useRouter()
   const [showModal, setShowModal] = useState(false)
   const [editingEmpleado, setEditingEmpleado] = useState<Empleado | null>(null)
   const [viewingEmpleado, setViewingEmpleado] = useState<Empleado | null>(null)
   const [empleadosList, setEmpleadosList] = useState<Empleado[]>([])
 
   useEffect(() => {
-    setEmpleadosList(Array.isArray(empleados) ? empleados : [])
-  }, [empleados])
+    setEmpleadosList(Array.isArray(initialEmpleados) ? initialEmpleados : [])
+  }, [initialEmpleados])
 
   const handleOpenModal = (empleado: Empleado | null) => {
     setEditingEmpleado(empleado)
@@ -50,21 +60,34 @@ export default function EmpleadosView() {
           ? { ...updateData, contrasenia }
           : updateData
 
-        const empleadoActualizado = await empleadoService.updateEmpleado(
+        const result = await actualizarEmpleado(
           editingEmpleado.cuil,
           dataToUpdate
         )
 
+        if (!result.success || !result.data) {
+          throw new Error(result.error || 'Error al actualizar empleado')
+        }
+
+        // Update optimista
         setEmpleadosList((prev) =>
           prev.map((emp) =>
-            emp.cuil === editingEmpleado.cuil ? empleadoActualizado : emp
+            emp.cuil === editingEmpleado.cuil ? result.data! : emp
           )
         )
       } else {
         // Crear nuevo empleado
-        const nuevoEmpleado = await empleadoService.createEmpleado(empleadoData)
-        setEmpleadosList((prev) => [...prev, nuevoEmpleado])
+        const result = await crearEmpleado(empleadoData)
+
+        if (!result.success || !result.data) {
+          throw new Error(result.error || 'Error al crear empleado')
+        }
+
+        // Update optimista
+        setEmpleadosList((prev) => [...prev, result.data!])
       }
+      // Recargar datos del servidor
+      router.refresh()
     } catch (error) {
       console.error('Error al guardar empleado:', error)
       throw error // Re-lanzar el error para que lo maneje CrearEmpleado
@@ -78,8 +101,17 @@ export default function EmpleadosView() {
       )
     ) {
       try {
-        await deleteEmpleado(cuil)
+        const result = await eliminarEmpleado(cuil)
+
+        if (!result.success) {
+          throw new Error(result.error || 'Error al eliminar empleado')
+        }
+
+        // Update optimista
         setEmpleadosList((prev) => prev.filter((emp) => emp.cuil !== cuil))
+
+        // Recargar datos del servidor
+        router.refresh()
       } catch (error) {
         console.error('Error al borrar empleado:', error)
         alert('Hubo un error al eliminar el empleado.')
