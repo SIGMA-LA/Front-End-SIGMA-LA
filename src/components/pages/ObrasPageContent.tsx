@@ -7,7 +7,6 @@ import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import ObrasFiltros from '@/components/shared/ObrasFiltros'
 import Link from 'next/link'
-import type { Obra, Provincia } from '@/types'
 
 function ObrasListSkeleton() {
   return (

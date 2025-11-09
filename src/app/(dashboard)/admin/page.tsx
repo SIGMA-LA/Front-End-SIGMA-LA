@@ -3,7 +3,6 @@ import { filtrarObrasAction } from '@/actions/obras'
 import { obtenerClientes } from '@/actions/clientes'
 
 export default async function Page() {
-  // Cargar datos en paralelo en el servidor
   const [obras, clientes] = await Promise.all([
     filtrarObrasAction({}),
     obtenerClientes(),

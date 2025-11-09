@@ -1,9 +1,16 @@
-import EmpleadosView from '@/components/admin/EmpleadosView'
-import { obtenerTodosLosEmpleados } from '@/actions/empleado'
+import EmpleadosPageContent from '@/components/pages/EmpleadosPageContent'
 
-export default async function EmpleadosPage() {
-  // Cargar empleados en el servidor
-  const empleados = await obtenerTodosLosEmpleados()
+interface EmpleadosPageProps {
+  searchParams?: Promise<{
+    q?: string
+  }>
+}
 
-  return <EmpleadosView empleados={empleados} />
+export default async function EmpleadosPage({
+  searchParams,
+}: EmpleadosPageProps) {
+  const params = await searchParams
+  const searchQuery = params?.q || ''
+
+  return <EmpleadosPageContent searchQuery={searchQuery} />
 }
