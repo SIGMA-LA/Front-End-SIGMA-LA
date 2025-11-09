@@ -1,4 +1,4 @@
-import { obtenerEmpleadoActual } from '@/actions/empleado'
+import { getEmpleadoActual } from '@/lib/cache'
 import { obtenerVisitas } from '@/actions/visitas'
 import { obtenerEntregas } from '@/actions/entregas'
 import { filtrarObrasAction } from '@/actions/obras'
@@ -82,12 +82,12 @@ async function getCoordinacionStats() {
 }
 
 export default async function CoordinacionPage() {
-  const [usuarioResponse, stats] = await Promise.all([
-    obtenerEmpleadoActual(),
+  const [empleadoResponse, stats] = await Promise.all([
+    getEmpleadoActual(),
     getCoordinacionStats(),
   ])
 
-  const usuario = usuarioResponse?.data
+  const usuario = empleadoResponse
 
   const statsCards = [
     {

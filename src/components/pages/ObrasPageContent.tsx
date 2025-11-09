@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
 import { Building2, Plus } from 'lucide-react'
 import { obtenerObras, filtrarObrasAction } from '@/actions/obras'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
+import { localidadesPorProvincia } from '@/actions/localidad'
+import { getProvincias } from '@/lib/cache'
 import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import ObrasFiltros from '@/components/shared/ObrasFiltros'
@@ -110,7 +111,7 @@ export default async function ObrasPageContent({
   title = 'Obras',
   subtitle = 'Visualiza, filtra y gestiona todas las obras.',
 }: ObrasPageContentProps) {
-  const provincias = await obtenerProvincias()
+  const provincias = await getProvincias()
   const filtros = {
     searchQuery,
     estado,

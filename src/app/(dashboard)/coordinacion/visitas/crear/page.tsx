@@ -1,11 +1,12 @@
 import CrearVisita from '@/components/coordinacion/CrearVisita'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
+import { localidadesPorProvincia } from '@/actions/localidad'
+import { getProvincias } from '@/lib/cache'
 import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
 import { obtenerTodosLosEmpleados } from '@/actions/empleado'
 import { obtenerObras } from '@/actions/obras'
 
 export default async function CrearVisitaPage() {
-  const provincias = await obtenerProvincias()
+  const provincias = await getProvincias()
   const vehiculos = await obtenerVehiculosDisponibles()
   const empleados = await obtenerTodosLosEmpleados()
 

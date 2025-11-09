@@ -11,6 +11,7 @@ interface ApiResponse<T> {
   data: T
 }
 
+// DEPRECADA - Usar getEmpleadoActual() de src/lib/cache.ts
 export async function obtenerEmpleadoActual(): Promise<ApiResponse<Empleado> | null> {
   try {
     const token = await getAccessToken()
@@ -19,7 +20,7 @@ export async function obtenerEmpleadoActual(): Promise<ApiResponse<Empleado> | n
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      next: { revalidate: 300 }, // 5 minutos
     })
 
     if (!response.ok) {

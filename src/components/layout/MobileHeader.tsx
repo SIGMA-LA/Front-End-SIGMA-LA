@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import Sidebar from './Sidebar'
 import { Empleado } from '@/types'
+import { useNavigation } from '@/context/NavigationContext'
 
 // Copiá los arrays de menú igual que en Sidebar
 const menuItemsVentas = [
@@ -38,6 +39,7 @@ const menuItemsAdmin = [
 export default function MobileHeader({ user }: { user: Empleado | null }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const { optimisticPath } = useNavigation()
 
   // Elegí el menú según el rol
   const menuItems =
@@ -49,14 +51,17 @@ export default function MobileHeader({ user }: { user: Empleado | null }) {
 
   // Lógica para el label actual
   const getCurrentLabel = () => {
-    if (!pathname) return 'Dashboard'
+    // Usar optimisticPath si existe
+    const currentPath = optimisticPath || pathname
+    if (!currentPath) return 'Dashboard'
+
     const found = menuItems.find(
       (item) =>
-        item.path === pathname ||
+        item.path === currentPath ||
         (item.path !== '/admin' &&
           item.path !== '/ventas' &&
           item.path !== '/coordinacion' &&
-          pathname.startsWith(item.path + '/'))
+          currentPath.startsWith(item.path + '/'))
     )
     return found?.label || 'Dashboard'
   }

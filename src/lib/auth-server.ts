@@ -1,14 +1,14 @@
 'use server'
 
-import { Empleado } from '@/types'
 import { cookies } from 'next/headers'
 
-export async function getUsuarioFromCookies(): Promise<Empleado | null> {
+// Esta función ahora está deprecada - usar getUsuario() de src/lib/cache.ts
+export async function getUsuarioFromCookies() {
   const cookieStore = await cookies()
-  const usuarioCookie = cookieStore.get('usuario')?.value
-  if (!usuarioCookie) return null
+  const usuario = cookieStore.get('usuario')?.value
+  if (!usuario) return null
   try {
-    return JSON.parse(usuarioCookie)
+    return JSON.parse(usuario)
   } catch {
     return null
   }

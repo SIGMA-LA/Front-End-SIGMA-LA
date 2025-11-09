@@ -4,27 +4,34 @@ import { Obra } from '@/types'
 import { getAccessToken } from './auth'
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { cache } from 'react'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const baseUrl = API_BASE.endsWith('/obras') ? API_BASE : `${API_BASE}/obras`
 
-/* Obtener una obra por ID (GET /obras/:id) */
-export async function getObraById(cod_obra: number): Promise<Obra | null> {
-  try {
-    const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${baseUrl}/${cod_obra}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    return await res.json()
-  } catch (error) {
-    console.error('[getObraById] ', error)
-    return null
+/* Obtener una obra por ID (GET /obras/:id) - Cachear por 30 segundos con Next.js Data Cache */
+export const getObraById = cache(
+  async (cod_obra: number): Promise<Obra | null> => {
+    try {
+      const token = await getAccessToken()
+      const res = await fetchWithErrorHandling(`${baseUrl}/${cod_obra}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: {
+          revalidate: 30,
+          tags: [`obra-${cod_obra}`],
+        },
+      })
+      return await res.json()
+    } catch (error) {
+      console.error('[getObraById] ', error)
+      return null
+    }
   }
-}
+)
 
 /* Buscar obras por texto (GET /obras/buscar?{texto}) */
 export async function obtenerObras(filtro?: string): Promise<Obra[]> {

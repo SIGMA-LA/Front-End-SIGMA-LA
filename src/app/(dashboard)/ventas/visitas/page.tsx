@@ -1,5 +1,5 @@
 import VisitasPageContent from '@/components/pages/VisitasPageContent'
-import { obtenerEmpleadoActual } from '@/actions/empleado'
+import { getUsuario } from '@/lib/cache'
 
 export default async function VentasVisitasPage({
   searchParams,
@@ -7,8 +7,7 @@ export default async function VentasVisitasPage({
   searchParams?: any
 }) {
   const sp = await searchParams
-  const [usuarioResponse] = await Promise.all([obtenerEmpleadoActual()])
-  const usuario = usuarioResponse?.data
+  const usuario = await getUsuario()
 
   return (
     <VisitasPageContent
