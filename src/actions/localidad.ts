@@ -59,7 +59,7 @@ export async function localidadesPorProvincia(
   try {
     const token = await getAccessToken()
     const response = await fetch(
-      `http://localhost:4000/api/localidades/provincias/${cod_provincia}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/localidades/provincias/${cod_provincia}`,
       {
         method: 'GET',
         headers: {

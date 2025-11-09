@@ -8,7 +8,6 @@ import ObrasFiltros from '@/components/shared/ObrasFiltros'
 import Link from 'next/link'
 import type { Obra, Provincia } from '@/types'
 
-// ✅ Skeleton para loading
 function ObrasListSkeleton() {
   return (
     <div className="grid gap-4 sm:gap-6">
@@ -37,7 +36,6 @@ function ObrasListSkeleton() {
   )
 }
 
-// ✅ Server Component que carga las obras
 async function ObrasGrid({
   searchQuery,
   estado,
@@ -91,7 +89,6 @@ async function ObrasGrid({
   )
 }
 
-// ✅ Componente principal con props
 interface ObrasPageContentProps {
   searchQuery?: string
   estado?: string
@@ -113,9 +110,7 @@ export default async function ObrasPageContent({
   title = 'Obras',
   subtitle = 'Visualiza, filtra y gestiona todas las obras.',
 }: ObrasPageContentProps) {
-  // ✅ Cargar provincias aquí (compartido)
   const provincias = await obtenerProvincias()
-
   const filtros = {
     searchQuery,
     estado,

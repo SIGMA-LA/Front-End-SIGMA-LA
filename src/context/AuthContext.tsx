@@ -27,17 +27,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
+    // Solo verifica el perfil una vez al montar
+    let isMounted = true
+
     const fetchProfile = async () => {
       try {
         const { data } = await api.get(`${BASE_URL}/profile`)
-        if (data) setUsuario(data)
+        if (data && isMounted) {
+          setUsuario(data)
+        }
       } catch {
-        setUsuario(null)
+        if (isMounted) {
+          setUsuario(null)
+        }
       } finally {
-        setCargando(false)
+        if (isMounted) {
+          setCargando(false)
+        }
       }
     }
+
     fetchProfile()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const login = async (
@@ -55,6 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       throw new Error('La respuesta de la API no contiene datos del usuario.')
     } catch (error) {
+      if (error instanceof Error && 'response' in error) {
+        console.error('Respuesta del servidor:', (error as any).response?.data)
+      }
       setUsuario(null)
       throw error
     }

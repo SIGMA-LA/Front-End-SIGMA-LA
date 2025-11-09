@@ -8,6 +8,24 @@ import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const baseUrl = API_BASE.endsWith('/obras') ? API_BASE : `${API_BASE}/obras`
 
+/* Obtener una obra por ID (GET /obras/:id) */
+export async function getObraById(cod_obra: number): Promise<Obra | null> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${baseUrl}/${cod_obra}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error('[getObraById] ', error)
+    return null
+  }
+}
+
 /* Buscar obras por texto (GET /obras/buscar?{texto}) */
 export async function obtenerObras(filtro?: string): Promise<Obra[]> {
   try {

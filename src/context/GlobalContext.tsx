@@ -114,11 +114,6 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  useEffect(() => {
-    fetchClientes()
-    fetchEmpleados()
-  }, [fetchClientes, fetchEmpleados])
-
   // --- FUNCIONES CRUD (MEMORIZADAS CON useCallback) ---
 
   const createObra = useCallback(
@@ -147,19 +142,16 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  const addEmpleado = useCallback(
-    async (empleadoData: any) => {
-      try {
-        const response = await api.post<any>('/empleados', empleadoData)
-        const nuevoEmpleado = response.data.data || response.data
-        setEmpleados((prev) => [...prev, nuevoEmpleado])
-      } catch (error) {
-        console.error('Error al crear empleado:', error)
-        throw error
-      }
-    },
-    []
-  )
+  const addEmpleado = useCallback(async (empleadoData: any) => {
+    try {
+      const response = await api.post<any>('/empleados', empleadoData)
+      const nuevoEmpleado = response.data.data || response.data
+      setEmpleados((prev) => [...prev, nuevoEmpleado])
+    } catch (error) {
+      console.error('Error al crear empleado:', error)
+      throw error
+    }
+  }, [])
 
   const updateEmpleado = useCallback(
     async (cuil: string, empleadoData: any) => {
