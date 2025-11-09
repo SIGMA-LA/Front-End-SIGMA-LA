@@ -6,6 +6,7 @@ import { useState, useTransition, useEffect } from 'react'
 import {
   Building2,
   Users,
+  UserStar,
   Calendar,
   Settings,
   Home,
@@ -56,8 +57,9 @@ const menuItemsCoordinacion: MenuItem[] = [
 const menuItemsAdmin: MenuItem[] = [
   { path: '/admin', label: 'Dashboard', icon: Home },
   { path: '/admin/empleados', label: 'Empleados', icon: Users },
-  { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
+  { path: '/admin/clientes', label: 'Clientes', icon: UserStar },
   { path: '/admin/obras', label: 'Obras', icon: Building2 },
+  { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
 ]
 
 export default function Sidebar({ user }: { user: Empleado | null }) {

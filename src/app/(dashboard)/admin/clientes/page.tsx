@@ -1,4 +1,4 @@
-import ClientesView from '@/components/admin/ClientesView'
+import ClientesPageContent from '@/components/pages/ClientesPageContent'
 export default function ClientesPage() {
-  return <ClientesView />
+  return <ClientesPageContent />
 }
