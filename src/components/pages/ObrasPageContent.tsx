@@ -23,7 +23,6 @@ function ObrasListSkeleton() {
               <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200"></div>
             </div>
             <div className="flex flex-col gap-2">
-              <div className="h-6 w-32 animate-pulse rounded-full bg-gray-200"></div>
               <div className="flex gap-2">
                 <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
                 <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
