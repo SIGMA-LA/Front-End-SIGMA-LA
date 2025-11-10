@@ -29,10 +29,13 @@ export async function obtenerVehiculo(patente: string): Promise<Vehiculo> {
     },
     cache: 'no-store',
   })
-  return res.json()
+  const data = await res.json()
+  console.log('Datos recibidos del backend para vehículo:', patente, data)
+  return data
 }
 
 export async function crearVehiculo(data: VehiculoFormData): Promise<Vehiculo> {
+  console.log('📝 Datos recibidos en crearVehiculo:', data)
   const token = await getAccessToken()
   const res = await fetchWithErrorHandling(`${API_URL}`, {
     method: 'POST',
@@ -42,7 +45,9 @@ export async function crearVehiculo(data: VehiculoFormData): Promise<Vehiculo> {
     },
     body: JSON.stringify(data),
   })
-  return res.json()
+  const result = await res.json()
+  console.log('✅ Respuesta del backend al crear:', result)
+  return result
 }
 
 export async function actualizarVehiculo(
@@ -51,7 +56,7 @@ export async function actualizarVehiculo(
 ): Promise<Vehiculo> {
   const token = await getAccessToken()
   const res = await fetchWithErrorHandling(`${API_URL}/${patente}`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',

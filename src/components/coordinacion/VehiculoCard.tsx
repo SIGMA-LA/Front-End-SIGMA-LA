@@ -121,7 +121,7 @@ export default function VehiculoCard({
             ) : vehiculo.estado === 'DISPONIBLE' ? (
               <>
                 <XCircle className="h-4 w-4" />
-                <span>Dar de Baja</span>
+                <span>Marcar como Fuera de Servicio</span>
               </>
             ) : (
               <>

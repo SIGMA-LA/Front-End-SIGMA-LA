@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchProfile = async () => {
       try {
+        console.log(BASE_URL)
         const { data } = await api.get(`${BASE_URL}/profile`)
         if (data && isMounted) {
           setUsuario(data)

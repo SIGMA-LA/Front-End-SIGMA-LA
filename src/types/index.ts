@@ -287,6 +287,9 @@ export interface BackendVehiculo {
   patente: string
   tipo_vehiculo: string
   estado: string
+  anio?: number
+  marca?: string
+  modelo?: string
 }
 
 export interface Maquinaria {
