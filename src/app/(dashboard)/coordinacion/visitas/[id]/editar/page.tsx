@@ -11,8 +11,10 @@ export default async function EditarVisitaPage({
 }: {
   params: { id: string }
 }) {
+  const { id } = await params
+
   const [visita, provincias, vehiculos, empleados] = await Promise.all([
-    obtenerVisitaPorId(Number(params.id)),
+    obtenerVisitaPorId(Number(id)),
     getProvincias(),
     obtenerVehiculosDisponibles(),
     obtenerTodosLosEmpleados(),
