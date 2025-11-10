@@ -8,11 +8,13 @@ import type {
   VehiculoConDisponibilidad,
 } from '@/types'
 
-// Tus funciones de mapeo no cambian, son perfectas como están.
 const mapToFrontend = (backendVehiculo: BackendVehiculo): Vehiculo => ({
   patente: backendVehiculo.patente,
-  tipo_vehiculo: backendVehiculo.tipo_vehiculo as any, // Podrías añadir validación aquí
+  tipo_vehiculo: backendVehiculo.tipo_vehiculo as any,
   estado: backendVehiculo.estado as VehiculoEstado,
+  anio: backendVehiculo.anio || 0,
+  marca: backendVehiculo.marca || '',
+  modelo: backendVehiculo.modelo || '',
 })
 
 const mapToBackend = (vehiculoData: Partial<VehiculoFormData>): any => {
@@ -28,6 +30,15 @@ const mapToBackend = (vehiculoData: Partial<VehiculoFormData>): any => {
   }
   if (vehiculoData.estado !== undefined) {
     payload.estado = vehiculoData.estado
+  }
+  if (vehiculoData.anio !== undefined) {
+    payload.anio = vehiculoData.anio
+  }
+  if (vehiculoData.marca !== undefined) {
+    payload.marca = vehiculoData.marca
+  }
+  if (vehiculoData.modelo !== undefined) {
+    payload.modelo = vehiculoData.modelo
   }
 
   // 3. Devolvemos el payload construido dinámicamente.
