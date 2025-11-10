@@ -74,9 +74,6 @@ class PresupuestoService {
       }
     }
 
-    console.log('Payload a enviar:', payload) // Para debugging
-    console.log('nro_presupuesto:', nro_presupuesto) // Para debugging
-
     try {
       const { data } = await api.put<any>(
         `${this.baseURL}/${nro_presupuesto}`,

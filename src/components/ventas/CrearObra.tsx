@@ -10,17 +10,16 @@ import {
   AlertCircle,
   MapPin,
   Home,
-  Calendar,
 } from 'lucide-react'
-import { useGlobalContext } from '@/context/GlobalContext'
 import type { Obra, Cliente } from '@/types'
 import type { ObraFormData } from '@/services/obra.service'
 import type { PresupuestoFormData } from '@/services/presupuesto.service'
 import CrearPresupuestoModal from './CrearPresupuestoModal'
-import CrearCliente from './CrearCliente'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
+import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
+import Link from 'next/link'
 
 interface CrearObraProps {
+  clientes: Cliente[]
   onCancel: () => void
   onSubmit: (
     obraData: ObraFormData,
@@ -40,11 +39,11 @@ const initialState: ObraFormData = {
 }
 
 export default function CrearObra({
+  clientes,
   onCancel,
   onSubmit,
   obraExistente,
 }: CrearObraProps) {
-  const { clientes, fetchClientes } = useGlobalContext()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
   const esModoEdicion = !!obraExistente
@@ -53,7 +52,6 @@ export default function CrearObra({
 
   // Estados para la nueva funcionalidad
   const [filtroCliente, setFiltroCliente] = useState('')
-  const [isClienteModalOpen, setIsClienteModalOpen] = useState(false)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [presupuestos, setPresupuestos] = useState<PresupuestoFormData[]>([])
@@ -155,13 +153,6 @@ export default function CrearObra({
     [presupuestos]
   )
 
-  const handleClienteCreado = (nuevoCliente: Cliente) => {
-    fetchClientes().then(() => {
-      handleClienteSelect(nuevoCliente.cuil)
-    })
-    setIsClienteModalOpen(false)
-  }
-
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -225,12 +216,6 @@ export default function CrearObra({
         onSubmit={handleModalSubmit}
         presupuestoExistente={presupuestoParaEditar}
       />
-      {isClienteModalOpen && (
-        <CrearCliente
-          onCancel={() => setIsClienteModalOpen(false)}
-          onSubmit={handleClienteCreado}
-        />
-      )}
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-5xl">
@@ -300,14 +285,13 @@ export default function CrearObra({
                       </div>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsClienteModalOpen(true)}
-                    className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
-                    disabled={isObraCancelada}
+                  <Link
+                    href="/ventas/clientes/crear"
+                    target="_blank"
+                    className="block w-full rounded-lg bg-blue-600 py-2.5 text-center font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
                   >
                     Nuevo Cliente
-                  </button>
+                  </Link>
                 </div>
 
                 {/* DATOS DE LA OBRA */}

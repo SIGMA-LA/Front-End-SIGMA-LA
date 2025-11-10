@@ -1,14 +1,13 @@
 import { Suspense } from 'react'
 import { Building2, Plus } from 'lucide-react'
 import { obtenerObras, filtrarObrasAction } from '@/actions/obras'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
+import { localidadesPorProvincia } from '@/actions/localidad'
+import { getProvincias } from '@/lib/cache'
 import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import ObrasFiltros from '@/components/shared/ObrasFiltros'
 import Link from 'next/link'
-import type { Obra, Provincia } from '@/types'
 
-// ✅ Skeleton para loading
 function ObrasListSkeleton() {
   return (
     <div className="grid gap-4 sm:gap-6">
@@ -37,33 +36,35 @@ function ObrasListSkeleton() {
   )
 }
 
-// ✅ Server Component que carga las obras
 async function ObrasGrid({
   searchQuery,
   estado,
   cod_localidad,
   usuarioRol,
-  provincias,
 }: {
   searchQuery?: string
   estado?: string
   cod_localidad?: number
   usuarioRol?: string
-  provincias: Provincia[]
 }) {
-  let obras: Obra[] = []
+  // Cargar provincias y obras en paralelo
+  const [provincias, obrasData] = await Promise.all([
+    getProvincias(),
+    (async () => {
+      try {
+        if (searchQuery) {
+          return await obtenerObras(searchQuery)
+        } else {
+          return await filtrarObrasAction({ estado, cod_localidad })
+        }
+      } catch (err) {
+        console.error('Error cargando obras:', err)
+        return []
+      }
+    })(),
+  ])
 
-  try {
-    if (searchQuery) {
-      obras = await obtenerObras(searchQuery)
-    } else {
-      obras = await filtrarObrasAction({ estado, cod_localidad })
-    }
-  } catch (err) {
-    console.error('Error cargando obras:', err)
-  }
-
-  if (obras.length === 0) {
+  if (obrasData.length === 0) {
     return (
       <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
         <Building2 className="mx-auto h-12 w-12 text-gray-400" />
@@ -79,7 +80,7 @@ async function ObrasGrid({
 
   return (
     <div className="grid gap-4 sm:gap-6">
-      {obras.map((obra) => (
+      {obrasData.map((obra) => (
         <ObraCard
           key={obra.cod_obra}
           obra={obra}
@@ -91,7 +92,6 @@ async function ObrasGrid({
   )
 }
 
-// ✅ Componente principal con props
 interface ObrasPageContentProps {
   searchQuery?: string
   estado?: string
@@ -113,8 +113,8 @@ export default async function ObrasPageContent({
   title = 'Obras',
   subtitle = 'Visualiza, filtra y gestiona todas las obras.',
 }: ObrasPageContentProps) {
-  // ✅ Cargar provincias aquí (compartido)
-  const provincias = await obtenerProvincias()
+  // Cargar provincias para los filtros (esto es rápido, viene de cache)
+  const provincias = await getProvincias()
 
   const filtros = {
     searchQuery,
@@ -168,7 +168,7 @@ export default async function ObrasPageContent({
           />
         </div>
 
-        {/* Grid con Suspense */}
+        {/* Grid con Suspense - Solo las obras se cargan async */}
         <Suspense
           key={JSON.stringify(filtros)}
           fallback={<ObrasListSkeleton />}
@@ -178,7 +178,6 @@ export default async function ObrasPageContent({
             estado={estado}
             cod_localidad={cod_localidad}
             usuarioRol={usuarioRol}
-            provincias={provincias}
           />
         </Suspense>
       </div>

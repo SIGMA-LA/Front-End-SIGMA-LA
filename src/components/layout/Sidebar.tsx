@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useTransition, useEffect } from 'react'
 import {
   Building2,
   Users,
+  UserStar,
   Calendar,
   Settings,
   Home,
@@ -17,6 +19,7 @@ import {
   BarChart2,
 } from 'lucide-react'
 import { Empleado } from '@/types'
+import { useNavigation } from '@/context/NavigationContext'
 
 type MenuItem = { path: string; label: string; icon: any }
 
@@ -54,23 +57,48 @@ const menuItemsCoordinacion: MenuItem[] = [
 const menuItemsAdmin: MenuItem[] = [
   { path: '/admin', label: 'Dashboard', icon: Home },
   { path: '/admin/empleados', label: 'Empleados', icon: Users },
-  { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
+  { path: '/admin/clientes', label: 'Clientes', icon: UserStar },
   { path: '/admin/obras', label: 'Obras', icon: Building2 },
+  { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
 ]
 
 export default function Sidebar({ user }: { user: Empleado | null }) {
+  const pathname = usePathname()
+  const { optimisticPath, setOptimisticPath } = useNavigation()
+  const [clickedPath, setClickedPath] = useState<string | null>(null)
+
   const menuItems =
     user?.rol_actual === 'ADMIN'
       ? menuItemsAdmin
       : user?.rol_actual === 'COORDINACION'
         ? menuItemsCoordinacion
         : menuItemsVentas
-  const pathname = usePathname()
+
+  // Limpiar clickedPath cuando pathname finalmente cambia
+  useEffect(() => {
+    if (clickedPath && pathname === clickedPath) {
+      setClickedPath(null)
+      setOptimisticPath(null)
+    }
+  }, [pathname, clickedPath, setOptimisticPath])
+
   const isActive = (path: string) => {
+    // Si hay un clickedPath, solo ese está activo
+    if (clickedPath) {
+      return clickedPath === path
+    }
+
+    // Sino, lógica normal basada en pathname
     if (path === '/admin' || path === '/ventas' || path === '/coordinacion') {
       return pathname === path
     }
     return pathname === path || pathname.startsWith(path + '/')
+  }
+
+  const handleClick = (path: string) => {
+    // Guardar el path clickeado
+    setClickedPath(path)
+    setOptimisticPath(path)
   }
 
   return (
@@ -83,6 +111,7 @@ export default function Sidebar({ user }: { user: Empleado | null }) {
             <Link
               key={item.path}
               href={item.path}
+              onClick={() => handleClick(item.path)}
               className={`flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-all ${
                 active
                   ? 'bg-blue-100 text-blue-700'

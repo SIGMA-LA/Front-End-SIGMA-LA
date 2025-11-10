@@ -72,7 +72,6 @@ export default function ObrasFiltros({
     [searchParams, router]
   )
 
-  // ✅ Función para limpiar todos los filtros
   const limpiarFiltros = () => {
     setFiltroProvincia('')
     const params = new URLSearchParams()

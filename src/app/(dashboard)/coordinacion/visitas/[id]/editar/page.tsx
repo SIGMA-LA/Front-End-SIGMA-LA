@@ -1,6 +1,7 @@
 import CrearVisita from '@/components/coordinacion/CrearVisita'
 import { obtenerVisitaPorId } from '@/actions/visitas'
-import { obtenerProvincias, localidadesPorProvincia } from '@/actions/localidad'
+import { localidadesPorProvincia } from '@/actions/localidad'
+import { getProvincias } from '@/lib/cache'
 import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
 import { obtenerTodosLosEmpleados } from '@/actions/empleado'
 import { obtenerObras } from '@/actions/obras'
@@ -12,7 +13,7 @@ export default async function EditarVisitaPage({
 }) {
   const [visita, provincias, vehiculos, empleados] = await Promise.all([
     obtenerVisitaPorId(Number(params.id)),
-    obtenerProvincias(),
+    getProvincias(),
     obtenerVehiculosDisponibles(),
     obtenerTodosLosEmpleados(),
   ])

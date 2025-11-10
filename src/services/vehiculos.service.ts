@@ -162,11 +162,6 @@ export const updateVehiculo = async (
 
   if (token) {
     // MODO SERVIDOR
-    console.log(
-      'Data a enviar para actualización (incluye patente):',
-      dataToSend
-    )
-    console.log('Actualizando vehículo en modo SERVIDOR:', payload)
     const url = `${process.env.NEXT_PUBLIC_API_URL}/vehiculos/${patente}`
     const response = await axios.put<BackendVehiculo>(url, payload, {
       headers: {

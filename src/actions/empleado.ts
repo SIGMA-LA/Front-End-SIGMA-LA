@@ -3,34 +3,13 @@
 import { Empleado } from '@/types'
 import { getAccessToken } from './auth'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { logError } from '@/lib/logger'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/empleados'
 
 interface ApiResponse<T> {
   success: boolean
   data: T
-}
-
-export async function obtenerEmpleadoActual(): Promise<ApiResponse<Empleado> | null> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      throw new Error('Error al obtener empleado actual')
-    }
-
-    return await response.json()
-  } catch (error) {
-    console.error('Error al obtener empleado actual:', error)
-    return null
-  }
 }
 
 export async function obtenerVisitadores(): Promise<Empleado[]> {
@@ -52,7 +31,7 @@ export async function obtenerVisitadores(): Promise<Empleado[]> {
     const visitadores: Empleado[] = await response.json()
     return visitadores
   } catch (error) {
-    console.error('Error obteniendo visitadores:', error)
+    logError(error, 'obtenerVisitadores')
     return []
   }
 }
@@ -79,7 +58,7 @@ export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
     const empleados: Empleado[] = await response.json()
     return empleados
   } catch (error) {
-    console.error('Error al obtener empleados disponibles para entrega:', error)
+    logError(error, 'obtenerEmpleadosDisponiblesParaEntrega')
     throw error
   }
 }
@@ -106,7 +85,7 @@ export async function buscarFiltrados(query: string): Promise<Empleado[]> {
     const empleados: Empleado[] = await response.json()
     return empleados
   } catch (error) {
-    console.error('Error al buscar acompañantes:', error)
+    logError(error, 'buscarFiltrados')
     throw error
   }
 }
@@ -115,7 +94,10 @@ export async function obtenerEmpleadoPorCuil(
   cuil: string
 ): Promise<Empleado | null> {
   if (!cuil) {
-    console.warn('Se intentó obtener un empleado sin CUIL.')
+    logError(
+      new Error('Se intentó obtener un empleado sin CUIL'),
+      'obtenerEmpleadoPorCuil'
+    )
     return null
   }
 
@@ -137,7 +119,7 @@ export async function obtenerEmpleadoPorCuil(
     const empleado: Empleado = await response.json()
     return empleado
   } catch (error) {
-    console.error(`Error obteniendo empleado con CUIL ${cuil}:`, error)
+    logError(error, `obtenerEmpleadoPorCuil:${cuil}`)
     return null
   }
 }
@@ -161,7 +143,98 @@ export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
     const data: ApiResponse<Empleado[]> = await response.json()
     return data.data || []
   } catch (error) {
-    console.error('Error obteniendo todos los empleados:', error)
+    logError(error, 'obtenerTodosLosEmpleados')
     return []
+  }
+}
+
+/* Crear empleado (POST /empleados) */
+export async function crearEmpleado(empleadoData: {
+  cuil: string
+  nombre: string
+  apellido: string
+  rol_actual: string
+  area_trabajo: string
+  contrasenia?: string
+}): Promise<{ success: boolean; data?: Empleado; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(empleadoData),
+    })
+
+    if (!response.ok) {
+      return { success: false, error: 'Error al crear empleado' }
+    }
+
+    const empleado: Empleado = await response.json()
+    return { success: true, data: empleado }
+  } catch (error) {
+    logError(error, 'crearEmpleado')
+    return { success: false, error: 'Error al crear empleado' }
+  }
+}
+
+/* Actualizar empleado (PUT /empleados/:cuil) */
+export async function actualizarEmpleado(
+  cuil: string,
+  empleadoData: {
+    nombre?: string
+    apellido?: string
+    rol_actual?: string
+    area_trabajo?: string
+    contrasenia?: string
+  }
+): Promise<{ success: boolean; data?: Empleado; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(empleadoData),
+    })
+
+    if (!response.ok) {
+      return { success: false, error: 'Error al actualizar empleado' }
+    }
+
+    const empleado: Empleado = await response.json()
+    return { success: true, data: empleado }
+  } catch (error) {
+    logError(error, 'actualizarEmpleado')
+    return { success: false, error: 'Error al actualizar empleado' }
+  }
+}
+
+/* Eliminar empleado (DELETE /empleados/:cuil) */
+export async function eliminarEmpleado(
+  cuil: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      return { success: false, error: 'Error al eliminar empleado' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    logError(error, 'eliminarEmpleado')
+    return { success: false, error: 'Error al eliminar empleado' }
   }
 }

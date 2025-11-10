@@ -1,4 +1,4 @@
-import { obtenerEmpleadoActual } from '@/actions/empleado'
+import { getUsuario } from '@/lib/cache'
 import { obtenerVisitas } from '@/actions/visitas'
 import { obtenerEntregas } from '@/actions/entregas'
 import { filtrarObrasAction } from '@/actions/obras'
@@ -12,6 +12,41 @@ import {
   Package,
 } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
+
+// Skeleton para las estadísticas
+function StatsSkeleton() {
+  return (
+    <>
+      <div className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          Resumen de Hoy
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                  <div className="mt-2 h-8 w-16 animate-pulse rounded bg-gray-200" />
+                </div>
+                <div className="h-12 w-12 animate-pulse rounded-lg bg-gray-200" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="h-64 animate-pulse rounded-xl border border-gray-200 bg-white p-6" />
+        <div className="h-64 animate-pulse rounded-xl border border-gray-200 bg-white p-6" />
+      </div>
+    </>
+  )
+}
 
 async function getCoordinacionStats() {
   try {
@@ -81,13 +116,9 @@ async function getCoordinacionStats() {
   }
 }
 
-export default async function CoordinacionPage() {
-  const [usuarioResponse, stats] = await Promise.all([
-    obtenerEmpleadoActual(),
-    getCoordinacionStats(),
-  ])
-
-  const usuario = usuarioResponse?.data
+// Componente separado para las estadísticas (carga async)
+async function DashboardStats() {
+  const stats = await getCoordinacionStats()
 
   const statsCards = [
     {
@@ -144,6 +175,159 @@ export default async function CoordinacionPage() {
   }
 
   return (
+    <>
+      <div className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          Resumen de Hoy
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statsCards.map((stat) => {
+            const colors = colorClasses[stat.color as keyof typeof colorClasses]
+            const Icon = stat.icon
+
+            return (
+              <Link
+                key={stat.title}
+                href={stat.href}
+                className={`group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md ${colors.hover}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {stat.title}
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className={`rounded-lg ${colors.bg} p-3`}>
+                    <Icon className={`h-6 w-6 ${colors.icon}`} />
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <CheckCircle2 className="h-5 w-5 text-blue-600" />
+            Acciones Rápidas
+          </h3>
+          <div className="space-y-3">
+            <Link
+              href="/coordinacion/visitas/crear"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+            >
+              <Calendar className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-gray-900">Nueva Visita</p>
+                <p className="text-sm text-gray-500">
+                  Agendar visita a obra o cliente
+                </p>
+              </div>
+            </Link>
+            <Link
+              href="/coordinacion/entregas/crear"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+            >
+              <Truck className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-medium text-gray-900">Nueva Entrega</p>
+                <p className="text-sm text-gray-500">
+                  Programar entrega de productos
+                </p>
+              </div>
+            </Link>
+            <Link
+              href="/coordinacion/obras"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+            >
+              <Building2 className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-gray-900">Ver Obras</p>
+                <p className="text-sm text-gray-500">
+                  Consultar estado y ubicación de obras
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            Resumen General
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Total Visitas
+                </span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                {stats.totalVisitas}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Visitas Completadas
+                </span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                {stats.visitasCompletadas}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-3">
+                <Truck className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Total Entregas
+                </span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                {stats.totalEntregas}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Entregas Realizadas
+                </span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                {stats.entregasRealizadas}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-3">
+                <Package className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-medium text-gray-900">
+                  Listas para Entrega
+                </span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">
+                {stats.obrasListasParaEntrega}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default async function CoordinacionPage() {
+  const usuario = await getUsuario()
+
+  return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 rounded-xl border-2 border-blue-400 bg-blue-100 p-6 sm:p-8">
@@ -165,151 +349,9 @@ export default async function CoordinacionPage() {
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Resumen de Hoy
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {statsCards.map((stat) => {
-              const colors =
-                colorClasses[stat.color as keyof typeof colorClasses]
-              const Icon = stat.icon
-
-              return (
-                <Link
-                  key={stat.title}
-                  href={stat.href}
-                  className={`group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md ${colors.hover}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">
-                        {stat.title}
-                      </p>
-                      <p className="mt-2 text-3xl font-bold text-gray-900">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div className={`rounded-lg ${colors.bg} p-3`}>
-                      <Icon className={`h-6 w-6 ${colors.icon}`} />
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <CheckCircle2 className="h-5 w-5 text-blue-600" />
-              Acciones Rápidas
-            </h3>
-            <div className="space-y-3">
-              <Link
-                href="/coordinacion/visitas/crear"
-                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-              >
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Nueva Visita</p>
-                  <p className="text-sm text-gray-500">
-                    Agendar visita a obra o cliente
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href="/coordinacion/entregas/crear"
-                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-              >
-                <Truck className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Nueva Entrega</p>
-                  <p className="text-sm text-gray-500">
-                    Programar entrega de productos
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href="/coordinacion/obras"
-                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-              >
-                <Building2 className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Ver Obras</p>
-                  <p className="text-sm text-gray-500">
-                    Consultar estado y ubicación de obras
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              Resumen General
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Total Visitas
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.totalVisitas}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Visitas Completadas
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.visitasCompletadas}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <Truck className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Total Entregas
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.totalEntregas}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Entregas Realizadas
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.entregasRealizadas}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Listas para Entrega
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasListasParaEntrega}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Suspense fallback={<StatsSkeleton />}>
+          <DashboardStats />
+        </Suspense>
       </div>
     </div>
   )

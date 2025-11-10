@@ -32,11 +32,6 @@ export default function EditarMaquinariaModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log('📝 [DEBUG] EditarMaquinariaModal - handleSubmit iniciado')
-    console.log('📝 [DEBUG] Maquinaria actual:', maquinaria)
-    console.log('📝 [DEBUG] Descripción form:', descripcion)
-    console.log('📝 [DEBUG] Estado form:', estado)
-
     if (!descripcion.trim()) {
       setError('La descripción es obligatoria')
       return
@@ -47,7 +42,6 @@ export default function EditarMaquinariaModal({
       descripcion.trim() === maquinaria.descripcion &&
       estado === maquinaria.estado
     ) {
-      console.log('📝 [DEBUG] No hay cambios detectados')
       setError('No se han realizado cambios')
       return
     }
@@ -56,22 +50,14 @@ export default function EditarMaquinariaModal({
       setLoading(true)
       setError('')
 
-      console.log('📝 [DEBUG] Enviando actualización con datos:', {
-        id: maquinaria.cod_maquina,
-        descripcion: descripcion.trim(),
-        estado,
-      })
-
       await updateMaquinaria(maquinaria.cod_maquina, {
         descripcion: descripcion.trim(),
         estado,
       })
 
-      console.log('📝 [DEBUG] Actualización exitosa')
       onSuccess()
       onClose()
     } catch (err) {
-      console.log('📝 [DEBUG] Error en actualización:', err)
       setError(
         err instanceof Error ? err.message : 'Error al actualizar la maquinaria'
       )

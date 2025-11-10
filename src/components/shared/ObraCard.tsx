@@ -55,6 +55,8 @@ export default function ObraCard({
   }
 
   const esVentas = usuarioRol === 'VENTAS'
+  const esAdmin = usuarioRol === 'ADMIN'
+  const esCoordinacion = usuarioRol === 'COORDINACION'
   const isCancelada = obra.estado === 'CANCELADA'
 
   const nombreCliente =
@@ -123,7 +125,19 @@ export default function ObraCard({
 
           {/* Botones */}
           <div className="flex flex-wrap gap-2">
-            {!esVentas && (
+            {/* ADMIN: Solo ver detalle */}
+            {esAdmin && (
+              <Link
+                href={`/admin/obras/${obra.cod_obra}`}
+                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              >
+                <Building2 className="h-4 w-4" />
+                Ver Detalle
+              </Link>
+            )}
+
+            {/* COORDINACION: Agendar visitas y entregas */}
+            {esCoordinacion && (
               <>
                 <Link
                   href={`/coordinacion/visitas/crear?obraId=${obra.cod_obra}`}
@@ -142,6 +156,7 @@ export default function ObraCard({
               </>
             )}
 
+            {/* VENTAS: Gestión completa */}
             {esVentas && (
               <>
                 <Link

@@ -342,17 +342,10 @@ class EntregasService {
         estado: 'PENDIENTE',
       }
 
-      console.log('Payload final enviado al backend:', payload)
-
       const response = await api.post<any>(this.baseURL, payload)
 
       return response.data as Entrega
     } catch (error: any) {
-      console.error('Error detallado al crear entrega:', error)
-      if (error.response) {
-        console.error('Status:', error.response.status)
-        console.error('Data:', error.response.data)
-      }
       throw new Error(
         error.response?.data?.message ||
           'Error al crear la entrega en el servidor.'

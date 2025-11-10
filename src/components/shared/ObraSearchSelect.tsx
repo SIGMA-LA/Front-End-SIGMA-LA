@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { Obra } from '@/types'
 import useDebounce from '@/hooks/useDebounce'
-import { Building2, User, Search } from 'lucide-react'
+import { Building2, User, Search, Building } from 'lucide-react'
 
 export default function ObraSearchSelect({
   onSelectObra,
@@ -84,14 +84,19 @@ export default function ObraSearchSelect({
                 <Building2 className="h-4 w-4 flex-shrink-0 text-blue-600" />
                 <span className="truncate">{obra.direccion}</span>
               </div>
-              {obra.cliente && (
+              {obra.cliente?.tipo_cliente !== 'EMPRESA' ? (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="h-3.5 w-3.5 flex-shrink-0" />
                   <span className="truncate">
                     {obra.cliente.nombre} {obra.cliente.apellido}
                   </span>
                 </div>
-              )}
+              ) : obra.cliente?.tipo_cliente === 'EMPRESA' ? (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Building className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{obra.cliente.razon_social}</span>
+                </div>
+              ) : null}
             </button>
           ))}
         </div>

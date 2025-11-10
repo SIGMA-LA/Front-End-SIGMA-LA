@@ -5,6 +5,7 @@ import { getAccessToken } from './auth'
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/provincias'
 
+// Para uso en Client Components que no pueden importar de cache.ts
 export async function obtenerProvincias(): Promise<Provincia[]> {
   try {
     const token = await getAccessToken()
@@ -14,17 +15,16 @@ export async function obtenerProvincias(): Promise<Provincia[]> {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      next: { revalidate: 3600 }, // 1 hora
     })
 
     if (!response.ok) {
       return []
     }
 
-    const provincias: Provincia[] = await response.json()
-    return provincias
+    return response.json()
   } catch (error) {
-    console.error('Error obteniendo empleado actual:', error)
+    console.error('Error obteniendo provincias:', error)
     return []
   }
 }
@@ -59,7 +59,7 @@ export async function localidadesPorProvincia(
   try {
     const token = await getAccessToken()
     const response = await fetch(
-      `http://localhost:4000/api/localidades/provincias/${cod_provincia}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/localidades/provincias/${cod_provincia}`,
       {
         method: 'GET',
         headers: {

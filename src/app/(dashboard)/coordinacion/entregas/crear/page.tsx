@@ -41,7 +41,7 @@ export default async function CrearEntregaPage({
   searchParams?: any
 }) {
   const sp = await searchParams
-  const obraId = sp?.obra ?? null
+  const obraId = sp?.obraId ?? null
 
   return (
     <Suspense fallback={<LoadingSkeleton />}>

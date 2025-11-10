@@ -7,6 +7,7 @@ import type { Cliente } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
 import { eliminarCliente } from '@/actions/clientes'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
+import { useAuth } from '@/context/AuthContext'
 
 interface ClienteCardProps {
   cliente: Cliente
@@ -18,6 +19,7 @@ export default function ClienteCard({
   showActions = true,
 }: ClienteCardProps) {
   const router = useRouter()
+  const { usuario } = useAuth()
   const [isPending, startTransition] = useTransition()
   const [showDetail, setShowDetail] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -26,6 +28,9 @@ export default function ClienteCard({
   const nombreCompleto = esEmpresa
     ? cliente.razon_social
     : `${cliente.nombre ?? ''} ${cliente.apellido ?? ''}`.trim()
+
+  // Solo mostrar botones de editar/eliminar si es VENTAS
+  const puedeEditarEliminar = usuario?.rol_actual === 'VENTAS'
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -108,23 +113,27 @@ export default function ClienteCard({
                 <Eye className="h-4 w-4" />
                 Ver Detalles
               </button>
-              <button
-                onClick={() =>
-                  router.push(`/ventas/clientes/${cliente.cuil}/editar`)
-                }
-                className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"
-              >
-                <Edit className="h-4 w-4" />
-                Editar
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                disabled={isPending}
-                className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
-              >
-                <Trash2 className="h-4 w-4" />
-                {isPending ? 'Eliminando...' : 'Eliminar'}
-              </button>
+              {puedeEditarEliminar && (
+                <>
+                  <button
+                    onClick={() =>
+                      router.push(`/ventas/clientes/${cliente.cuil}/editar`)
+                    }
+                    className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    disabled={isPending}
+                    className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {isPending ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

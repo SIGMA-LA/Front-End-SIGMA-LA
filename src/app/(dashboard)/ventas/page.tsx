@@ -1,4 +1,4 @@
-import { obtenerEmpleadoActual } from '@/actions/empleado'
+import { getEmpleadoActual } from '@/lib/cache'
 import { obtenerClientes } from '@/actions/clientes'
 import { filtrarObrasAction } from '@/actions/obras'
 import {
@@ -70,12 +70,12 @@ async function getVentasStats() {
 }
 
 export default async function VentasPage() {
-  const [usuarioResponse, stats] = await Promise.all([
-    obtenerEmpleadoActual(),
+  const [empleadoResponse, stats] = await Promise.all([
+    getEmpleadoActual(),
     getVentasStats(),
   ])
 
-  const usuario = usuarioResponse?.data
+  const usuario = empleadoResponse
 
   const statsCards = [
     {

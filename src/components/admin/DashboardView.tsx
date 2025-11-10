@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { useGlobalContext } from '@/context/GlobalContext'
+import type { Obra, Cliente } from '@/types'
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-AR', {
@@ -20,9 +20,12 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-export default function DashboardView() {
-  const { obras, clientes } = useGlobalContext()
+interface DashboardViewProps {
+  obras: Obra[]
+  clientes: Cliente[]
+}
 
+export default function DashboardView({ obras, clientes }: DashboardViewProps) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

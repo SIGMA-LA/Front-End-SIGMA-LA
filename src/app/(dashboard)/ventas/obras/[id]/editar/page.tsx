@@ -1,35 +1,26 @@
-'use client'
-
 import CrearObra from '@/components/ventas/CrearObra'
-import { useRouter, useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { obtenerClientes } from '@/actions/clientes'
 import { getObraById } from '@/services/obra.service'
-import type { Obra } from '@/types'
 
-export default function EditarObraPage() {
-  const router = useRouter()
-  const params = useParams()
-  const [obra, setObra] = useState<Obra | null>(null)
+interface EditarObraPageProps {
+  params: Promise<{ id: string }>
+}
 
-  useEffect(() => {
-    async function fetchObra() {
-      if (params.id) {
-        const obraData = await getObraById(Number(params.id))
-        setObra(obraData)
-      }
-    }
-    fetchObra()
-  }, [params.id])
+export default async function EditarObraPage({ params }: EditarObraPageProps) {
+  const { id } = await params
+  const [clientes, obra] = await Promise.all([
+    obtenerClientes(),
+    getObraById(Number(id)),
+  ])
 
-  if (!obra) return <div>Cargando...</div>
+  if (!obra) return <div>Obra no encontrada</div>
 
   return (
     <CrearObra
+      clientes={clientes}
       obraExistente={obra}
-      onCancel={() => router.push('/ventas/obras')}
-      onSubmit={async (obraData, presupuestos) => {
-        router.push('/ventas/obras')
-      }}
+      onCancel={() => {}}
+      onSubmit={async (obraData, presupuestos) => {}}
     />
   )
 }

@@ -6,20 +6,28 @@ import ConfirmDeleteModal from './ConfirmDeleteModal'
 
 interface PagoCardProps {
   pago: Pago
-  onRefresh: () => void
+  onRefresh?: () => void
   obra?: Obra
+  rolActual?: string
 }
 
-export default function PagoCard({ pago, onRefresh, obra }: PagoCardProps) {
+export default function PagoCard({
+  pago,
+  onRefresh,
+  obra,
+  rolActual,
+}: PagoCardProps) {
   const [loading, setLoading] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+
+  const puedeEliminar = rolActual?.toUpperCase() === 'VENTAS'
 
   const handleDelete = async () => {
     setLoading(true)
     try {
       await deletePago(pago.cod_pago)
       setShowConfirm(false)
-      onRefresh()
+      onRefresh?.()
     } catch (err) {
       alert('Error al eliminar el pago')
     } finally {
@@ -60,25 +68,29 @@ export default function PagoCard({ pago, onRefresh, obra }: PagoCardProps) {
             </span>
           </div>
         </div>
-        <div className="mt-3 flex gap-2 lg:mt-0">
-          <button
-            onClick={() => setShowConfirm(true)}
-            className="rounded border-1 border-red-700 bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
-            title="Eliminar"
-            disabled={loading}
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
-        </div>
+        {puedeEliminar && (
+          <div className="mt-3 flex gap-2 lg:mt-0">
+            <button
+              onClick={() => setShowConfirm(true)}
+              className="rounded border-1 border-red-700 bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
+              title="Eliminar"
+              disabled={loading}
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
-      <ConfirmDeleteModal
-        open={showConfirm}
-        onCancel={() => setShowConfirm(false)}
-        onConfirm={handleDelete}
-        loading={loading}
-        monto={pago.monto}
-        fecha_pago={pago.fecha_pago}
-      />
+      {puedeEliminar && (
+        <ConfirmDeleteModal
+          open={showConfirm}
+          onCancel={() => setShowConfirm(false)}
+          onConfirm={handleDelete}
+          loading={loading}
+          monto={pago.monto}
+          fecha_pago={pago.fecha_pago}
+        />
+      )}
     </>
   )
 }

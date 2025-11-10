@@ -104,7 +104,6 @@ class ClienteService {
    */
   async createCliente(clienteData: CreateClienteDTO): Promise<Cliente> {
     const payload = mapToBackend(clienteData)
-    console.log('Payload enviado al backend:', payload)
     const { data } = await api.post<BackendCliente>(this.baseURL, payload)
     return mapToFrontend(data)
   }
@@ -120,7 +119,6 @@ class ClienteService {
     clienteData: UpdateClienteDTO
   ): Promise<Cliente> {
     const payload = mapToBackend(clienteData)
-    console.log('Payload de actualización enviado al backend:', payload)
     const { data } = await api.put<BackendCliente>(
       `${this.baseURL}/${cuil}`,
       payload

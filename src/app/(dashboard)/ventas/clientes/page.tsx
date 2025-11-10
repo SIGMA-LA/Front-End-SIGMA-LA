@@ -1,5 +1,5 @@
 import ClientesPageContent from '@/components/pages/ClientesPageContent'
-import { obtenerEmpleadoActual } from '@/actions/empleado'
+import { getUsuario } from '@/lib/cache'
 
 export default async function VentasClientesPage({
   searchParams,
@@ -7,8 +7,7 @@ export default async function VentasClientesPage({
   searchParams?: any
 }) {
   const sp = await searchParams
-  const [usuarioResponse] = await Promise.all([obtenerEmpleadoActual()])
-  const usuario = usuarioResponse?.data
+  const usuario = await getUsuario()
 
   return (
     <ClientesPageContent
