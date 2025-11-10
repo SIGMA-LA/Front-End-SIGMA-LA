@@ -9,8 +9,133 @@ import { revalidatePath } from 'next/cache'
 const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/visitas'
 
 /**
- * Obtiene una visita por su ID
+ * Obtiene visitas de un empleado por estado
  */
+export async function getVisitasByEmpleadoAndEstado(
+  cuil: string,
+  estados: string[]
+): Promise<Visita[]> {
+  try {
+    console.log(
+      'Obteniendo visitas para empleado:',
+      cuil,
+      'con estados:',
+      estados
+    )
+    const token = await getAccessToken()
+    const queryParams = new URLSearchParams()
+    estados.forEach((estado) => queryParams.append('estado', estado))
+
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/empleado/${cuil}?${queryParams.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    )
+
+    if (!response.ok) {
+      console.error('Response not OK:', response.status, response.statusText)
+      return []
+    }
+
+    const data = await response.json()
+    console.log('Visitas obtenidas:', data)
+    return data
+  } catch (error) {
+    console.error('Error al obtener visitas:', error)
+    return []
+  }
+}
+
+/**
+ * Finaliza una visita
+ */
+export async function finalizarVisitaAction(
+  codVisita: number,
+  observaciones?: string
+) {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/${codVisita}/finalizar`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ observaciones }),
+      }
+    )
+
+    const data = await response.json()
+    revalidatePath('/visitador')
+    revalidatePath('/coordinacion/visitas')
+    return { success: true, data, error: null }
+  } catch (error) {
+    console.error('Error al finalizar visita:', error)
+    return { success: false, data: null, error: 'Error al finalizar la visita' }
+  }
+}
+
+/**
+ * Cancela una visita
+ */
+export async function cancelarVisitaAction(codVisita: number, motivo: string) {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/${codVisita}/cancelar`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ motivo }),
+      }
+    )
+
+    const data = await response.json()
+    revalidatePath('/visitador')
+    revalidatePath('/coordinacion/visitas')
+    return { success: true, data, error: null }
+  } catch (error) {
+    console.error('Error al cancelar visita:', error)
+    return { success: false, data: null, error: 'Error al cancelar la visita' }
+  }
+}
+
+/**
+ * Refresca los datos del visitador
+ */
+export async function refreshVisitadorData(cuil: string) {
+  try {
+    const [visitasPendientes, visitasRealizadas] = await Promise.all([
+      getVisitasByEmpleadoAndEstado(cuil, ['PROGRAMADA', 'EN CURSO']),
+      getVisitasByEmpleadoAndEstado(cuil, ['COMPLETADA']),
+    ])
+
+    return {
+      visitasPendientes,
+      visitasRealizadas,
+      error: null,
+    }
+  } catch (error) {
+    console.error('Error al refrescar visitas:', error)
+    return {
+      visitasPendientes: [],
+      visitasRealizadas: [],
+      error: 'Error al cargar las visitas',
+    }
+  }
+}
+
 export async function obtenerVisitaPorId(id: number): Promise<Visita | null> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}/${id}`, {
@@ -24,35 +149,6 @@ export async function obtenerVisitaPorId(id: number): Promise<Visita | null> {
   return response.ok ? await response.json() : null
 }
 
-/**
- * Cancela una visita por ID
- */
-export async function cancelarVisita(id: number): Promise<Visita> {
-  const token = await getAccessToken()
-  const visita = await obtenerVisitaPorId(id)
-  if (!visita) throw new Error('Visita no encontrada')
-
-  const updatePayload = {
-    estado: 'CANCELADA',
-    fecha_cancelacion: new Date().toISOString().split('T')[0],
-  }
-
-  const response = await fetchWithErrorHandling(`${baseUrl}/${id}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(updatePayload),
-  })
-
-  const result = await response.json()
-  return result
-}
-
-/**
- * Obtiene todas las visitas con filtrado opcional
- */
 export async function obtenerVisitas(filtro?: string): Promise<Visita[]> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}`, {
@@ -68,7 +164,6 @@ export async function obtenerVisitas(filtro?: string): Promise<Visita[]> {
 
   let visitas: Visita[] = await response.json()
 
-  // Filtrado en el servidor
   if (filtro?.trim()) {
     const filtroLower = filtro.trim().toLowerCase()
 
@@ -111,9 +206,6 @@ export async function obtenerVisitas(filtro?: string): Promise<Visita[]> {
   return visitas
 }
 
-/**
- * Crea una nueva visita
- */
 export async function crearVisita(visitaData: VisitaFormData): Promise<Visita> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}`, {
@@ -127,9 +219,6 @@ export async function crearVisita(visitaData: VisitaFormData): Promise<Visita> {
   return await response.json()
 }
 
-/**
- * Actualiza una visita existente
- */
 export async function actualizarVisita(
   id: number,
   visitaData: Partial<VisitaFormData>

@@ -1,6 +1,6 @@
 'use server'
 
-import { Entrega } from '@/types'
+import { Entrega, EntregaEmpleado } from '@/types'
 import { getAccessToken } from './auth'
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
@@ -9,6 +9,119 @@ import { redirect } from 'next/navigation'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const baseUrl = `${API_BASE}/entregas`
 
+/**
+ * Obtiene entregas de un empleado por estado
+ */
+export async function getEntregasByEmpleadoAndEstado(
+  cuilEmpleado: string,
+  estado: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+): Promise<EntregaEmpleado[]> {
+  const token = await getAccessToken()
+  const response = await fetchWithErrorHandling(
+    `${baseUrl}/${cuilEmpleado}/${estado}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    }
+  )
+  return response.ok ? await response.json() : []
+}
+
+/**
+ * Finaliza una entrega
+ */
+export async function finalizarEntregaAction(
+  codEntrega: number,
+  observaciones?: string
+) {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/${codEntrega}/finalizar`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ observaciones }),
+      }
+    )
+
+    const data = await response.json()
+    revalidatePath('/visitador')
+    revalidatePath('/planta')
+    return { success: true, data, error: null }
+  } catch (error) {
+    console.error('Error al finalizar entrega:', error)
+    return {
+      success: false,
+      data: null,
+      error: 'Error al finalizar la entrega',
+    }
+  }
+}
+
+/**
+ * Cancela una entrega
+ */
+export async function cancelarEntregaAction(
+  codEntrega: number,
+  motivo: string
+) {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${baseUrl}/${codEntrega}/cancelar`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ motivo }),
+      }
+    )
+
+    revalidatePath('/visitador')
+    revalidatePath('/planta')
+    return { success: true, error: null }
+  } catch (error) {
+    console.error('Error al cancelar entrega:', error)
+    return { success: false, error: 'Error al cancelar la entrega' }
+  }
+}
+
+/**
+ * Refresca los datos de entregas
+ */
+export async function refreshEntregasData(cuil: string) {
+  try {
+    const [entregasPendientes, entregasRealizadas] = await Promise.all([
+      getEntregasByEmpleadoAndEstado(cuil, 'PENDIENTE'),
+      getEntregasByEmpleadoAndEstado(cuil, 'ENTREGADO'),
+    ])
+
+    return {
+      entregasPendientes,
+      entregasRealizadas,
+      error: null,
+    }
+  } catch (error) {
+    console.error('Error al refrescar entregas:', error)
+    return {
+      entregasPendientes: [],
+      entregasRealizadas: [],
+      error: 'Error al cargar las entregas',
+    }
+  }
+}
+
+// ... resto de funciones existentes
 export async function obtenerEntregas(filtro?: string): Promise<Entrega[]> {
   const token = await getAccessToken()
   const response = await fetchWithErrorHandling(`${baseUrl}`, {
@@ -74,25 +187,6 @@ export async function obtenerEntregaPorId(id: number): Promise<Entrega | null> {
   return response.ok ? await response.json() : null
 }
 
-export async function obtenerEntregasPorEmpleadoEstado(
-  cuilEmpleado: string,
-  estado: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
-): Promise<Entrega[]> {
-  const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(
-    `${baseUrl}/${cuilEmpleado}/${estado}`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    }
-  )
-  return response.ok ? await response.json() : []
-}
-
 export async function crearEntrega(entregaData: {
   cod_obra: number
   fecha_hora_entrega: string
@@ -147,30 +241,6 @@ export async function eliminarEntrega(id: number): Promise<void> {
       'Content-Type': 'application/json',
     },
   })
-}
-
-export async function finalizarEntrega(id: number): Promise<Entrega> {
-  const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(`${baseUrl}/${id}/finalizar`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  })
-  return await response.json()
-}
-
-export async function cancelarEntrega(id: number): Promise<Entrega> {
-  const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(`${baseUrl}/${id}/cancelar`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  })
-  return await response.json()
 }
 
 export async function crearEntregaAction(formData: FormData) {
