@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { User as UserIcon, Package, Menu, X } from 'lucide-react'
 import type { Visita, EntregaEmpleado } from '@/types'
 import TabNavigation from '@/components/visitador/TabNavigation'
@@ -11,15 +12,10 @@ import ConfirmModal from '@/components/visitador/ConfirmModal'
 import EntregasSidebar from '@/components/planta/EntregasSidebar'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
 import Navbar from '@/components/layout/Navbar'
-import {
-  finalizarVisitaAction,
-  cancelarVisitaAction,
-  refreshVisitadorData as refreshVisitas,
-} from '@/actions/visitas'
+import { finalizarVisitaAction, cancelarVisitaAction } from '@/actions/visitas'
 import {
   finalizarEntregaAction,
   cancelarEntregaAction,
-  refreshEntregasData,
 } from '@/actions/entregas'
 
 interface VisitadorClientProps {
@@ -37,6 +33,7 @@ export default function VisitadorClient({
   usuario,
   initialData,
 }: VisitadorClientProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   // Tab activa
@@ -47,24 +44,12 @@ export default function VisitadorClient({
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
   const [showVisitaModal, setShowVisitaModal] = useState(false)
   const [observacionesVisita, setObservacionesVisita] = useState('')
-  const [visitasPendientes, setVisitasPendientes] = useState<Visita[]>(
-    initialData.visitasPendientes
-  )
-  const [visitasRealizadas, setVisitasRealizadas] = useState<Visita[]>(
-    initialData.visitasRealizadas
-  )
 
   // Estados para Entregas
   const [selectedEntrega, setSelectedEntrega] =
     useState<EntregaEmpleado | null>(null)
   const [showEntregaModal, setShowEntregaModal] = useState(false)
   const [observacionesEntrega, setObservacionesEntrega] = useState('')
-  const [entregasPendientes, setEntregasPendientes] = useState<
-    EntregaEmpleado[]
-  >(initialData.entregasPendientes)
-  const [entregasRealizadas, setEntregasRealizadas] = useState<
-    EntregaEmpleado[]
-  >(initialData.entregasRealizadas)
 
   const handleTabChange = (tab: 'visitas' | 'entregas') => {
     setActiveTab(tab)
@@ -91,13 +76,11 @@ export default function VisitadorClient({
         observacionesVisita
       )
 
-      if (result.success && result.data) {
-        const data = await refreshVisitas(usuario.cuil)
-        setVisitasPendientes(data.visitasPendientes)
-        setVisitasRealizadas(data.visitasRealizadas)
-        setSelectedVisita(result.data)
+      if (result.success) {
         setShowVisitaModal(false)
         setObservacionesVisita('')
+        setSelectedVisita(null)
+        router.refresh()
       } else {
         alert(result.error || 'Error al finalizar la visita')
       }
@@ -117,12 +100,10 @@ export default function VisitadorClient({
       )
 
       if (result.success) {
-        const data = await refreshVisitas(usuario.cuil)
-        setVisitasPendientes(data.visitasPendientes)
-        setVisitasRealizadas(data.visitasRealizadas)
-        setSelectedVisita(null)
         setShowVisitaModal(false)
         setObservacionesVisita('')
+        setSelectedVisita(null)
+        router.refresh()
       } else {
         alert(result.error || 'Error al cancelar la visita')
       }
@@ -138,23 +119,11 @@ export default function VisitadorClient({
         observacionesEntrega || undefined
       )
 
-      if (result.success && result.data) {
-        const data = await refreshEntregasData(usuario.cuil)
-        setEntregasPendientes(data.entregasPendientes)
-        setEntregasRealizadas(data.entregasRealizadas)
-
-        const entregaActualizada = {
-          ...selectedEntrega,
-          entrega: {
-            ...selectedEntrega.entrega,
-            estado: 'ENTREGADO' as const,
-            observaciones:
-              observacionesEntrega || selectedEntrega.entrega.observaciones,
-          },
-        }
-        setSelectedEntrega(entregaActualizada)
+      if (result.success) {
         setShowEntregaModal(false)
         setObservacionesEntrega('')
+        setSelectedEntrega(null)
+        router.refresh()
       } else {
         alert(result.error || 'Error al finalizar la entrega')
       }
@@ -171,12 +140,10 @@ export default function VisitadorClient({
       )
 
       if (result.success) {
-        const data = await refreshEntregasData(usuario.cuil)
-        setEntregasPendientes(data.entregasPendientes)
-        setEntregasRealizadas(data.entregasRealizadas)
-        setSelectedEntrega(null)
         setShowEntregaModal(false)
         setObservacionesEntrega('')
+        setSelectedEntrega(null)
+        router.refresh()
       } else {
         alert(result.error || 'Error al cancelar la entrega')
       }
@@ -213,16 +180,16 @@ export default function VisitadorClient({
                 <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
                   <div className="text-base font-semibold text-blue-600">
                     {activeTab === 'visitas'
-                      ? visitasPendientes.length
-                      : entregasPendientes.length}
+                      ? initialData.visitasPendientes.length
+                      : initialData.entregasPendientes.length}
                   </div>
                   <div className="text-xs text-gray-600">Pendientes</div>
                 </div>
                 <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
                   <div className="text-base font-semibold text-green-600">
                     {activeTab === 'visitas'
-                      ? visitasRealizadas.length
-                      : entregasRealizadas.length}
+                      ? initialData.visitasRealizadas.length
+                      : initialData.entregasRealizadas.length}
                   </div>
                   <div className="text-xs text-gray-600">
                     {activeTab === 'visitas' ? 'Realizadas' : 'Entregadas'}
@@ -234,8 +201,8 @@ export default function VisitadorClient({
               <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
                 <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                   {activeTab === 'visitas'
-                    ? visitasPendientes.length
-                    : entregasPendientes.length}
+                    ? initialData.visitasPendientes.length
+                    : initialData.entregasPendientes.length}
                 </div>
                 <div className="text-sm text-gray-600 lg:text-base">
                   Pendientes
@@ -244,8 +211,8 @@ export default function VisitadorClient({
               <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
                 <div className="text-lg font-semibold text-green-600 lg:text-xl">
                   {activeTab === 'visitas'
-                    ? visitasRealizadas.length
-                    : entregasRealizadas.length}
+                    ? initialData.visitasRealizadas.length
+                    : initialData.entregasRealizadas.length}
                 </div>
                 <div className="text-sm text-gray-600 lg:text-base">
                   {activeTab === 'visitas' ? 'Realizadas' : 'Entregadas'}
@@ -271,26 +238,20 @@ export default function VisitadorClient({
               <div className="space-y-4 p-3 lg:space-y-6">
                 {activeTab === 'visitas' ? (
                   <SidebarVisitas
-                    visitasPendientes={visitasPendientes}
-                    visitasRealizadas={visitasRealizadas}
+                    visitasPendientes={initialData.visitasPendientes}
+                    visitasRealizadas={initialData.visitasRealizadas}
                     selectedVisita={selectedVisita}
                     onSelectVisita={handleSelectVisita}
                   />
                 ) : (
                   <EntregasSidebar
-                    entregasPendientes={entregasPendientes}
-                    entregasRealizadas={entregasRealizadas}
+                    entregasPendientes={initialData.entregasPendientes}
+                    entregasRealizadas={initialData.entregasRealizadas}
                     selectedEntrega={selectedEntrega}
                     onSelectEntrega={handleSelectEntrega}
                     loadingEntregas={isPending}
                     errorEntregas={initialData.error}
-                    onRetry={async () => {
-                      startTransition(async () => {
-                        const data = await refreshEntregasData(usuario.cuil)
-                        setEntregasPendientes(data.entregasPendientes)
-                        setEntregasRealizadas(data.entregasRealizadas)
-                      })
-                    }}
+                    onRetry={() => router.refresh()}
                   />
                 )}
               </div>
@@ -321,8 +282,8 @@ export default function VisitadorClient({
                 />
               ) : (
                 <EmptyStateVisitas
-                  totalPendientes={visitasPendientes.length}
-                  totalRealizadas={visitasRealizadas.length}
+                  totalPendientes={initialData.visitasPendientes.length}
+                  totalRealizadas={initialData.visitasRealizadas.length}
                 />
               )
             ) : selectedEntrega ? (
@@ -336,8 +297,8 @@ export default function VisitadorClient({
               />
             ) : (
               <EmptyStateEntregas
-                totalPendientes={entregasPendientes.length}
-                totalEntregadas={entregasRealizadas.length}
+                totalPendientes={initialData.entregasPendientes.length}
+                totalEntregadas={initialData.entregasRealizadas.length}
               />
             )}
           </main>

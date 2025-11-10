@@ -96,31 +96,6 @@ export async function cancelarEntregaAction(
   }
 }
 
-/**
- * Refresca los datos de entregas
- */
-export async function refreshEntregasData(cuil: string) {
-  try {
-    const [entregasPendientes, entregasRealizadas] = await Promise.all([
-      getEntregasByEmpleadoAndEstado(cuil, 'PENDIENTE'),
-      getEntregasByEmpleadoAndEstado(cuil, 'ENTREGADO'),
-    ])
-
-    return {
-      entregasPendientes,
-      entregasRealizadas,
-      error: null,
-    }
-  } catch (error) {
-    console.error('Error al refrescar entregas:', error)
-    return {
-      entregasPendientes: [],
-      entregasRealizadas: [],
-      error: 'Error al cargar las entregas',
-    }
-  }
-}
-
 // ... resto de funciones existentes
 export async function obtenerEntregas(filtro?: string): Promise<Entrega[]> {
   const token = await getAccessToken()

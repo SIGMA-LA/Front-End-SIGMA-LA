@@ -16,12 +16,6 @@ export async function getVisitasByEmpleadoAndEstado(
   estados: string[]
 ): Promise<Visita[]> {
   try {
-    console.log(
-      'Obteniendo visitas para empleado:',
-      cuil,
-      'con estados:',
-      estados
-    )
     const token = await getAccessToken()
     const queryParams = new URLSearchParams()
     estados.forEach((estado) => queryParams.append('estado', estado))
@@ -44,7 +38,6 @@ export async function getVisitasByEmpleadoAndEstado(
     }
 
     const data = await response.json()
-    console.log('Visitas obtenidas:', data)
     return data
   } catch (error) {
     console.error('Error al obtener visitas:', error)
@@ -108,31 +101,6 @@ export async function cancelarVisitaAction(codVisita: number, motivo: string) {
   } catch (error) {
     console.error('Error al cancelar visita:', error)
     return { success: false, data: null, error: 'Error al cancelar la visita' }
-  }
-}
-
-/**
- * Refresca los datos del visitador
- */
-export async function refreshVisitadorData(cuil: string) {
-  try {
-    const [visitasPendientes, visitasRealizadas] = await Promise.all([
-      getVisitasByEmpleadoAndEstado(cuil, ['PROGRAMADA', 'EN CURSO']),
-      getVisitasByEmpleadoAndEstado(cuil, ['COMPLETADA']),
-    ])
-
-    return {
-      visitasPendientes,
-      visitasRealizadas,
-      error: null,
-    }
-  } catch (error) {
-    console.error('Error al refrescar visitas:', error)
-    return {
-      visitasPendientes: [],
-      visitasRealizadas: [],
-      error: 'Error al cargar las visitas',
-    }
   }
 }
 
