@@ -29,7 +29,6 @@ export default async function ObraDetallePage({
   // Cargar todos los datos en paralelo en el servidor
   const obra = await getObraById(obraId)
 
-  // Prisma devuelve las relaciones con los nombres del schema (singular)
   const visitas = (obra as any)?.visita || obra?.visitas || []
   const entregas = (obra as any)?.entrega || obra?.entregas || []
   const pagos = (obra as any)?.pago || obra?.pagos || []

@@ -70,7 +70,6 @@ export default function ObraDetalleView({
             <p className="text-sm text-gray-600">{obra.direccion}</p>
           </div>
         </div>
-        <EstadoObraBadge estado={obra.estado} />
       </div>
 
       {/* KPIs */}
