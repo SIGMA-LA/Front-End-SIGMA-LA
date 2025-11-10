@@ -260,11 +260,13 @@ export type VehiculoEstado =
 
 // Este es el tipo que usará el formulario y la Server Action
 export interface VehiculoFormData {
-  patente: string
   tipo_vehiculo: VehiculoTipo
   estado: VehiculoEstado
+  patente: string
+  anio?: number
+  marca?: string
+  modelo?: string
 }
-
 export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
 export interface VehiculoConDisponibilidad extends Vehiculo {
   availabilityStatus: AvailabilityStatus
@@ -276,7 +278,9 @@ export interface Vehiculo {
   patente: string
   tipo_vehiculo: VehiculoTipo
   estado: VehiculoEstado
-  // Puede que el GET sí devuelva más datos, como una fecha de creación, etc.
+  anio: number
+  marca: string
+  modelo: string
 }
 
 export interface BackendVehiculo {
