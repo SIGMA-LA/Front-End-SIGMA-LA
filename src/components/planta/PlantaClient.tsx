@@ -2,13 +2,17 @@
 
 import { useState } from 'react'
 import type { EntregaEmpleado } from '@/types'
-import entregasService from '@/services/entregas.service'
 import EntregasSidebar from '@/components/planta/EntregasSidebar'
 import EntregaDetails from '@/components/planta/EntregaDetails'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
 import EmptyState from '@/components/planta/EmptyState'
 import { Menu, X } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
+import {
+  getEntregasByEmpleadoAndEstado,
+  finalizarEntregaAction,
+  cancelarEntregaAction,
+} from '@/actions/entregas'
 
 interface PlantaClientProps {
   usuario: any
@@ -46,14 +50,8 @@ export default function PlantaClient({
       setError(null)
 
       const [pendientes, entregadas] = await Promise.all([
-        entregasService.getEntregasByEmpleadoAndEstado(
-          usuario.cuil,
-          'PENDIENTE'
-        ),
-        entregasService.getEntregasByEmpleadoAndEstado(
-          usuario.cuil,
-          'ENTREGADO'
-        ),
+        getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE'),
+        getEntregasByEmpleadoAndEstado(usuario.cuil, 'ENTREGADO'),
       ])
 
       setEntregasPendientes(pendientes)
@@ -80,7 +78,7 @@ export default function PlantaClient({
       try {
         setFinalizandoEntrega(true)
 
-        await entregasService.finalizarEntrega(
+        finalizarEntregaAction(
           selectedEntrega.cod_entrega,
           observacionesFinal || undefined
         )
@@ -115,7 +113,7 @@ export default function PlantaClient({
     if (selectedEntrega && !finalizandoEntrega) {
       try {
         setFinalizandoEntrega(true)
-        await entregasService.cancelarEntrega(
+        cancelarEntregaAction(
           selectedEntrega.cod_entrega,
           observacionesFinal || 'No se especificó motivo.'
         )
