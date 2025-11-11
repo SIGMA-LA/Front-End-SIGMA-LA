@@ -1,5 +1,3 @@
-'use client'
-
 import Configuraciones from '@/components/shared/Configuraciones'
 
 export default function ConfiguracionesPage() {

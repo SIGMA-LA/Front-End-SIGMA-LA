@@ -1,7 +1,7 @@
 import type { Visita } from '@/types'
 import { MapPin } from 'lucide-react'
 
-interface VisitaCardProps {
+interface VisitaCardVisitadorProps {
   visita: Visita
   isSelected: boolean
   onClick: () => void
@@ -32,30 +32,12 @@ const formatTime = (dateString: string) =>
     minute: '2-digit',
   })
 
-export default function VisitaCard({
+export default function VisitaCardVisitador({
   visita,
   isSelected,
   onClick,
   isPendiente,
-}: VisitaCardProps) {
-  const getEstadoColor = (estado: string) => {
-    switch (estado) {
-      case 'PROGRAMADA':
-        return 'bg-blue-500'
-      case 'EN CURSO':
-        return 'bg-yellow-500'
-      case 'COMPLETADA':
-        return 'bg-green-500'
-      case 'CANCELADA':
-        return 'bg-red-500'
-      case 'REPROGRAMADA':
-        return 'bg-purple-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
-
-  // Lógica para determinar el estilo del card basado en si está seleccionado y si es pendiente
+}: VisitaCardVisitadorProps) {
   const getCardStyle = () => {
     if (isSelected) {
       if (isPendiente) {
@@ -90,26 +72,24 @@ export default function VisitaCard({
     >
       <div className="flex items-start justify-between">
         <div className="flex-grow space-y-1.5">
-          {/* Fecha principal */}
           <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
             {formatDate(visita.fecha_hora_visita)} -{' '}
             {formatTime(visita.fecha_hora_visita)}
           </p>
 
-          {/* Motivo */}
           <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
             {getMotivoText(visita.motivo_visita)}
           </p>
 
-          {/* Cliente */}
           <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
             Cliente:{' '}
             <span className="font-medium">
-              {visita.obra?.cliente.razon_social || 'Sin obra asignada'}
+              {visita.obra?.cliente?.razon_social ||
+                `${visita.nombre_cliente || ''} ${visita.apellido_cliente || ''}`.trim() ||
+                'Sin cliente'}
             </span>
           </p>
 
-          {/* Dirección */}
           <div className="flex items-start space-x-1">
             <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
             <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
@@ -120,7 +100,6 @@ export default function VisitaCard({
           </div>
         </div>
 
-        {/* Badge arriba a la derecha */}
         <div className="ml-3 flex flex-col items-end space-y-1">
           <span
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${getVariantBadgeColor()}`}

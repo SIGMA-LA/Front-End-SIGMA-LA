@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { Truck, Plus } from 'lucide-react'
-import { obtenerEntregas } from '@/actions/entregas'
+import { getEntregas } from '@/actions/entregas'
 import EntregaCard from '@/components/shared/EntregaCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import Link from 'next/link'
@@ -39,7 +39,7 @@ function EntregasListSkeleton() {
 }
 
 async function EntregasList({ searchQuery }: { searchQuery?: string }) {
-  const entregas = await obtenerEntregas(searchQuery)
+  const entregas = await getEntregas(searchQuery)
 
   if (entregas.length === 0) {
     return (

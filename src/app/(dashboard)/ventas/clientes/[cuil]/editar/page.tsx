@@ -1,5 +1,5 @@
 import CrearClienteForm from '@/components/ventas/CrearCliente'
-import { obtenerCliente, actualizarCliente } from '@/actions/clientes'
+import { getCliente, updateCliente } from '@/actions/clientes'
 import { redirect, notFound } from 'next/navigation'
 
 export default async function EditarClientePage({
@@ -8,7 +8,7 @@ export default async function EditarClientePage({
   params: Promise<{ cuil: string }>
 }) {
   const { cuil } = await params
-  const cliente = await obtenerCliente(cuil)
+  const cliente = await getCliente(cuil)
 
   if (!cliente) {
     notFound()
@@ -19,7 +19,7 @@ export default async function EditarClientePage({
 
     try {
       const raw = Object.fromEntries(formData.entries())
-      const result = await actualizarCliente(cuil, raw as any)
+      const result = await updateCliente(cuil, raw as any)
 
       if (!result) {
         return {

@@ -1,8 +1,8 @@
 import CrearObra from '@/components/ventas/CrearObra'
-import { obtenerClientes } from '@/actions/clientes'
+import { getClientes } from '@/actions/clientes'
 
 export default async function CrearObraPage() {
-  const clientes = await obtenerClientes()
+  const clientes = await getClientes()
 
   return (
     <CrearObra

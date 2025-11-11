@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
-import { obtenerCliente, obtenerObrasCliente } from '@/actions/clientes'
+import { getCliente, getClienteObras } from '@/actions/clientes'
 import type { Cliente } from '@/types'
 
 interface VerDetallesClienteProps {
@@ -23,8 +23,8 @@ export default function VerDetallesCliente({
       try {
         setLoading(true)
         const [clienteData, obrasData] = await Promise.all([
-          obtenerCliente(cuil),
-          obtenerObrasCliente(cuil),
+          getCliente(cuil),
+          getClienteObras(cuil),
         ])
         setCliente(clienteData)
         setObras(obrasData || [])

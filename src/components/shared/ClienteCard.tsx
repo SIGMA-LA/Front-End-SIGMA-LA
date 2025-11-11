@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Mail, Phone, User, Building2, Eye, Edit, Trash2 } from 'lucide-react'
 import type { Cliente } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
-import { eliminarCliente } from '@/actions/clientes'
+import { deleteCliente } from '@/actions/clientes'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
 import { useAuth } from '@/context/AuthContext'
 
@@ -35,7 +35,7 @@ export default function ClienteCard({
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        const result = await eliminarCliente(cliente.cuil)
+        const result = await deleteCliente(cliente.cuil)
         if (result.success) {
           setShowDeleteModal(false)
           router.refresh()

@@ -1,6 +1,6 @@
 import { Calendar, Plus } from 'lucide-react'
 import { Suspense } from 'react'
-import { obtenerVisitas } from '@/actions/visitas'
+import { getVisitas } from '@/actions/visitas'
 import VisitaCard from '@/components/shared/VisitaCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import Link from 'next/link'
@@ -12,7 +12,7 @@ async function VisitasList({
   searchQuery?: string
   rolActual?: string
 }) {
-  const visitas = await obtenerVisitas(searchQuery)
+  const visitas = await getVisitas(searchQuery)
 
   if (visitas.length === 0) {
     return (

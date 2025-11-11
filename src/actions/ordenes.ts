@@ -1,14 +1,165 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
+import { OrdenProduccion } from '@/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const BASE_URL = API_URL.endsWith('/ordenes-produccion')
+  ? API_URL
+  : `${API_URL}/ordenes-produccion`
 
 /**
- * Crea una nueva orden de producción
+ * Retrieves a single orden de produccion by code
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result with orden data
  */
-export async function crearOrdenProduccion(formData: FormData) {
+export async function getOrdenProduccion(cod_op: number) {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${BASE_URL}/${cod_op}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      next: { revalidate: 30, tags: [`orden-${cod_op}`] },
+    })
+
+    const orden = await response.json()
+
+    return {
+      success: true,
+      data: orden,
+    }
+  } catch (error) {
+    console.error('[getOrdenProduccion]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+    }
+  }
+}
+
+/**
+ * Retrieves ordenes de produccion with optional filters
+ * @param {string} estado - Optional estado filter (PENDIENTE, APROBADA, EN PRODUCCION, FINALIZADA)
+ * @param {number} cod_obra - Optional obra code filter
+ * @returns {Promise<{success: boolean, data: any[], error?: string}>} Operation result with ordenes list
+ */
+export async function getOrdenesProduccion(
+  estado?: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA',
+  cod_obra?: number
+) {
+  try {
+    let url = BASE_URL
+
+    // Use specific endpoint for certain estados
+    if (estado === 'APROBADA') {
+      url = `${BASE_URL}/validadas`
+    } else if (estado === 'EN PRODUCCION') {
+      url = `${BASE_URL}/en-produccion`
+    }
+
+    // Use obra-specific endpoint if cod_obra is provided
+    if (cod_obra) {
+      url = `${BASE_URL}/obra/${cod_obra}`
+    }
+
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      next: { revalidate: 30, tags: ['ordenes-produccion'] },
+    })
+
+    const ordenes = await response.json()
+
+    // Filter manually if estado is specified and not a specific endpoint
+    if (
+      estado &&
+      estado !== 'APROBADA' &&
+      estado !== 'EN PRODUCCION' &&
+      !cod_obra
+    ) {
+      return {
+        success: true,
+        data: ordenes.filter(
+          (orden: OrdenProduccion) => orden.estado === estado
+        ),
+      }
+    }
+
+    return {
+      success: true,
+      data: ordenes,
+    }
+  } catch (error) {
+    console.error('[getOrdenesProduccion]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido',
+      data: [],
+    }
+  }
+}
+
+/**
+ * Retrieves validated ordenes de produccion (estado APROBADA)
+ * @returns {Promise<OrdenProduccion[]>} List of validated ordenes
+ */
+export async function getOrdenesValidadas() {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${BASE_URL}/validadas`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      next: { revalidate: 30, tags: ['ordenes-validadas'] },
+    })
+
+    return await response.json()
+  } catch (error) {
+    console.error('[getOrdenesValidadas]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves ordenes de produccion in production (estado EN PRODUCCION)
+ * @returns {Promise<OrdenProduccion[]>} List of ordenes in production
+ */
+export async function getOrdenesEnProduccion() {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(`${BASE_URL}/en-produccion`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      next: { revalidate: 30, tags: ['ordenes-produccion'] },
+    })
+
+    return await response.json()
+  } catch (error) {
+    console.error('[getOrdenesEnProduccion]', error)
+    return []
+  }
+}
+
+/**
+ * Creates a new orden de produccion
+ * @param {FormData} formData - Form data with cod_obra and PDF file
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result
+ */
+export async function createOrdenProduccion(formData: FormData) {
   try {
     const cod_obra = formData.get('cod_obra') as string
     const file = formData.get('file') as File
@@ -34,12 +185,12 @@ export async function crearOrdenProduccion(formData: FormData) {
 
     const token = await getAccessToken()
 
-    // Enviar directamente al backend que ya tiene Multer + Cloudinary configurado
-    const response = await fetch(`${baseUrl}/ordenes-produccion`, {
+    // Send directly to backend (has Multer + Cloudinary configured)
+    // DO NOT include Content-Type when sending FormData
+    const response = await fetch(BASE_URL, {
       method: 'POST',
       headers: {
-        // NO incluir Content-Type cuando envías FormData
-        ...(token && { Authorization: `Bearer ${token}` }),
+        Authorization: `Bearer ${token}`,
       },
       body: backendFormData,
     })
@@ -58,7 +209,7 @@ export async function crearOrdenProduccion(formData: FormData) {
       data: ordenCreada,
     }
   } catch (error) {
-    console.error('Error en crearOrdenProduccion:', error)
+    console.error('[createOrdenProduccion]', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',
@@ -67,91 +218,24 @@ export async function crearOrdenProduccion(formData: FormData) {
 }
 
 /**
- * Obtiene órdenes de producción con filtros opcionales
+ * Approves an orden de produccion (changes estado to APROBADA)
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @returns {Promise<{success: boolean, data?: any, error?: string, message?: string}>} Operation result
  */
-export async function obtenerOrdenesProduccion(
-  estado?: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA',
-  cod_obra?: number
-) {
-  try {
-    let url = `${baseUrl}/ordenes-produccion`
-
-    // Si se especifica un estado específico, usar el endpoint correspondiente
-    if (estado === 'APROBADA') {
-      url = `${baseUrl}/ordenes-produccion/validadas`
-    } else if (estado === 'EN PRODUCCION') {
-      url = `${baseUrl}/ordenes-produccion/en-produccion`
-    }
-
-    // Si se especifica una obra, usar el endpoint por obra
-    if (cod_obra) {
-      url = `${baseUrl}/ordenes-produccion/obra/${cod_obra}`
-    }
-
-    const token = await getAccessToken()
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      throw new Error('Error al obtener órdenes de producción')
-    }
-
-    const ordenes = await response.json()
-
-    // Si se especifica un estado y no es un endpoint específico, filtrar manualmente
-    if (
-      estado &&
-      estado !== 'APROBADA' &&
-      estado !== 'EN PRODUCCION' &&
-      !cod_obra
-    ) {
-      return {
-        success: true,
-        data: ordenes.filter((orden: any) => orden.estado === estado),
-      }
-    }
-
-    return {
-      success: true,
-      data: ordenes,
-    }
-  } catch (error) {
-    console.error('Error en obtenerOrdenesProduccion:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-      data: [],
-    }
-  }
-}
-
-/**
- * Aprueba una orden de producción (cambia estado a APROBADA y registra fecha_validacion)
- */
-export async function aprobarOrdenProduccion(cod_op: number) {
+export async function approveOrdenProduccion(cod_op: number) {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/ordenes-produccion/${cod_op}`, {
+    const response = await fetchWithErrorHandling(`${BASE_URL}/${cod_op}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         estado: 'APROBADA',
         fecha_validacion: new Date().toISOString(),
       }),
     })
-
-    if (!response.ok) {
-      throw new Error('Error al aprobar orden de producción')
-    }
 
     const ordenActualizada = await response.json()
     revalidatePath('/dashboard')
@@ -163,7 +247,7 @@ export async function aprobarOrdenProduccion(cod_op: number) {
       message: 'Orden de producción aprobada exitosamente',
     }
   } catch (error) {
-    console.error('Error en aprobarOrdenProduccion:', error)
+    console.error('[approveOrdenProduccion]', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Error desconocido',
@@ -172,35 +256,77 @@ export async function aprobarOrdenProduccion(cod_op: number) {
 }
 
 /**
- * Obtiene una orden de producción por su código
+ * Starts production for an orden (changes estado to EN PRODUCCION)
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>} Operation result
  */
-export async function obtenerOrdenProduccion(cod_op: number) {
+export async function startProduccion(cod_op: number) {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/ordenes-produccion/${cod_op}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      cache: 'no-store',
-    })
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/${cod_op}/iniciar`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
 
-    if (!response.ok) {
-      throw new Error('Error al obtener orden de producción')
-    }
-
-    const orden = await response.json()
+    await response.json()
+    revalidatePath('/produccion')
+    revalidatePath('/coordinacion/ordenes-produccion')
 
     return {
       success: true,
-      data: orden,
+      message: 'Producción iniciada exitosamente',
     }
   } catch (error) {
-    console.error('Error en obtenerOrdenProduccion:', error)
+    console.error('[startProduccion]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
+      error:
+        error instanceof Error ? error.message : 'Error al iniciar producción',
+    }
+  }
+}
+
+/**
+ * Finalizes production for an orden (changes estado to FINALIZADA)
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>} Operation result
+ */
+export async function finishProduccion(cod_op: number) {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/${cod_op}/finalizar`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    await response.json()
+    revalidatePath('/produccion')
+    revalidatePath('/coordinacion/ordenes-produccion')
+
+    return {
+      success: true,
+      message: 'Producción finalizada exitosamente',
+    }
+  } catch (error) {
+    console.error('[finishProduccion]', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Error al finalizar producción',
     }
   }
 }

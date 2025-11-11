@@ -1,12 +1,12 @@
 import { Users, Building, Plus } from 'lucide-react'
 import { Suspense } from 'react'
-import { obtenerTodosLosEmpleados } from '@/actions/empleado'
+import { getEmpleados } from '@/actions/empleado'
 import EmpleadosListByRole from '@/components/admin/EmpleadosListByRole'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import Link from 'next/link'
 
 async function EmpleadosList({ searchQuery }: { searchQuery?: string }) {
-  const empleados = await obtenerTodosLosEmpleados()
+  const empleados = await getEmpleados()
 
   // Filtrar empleados según la búsqueda
   const filteredEmpleados = searchQuery

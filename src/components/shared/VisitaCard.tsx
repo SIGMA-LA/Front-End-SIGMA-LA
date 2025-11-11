@@ -73,15 +73,30 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
   const esCoordinacion = rolActual?.trim().toUpperCase() === 'COORDINACION'
   const [showDetail, setShowDetail] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [motivoCancelacion, setMotivoCancelacion] = useState('')
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const handleCancelarVisita = () => {
+    if (!motivoCancelacion.trim()) {
+      alert('Por favor, ingresa un motivo de cancelación')
+      return
+    }
+
     startTransition(async () => {
       try {
-        await cancelarVisita(visita.cod_visita)
-        setShowCancelModal(false)
-        router.refresh()
+        const result = await cancelarVisita(
+          visita.cod_visita,
+          motivoCancelacion
+        )
+
+        if (result.success) {
+          setShowCancelModal(false)
+          setMotivoCancelacion('')
+          router.refresh()
+        } else {
+          alert(result.error || 'Error al cancelar la visita')
+        }
       } catch (error) {
         console.error('Error al cancelar:', error)
         alert('Error al cancelar la visita')
@@ -233,7 +248,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
         <VisitaDetail visita={visita} onClose={() => setShowDetail(false)} />
       )}
 
-      {/* Modal de confirmación */}
+      {/* Modal de confirmación de cancelación */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
@@ -249,9 +264,33 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
                 se puede deshacer.
               </p>
             </div>
+
+            {/* Campo de motivo */}
+            <div className="mb-4">
+              <label
+                htmlFor="motivo"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
+                Motivo de cancelación *
+              </label>
+              <textarea
+                id="motivo"
+                value={motivoCancelacion}
+                onChange={(e) => setMotivoCancelacion(e.target.value)}
+                disabled={isPending}
+                className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500"
+                rows={3}
+                placeholder="Ingresa el motivo de la cancelación..."
+                required
+              />
+            </div>
+
             <div className="flex gap-3">
               <button
-                onClick={() => setShowCancelModal(false)}
+                onClick={() => {
+                  setShowCancelModal(false)
+                  setMotivoCancelacion('')
+                }}
                 disabled={isPending}
                 className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
@@ -259,8 +298,8 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
               </button>
               <button
                 onClick={handleCancelarVisita}
-                disabled={isPending}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                disabled={isPending || !motivoCancelacion.trim()}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending ? 'Cancelando...' : 'Confirmar'}
               </button>

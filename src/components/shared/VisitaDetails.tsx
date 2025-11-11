@@ -16,7 +16,7 @@ import {
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Visita, VisitaDetailProps } from '@/types'
-import { obtenerVisitaPorId } from '@/actions/visitas'
+import { getVisita } from '@/actions/visitas'
 import { getStatusColor, getTipoText } from './VisitaCard'
 import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
 
@@ -33,7 +33,7 @@ export default function VisitaDetail({
       setLoading(true)
       setError(null)
       try {
-        const data = await obtenerVisitaPorId(visitaProp.cod_visita)
+        const data = await getVisita(visitaProp.cod_visita)
         setVisita(data)
       } catch (err: any) {
         setError(err?.message || 'Error al obtener los detalles de la visita.')

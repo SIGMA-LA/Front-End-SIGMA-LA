@@ -1,5 +1,5 @@
 import CrearObra from '@/components/ventas/CrearObra'
-import { obtenerClientes } from '@/actions/clientes'
+import { getClientes } from '@/actions/clientes'
 import { getObraById } from '@/services/obra.service'
 
 interface EditarObraPageProps {
@@ -9,7 +9,7 @@ interface EditarObraPageProps {
 export default async function EditarObraPage({ params }: EditarObraPageProps) {
   const { id } = await params
   const [clientes, obra] = await Promise.all([
-    obtenerClientes(),
+    getClientes(),
     getObraById(Number(id)),
   ])
 

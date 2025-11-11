@@ -1,83 +1,86 @@
 'use server'
 
-import { Localidad, Provincia } from '@/types'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
+import type { Localidad, Provincia } from '@/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/provincias'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const BASE_URL = `${API_URL}/provincias`
 
-// Para uso en Client Components que no pueden importar de cache.ts
-export async function obtenerProvincias(): Promise<Provincia[]> {
+/**
+ * Retrieves all provincias from the system
+ * @returns {Promise<Provincia[]>} List of provincias
+ */
+export async function getProvincias(): Promise<Provincia[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}`, {
+    const res = await fetchWithErrorHandling(BASE_URL, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 3600 }, // 1 hora
+      next: { revalidate: 3600, tags: ['provincias'] }, // 1 hour cache
     })
-
-    if (!response.ok) {
-      return []
-    }
-
-    return response.json()
+    return await res.json()
   } catch (error) {
-    console.error('Error obteniendo provincias:', error)
+    console.error('[getProvincias]', error)
     return []
   }
 }
 
-export async function obtenerProvinciaById(
+/**
+ * Retrieves a single provincia by ID
+ * @param {number} cod_provincia - Provincia code/ID
+ * @returns {Promise<Provincia | null>} Provincia data or null if not found
+ */
+export async function getProvincia(
   cod_provincia: number
 ): Promise<Provincia | null> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(`${baseUrl}/${cod_provincia}`, {
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${cod_provincia}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      next: { revalidate: 3600, tags: [`provincia-${cod_provincia}`] },
     })
-    if (!response.ok) {
-      return null
-    }
-    const provincia: Provincia = await response.json()
-    return provincia
+    return await res.json()
   } catch (error) {
-    console.error('Error obteniendo provincia por ID:', error)
+    console.error('[getProvincia]', error)
     return null
   }
 }
 
-export async function localidadesPorProvincia(
+/**
+ * Retrieves all localidades belonging to a specific provincia
+ * @param {number} cod_provincia - Provincia code/ID
+ * @returns {Promise<Localidad[]>} List of localidades in the provincia
+ */
+export async function getLocalidadesByProvincia(
   cod_provincia: number
 ): Promise<Localidad[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/localidades/provincias/${cod_provincia}`,
+    const res = await fetchWithErrorHandling(
+      `${API_URL}/localidades/provincias/${cod_provincia}`,
       {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        cache: 'no-store',
+        next: {
+          revalidate: 3600,
+          tags: ['localidades', `localidades-provincia-${cod_provincia}`],
+        },
       }
     )
-
-    if (!response.ok) {
-      return []
-    }
-
-    const localidades: Localidad[] = await response.json()
-    return localidades
+    return await res.json()
   } catch (error) {
-    console.error('Error obteniendo localidades por provincia:', error)
+    console.error('[getLocalidadesByProvincia]', error)
     return []
   }
 }

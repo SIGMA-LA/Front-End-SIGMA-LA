@@ -7,9 +7,9 @@ import {
   ReactNode,
   useEffect,
 } from 'react'
+import { useRouter } from 'next/navigation'
 import api from '@/services/api/api'
 import { Empleado } from '@/types'
-import { redirect } from 'next/navigation'
 
 interface AuthContextType {
   usuario: Empleado | null
@@ -23,11 +23,11 @@ const BASE_URL = 'http://localhost:4000/api/auth'
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter()
   const [usuario, setUsuario] = useState<Empleado | null>(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    // Solo verifica el perfil una vez al montar
     let isMounted = true
 
     const fetchProfile = async () => {
@@ -84,9 +84,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error en logout:', error)
     } finally {
       setUsuario(null)
-      redirect('/login')
+      router.push('/login')
+      router.refresh()
     }
   }
+
   return (
     <AuthContext.Provider value={{ usuario, cargando, login, logout }}>
       {children}

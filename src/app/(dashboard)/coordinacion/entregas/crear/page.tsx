@@ -1,6 +1,6 @@
-import { obtenerObra } from '@/actions/obras'
-import { obtenerTodosLosEmpleados } from '@/actions/empleado'
-import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
+import { getObra } from '@/actions/obras'
+import { getEmpleados } from '@/actions/empleado'
+import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinariasDisponibles } from '@/actions/maquinarias'
 import CrearEntregaForm from '@/components/coordinacion/CrearEntregaForm'
 import { Suspense } from 'react'
@@ -8,9 +8,9 @@ import { Loader2 } from 'lucide-react'
 
 async function CrearEntregaContent({ obraId }: { obraId: string | null }) {
   const [obra, empleados, vehiculos, maquinarias] = await Promise.all([
-    obraId ? obtenerObra(Number(obraId)) : null,
-    obtenerTodosLosEmpleados(),
-    obtenerVehiculosDisponibles(),
+    obraId ? getObra(Number(obraId)) : null,
+    getEmpleados(),
+    getVehiculos(),
     getMaquinariasDisponibles(),
   ])
 
@@ -28,7 +28,7 @@ function LoadingSkeleton() {
   return (
     <div className="flex items-center justify-center p-8">
       <div className="text-center">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
+        <Loader2 className="mx-auto h-12 w-12 animate-spin pt-10 text-blue-600" />
         <p className="mt-4 text-gray-600">Cargando formulario...</p>
       </div>
     </div>

@@ -1,21 +1,23 @@
 import CrearVisita from '@/components/coordinacion/CrearVisita'
-import { obtenerVisitaPorId } from '@/actions/visitas'
-import { localidadesPorProvincia } from '@/actions/localidad'
+import { getVisita } from '@/actions/visitas'
+import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
-import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
-import { obtenerTodosLosEmpleados } from '@/actions/empleado'
-import { obtenerObras } from '@/actions/obras'
+import { getVehiculosDisponibles } from '@/actions/vehiculos'
+import { getEmpleadosDisponiblesEntrega } from '@/actions/empleado'
+import { getObras } from '@/actions/obras'
 
 export default async function EditarVisitaPage({
   params,
 }: {
   params: { id: string }
 }) {
+  const { id } = await params
+
   const [visita, provincias, vehiculos, empleados] = await Promise.all([
-    obtenerVisitaPorId(Number(params.id)),
+    getVisita(Number(id)),
     getProvincias(),
-    obtenerVehiculosDisponibles(),
-    obtenerTodosLosEmpleados(),
+    getVehiculosDisponibles(),
+    getEmpleadosDisponiblesEntrega(),
   ])
 
   return (
@@ -24,8 +26,8 @@ export default async function EditarVisitaPage({
       vehiculos={vehiculos}
       empleados={empleados}
       visitaEditar={visita}
-      buscarObras={obtenerObras}
-      buscarLocalidades={localidadesPorProvincia}
+      buscarObras={getObras}
+      buscarLocalidades={getLocalidadesByProvincia}
     />
   )
 }

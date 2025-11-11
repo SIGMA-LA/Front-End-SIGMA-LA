@@ -1,9 +1,9 @@
 import CrearVisita from '@/components/coordinacion/CrearVisita'
-import { localidadesPorProvincia } from '@/actions/localidad'
+import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
-import { obtenerVehiculosDisponibles } from '@/actions/vehiculos'
-import { obtenerTodosLosEmpleados } from '@/actions/empleado'
-import { obtenerObras, obtenerObra } from '@/actions/obras'
+import { getVehiculosDisponibles } from '@/actions/vehiculos'
+import { getEmpleados } from '@/actions/empleado'
+import { getObras, getObra } from '@/actions/obras'
 
 export default async function CrearVisitaPage({
   searchParams,
@@ -16,9 +16,9 @@ export default async function CrearVisitaPage({
   const [provincias, vehiculos, empleados, obraPreseleccionada] =
     await Promise.all([
       getProvincias(),
-      obtenerVehiculosDisponibles(),
-      obtenerTodosLosEmpleados(),
-      obraId ? obtenerObra(Number(obraId)) : null,
+      getVehiculosDisponibles(),
+      getEmpleados(),
+      obraId ? getObra(Number(obraId)) : null,
     ])
 
   return (
@@ -26,8 +26,8 @@ export default async function CrearVisitaPage({
       provincias={provincias}
       vehiculos={vehiculos}
       empleados={Array.isArray(empleados) ? empleados : []}
-      buscarObras={obtenerObras}
-      buscarLocalidades={localidadesPorProvincia}
+      buscarObras={getObras}
+      buscarLocalidades={getLocalidadesByProvincia}
       preloadedObra={obraPreseleccionada}
     />
   )

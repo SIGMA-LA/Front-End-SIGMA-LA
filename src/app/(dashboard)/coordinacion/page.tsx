@@ -1,7 +1,7 @@
 import { getUsuario } from '@/lib/cache'
-import { obtenerVisitas } from '@/actions/visitas'
-import { obtenerEntregas } from '@/actions/entregas'
-import { filtrarObrasAction } from '@/actions/obras'
+import { getVisitas } from '@/actions/visitas'
+import { getEntregas } from '@/actions/entregas'
+import { filterObras } from '@/actions/obras'
 import {
   Calendar,
   Truck,
@@ -56,9 +56,9 @@ async function getCoordinacionStats() {
     manana.setDate(manana.getDate() + 1)
 
     const [visitas, entregas, obras] = await Promise.all([
-      obtenerVisitas(),
-      obtenerEntregas(),
-      filtrarObrasAction({}),
+      getVisitas(),
+      getEntregas(),
+      filterObras({}),
     ])
 
     const visitasHoy = visitas.filter((v) => {

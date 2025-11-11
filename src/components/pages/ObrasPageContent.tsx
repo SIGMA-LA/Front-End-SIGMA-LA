@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Building2, Plus } from 'lucide-react'
-import { obtenerObras, filtrarObrasAction } from '@/actions/obras'
-import { localidadesPorProvincia } from '@/actions/localidad'
+import { getObras, filterObras } from '@/actions/obras'
+import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
 import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
@@ -23,7 +23,6 @@ function ObrasListSkeleton() {
               <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200"></div>
             </div>
             <div className="flex flex-col gap-2">
-              <div className="h-6 w-32 animate-pulse rounded-full bg-gray-200"></div>
               <div className="flex gap-2">
                 <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
                 <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
@@ -53,9 +52,9 @@ async function ObrasGrid({
     (async () => {
       try {
         if (searchQuery) {
-          return await obtenerObras(searchQuery)
+          return await getObras(searchQuery)
         } else {
-          return await filtrarObrasAction({ estado, cod_localidad })
+          return await filterObras({ estado, cod_localidad })
         }
       } catch (err) {
         console.error('Error cargando obras:', err)
@@ -162,7 +161,7 @@ export default async function ObrasPageContent({
         <div className="mb-8">
           <ObrasFiltros
             provincias={provincias}
-            buscarLocalidades={localidadesPorProvincia}
+            buscarLocalidades={getLocalidadesByProvincia}
             estadoInicial={estado}
             localidadInicial={cod_localidad}
           />

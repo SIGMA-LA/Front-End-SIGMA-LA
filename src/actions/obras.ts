@@ -1,45 +1,51 @@
 'use server'
 
-import { Obra } from '@/types'
-import { getAccessToken } from './auth'
 import { revalidatePath } from 'next/cache'
-import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { cache } from 'react'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { getAccessToken } from './auth'
+import type { Obra } from '@/types'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
-const baseUrl = API_BASE.endsWith('/obras') ? API_BASE : `${API_BASE}/obras`
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const BASE_URL = API_URL.endsWith('/obras') ? API_URL : `${API_URL}/obras`
 
-/* Obtener una obra por ID (GET /obras/:id) - Cachear por 30 segundos con Next.js Data Cache */
-export const getObraById = cache(
-  async (cod_obra: number): Promise<Obra | null> => {
-    try {
-      const token = await getAccessToken()
-      const res = await fetchWithErrorHandling(`${baseUrl}/${cod_obra}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        next: {
-          revalidate: 30,
-          tags: [`obra-${cod_obra}`],
-        },
-      })
-      return await res.json()
-    } catch (error) {
-      console.error('[getObraById] ', error)
-      return null
-    }
-  }
-)
-
-/* Buscar obras por texto (GET /obras/buscar?{texto}) */
-export async function obtenerObras(filtro?: string): Promise<Obra[]> {
+/**
+ * Retrieves a single obra by ID (cached with React cache)
+ * @param {number} cod_obra - Obra code/ID
+ * @returns {Promise<Obra | null>} Obra data or null if not found
+ */
+export const getObra = cache(async (cod_obra: number): Promise<Obra | null> => {
   try {
     const token = await getAccessToken()
-    let url = baseUrl
-    if (filtro && filtro.trim().length > 0) {
-      url = `${baseUrl}/buscar?q=${encodeURIComponent(filtro.trim())}`
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${cod_obra}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: {
+        revalidate: 30,
+        tags: [`obra-${cod_obra}`],
+      },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error('[getObra]', error)
+    return null
+  }
+})
+
+/**
+ * Searches obras by text filter
+ * @param {string} filter - Optional search query
+ * @returns {Promise<Obra[]>} List of matching obras
+ */
+export async function getObras(filter?: string): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    let url = BASE_URL
+    if (filter && filter.trim().length > 0) {
+      url = `${BASE_URL}/buscar?q=${encodeURIComponent(filter.trim())}`
     }
     const res = await fetchWithErrorHandling(url, {
       method: 'GET',
@@ -47,17 +53,24 @@ export async function obtenerObras(filtro?: string): Promise<Obra[]> {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      next: { revalidate: 30, tags: ['obras'] },
     })
     const data = await res.json()
     return Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('[obtenerObras] ', error)
+    console.error('[getObras]', error)
     return []
   }
 }
 
-/* Filtrar obras por estado o localidad (GET /obras/filtrar?estado=X&localidad=Y) */
-export async function filtrarObras({
+/**
+ * Filters obras by estado or localidad
+ * @param {Object} params - Filter parameters
+ * @param {string} params.estado - Obra estado filter
+ * @param {number} params.cod_localidad - Localidad code filter
+ * @returns {Promise<Obra[]>} Filtered list of obras
+ */
+export async function filterObras({
   estado,
   cod_localidad,
 }: {
@@ -69,81 +82,29 @@ export async function filtrarObras({
     const params = new URLSearchParams()
     if (estado) params.append('estado', estado)
     if (cod_localidad) params.append('localidad', String(cod_localidad))
-    const url = `${baseUrl}/filtrar?${params.toString()}`
+    const url = `${BASE_URL}/filtrar?${params.toString()}`
     const res = await fetchWithErrorHandling(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      next: { revalidate: 30, tags: ['obras'] },
     })
     const data = await res.json()
     return Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('[filtrarObras] ', error)
+    console.error('[filterObras]', error)
     return []
   }
 }
 
-export async function filtrarObrasAction(filters: {
-  estado?: string
-  cod_localidad?: number
-}): Promise<Obra[]> {
-  try {
-    return await filtrarObras({
-      estado: filters.estado,
-      cod_localidad: filters.cod_localidad,
-    })
-  } catch (err) {
-    console.error('[filtrarObrasAction] ', err)
-    return []
-  }
-}
-
-/* Obtener obra por ID (GET /obras/:id) */
-export async function obtenerObra(id: number): Promise<Obra> {
-  if (id === undefined || id === null) throw new Error('ID de obra inválido')
-  const numericId = typeof id === 'string' ? Number(id) : id
-  if (isNaN(numericId) || numericId <= 0) throw new Error('ID de obra inválido')
-
-  try {
-    const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${baseUrl}/${numericId}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    return await res.json()
-  } catch (error) {
-    console.error('[obtenerObra] ', error)
-    throw new Error(`No se pudo obtener la obra #${numericId}`)
-  }
-}
-
-/* Eliminar obra (DELETE /obras/:id) */
-export async function deleteObra(
-  id: number
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const token = await getAccessToken()
-    await fetchWithErrorHandling(`${baseUrl}/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    revalidatePath('/ventas/obras')
-    return { success: true }
-  } catch (error: any) {
-    console.error('[deleteObra] ', error)
-    return { success: false, error: error?.message ?? 'Error desconocido' }
-  }
-}
-
-/* Subir nota de fábrica (POST /obras/:id/nota-fabrica) */
+/**
+ * Uploads nota fabrica file for an obra
+ * @param {number} codObra - Obra code/ID
+ * @param {FormData} file - FormData with the file
+ * @returns {Promise<Obra>} Updated obra
+ */
 export async function uploadNotaFabrica(
   codObra: number,
   file: FormData
@@ -151,7 +112,7 @@ export async function uploadNotaFabrica(
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
-      `${baseUrl}/${codObra}/nota-fabrica`,
+      `${BASE_URL}/${codObra}/nota-fabrica`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -162,17 +123,21 @@ export async function uploadNotaFabrica(
     revalidatePath('/ventas/obras')
     return data
   } catch (error) {
-    console.error('[uploadNotaFabrica] ', error)
+    console.error('[uploadNotaFabrica]', error)
     throw error
   }
 }
 
-/* Eliminar nota de fábrica (DELETE /obras/:id/nota-fabrica) */
+/**
+ * Deletes nota fabrica file from an obra
+ * @param {number} codObra - Obra code/ID
+ * @returns {Promise<Obra>} Updated obra
+ */
 export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
-      `${baseUrl}/${codObra}/nota-fabrica`,
+      `${BASE_URL}/${codObra}/nota-fabrica`,
       {
         method: 'DELETE',
         headers: {
@@ -185,7 +150,93 @@ export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
     revalidatePath('/ventas/obras')
     return data
   } catch (error) {
-    console.error('[deleteNotaFabrica] ', error)
+    console.error('[deleteNotaFabrica]', error)
     throw error
+  }
+}
+
+/**
+ * Retrieves obras with nota fabrica but no approved or in-production orders
+ * @returns {Promise<Obra[]>} List of obras
+ */
+export async function getNotasSinOrdenAprobada(): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/notas-sin-orden-aprobada`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: {
+          revalidate: 30,
+          tags: ['notas-sin-orden'],
+        },
+      }
+    )
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('[getNotasSinOrdenAprobada]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves obras in production with nota fabrica and orders in process
+ * @returns {Promise<Obra[]>} List of obras
+ */
+export async function getNotasConOrdenEnProceso(): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/notas-con-orden-proceso`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: {
+          revalidate: 30,
+          tags: ['notas-con-orden'],
+        },
+      }
+    )
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('[getNotasConOrdenEnProceso]', error)
+    return []
+  }
+}
+
+/**
+ * Deletes an obra by ID
+ * @param {number} id - Obra ID
+ * @returns {Promise<{success: boolean, error?: string}>} Operation result
+ */
+export async function deleteObra(
+  id: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    revalidatePath('/ventas/obras')
+    return { success: true }
+  } catch (error) {
+    console.error('[deleteObra]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
   }
 }

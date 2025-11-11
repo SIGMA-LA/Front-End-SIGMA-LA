@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Calendar } from 'lucide-react'
 import { CrearVisitaProps, Localidad, Visita } from '@/types'
-import { crearVisitaAction, actualizarVisitaAction } from '@/actions/visitas'
+import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
 import SeccionEmpleados from './visita/SeccionEmpleados'
 import SeccionDatosVisita from './visita/SeccionDatosVisita'
 import SeccionVisitaInicial from './visita/SeccionVisitaInicial'
@@ -114,7 +114,7 @@ export default function CrearVisita({
     }
   }, [provinciaSeleccionada, buscarLocalidades])
 
-  const formAction = visitaEditar ? actualizarVisitaAction : crearVisitaAction
+  const formAction = visitaEditar ? updateVisitaFromForm : createVisitaFromForm
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

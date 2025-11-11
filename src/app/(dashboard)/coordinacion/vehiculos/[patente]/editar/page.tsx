@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import EditarVehiculo from '@/components/coordinacion/EditarVehiculo'
-import { Vehiculo } from '@/types'
-import { obtenerVehiculo } from '@/actions/vehiculos'
+import VehiculoForm from '@/components/coordinacion/VehiculoForm'
+import { getVehiculo, updateVehiculo } from '@/actions/vehiculos'
+import { Vehiculo, VehiculoFormData } from '@/types'
 
 export default function EditarVehiculoPage() {
   const params = useParams()
@@ -12,14 +12,25 @@ export default function EditarVehiculoPage() {
   const patente = params.patente as string
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchVehiculo = async () => {
       try {
-        const data = await obtenerVehiculo(patente)
+        const data = await getVehiculo(patente)
+        console.log('Datos del vehículo recibidos:', data)
+        console.log(
+          'Marca:',
+          data.marca,
+          'Modelo:',
+          data.modelo,
+          'Año:',
+          data.anio
+        )
         setVehiculo(data)
-      } catch (error) {
-        console.error('Error al cargar vehículo:', error)
+      } catch (error: any) {
+        setError(error.message)
       } finally {
         setLoading(false)
       }
@@ -28,17 +39,45 @@ export default function EditarVehiculoPage() {
     fetchVehiculo()
   }, [patente])
 
-  if (loading) return <div className="p-8 text-center">Cargando...</div>
-  if (!vehiculo)
+  const handleSubmit = async (data: VehiculoFormData) => {
+    setIsPending(true)
+    setError(null)
+
+    try {
+      await updateVehiculo(patente, data)
+      router.push('/coordinacion/vehiculos')
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || 'Error al actualizar el vehículo')
+    } finally {
+      setIsPending(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent" />
+      </div>
+    )
+  }
+
+  if (!vehiculo) {
     return (
       <div className="p-8 text-center text-red-600">Vehículo no encontrado</div>
     )
+  }
 
   return (
-    <EditarVehiculo
-      vehiculo={vehiculo}
-      onCancel={() => router.push('/coordinacion/vehiculos')}
-      onSubmit={() => router.push('/coordinacion/vehiculos')}
-    />
+    <div className="p-4 sm:p-6 lg:p-8">
+      <VehiculoForm
+        vehiculo={vehiculo}
+        onSubmit={handleSubmit}
+        onCancel={() => router.push('/coordinacion/vehiculos')}
+        isPending={isPending}
+        error={error}
+        isEdit
+      />
+    </div>
   )
 }

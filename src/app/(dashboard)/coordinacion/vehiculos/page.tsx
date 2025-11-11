@@ -1,20 +1,7 @@
-'use client'
+import { getVehiculos } from '@/actions/vehiculos'
+import VehiculosPageContent from '@/components/pages/VehiculosPageContent'
 
-import { useRouter } from 'next/navigation'
-import VehiculosList from '@/components/coordinacion/VehiculosList'
-import { Vehiculo } from '@/types'
-
-export default function VehiculosPage() {
-  const router = useRouter()
-
-  return (
-    <VehiculosList
-      onCreateClick={() => {
-        router.push('/coordinacion/vehiculos/crear')
-      }}
-      onEditClick={(vehiculo: Vehiculo) => {
-        router.push(`/coordinacion/vehiculos/${vehiculo.patente}/editar`)
-      }}
-    />
-  )
+export default async function VehiculosPage() {
+  const vehiculos = await getVehiculos()
+  return <VehiculosPageContent vehiculos={vehiculos} />
 }

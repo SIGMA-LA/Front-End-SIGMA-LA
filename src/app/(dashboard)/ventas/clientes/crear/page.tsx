@@ -1,12 +1,12 @@
 import CrearClienteForm from '@/components/ventas/CrearCliente'
-import { crearCliente } from '@/actions/clientes'
+import { createCliente } from '@/actions/clientes'
 import { redirect } from 'next/navigation'
 
 export default function CrearClientePage() {
   async function handleCrear(formData: FormData) {
     'use server'
     try {
-      const result = await crearCliente(formData)
+      const result = await createCliente(formData)
 
       if (!result || result.error) {
         return {

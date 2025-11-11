@@ -3,8 +3,8 @@
 import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Truck, AlertCircle } from 'lucide-react'
-import { crearEntregaAction } from '@/actions/entregas'
-import { obtenerObras } from '@/actions/obras'
+import { createEntrega } from '@/actions/entregas'
+import { getObras } from '@/actions/obras'
 import type { Obra, Empleado, Vehiculo, Maquinaria } from '@/types'
 
 // Componentes
@@ -118,29 +118,20 @@ export default function CrearEntregaForm({
         })),
       ]
 
-      const formDataToSend = new FormData()
-      formDataToSend.append('cod_obra', String(formData.obraId))
-      formDataToSend.append(
-        'fecha_hora_entrega',
-        `${formData.fecha}T${formData.hora}:00`
-      )
-      formDataToSend.append('detalle', formData.detalle)
-      formDataToSend.append('observaciones', formData.observaciones || '')
-      formDataToSend.append('dias_viaticos', String(diasViaticos))
-      formDataToSend.append(
-        'empleados_asignados',
-        JSON.stringify(empleados_asignados)
-      )
-
-      if (selectedVehiculos.length > 0) {
-        formDataToSend.append('vehiculos', JSON.stringify(selectedVehiculos))
-      }
-      if (selectedMaquinaria.length > 0) {
-        formDataToSend.append('maquinarias', JSON.stringify(selectedMaquinaria))
+      const entregaData = {
+        cod_obra: formData.obraId,
+        fecha_hora_entrega: `${formData.fecha}T${formData.hora}:00`,
+        detalle: formData.detalle,
+        observaciones: formData.observaciones || '',
+        dias_viaticos: diasViaticos,
+        empleados_asignados,
+        vehiculos: selectedVehiculos.length > 0 ? selectedVehiculos : undefined,
+        maquinarias:
+          selectedMaquinaria.length > 0 ? selectedMaquinaria : undefined,
       }
 
       startTransition(async () => {
-        await crearEntregaAction(formDataToSend)
+        await createEntrega(entregaData)
       })
     } catch (err: any) {
       setError(err.message || 'Error al crear la entrega')
@@ -207,7 +198,7 @@ export default function CrearEntregaForm({
                   ) : (
                     <ObraSearchSelect
                       onSelectObra={handleObraSelect}
-                      buscarObras={obtenerObras}
+                      buscarObras={getObras}
                       placeholder="Buscar obra por dirección o cliente..."
                     />
                   )}
