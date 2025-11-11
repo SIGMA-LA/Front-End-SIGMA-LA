@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import VisitadorClient from '@/components/visitador/VisitadorClient'
-import { getVisitasByEmpleadoAndEstado } from '@/actions/visitas'
-import { getEntregasByEmpleadoAndEstado } from '@/actions/entregas'
+import { getVisitasByEmpleado } from '@/actions/visitas'
+import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuarioFromCookies } from '@/lib/auth-server'
 
 function VisitadorSkeleton() {
@@ -76,10 +76,10 @@ async function getVisitadorData(cuil: string) {
       entregasPendientes,
       entregasRealizadas,
     ] = await Promise.all([
-      getVisitasByEmpleadoAndEstado(cuil, ['PROGRAMADA', 'EN CURSO']),
-      getVisitasByEmpleadoAndEstado(cuil, ['COMPLETADA']),
-      getEntregasByEmpleadoAndEstado(cuil, 'PENDIENTE'),
-      getEntregasByEmpleadoAndEstado(cuil, 'ENTREGADO'),
+      getVisitasByEmpleado(cuil),
+      getVisitasByEmpleado(cuil),
+      getEntregasByEmpleado(cuil, 'PENDIENTE'),
+      getEntregasByEmpleado(cuil, 'ENTREGADO'),
     ])
 
     return {

@@ -1,12 +1,9 @@
 import DashboardView from '@/components/admin/DashboardView'
-import { filtrarObrasAction } from '@/actions/obras'
-import { obtenerClientes } from '@/actions/clientes'
+import { filterObras } from '@/actions/obras'
+import { getClientes } from '@/actions/clientes'
 
 export default async function Page() {
-  const [obras, clientes] = await Promise.all([
-    filtrarObrasAction({}),
-    obtenerClientes(),
-  ])
+  const [obras, clientes] = await Promise.all([filterObras({}), getClientes()])
 
   return (
     <main className="flex-1 bg-gray-50 p-4 sm:p-6 lg:p-8">

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import VehiculoForm from '@/components/coordinacion/VehiculoForm'
-import { crearVehiculo } from '@/actions/vehiculos'
+import { createVehiculo } from '@/actions/vehiculos'
 import { VehiculoFormData } from '@/types'
 
 export default function CrearVehiculoPage() {
@@ -16,7 +16,7 @@ export default function CrearVehiculoPage() {
     setError(null)
 
     try {
-      await crearVehiculo(data)
+      await createVehiculo(data)
       router.push('/coordinacion/vehiculos')
       router.refresh()
     } catch (err: any) {

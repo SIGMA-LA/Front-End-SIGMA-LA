@@ -1,11 +1,10 @@
 import { Suspense } from 'react'
 import { Loader2 } from 'lucide-react'
-import { getMaquinariaById } from '@/actions/maquinarias'
+import { getMaquinaria } from '@/actions/maquinarias'
 import MaquinariaForm from '@/components/coordinacion/maquinaria/MaquinariaForm'
 
 async function EditarMaquinariaContent({ id }: { id: string }) {
-  const maquinaria = await getMaquinariaById(Number(id))
-
+  const maquinaria = await getMaquinaria(Number(id))
   if (!maquinaria) {
     return (
       <div className="p-8 text-center">

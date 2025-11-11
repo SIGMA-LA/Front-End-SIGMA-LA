@@ -1,6 +1,6 @@
-import { obtenerObra } from '@/actions/obras'
-import { obtenerTodosLosEmpleados } from '@/actions/empleado'
-import { obtenerVehiculos } from '@/actions/vehiculos'
+import { getObra } from '@/actions/obras'
+import { getEmpleados } from '@/actions/empleado'
+import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinariasDisponibles } from '@/actions/maquinarias'
 import CrearEntregaForm from '@/components/coordinacion/CrearEntregaForm'
 import { Suspense } from 'react'
@@ -8,9 +8,9 @@ import { Loader2 } from 'lucide-react'
 
 async function CrearEntregaContent({ obraId }: { obraId: string | null }) {
   const [obra, empleados, vehiculos, maquinarias] = await Promise.all([
-    obraId ? obtenerObra(Number(obraId)) : null,
-    obtenerTodosLosEmpleados(),
-    obtenerVehiculos(),
+    obraId ? getObra(Number(obraId)) : null,
+    getEmpleados(),
+    getVehiculos(),
     getMaquinariasDisponibles(),
   ])
 

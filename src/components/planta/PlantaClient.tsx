@@ -9,9 +9,9 @@ import EmptyState from '@/components/planta/EmptyState'
 import { Menu, X } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import {
-  getEntregasByEmpleadoAndEstado,
-  finalizarEntregaAction,
-  cancelarEntregaAction,
+  getEntregasByEmpleado,
+  finalizarEntrega,
+  cancelarEntrega,
 } from '@/actions/entregas'
 
 interface PlantaClientProps {
@@ -50,8 +50,8 @@ export default function PlantaClient({
       setError(null)
 
       const [pendientes, entregadas] = await Promise.all([
-        getEntregasByEmpleadoAndEstado(usuario.cuil, 'PENDIENTE'),
-        getEntregasByEmpleadoAndEstado(usuario.cuil, 'ENTREGADO'),
+        getEntregasByEmpleado(usuario.cuil, 'PENDIENTE'),
+        getEntregasByEmpleado(usuario.cuil, 'ENTREGADO'),
       ])
 
       setEntregasPendientes(pendientes)
@@ -78,7 +78,7 @@ export default function PlantaClient({
       try {
         setFinalizandoEntrega(true)
 
-        finalizarEntregaAction(
+        finalizarEntrega(
           selectedEntrega.cod_entrega,
           observacionesFinal || undefined
         )
@@ -113,7 +113,7 @@ export default function PlantaClient({
     if (selectedEntrega && !finalizandoEntrega) {
       try {
         setFinalizandoEntrega(true)
-        cancelarEntregaAction(
+        cancelarEntrega(
           selectedEntrega.cod_entrega,
           observacionesFinal || 'No se especificó motivo.'
         )

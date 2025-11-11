@@ -1,6 +1,6 @@
 import { getEmpleadoActual } from '@/lib/cache'
-import { obtenerClientes } from '@/actions/clientes'
-import { filtrarObrasAction } from '@/actions/obras'
+import { getClientes } from '@/actions/clientes'
+import { filterObras } from '@/actions/obras'
 import {
   Users,
   Building2,
@@ -17,8 +17,8 @@ import Link from 'next/link'
 async function getVentasStats() {
   try {
     const [clientes, obras] = await Promise.all([
-      obtenerClientes(),
-      filtrarObrasAction({}),
+      getClientes(),
+      filterObras({}),
     ])
 
     const obrasPagadasParcialmente = obras.filter(

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import type { Empleado } from '@/types'
 import EmpleadoDetailsModal from './EmpleadoDetailsModal'
-import { eliminarEmpleado } from '@/actions/empleado'
+import { deleteEmpleado } from '@/actions/empleado'
 import { getRolDisplayName } from '@/lib/empleado-utils'
 import Link from 'next/link'
 
@@ -32,7 +32,7 @@ export default function EmpleadoCard({ empleado }: EmpleadoCardProps) {
     setDeleteError(null)
 
     try {
-      const result = await eliminarEmpleado(empleado.cuil)
+      const result = await deleteEmpleado(empleado.cuil)
 
       if (!result.success) {
         throw new Error(result.error || 'Error al eliminar empleado')

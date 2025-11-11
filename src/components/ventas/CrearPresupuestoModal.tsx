@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Save, DollarSign, Calendar } from 'lucide-react'
+import { X, Save, DollarSign } from 'lucide-react'
 import type { PresupuestoFormData } from '@/services/presupuesto.service'
 
 interface CrearPresupuestoModalProps {

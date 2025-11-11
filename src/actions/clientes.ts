@@ -1,21 +1,24 @@
 'use server'
 
-import { Cliente } from '@/types'
-import { getAccessToken } from './auth'
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { getAccessToken } from './auth'
+import type { Cliente } from '@/types'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
-const baseUrl = API_BASE.endsWith('/clientes')
-  ? API_BASE
-  : `${API_BASE}/clientes`
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const BASE_URL = API_URL.endsWith('/clientes') ? API_URL : `${API_URL}/clientes`
 
-export async function obtenerClientes(filtro?: string): Promise<Cliente[]> {
+/**
+ * Retrieves all Clientes or searches Clientes by filter
+ * @param {string} filter - Optional search query
+ * @returns {Promise<Cliente[]>} List of Clientes
+ */
+export async function getClientes(filter?: string): Promise<Cliente[]> {
   try {
     const token = await getAccessToken()
-    const url = filtro?.trim()
-      ? `${baseUrl}/buscar?q=${encodeURIComponent(filtro.trim())}`
-      : baseUrl
+    const url = filter?.trim()
+      ? `${BASE_URL}/buscar?q=${encodeURIComponent(filter.trim())}`
+      : BASE_URL
 
     const res = await fetchWithErrorHandling(url, {
       method: 'GET',
@@ -23,38 +26,48 @@ export async function obtenerClientes(filtro?: string): Promise<Cliente[]> {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      next: { revalidate: 30, tags: ['clientes'] },
     })
     const data = await res.json()
     return Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('[obtenerClientes]', error)
+    console.error('[getClientes]', error)
     return []
   }
 }
 
-export async function obtenerCliente(cuil: string): Promise<Cliente | null> {
+/**
+ * Retrieves a single Cliente by CUIL
+ * @param {string} cuil - Cliente CUIL identifier
+ * @returns {Promise<Cliente | null>} Cliente data or null if not found
+ */
+export async function getCliente(cuil: string): Promise<Cliente | null> {
   if (!cuil) return null
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
-      `${baseUrl}/${encodeURIComponent(cuil)}`,
+      `${BASE_URL}/${encodeURIComponent(cuil)}`,
       {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        cache: 'no-store',
+        next: { revalidate: 30, tags: [`cliente-${cuil}`] },
       }
     )
     return await res.json()
   } catch (error) {
-    console.error('[obtenerCliente]', error)
+    console.error('[getCliente]', error)
     return null
   }
 }
-export async function crearCliente(
+/**
+ * Creates a new Cliente from form data
+ * @param {FormData} formData - Cliente data from form submission
+ * @returns {Promise<{success: boolean, data?: Cliente, error?: string}>} Operation result
+ */
+export async function createCliente(
   formData: FormData
 ): Promise<{ success: boolean; error?: string; data?: Cliente }> {
   try {
@@ -64,50 +77,53 @@ export async function crearCliente(
       FormDataEntryValue
     >
 
-    const dataCliente: Record<string, string> = {}
+    const clienteData: Record<string, string> = {}
     for (const [key, val] of Object.entries(raw)) {
       if (typeof val === 'string') {
-        dataCliente[key] = val.trim()
+        clienteData[key] = val.trim()
       }
     }
-    if (!dataCliente.cuil) {
-      return { success: false, error: 'CUIL es requerido' }
+
+    // Validate CUIL
+    if (!clienteData.cuil) {
+      return { success: false, error: 'CUIL is required' }
     }
 
-    const cuilDigits = dataCliente.cuil.replace(/\D/g, '')
+    const cuilDigits = clienteData.cuil.replace(/\D/g, '')
     if (cuilDigits.length !== 11) {
-      return { success: false, error: 'CUIL inválido (debe tener 11 dígitos)' }
+      return { success: false, error: 'Invalid CUIL (must have 11 digits)' }
     }
-    dataCliente.cuil = cuilDigits
+    clienteData.cuil = cuilDigits
 
-    if (dataCliente.tipo_cliente === 'EMPRESA' && !dataCliente.razon_social) {
+    // Validate by cliente type
+    if (clienteData.tipo_cliente === 'EMPRESA' && !clienteData.razon_social) {
       return {
         success: false,
-        error: 'Razón social es requerida para empresas',
+        error: 'Business name is required for companies',
       }
     }
 
-    if (dataCliente.tipo_cliente === 'PERSONA') {
-      if (!dataCliente.nombre || !dataCliente.apellido) {
-        return { success: false, error: 'Nombre y apellido son requeridos' }
+    if (clienteData.tipo_cliente === 'PERSONA') {
+      if (!clienteData.nombre || !clienteData.apellido) {
+        return { success: false, error: 'First and last name are required' }
       }
-      if (!dataCliente.sexo) {
-        return { success: false, error: 'Sexo es requerido' }
+      if (!clienteData.sexo) {
+        return { success: false, error: 'Gender is required' }
       }
     }
 
     const payload = {
-      cuil: dataCliente.cuil,
-      tipo_cliente: dataCliente.tipo_cliente,
-      telefono: dataCliente.telefono,
-      mail: dataCliente.mail,
-      razon_social: dataCliente.razon_social || null,
-      nombre: dataCliente.nombre || null,
-      apellido: dataCliente.apellido || null,
-      sexo: dataCliente.sexo || null,
+      cuil: clienteData.cuil,
+      tipo_cliente: clienteData.tipo_cliente,
+      telefono: clienteData.telefono,
+      mail: clienteData.mail,
+      razon_social: clienteData.razon_social || null,
+      nombre: clienteData.nombre || null,
+      apellido: clienteData.apellido || null,
+      sexo: clienteData.sexo || null,
     }
 
-    const res = await fetch(baseUrl, {
+    const res = await fetchWithErrorHandling(BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -116,30 +132,28 @@ export async function crearCliente(
       body: JSON.stringify(payload),
     })
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      return {
-        success: false,
-        error: errorData.message || `Error HTTP ${res.status}`,
-      }
-    }
-
     const data = await res.json()
 
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
 
     return { success: true, data }
-  } catch (error: any) {
-    console.error('[crearCliente]', error)
+  } catch (error) {
+    console.error('[createCliente]', error)
     return {
       success: false,
-      error: error?.message || 'Error al crear el cliente',
+      error: error instanceof Error ? error.message : 'Error creating client',
     }
   }
 }
 
-export async function actualizarCliente(
+/**
+ * Updates an existing cliente
+ * @param {string} cuil - Cliente CUIL identifier
+ * @param {Partial<Cliente>} clienteData - Fields to update
+ * @returns {Promise<Cliente | null>} Updated cliente or null on failure
+ */
+export async function updateCliente(
   cuil: string,
   clienteData: Partial<Cliente>
 ): Promise<Cliente | null> {
@@ -147,7 +161,7 @@ export async function actualizarCliente(
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
-      `${baseUrl}/${encodeURIComponent(cuil)}`,
+      `${BASE_URL}/${encodeURIComponent(cuil)}`,
       {
         method: 'PUT',
         headers: {
@@ -164,18 +178,23 @@ export async function actualizarCliente(
 
     return data
   } catch (error) {
-    console.error('[actualizarCliente]', error)
+    console.error('[updateCliente]', error)
     return null
   }
 }
 
-export async function eliminarCliente(
+/**
+ * Deletes a cliente by CUIL
+ * @param {string} cuil - Cliente CUIL identifier
+ * @returns {Promise<{success: boolean, error?: string}>} Operation result
+ */
+export async function deleteCliente(
   cuil: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (!cuil) return { success: false, error: 'CUIL inválido' }
+  if (!cuil) return { success: false, error: 'Invalid CUIL' }
   try {
     const token = await getAccessToken()
-    await fetchWithErrorHandling(`${baseUrl}/${encodeURIComponent(cuil)}`, {
+    await fetchWithErrorHandling(`${BASE_URL}/${encodeURIComponent(cuil)}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -187,31 +206,39 @@ export async function eliminarCliente(
     revalidatePath('/ventas/clientes')
 
     return { success: true }
-  } catch (error: any) {
-    console.error('[eliminarCliente]', error)
-    return { success: false, error: error?.message ?? 'Error desconocido' }
+  } catch (error) {
+    console.error('[deleteCliente]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
   }
 }
 
-export async function obtenerObrasCliente(cuil: string): Promise<any[]> {
+/**
+ * Retrieves all construction sites (obras) for a specific cliente
+ * @param {string} cuil - Cliente CUIL identifier
+ * @returns {Promise<any[]>} List of cliente obras
+ */
+export async function getClienteObras(cuil: string): Promise<any[]> {
   if (!cuil) return []
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
-      `${baseUrl}/${encodeURIComponent(cuil)}/obras`,
+      `${BASE_URL}/${encodeURIComponent(cuil)}/obras`,
       {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        cache: 'no-store',
+        next: { revalidate: 30, tags: [`cliente-${cuil}-obras`] },
       }
     )
     const data = await res.json()
     return Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('[obtenerObrasCliente]', error)
+    console.error('[getClienteObras]', error)
     return []
   }
 }

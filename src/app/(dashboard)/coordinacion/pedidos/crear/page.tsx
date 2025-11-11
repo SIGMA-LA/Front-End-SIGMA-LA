@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import RegistrarPedido from '@/components/coordinacion/RegistrarPedido'
 import { Obra } from '@/types'
-import { obtenerObra } from '@/actions/obras'
+import { getObra } from '@/actions/obras'
 
 export default function CrearPedidoPage() {
   const router = useRouter()
@@ -17,7 +17,7 @@ export default function CrearPedidoPage() {
     if (obraId) {
       const fetchObra = async () => {
         try {
-          const data = await obtenerObra(Number(obraId))
+          const data = await getObra(Number(obraId))
           setPreloadedObra(data)
         } catch (error) {
           console.error('Error al cargar obra:', error)

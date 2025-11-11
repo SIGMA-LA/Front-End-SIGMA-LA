@@ -2,13 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-  }).format(amount)
-}
-
 export default function ReportesView() {
   return (
     <div className="space-y-6">

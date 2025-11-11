@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import ObraDetalleView from '@/components/admin/ObraDetalleView'
-import { getObraById } from '@/actions/obras'
+import { getObra } from '@/actions/obras'
 import { Suspense } from 'react'
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default async function ObraDetallePage({
   const obraId = Number(id)
 
   // Cargar todos los datos en paralelo en el servidor
-  const obra = await getObraById(obraId)
+  const obra = await getObra(obraId)
 
   const visitas = (obra as any)?.visita || obra?.visitas || []
   const entregas = (obra as any)?.entrega || obra?.entregas || []

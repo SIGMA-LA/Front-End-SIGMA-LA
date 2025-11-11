@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import EmpleadoFormulario from '@/components/admin/EmpleadoFormulario'
-import { actualizarEmpleado, obtenerEmpleadoPorCuil } from '@/actions/empleado'
+import { updateEmpleado, getEmpleado } from '@/actions/empleado'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -10,7 +10,7 @@ export default async function EditarEmpleadoPage({
   params: Promise<{ cuil: string }>
 }) {
   const { cuil } = await params
-  const empleado = await obtenerEmpleadoPorCuil(cuil)
+  const empleado = await getEmpleado(cuil)
 
   if (!empleado) {
     notFound()
@@ -24,7 +24,7 @@ export default async function EditarEmpleadoPage({
       ? { ...updateData, contrasenia }
       : updateData
 
-    const result = await actualizarEmpleado(cuil, dataToUpdate)
+    const result = await updateEmpleado(cuil, dataToUpdate)
 
     if (!result.success) {
       throw new Error(result.error || 'Error al actualizar empleado')

@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { Package } from 'lucide-react'
-import { obtenerOrdenesProduccion } from '@/actions/ordenes'
+import { getOrdenesProduccion } from '@/actions/ordenes'
 import OrdenesProduccionContent from '@/components/coordinacion/orden_produccion/OrdenesProduccionContent'
 
 async function OrdenesProduccionList({
@@ -15,7 +15,7 @@ async function OrdenesProduccionList({
     | 'FINALIZADA'
     | undefined
 
-  const result = await obtenerOrdenesProduccion(
+  const result = await getOrdenesProduccion(
     estadoFiltro ? estadoParam : undefined
   )
 

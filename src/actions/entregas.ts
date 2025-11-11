@@ -1,47 +1,165 @@
 'use server'
 
-import { Entrega, EntregaEmpleado } from '@/types'
-import { getAccessToken } from './auth'
 import { revalidatePath } from 'next/cache'
-import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { redirect } from 'next/navigation'
+import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { getAccessToken } from './auth'
+import type { Entrega, EntregaEmpleado } from '@/types'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
-const baseUrl = `${API_BASE}/entregas`
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const BASE_URL = `${API_URL}/entregas`
+
+interface CreateEntregaData {
+  cod_obra: number
+  fecha_hora_entrega: string
+  detalle: string
+  observaciones?: string
+  dias_viaticos?: number
+  empleados_asignados: Array<{
+    cuil: string
+    rol_entrega: string
+  }>
+}
+
+interface UpdateEntregaData {
+  fecha_hora_entrega?: string
+  detalle?: string
+  observaciones?: string
+  dias_viaticos?: number
+  estado?: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+}
 
 /**
- * Obtiene entregas de un empleado por estado
+ * Retrieves deliveries for an employee filtered by status
+ * @param {string} cuilEmpleado - Employee's CUIL identifier
+ * @param {string} estado - Entrega status filter
+ * @returns {Promise<EntregaEmpleado[]>} List of employee's deliveries
  */
-export async function getEntregasByEmpleadoAndEstado(
+export async function getEntregasByEmpleado(
   cuilEmpleado: string,
   estado: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
 ): Promise<EntregaEmpleado[]> {
-  const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(
-    `${baseUrl}/${cuilEmpleado}/${estado}`,
-    {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/${cuilEmpleado}/${estado}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: {
+          revalidate: 30,
+          tags: ['entregas', `entregas-empleado-${cuilEmpleado}`],
+        },
+      }
+    )
+    return await res.json()
+  } catch (error) {
+    console.error('[getEntregasByEmpleado]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves all deliveries with optional filtering
+ * @param {string} filter - Optional search query
+ * @returns {Promise<Entrega[]>} List of deliveries
+ */
+export async function getEntregas(filter?: string): Promise<Entrega[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(BASE_URL, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store',
+      next: { revalidate: 30, tags: ['entregas'] },
+    })
+
+    let entregas: Entrega[] = await res.json()
+
+    // Client-side filtering if needed
+    if (filter?.trim()) {
+      const filterLower = filter.trim().toLowerCase()
+
+      entregas = entregas.filter((entrega) => {
+        const obraDireccion = entrega.obra?.direccion?.toLowerCase() || ''
+        const clienteNombre = entrega.obra?.cliente?.nombre?.toLowerCase() || ''
+        const clienteApellido =
+          entrega.obra?.cliente?.apellido?.toLowerCase() || ''
+        const clienteRazon =
+          entrega.obra?.cliente?.razon_social?.toLowerCase() || ''
+        const detalle = entrega.detalle?.toLowerCase() || ''
+        const observaciones = entrega.observaciones?.toLowerCase() || ''
+        const codigoEntrega = String(entrega.cod_entrega || '')
+
+        const empleadosNombres =
+          entrega.empleados_asignados
+            ?.map((ea) =>
+              `${ea.empleado?.nombre} ${ea.empleado?.apellido}`.toLowerCase()
+            )
+            .join(' ') || ''
+
+        return (
+          obraDireccion.includes(filterLower) ||
+          clienteNombre.includes(filterLower) ||
+          clienteApellido.includes(filterLower) ||
+          clienteRazon.includes(filterLower) ||
+          detalle.includes(filterLower) ||
+          observaciones.includes(filterLower) ||
+          codigoEntrega.includes(filterLower) ||
+          empleadosNombres.includes(filterLower)
+        )
+      })
     }
-  )
-  return response.ok ? await response.json() : []
+
+    return entregas
+  } catch (error) {
+    console.error('[getEntregas]', error)
+    return []
+  }
 }
 
 /**
- * Finaliza una entrega
+ * Retrieves a single Entrega by ID
+ * @param {number} id - Entrega ID
+ * @returns {Promise<Entrega | null>} Entrega data or null if not found
  */
-export async function finalizarEntregaAction(
+export async function getEntrega(id: number): Promise<Entrega | null> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30, tags: [`entrega-${id}`] },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error('[getEntrega]', error)
+    return null
+  }
+}
+
+/**
+ * Finalizes a Entrega
+ * @param {number} codEntrega - Entrega ID
+ * @param {string} observaciones - Optional final observations
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result
+ */
+export async function finalizarEntrega(
   codEntrega: number,
   observaciones?: string
 ) {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
-      `${baseUrl}/${codEntrega}/finalizar`,
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/${codEntrega}/finalizar`,
       {
         method: 'PATCH',
         headers: {
@@ -52,129 +170,69 @@ export async function finalizarEntregaAction(
       }
     )
 
-    const data = await response.json()
+    const data = await res.json()
+
     revalidatePath('/visitador')
     revalidatePath('/planta')
+    revalidatePath('/coordinacion/entregas')
+
     return { success: true, data, error: null }
   } catch (error) {
-    console.error('Error al finalizar entrega:', error)
+    console.error('[finalizarEntrega]', error)
     return {
       success: false,
       data: null,
-      error: 'Error al finalizar la entrega',
+      error:
+        error instanceof Error ? error.message : 'Error finalizing Entrega',
     }
   }
 }
 
 /**
- * Cancela una entrega
+ * Cancels a Entrega
+ * @param {number} codEntrega - Entrega ID
+ * @param {string} motivo - Cancellation reason
+ * @returns {Promise<{success: boolean, error?: string}>} Operation result
  */
-export async function cancelarEntregaAction(
+export async function cancelarEntrega(
   codEntrega: number,
   motivo: string
-) {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
-      `${baseUrl}/${codEntrega}/cancelar`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ motivo }),
-      }
-    )
+    await fetchWithErrorHandling(`${BASE_URL}/${codEntrega}/cancelar`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ motivo }),
+    })
 
     revalidatePath('/visitador')
     revalidatePath('/planta')
-    return { success: true, error: null }
+    revalidatePath('/coordinacion/entregas')
+
+    return { success: true }
   } catch (error) {
-    console.error('Error al cancelar entrega:', error)
-    return { success: false, error: 'Error al cancelar la entrega' }
+    console.error('[cancelarEntrega]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error canceling Entrega',
+    }
   }
 }
 
-// ... resto de funciones existentes
-export async function obtenerEntregas(filtro?: string): Promise<Entrega[]> {
+/**
+ * Creates a new Entrega
+ * @param {CreateEntregaData} entregaData - Entrega data
+ * @returns {Promise<Entrega>} Created Entrega
+ */
+export async function createEntrega(
+  entregaData: CreateEntregaData
+): Promise<Entrega> {
   const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(`${baseUrl}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-  })
-
-  if (!response.ok) return []
-
-  let entregas: Entrega[] = await response.json()
-
-  if (filtro?.trim()) {
-    const filtroLower = filtro.trim().toLowerCase()
-
-    entregas = entregas.filter((entrega) => {
-      const obraDireccion = entrega.obra?.direccion?.toLowerCase() || ''
-      const clienteNombre = entrega.obra?.cliente?.nombre?.toLowerCase() || ''
-      const clienteApellido =
-        entrega.obra?.cliente?.apellido?.toLowerCase() || ''
-      const clienteRazon =
-        entrega.obra?.cliente?.razon_social?.toLowerCase() || ''
-      const detalle = entrega.detalle?.toLowerCase() || ''
-      const observaciones = entrega.observaciones?.toLowerCase() || ''
-      const codigoEntrega = String(entrega.cod_entrega || '')
-
-      const empleadosNombres =
-        entrega.empleados_asignados
-          ?.map((ea) =>
-            `${ea.empleado?.nombre} ${ea.empleado?.apellido}`.toLowerCase()
-          )
-          .join(' ') || ''
-
-      return (
-        obraDireccion.includes(filtroLower) ||
-        clienteNombre.includes(filtroLower) ||
-        clienteApellido.includes(filtroLower) ||
-        clienteRazon.includes(filtroLower) ||
-        detalle.includes(filtroLower) ||
-        observaciones.includes(filtroLower) ||
-        codigoEntrega.includes(filtroLower) ||
-        empleadosNombres.includes(filtroLower)
-      )
-    })
-  }
-
-  return entregas
-}
-
-export async function obtenerEntregaPorId(id: number): Promise<Entrega | null> {
-  const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(`${baseUrl}/${id}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-  })
-  return response.ok ? await response.json() : null
-}
-
-export async function crearEntrega(entregaData: {
-  cod_obra: number
-  fecha_hora_entrega: string
-  detalle: string
-  observaciones?: string
-  dias_viaticos?: number
-  empleados_asignados: Array<{
-    cuil: string
-    rol_entrega: string
-  }>
-}): Promise<Entrega> {
-  const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(`${baseUrl}`, {
+  const res = await fetchWithErrorHandling(BASE_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -182,21 +240,21 @@ export async function crearEntrega(entregaData: {
     },
     body: JSON.stringify(entregaData),
   })
-  return await response.json()
+  return await res.json()
 }
 
-export async function actualizarEntrega(
+/**
+ * Updates an existing Entrega
+ * @param {number} id - Entrega ID
+ * @param {UpdateEntregaData} entregaData - Fields to update
+ * @returns {Promise<Entrega>} Updated Entrega
+ */
+export async function updateEntrega(
   id: number,
-  entregaData: {
-    fecha_hora_entrega?: string
-    detalle?: string
-    observaciones?: string
-    dias_viaticos?: number
-    estado?: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
-  }
+  entregaData: UpdateEntregaData
 ): Promise<Entrega> {
   const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(`${baseUrl}/${id}`, {
+  const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -204,12 +262,17 @@ export async function actualizarEntrega(
     },
     body: JSON.stringify(entregaData),
   })
-  return await response.json()
+  return await res.json()
 }
 
-export async function eliminarEntrega(id: number): Promise<void> {
+/**
+ * Deletes a Entrega
+ * @param {number} id - Entrega ID
+ * @returns {Promise<void>}
+ */
+export async function deleteEntrega(id: number): Promise<void> {
   const token = await getAccessToken()
-  await fetchWithErrorHandling(`${baseUrl}/${id}`, {
+  await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -218,13 +281,17 @@ export async function eliminarEntrega(id: number): Promise<void> {
   })
 }
 
-export async function crearEntregaAction(formData: FormData) {
+/**
+ * Creates a Entrega from form data and redirects
+ * @param {FormData} formData - Form submission data
+ */
+export async function createEntregaFromForm(formData: FormData) {
   try {
     const empleadosAsignados = JSON.parse(
       (formData.get('empleados_asignados') as string) || '[]'
     )
 
-    const entregaData = {
+    const entregaData: CreateEntregaData = {
       cod_obra: Number(formData.get('cod_obra')),
       fecha_hora_entrega: formData.get('fecha_hora_entrega') as string,
       detalle: formData.get('detalle') as string,
@@ -235,21 +302,25 @@ export async function crearEntregaAction(formData: FormData) {
       empleados_asignados: empleadosAsignados,
     }
 
-    await crearEntrega(entregaData)
+    await createEntrega(entregaData)
     revalidatePath('/coordinacion/entregas')
   } catch (error) {
-    console.error('Error al crear entrega:', error)
+    console.error('[createEntregaFromForm]', error)
     throw error
   }
 
   redirect('/coordinacion/entregas')
 }
 
-export async function actualizarEntregaAction(formData: FormData) {
+/**
+ * Updates a Entrega from form data and redirects
+ * @param {FormData} formData - Form submission data
+ */
+export async function updateEntregaFromForm(formData: FormData) {
   try {
     const codEntrega = Number(formData.get('cod_entrega'))
 
-    const entregaData: any = {
+    const entregaData: UpdateEntregaData = {
       fecha_hora_entrega: formData.get('fecha_hora_entrega') as string,
       detalle: formData.get('detalle') as string,
       observaciones: (formData.get('observaciones') as string) || undefined,
@@ -258,11 +329,11 @@ export async function actualizarEntregaAction(formData: FormData) {
         : undefined,
     }
 
-    await actualizarEntrega(codEntrega, entregaData)
+    await updateEntrega(codEntrega, entregaData)
     revalidatePath('/coordinacion/entregas')
     revalidatePath(`/coordinacion/entregas/${codEntrega}`)
   } catch (error) {
-    console.error('Error al actualizar entrega:', error)
+    console.error('[updateEntregaFromForm]', error)
     throw error
   }
 

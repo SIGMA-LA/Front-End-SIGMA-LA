@@ -1,13 +1,11 @@
 import { ArrowLeft } from 'lucide-react'
 import EmpleadoFormulario from '@/components/admin/EmpleadoFormulario'
-import { crearEmpleado } from '@/actions/empleado'
+import { createEmpleado } from '@/actions/empleado'
 import Link from 'next/link'
 
 export default function CrearEmpleadoPage() {
   async function handleCreate(data: any) {
-    'use server'
-
-    const result = await crearEmpleado(data)
+    const result = await createEmpleado(data)
 
     if (!result.success) {
       throw new Error(result.error || 'Error al crear empleado')

@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import VehiculoForm from '@/components/coordinacion/VehiculoForm'
-import { obtenerVehiculo, actualizarVehiculo } from '@/actions/vehiculos'
+import { getVehiculo, updateVehiculo } from '@/actions/vehiculos'
 import { Vehiculo, VehiculoFormData } from '@/types'
 
 export default function EditarVehiculoPage() {
@@ -18,7 +18,7 @@ export default function EditarVehiculoPage() {
   useEffect(() => {
     const fetchVehiculo = async () => {
       try {
-        const data = await obtenerVehiculo(patente)
+        const data = await getVehiculo(patente)
         console.log('Datos del vehículo recibidos:', data)
         console.log(
           'Marca:',
@@ -44,7 +44,7 @@ export default function EditarVehiculoPage() {
     setError(null)
 
     try {
-      await actualizarVehiculo(patente, data)
+      await updateVehiculo(patente, data)
       router.push('/coordinacion/vehiculos')
       router.refresh()
     } catch (err: any) {

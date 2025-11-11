@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Visita } from '@/types'
 import VisitaDetail from './VisitaDetails'
-import { cancelarVisitaAction } from '@/actions/visitas'
+import { cancelarVisita } from '@/actions/visitas'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -85,7 +85,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
 
     startTransition(async () => {
       try {
-        const result = await cancelarVisitaAction(
+        const result = await cancelarVisita(
           visita.cod_visita,
           motivoCancelacion
         )

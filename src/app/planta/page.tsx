@@ -1,14 +1,14 @@
 import { redirect } from 'next/navigation'
 import PlantaClient from '@/components/planta/PlantaClient'
 import { Suspense } from 'react'
-import { getEntregasByEmpleadoAndEstado } from '@/actions/entregas'
+import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuarioFromCookies } from '@/lib/auth-server'
 
 async function getEntregasData(cuil: string) {
   try {
     const [pendientes, entregadas] = await Promise.all([
-      getEntregasByEmpleadoAndEstado(cuil, 'PENDIENTE'),
-      getEntregasByEmpleadoAndEstado(cuil, 'ENTREGADO'),
+      getEntregasByEmpleado(cuil, 'PENDIENTE'),
+      getEntregasByEmpleado(cuil, 'ENTREGADO'),
     ])
 
     return { pendientes, entregadas, error: null }

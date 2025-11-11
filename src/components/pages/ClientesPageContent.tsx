@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { Users, Plus } from 'lucide-react'
-import { obtenerClientes } from '@/actions/clientes'
+import { getClientes } from '@/actions/clientes'
 import ClienteCard from '@/components/shared/ClienteCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import Link from 'next/link'
@@ -34,7 +34,7 @@ async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
   let clientes: Cliente[] = []
 
   try {
-    clientes = await obtenerClientes(searchQuery)
+    clientes = await getClientes(searchQuery)
   } catch (err) {
     console.error('Error cargando clientes:', err)
   }

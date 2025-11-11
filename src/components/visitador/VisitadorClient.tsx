@@ -12,11 +12,8 @@ import ConfirmModal from '@/components/visitador/ConfirmModal'
 import EntregasSidebar from '@/components/planta/EntregasSidebar'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
 import Navbar from '@/components/layout/Navbar'
-import { finalizarVisitaAction, cancelarVisitaAction } from '@/actions/visitas'
-import {
-  finalizarEntregaAction,
-  cancelarEntregaAction,
-} from '@/actions/entregas'
+import { finalizarVisita, cancelarVisita } from '@/actions/visitas'
+import { finalizarEntrega, cancelarEntrega } from '@/actions/entregas'
 
 interface VisitadorClientProps {
   usuario: any
@@ -71,7 +68,7 @@ export default function VisitadorClient({
     if (!selectedVisita) return
 
     startTransition(async () => {
-      const result = await finalizarVisitaAction(
+      const result = await finalizarVisita(
         selectedVisita.cod_visita,
         observacionesVisita
       )
@@ -94,7 +91,7 @@ export default function VisitadorClient({
     }
 
     startTransition(async () => {
-      const result = await cancelarVisitaAction(
+      const result = await cancelarVisita(
         selectedVisita.cod_visita,
         observacionesVisita
       )
@@ -114,7 +111,7 @@ export default function VisitadorClient({
     if (!selectedEntrega) return
 
     startTransition(async () => {
-      const result = await finalizarEntregaAction(
+      const result = await finalizarEntrega(
         selectedEntrega.cod_entrega,
         observacionesEntrega || undefined
       )
@@ -134,7 +131,7 @@ export default function VisitadorClient({
     if (!selectedEntrega) return
 
     startTransition(async () => {
-      const result = await cancelarEntregaAction(
+      const result = await cancelarEntrega(
         selectedEntrega.cod_entrega,
         observacionesEntrega || 'No se especificó motivo.'
       )

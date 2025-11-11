@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Filter, Package } from 'lucide-react'
 import type { OrdenProduccion, Cliente } from '@/types'
-import { aprobarOrdenProduccion } from '@/actions/ordenes'
+import { approveOrdenProduccion } from '@/actions/ordenes'
 import OrdenProduccionCard from './OrdenProduccionCard'
 import OrdenProduccionDetailsModal from './OrdenProduccionDetailsModal'
 import OPConfirmModal from './OPConfirmModal'
@@ -69,7 +69,7 @@ export default function OrdenesProduccionContent({
 
     setIsApproving(true)
     try {
-      const result = await aprobarOrdenProduccion(ordenToApprove.cod_op)
+      const result = await approveOrdenProduccion(ordenToApprove.cod_op)
 
       if (result.success) {
         alert(result.message || 'Orden aprobada exitosamente')

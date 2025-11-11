@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Building2, Plus } from 'lucide-react'
-import { obtenerObras, filtrarObrasAction } from '@/actions/obras'
-import { localidadesPorProvincia } from '@/actions/localidad'
+import { getObras, filterObras } from '@/actions/obras'
+import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
 import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
@@ -52,9 +52,9 @@ async function ObrasGrid({
     (async () => {
       try {
         if (searchQuery) {
-          return await obtenerObras(searchQuery)
+          return await getObras(searchQuery)
         } else {
-          return await filtrarObrasAction({ estado, cod_localidad })
+          return await filterObras({ estado, cod_localidad })
         }
       } catch (err) {
         console.error('Error cargando obras:', err)
@@ -161,7 +161,7 @@ export default async function ObrasPageContent({
         <div className="mb-8">
           <ObrasFiltros
             provincias={provincias}
-            buscarLocalidades={localidadesPorProvincia}
+            buscarLocalidades={getLocalidadesByProvincia}
             estadoInicial={estado}
             localidadInicial={cod_localidad}
           />

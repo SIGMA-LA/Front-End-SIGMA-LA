@@ -1,165 +1,167 @@
 'use server'
 
-import { Empleado } from '@/types'
-import { getAccessToken } from './auth'
+import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
-import { logError } from '@/lib/logger'
+import { getAccessToken } from './auth'
+import type { Empleado } from '@/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL + '/empleados'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
+const BASE_URL = `${API_URL}/empleados`
 
 interface ApiResponse<T> {
   success: boolean
   data: T
 }
 
-export async function obtenerVisitadores(): Promise<Empleado[]> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}/visitadores`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return []
-    }
-
-    const visitadores: Empleado[] = await response.json()
-    return visitadores
-  } catch (error) {
-    logError(error, 'obtenerVisitadores')
-    return []
-  }
-}
-
-export async function getDisponiblesParaEntrega(): Promise<Empleado[]> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
-      `${baseUrl}/disponibles-entrega`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      }
-    )
-
-    if (!response.ok) {
-      return []
-    }
-
-    const empleados: Empleado[] = await response.json()
-    return empleados
-  } catch (error) {
-    logError(error, 'obtenerEmpleadosDisponiblesParaEntrega')
-    throw error
-  }
-}
-
-export async function buscarFiltrados(query: string): Promise<Empleado[]> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
-      `${baseUrl}/buscar?${query}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      }
-    )
-
-    if (!response.ok) {
-      return []
-    }
-
-    const empleados: Empleado[] = await response.json()
-    return empleados
-  } catch (error) {
-    logError(error, 'buscarFiltrados')
-    throw error
-  }
-}
-
-export async function obtenerEmpleadoPorCuil(
-  cuil: string
-): Promise<Empleado | null> {
-  if (!cuil) {
-    logError(
-      new Error('Se intentó obtener un empleado sin CUIL'),
-      'obtenerEmpleadoPorCuil'
-    )
-    return null
-  }
-
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return null
-    }
-
-    const empleado: Empleado = await response.json()
-    return empleado
-  } catch (error) {
-    logError(error, `obtenerEmpleadoPorCuil:${cuil}`)
-    return null
-  }
-}
-
-export async function obtenerTodosLosEmpleados(): Promise<Empleado[]> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return []
-    }
-
-    const data: ApiResponse<Empleado[]> = await response.json()
-    return data.data || []
-  } catch (error) {
-    logError(error, 'obtenerTodosLosEmpleados')
-    return []
-  }
-}
-
-/* Crear empleado (POST /empleados) */
-export async function crearEmpleado(empleadoData: {
+interface CreateEmpleadoData {
   cuil: string
   nombre: string
   apellido: string
   rol_actual: string
   area_trabajo: string
   contrasenia?: string
-}): Promise<{ success: boolean; data?: Empleado; error?: string }> {
+}
+
+interface UpdateEmpleadoData {
+  nombre?: string
+  apellido?: string
+  rol_actual?: string
+  area_trabajo?: string
+  contrasenia?: string
+}
+
+/**
+ * Retrieves all Empleados with visitador role
+ * @returns {Promise<Empleado[]>} List of visitador Empleados
+ */
+export async function getVisitadores(): Promise<Empleado[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}`, {
+    const res = await fetchWithErrorHandling(`${BASE_URL}/visitadores`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30, tags: ['empleados', 'visitadores'] },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error('[getVisitadores]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves Empleados available for delivery assignments
+ * @returns {Promise<Empleado[]>} List of available Empleados
+ */
+export async function getEmpleadosDisponiblesEntrega(): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/disponibles-entrega`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: { revalidate: 30, tags: ['empleados', 'disponibles-entrega'] },
+      }
+    )
+    return await res.json()
+  } catch (error) {
+    console.error('[getEmpleadosDisponiblesEntrega]', error)
+    return []
+  }
+}
+
+/**
+ * Searches Empleados by query parameters
+ * @param {string} query - URL query string with filters (e.g., "rol=VISITADOR&area=VENTAS")
+ * @returns {Promise<Empleado[]>} Filtered list of Empleados
+ */
+export async function searchEmpleados(query: string): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/buscar?${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30, tags: ['empleados'] },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error('[searchEmpleados]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves a single Empleado by CUIL
+ * @param {string} cuil - Empleado's CUIL identifier
+ * @returns {Promise<Empleado | null>} Empleado data or null if not found
+ */
+export async function getEmpleado(cuil: string): Promise<Empleado | null> {
+  if (!cuil) {
+    console.error('[getEmpleado] Attempted to get Empleado without CUIL')
+    return null
+  }
+
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${cuil}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30, tags: [`empleado-${cuil}`] },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error(`[getEmpleado] CUIL: ${cuil}`, error)
+    return null
+  }
+}
+
+/**
+ * Retrieves all Empleados in the system
+ * @returns {Promise<Empleado[]>} Complete list of Empleados
+ */
+export async function getEmpleados(): Promise<Empleado[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(BASE_URL, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30, tags: ['empleados'] },
+    })
+    const data: ApiResponse<Empleado[]> = await res.json()
+    return data.data || []
+  } catch (error) {
+    console.error('[getEmpleados]', error)
+    return []
+  }
+}
+
+/**
+ * Creates a new Empleado
+ * @param {CreateEmpleadoData} empleadoData - Empleado data
+ * @returns {Promise<{success: boolean, data?: Empleado, error?: string}>} Operation result
+ */
+export async function createEmpleado(
+  empleadoData: CreateEmpleadoData
+): Promise<{ success: boolean; data?: Empleado; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -168,32 +170,34 @@ export async function crearEmpleado(empleadoData: {
       body: JSON.stringify(empleadoData),
     })
 
-    if (!response.ok) {
-      return { success: false, error: 'Error al crear empleado' }
-    }
+    const empleado: Empleado = await res.json()
 
-    const empleado: Empleado = await response.json()
+    revalidatePath('/admin/empleados')
+    revalidatePath('/coordinacion/empleados')
+
     return { success: true, data: empleado }
   } catch (error) {
-    logError(error, 'crearEmpleado')
-    return { success: false, error: 'Error al crear empleado' }
+    console.error('[createEmpleado]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error creating Empleado',
+    }
   }
 }
 
-/* Actualizar empleado (PUT /empleados/:cuil) */
-export async function actualizarEmpleado(
+/**
+ * Updates an existing Empleado
+ * @param {string} cuil - Empleado's CUIL identifier
+ * @param {UpdateEmpleadoData} empleadoData - Fields to update
+ * @returns {Promise<{success: boolean, data?: Empleado, error?: string}>} Operation result
+ */
+export async function updateEmpleado(
   cuil: string,
-  empleadoData: {
-    nombre?: string
-    apellido?: string
-    rol_actual?: string
-    area_trabajo?: string
-    contrasenia?: string
-  }
+  empleadoData: UpdateEmpleadoData
 ): Promise<{ success: boolean; data?: Empleado; error?: string }> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${cuil}`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -202,25 +206,33 @@ export async function actualizarEmpleado(
       body: JSON.stringify(empleadoData),
     })
 
-    if (!response.ok) {
-      return { success: false, error: 'Error al actualizar empleado' }
-    }
+    const empleado: Empleado = await res.json()
 
-    const empleado: Empleado = await response.json()
+    revalidatePath('/admin/empleados')
+    revalidatePath('/coordinacion/empleados')
+    revalidatePath(`/admin/empleados/${cuil}`)
+
     return { success: true, data: empleado }
   } catch (error) {
-    logError(error, 'actualizarEmpleado')
-    return { success: false, error: 'Error al actualizar empleado' }
+    console.error('[updateEmpleado]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error updating Empleado',
+    }
   }
 }
 
-/* Eliminar empleado (DELETE /empleados/:cuil) */
-export async function eliminarEmpleado(
+/**
+ * Deletes an Empleado by CUIL
+ * @param {string} cuil - Empleado's CUIL identifier
+ * @returns {Promise<{success: boolean, error?: string}>} Operation result
+ */
+export async function deleteEmpleado(
   cuil: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${baseUrl}/${cuil}`, {
+    await fetchWithErrorHandling(`${BASE_URL}/${cuil}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -228,13 +240,15 @@ export async function eliminarEmpleado(
       },
     })
 
-    if (!response.ok) {
-      return { success: false, error: 'Error al eliminar empleado' }
-    }
+    revalidatePath('/admin/empleados')
+    revalidatePath('/coordinacion/empleados')
 
     return { success: true }
   } catch (error) {
-    logError(error, 'eliminarEmpleado')
-    return { success: false, error: 'Error al eliminar empleado' }
+    console.error('[deleteEmpleado]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error deleting Empleado',
+    }
   }
 }

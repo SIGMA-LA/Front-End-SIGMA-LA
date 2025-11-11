@@ -8,7 +8,7 @@ import {
   getObrasParaPedidoStock,
   recibirStockObra,
 } from '@/services/obra.service'
-import { filtrarObras } from '@/actions/obras' // Usaremos la server action
+import { filterObras } from '@/actions/obras' // Usaremos la server action
 
 export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
   const [obrasParaPedir, setObrasParaPedir] = useState<Obra[]>([])
@@ -23,7 +23,7 @@ export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
     try {
       const [paraPedirData, enEsperaData] = await Promise.all([
         getObrasParaPedidoStock(),
-        filtrarObras({ estado: 'EN ESPERA DE STOCK' }),
+        filterObras({ estado: 'EN ESPERA DE STOCK' }),
       ])
 
       setObrasParaPedir(paraPedirData)

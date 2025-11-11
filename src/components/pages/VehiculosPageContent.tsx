@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car, Plus, CheckCircle, XCircle } from 'lucide-react'
 import { Vehiculo } from '@/types'
-import { actualizarVehiculo, eliminarVehiculo } from '@/actions/vehiculos'
+import { updateVehiculo, deleteVehiculo } from '@/actions/vehiculos'
 import VehiculoCard from '@/components/coordinacion/VehiculoCard'
 
 interface VehiculosPageContentProps {
@@ -67,7 +67,7 @@ export default function VehiculosPageContent({
       const nuevoEstado =
         estadoActual === 'DISPONIBLE' ? 'FUERA DE SERVICIO' : 'DISPONIBLE'
 
-      await actualizarVehiculo(patente, { estado: nuevoEstado as any })
+      await updateVehiculo(patente, { estado: nuevoEstado as any })
 
       setVehiculos((prev) =>
         prev.map((v) =>
@@ -84,7 +84,7 @@ export default function VehiculosPageContent({
   }
 
   const handleDelete = async (patente: string) => {
-    await eliminarVehiculo(patente)
+    await deleteVehiculo(patente)
     setVehiculos((prev) => prev.filter((v) => v.patente !== patente))
     router.refresh()
   }
