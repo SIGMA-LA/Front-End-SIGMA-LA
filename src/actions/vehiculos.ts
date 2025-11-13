@@ -3,7 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Vehiculo, VehiculoFormData } from '@/types'
+import type {
+  Vehiculo,
+  VehiculoFormData,
+  VehiculoConDisponibilidad,
+} from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/vehiculos')
@@ -75,6 +79,36 @@ export async function getVehiculosDisponibles(): Promise<Vehiculo[]> {
     return await res.json()
   } catch (error) {
     console.error('[getVehiculosDisponibles]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves vehiculos availability status for a date range
+ * @param {string} fechaInicioISO - Start date in ISO format
+ * @param {string} fechaFinISO - End date in ISO format
+ * @returns {Promise<VehiculoConDisponibilidad[]>} List of vehiculos with availability status
+ */
+export async function getDisponibilidadVehiculos(
+  fechaInicioISO: string,
+  fechaFinISO: string
+): Promise<VehiculoConDisponibilidad[]> {
+  try {
+    const token = await getAccessToken()
+    const params = new URLSearchParams({
+      fecha_hora_inicio: fechaInicioISO,
+      fecha_hora_fin: fechaFinISO,
+    })
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/disponibilidad?${params}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate: 30, tags: ['vehiculos-disponibilidad'] },
+      }
+    )
+    return await res.json()
+  } catch (error) {
+    console.error('[getDisponibilidadVehiculos]', error)
     return []
   }
 }

@@ -7,8 +7,8 @@ import EstadoObraBadge from '../shared/EstadoObraBadge'
 import {
   getObrasParaPedidoStock,
   recibirStockObra,
-} from '@/services/obra.service'
-import { filterObras } from '@/actions/obras' // Usaremos la server action
+  filterObras,
+} from '@/actions/obras'
 
 export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
   const [obrasParaPedir, setObrasParaPedir] = useState<Obra[]>([])

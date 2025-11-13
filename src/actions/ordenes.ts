@@ -155,6 +155,70 @@ export async function getOrdenesEnProduccion() {
 }
 
 /**
+ * Retrieves all ordenes de produccion for a specific obra
+ * @param {number} cod_obra - Obra code
+ * @returns {Promise<OrdenProduccion[]>} List of ordenes for the obra
+ */
+export async function getOrdenesByObra(
+  cod_obra: number
+): Promise<OrdenProduccion[]> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/obra/${cod_obra}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        next: {
+          revalidate: 30,
+          tags: ['ordenes-produccion', `ordenes-obra-${cod_obra}`],
+        },
+      }
+    )
+
+    return await response.json()
+  } catch (error) {
+    console.error('[getOrdenesByObra]', error)
+    return []
+  }
+}
+
+/**
+ * Retrieves finalized ordenes de produccion for a specific obra
+ * @param {number} cod_obra - Obra code
+ * @returns {Promise<OrdenProduccion[]>} List of finalized ordenes for the obra
+ */
+export async function getOrdenesByObraAndFinalizada(
+  cod_obra: number
+): Promise<OrdenProduccion[]> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/obra/${cod_obra}/finalizada`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        next: {
+          revalidate: 30,
+          tags: ['ordenes-produccion', `ordenes-obra-${cod_obra}`],
+        },
+      }
+    )
+
+    return await response.json()
+  } catch (error) {
+    console.error('[getOrdenesByObraAndFinalizada]', error)
+    return []
+  }
+}
+
+/**
  * Creates a new orden de produccion
  * @param {FormData} formData - Form data with cod_obra and PDF file
  * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result

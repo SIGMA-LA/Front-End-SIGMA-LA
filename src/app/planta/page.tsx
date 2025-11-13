@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import PlantaClient from '@/components/planta/PlantaClient'
 import { Suspense } from 'react'
 import { getEntregasByEmpleado } from '@/actions/entregas'
-import { getUsuarioFromCookies } from '@/lib/auth-server'
+import { getUsuario } from '@/lib/cache'
 
 async function getEntregasData(cuil: string) {
   try {
@@ -85,7 +85,7 @@ function PlantaSkeleton() {
 }
 
 export default async function PlantaPage() {
-  const usuario = await getUsuarioFromCookies()
+  const usuario = await getUsuario()
 
   if (!usuario) {
     redirect('/login')

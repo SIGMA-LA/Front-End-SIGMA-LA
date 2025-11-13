@@ -9,6 +9,13 @@ import type { Maquinaria } from '@/types'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/maquinarias`
 
+export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
+
+export interface MaquinariaConDisponibilidad extends Maquinaria {
+  availabilityStatus: AvailabilityStatus
+  warningMessage?: string
+}
+
 /**
  * Retrieves all maquinarias from the system
  * @returns {Promise<Maquinaria[]>} List of all maquinarias
@@ -32,6 +39,31 @@ export async function getMaquinariasDisponibles(): Promise<Maquinaria[]> {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30, tags: ['maquinarias', 'maquinarias-disponibles'] },
   })
+  return res.json()
+}
+
+/**
+ * Retrieves maquinarias availability status for a date range
+ * @param {string} fechaInicioISO - Start date in ISO format
+ * @param {string} fechaFinISO - End date in ISO format
+ * @returns {Promise<MaquinariaConDisponibilidad[]>} List of maquinarias with availability status
+ */
+export async function getDisponibilidadMaquinarias(
+  fechaInicioISO: string,
+  fechaFinISO: string
+): Promise<MaquinariaConDisponibilidad[]> {
+  const token = await getAccessToken()
+  const params = new URLSearchParams({
+    fecha_hora_inicio: fechaInicioISO,
+    fecha_hora_fin: fechaFinISO,
+  })
+  const res = await fetchWithErrorHandling(
+    `${BASE_URL}/disponibilidad?${params}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 30, tags: ['maquinarias-disponibilidad'] },
+    }
+  )
   return res.json()
 }
 

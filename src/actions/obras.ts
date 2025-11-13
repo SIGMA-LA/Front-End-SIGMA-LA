@@ -240,3 +240,70 @@ export async function deleteObra(
     }
   }
 }
+
+/**
+ * Retrieves obras eligible for stock request (PAGADA PARCIALMENTE from empresas)
+ * @returns {Promise<Obra[]>} List of obras
+ */
+export async function getObrasParaPedidoStock(): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/para-pedido-stock`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: {
+        revalidate: 30,
+        tags: ['obras', 'obras-pedido-stock'],
+      },
+    })
+    const data = await res.json()
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('[getObrasParaPedidoStock]', error)
+    return []
+  }
+}
+
+/**
+ * Changes obra status to 'EN ESPERA DE STOCK'
+ * @param {number} id - Obra ID
+ * @returns {Promise<Obra>} Updated obra
+ */
+export async function solicitarStockObra(id: number): Promise<Obra> {
+  const token = await getAccessToken()
+  const res = await fetchWithErrorHandling(
+    `${BASE_URL}/${id}/solicitar-stock`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  revalidatePath('/coordinacion/pedidos')
+  revalidatePath('/ventas/obras')
+  return await res.json()
+}
+
+/**
+ * Changes obra status to 'EN PRODUCCION'
+ * @param {number} id - Obra ID
+ * @returns {Promise<Obra>} Updated obra
+ */
+export async function recibirStockObra(id: number): Promise<Obra> {
+  const token = await getAccessToken()
+  const res = await fetchWithErrorHandling(`${BASE_URL}/${id}/recibir-stock`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+  revalidatePath('/coordinacion/pedidos')
+  revalidatePath('/produccion')
+  return await res.json()
+}

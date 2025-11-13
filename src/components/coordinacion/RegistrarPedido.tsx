@@ -11,7 +11,7 @@ import {
   Loader2,
   X,
 } from 'lucide-react'
-import { solicitarStockObra } from '@/services/obra.service'
+import { solicitarStockObra } from '@/actions/obras'
 import type { Obra } from '@/types'
 
 interface RegistrarPedidoProps {

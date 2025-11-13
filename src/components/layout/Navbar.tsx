@@ -1,9 +1,9 @@
 'use client'
 import { Empleado } from '@/types'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { LogOut, Sigma } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { useAuth } from '@/context/AuthContext'
+import { logoutAction } from '@/actions/auth'
 
 type NavbarProps = {
   usuario: Empleado | null
@@ -11,10 +11,12 @@ type NavbarProps = {
 
 export default function Navbar({ usuario }: NavbarProps) {
   const [showModal, setShowModal] = useState(false)
-  const { logout } = useAuth()
+  const [isPending, startTransition] = useTransition()
 
   const handleLogout = () => {
-    logout()
+    startTransition(async () => {
+      await logoutAction()
+    })
   }
 
   if (!usuario) {
@@ -44,10 +46,11 @@ export default function Navbar({ usuario }: NavbarProps) {
               onClick={() => setShowModal(true)}
               variant="destructive"
               size="sm"
+              disabled={isPending}
               className="ml-2 w-24 py-2 text-xs sm:w-auto sm:py-0 sm:text-base"
             >
               <LogOut className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
-              <span>Salir</span>
+              <span>{isPending ? 'Saliendo...' : 'Salir'}</span>
             </Button>
           </div>
         </div>
@@ -78,9 +81,10 @@ export default function Navbar({ usuario }: NavbarProps) {
               <Button
                 variant="destructive"
                 onClick={handleLogout}
+                disabled={isPending}
                 className="w-full sm:w-auto"
               >
-                Cerrar sesión
+                {isPending ? 'Cerrando sesión...' : 'Cerrar sesión'}
               </Button>
             </div>
           </div>

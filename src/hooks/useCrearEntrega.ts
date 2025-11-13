@@ -8,15 +8,17 @@ import {
   OrdenProduccion,
   VehiculoConDisponibilidad,
 } from '@/types'
-import empleadoService from '@/services/empleado.service'
-import { getObras } from '@/services/obra.service'
-import entregasService, { CreateEntregaDTO } from '@/services/entregas.service'
-import maquinariaService, {
-  MaquinariaConDisponibilidad,
-} from '@/services/maquinaria.service'
-import * as vehiculoService from '@/services/vehiculos.service'
-import parametroService from '@/services/parametro.service'
-import ordenProduccionService from '@/services/ordenProduccion.service'
+import { getEmpleadosDisponiblesEntrega } from '@/actions/empleado'
+import { createEntrega } from '@/actions/entregas'
+import {
+  getMaquinarias,
+  getDisponibilidadMaquinarias,
+  type MaquinariaConDisponibilidad,
+} from '@/actions/maquinarias'
+import { getObras } from '@/actions/obras'
+import { getVehiculos, getDisponibilidadVehiculos } from '@/actions/vehiculos'
+import { getActualViatico } from '@/actions/parametros'
+import { getOrdenesByObra } from '@/actions/ordenes'
 
 export function useCrearEntrega({
   preloadedObra,
@@ -81,8 +83,8 @@ export function useCrearEntrega({
         setLoading(true)
         setError(null)
         const [empleadosData, paramsData] = await Promise.all([
-          empleadoService.getDisponiblesParaEntrega(),
-          parametroService.getActualViatico(),
+          getEmpleadosDisponiblesEntrega(),
+          getActualViatico(),
         ])
         setEmpleados(empleadosData)
         setViaticoPorDia(paramsData.viatico_dia_persona)
@@ -112,11 +114,11 @@ export function useCrearEntrega({
           const fechaFin = new Date(fechaInicio.getTime() + horasDeUsoEnMs)
 
           const [maquinariasData, vehiculosData] = await Promise.all([
-            maquinariaService.getDisponibilidadPorFecha(
+            getDisponibilidadMaquinarias(
               fechaInicio.toISOString(),
               fechaFin.toISOString()
             ),
-            vehiculoService.getDisponibilidadPorFecha(
+            getDisponibilidadVehiculos(
               fechaInicio.toISOString(),
               fechaFin.toISOString()
             ),
@@ -131,8 +133,8 @@ export function useCrearEntrega({
         }
       } else if (!loading) {
         const [todasMaquinarias, todosVehiculos] = await Promise.all([
-          maquinariaService.getAllMaquinarias(),
-          vehiculoService.getVehiculos(),
+          getMaquinarias(),
+          getVehiculos(),
         ])
         setMaquinarias(
           todasMaquinarias.map((m) => ({
@@ -159,9 +161,7 @@ export function useCrearEntrega({
         setErrorOrdenes(null)
         setSelectedOrden(null)
         try {
-          const data = await ordenProduccionService.getOrdenesByObra(
-            Number(formData.obraId)
-          )
+          const data = await getOrdenesByObra(Number(formData.obraId))
           setOrdenesProduccion(data)
         } catch (err) {
           console.error('Error al cargar órdenes de producción:', err)
@@ -247,28 +247,25 @@ export function useCrearEntrega({
       const empleadosConRoles = [
         {
           cuil: encargado,
-          rol_entrega: 'ENCARGADO' as 'ENCARGADO' | 'AYUDANTE',
+          rol_entrega: 'ENCARGADO',
         },
         ...acompanantes.map((cuil) => ({
           cuil,
-          rol_entrega: 'AYUDANTE' as 'ENCARGADO' | 'AYUDANTE',
+          rol_entrega: 'AYUDANTE',
         })),
       ]
 
-      const createEntregaDTO: CreateEntregaDTO = {
+      const entregaData = {
         cod_obra: Number(formData.obraId),
         fecha_hora_entrega: fechaHoraISO,
         detalle: formData.descripcionUso,
         observaciones: formData.observaciones || undefined,
-        empleados: empleadosConRoles,
+        empleados_asignados: empleadosConRoles,
         dias_viaticos:
           diasViaticosNumerico > 0 ? diasViaticosNumerico : undefined,
-        maquinarias: selectedMaquinaria.map((id) => parseInt(id, 10)),
-        vehiculos: selectedVehiculos,
-        cod_op: selectedOrden?.cod_op,
       }
 
-      const nuevaEntrega = await entregasService.createEntrega(createEntregaDTO)
+      const nuevaEntrega = await createEntrega(entregaData)
       alert('¡Entrega creada exitosamente!')
       onSubmit(nuevaEntrega)
     } catch (err: any) {

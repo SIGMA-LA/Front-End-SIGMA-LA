@@ -12,10 +12,34 @@ import {
   Home,
 } from 'lucide-react'
 import type { Obra, Cliente } from '@/types'
-import type { ObraFormData } from '@/services/obra.service'
-import type { PresupuestoFormData } from '@/services/presupuesto.service'
+
+export interface PresupuestoFormData {
+  nro_presupuesto?: number
+  valor: number
+  fecha_emision: string
+  fecha_aceptacion?: string
+}
+
+export interface ObraFormData {
+  direccion: string
+  nota_fabrica?: string
+  fecha_ini: string
+  fecha_cancelacion?: string | null
+  estado:
+    | 'EN ESPERA DE PAGO'
+    | 'PAGADA PARCIALMENTE'
+    | 'EN ESPERA DE STOCK'
+    | 'EN PRODUCCION'
+    | 'PRODUCCION FINALIZADA'
+    | 'PAGADA TOTALMENTE'
+    | 'ENTREGADA'
+    | 'CANCELADA'
+  cuil_cliente: string
+  cod_localidad: number
+}
+
 import CrearPresupuestoModal from './CrearPresupuestoModal'
-import { localidadesPorProvincia, obtenerProvincias } from '@/actions/localidad'
+import { getLocalidadesByProvincia, getProvincias } from '@/actions/localidad'
 import Link from 'next/link'
 
 interface CrearObraProps {
@@ -97,13 +121,13 @@ export default function CrearObra({
 
   // Cargar provincias al inicio
   useEffect(() => {
-    obtenerProvincias().then(setProvincias)
+    getProvincias().then(setProvincias)
   }, [])
 
   // Cargar localidades cuando cambia la provincia
   useEffect(() => {
     if (provinciaSeleccionada) {
-      localidadesPorProvincia(Number(provinciaSeleccionada)).then((locs) => {
+      getLocalidadesByProvincia(Number(provinciaSeleccionada)).then((locs) => {
         setLocalidades(locs)
         // Si estoy editando, seteo la localidad solo si está en la obra
         if (esModoEdicion && obraExistente?.localidad) {

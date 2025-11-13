@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Package, ExternalLink, Calendar, FileText } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
-import ordenProduccionService from '@/services/ordenProduccion.service'
+import { getOrdenesByObra } from '@/actions/ordenes'
 
 interface OrdenesProduccionListProps {
   cod_obra: number
@@ -24,7 +24,9 @@ const getEstadoBadge = (estado: string) => {
   return badges[estado as keyof typeof badges] || 'bg-gray-100 text-gray-800'
 }
 
-export default function OrdenesProduccionList({ cod_obra }: OrdenesProduccionListProps) {
+export default function OrdenesProduccionList({
+  cod_obra,
+}: OrdenesProduccionListProps) {
   const [ordenes, setOrdenes] = useState<OrdenProduccion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,7 +39,7 @@ export default function OrdenesProduccionList({ cod_obra }: OrdenesProduccionLis
     try {
       setLoading(true)
       setError(null)
-      const data = await ordenProduccionService.getOrdenesByObra(cod_obra)
+      const data = await getOrdenesByObra(cod_obra)
       setOrdenes(data)
     } catch (error) {
       console.error('Error al cargar órdenes:', error)

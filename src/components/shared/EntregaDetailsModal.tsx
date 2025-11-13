@@ -12,7 +12,7 @@ import {
   Package,
 } from 'lucide-react'
 import type { Entrega } from '@/types'
-import parametroService from '@/services/parametro.service'
+import { getActualViatico } from '@/actions/parametros'
 
 interface EntregaDetailsModalProps {
   isOpen: boolean
@@ -36,7 +36,7 @@ export default function EntregaDetailsModal({
 
   useEffect(() => {
     if (isOpen) {
-      parametroService.getActualViatico().then((params) => {
+      getActualViatico().then((params) => {
         setViaticoPorDia(params.viatico_dia_persona)
       })
     }
