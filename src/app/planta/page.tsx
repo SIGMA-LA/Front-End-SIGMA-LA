@@ -3,6 +3,7 @@ import PlantaClient from '@/components/planta/PlantaClient'
 import { Suspense } from 'react'
 import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuario } from '@/lib/cache'
+import Navbar from '@/components/layout/Navbar'
 
 async function getEntregasData(cuil: string) {
   try {
@@ -95,6 +96,7 @@ export default async function PlantaPage() {
 
   return (
     <Suspense fallback={<PlantaSkeleton />}>
+      <Navbar usuario={usuario} />
       <PlantaClient
         usuario={usuario}
         entregasPendientesInitial={pendientes}

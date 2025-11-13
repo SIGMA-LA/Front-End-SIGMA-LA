@@ -4,6 +4,7 @@ import VisitadorClient from '@/components/visitador/VisitadorClient'
 import { getVisitasByEmpleado } from '@/actions/visitas'
 import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuario } from '@/lib/cache'
+import Navbar from '@/components/layout/Navbar'
 
 function VisitadorSkeleton() {
   return (
@@ -112,6 +113,7 @@ export default async function VisitadorPage() {
 
   return (
     <Suspense fallback={<VisitadorSkeleton />}>
+      <Navbar usuario={usuario} />
       <VisitadorClient usuario={usuario} initialData={data} />
     </Suspense>
   )
