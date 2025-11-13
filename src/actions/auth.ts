@@ -3,7 +3,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
-import type { Empleado } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
