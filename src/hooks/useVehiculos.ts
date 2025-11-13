@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Vehiculo } from '@/types'
-import { getVehiculos } from '@/services/vehiculos.service'
+import { getVehiculos } from '@/actions/vehiculos'
 
 export function useVehiculos() {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])

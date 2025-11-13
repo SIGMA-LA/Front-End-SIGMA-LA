@@ -16,8 +16,8 @@ import {
   type MaquinariaConDisponibilidad,
 } from '@/actions/maquinarias'
 import { getObras } from '@/actions/obras'
-import * as vehiculoService from '@/services/vehiculos.service'
-import parametroService from '@/services/parametro.service'
+import { getVehiculos, getDisponibilidadVehiculos } from '@/actions/vehiculos'
+import { getActualViatico } from '@/actions/parametros'
 import { getOrdenesByObra } from '@/actions/ordenes'
 
 export function useCrearEntrega({
@@ -84,7 +84,7 @@ export function useCrearEntrega({
         setError(null)
         const [empleadosData, paramsData] = await Promise.all([
           getEmpleadosDisponiblesEntrega(),
-          parametroService.getActualViatico(),
+          getActualViatico(),
         ])
         setEmpleados(empleadosData)
         setViaticoPorDia(paramsData.viatico_dia_persona)
@@ -118,7 +118,7 @@ export function useCrearEntrega({
               fechaInicio.toISOString(),
               fechaFin.toISOString()
             ),
-            vehiculoService.getDisponibilidadPorFecha(
+            getDisponibilidadVehiculos(
               fechaInicio.toISOString(),
               fechaFin.toISOString()
             ),
@@ -134,7 +134,7 @@ export function useCrearEntrega({
       } else if (!loading) {
         const [todasMaquinarias, todosVehiculos] = await Promise.all([
           getMaquinarias(),
-          vehiculoService.getVehiculos(),
+          getVehiculos(),
         ])
         setMaquinarias(
           todasMaquinarias.map((m) => ({

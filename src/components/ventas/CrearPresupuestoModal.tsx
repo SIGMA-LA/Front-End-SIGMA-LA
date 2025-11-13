@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Save, DollarSign } from 'lucide-react'
-import type { PresupuestoFormData } from '@/services/presupuesto.service'
+import type { PresupuestoFormData } from './CrearObra'
 
 interface CrearPresupuestoModalProps {
   isOpen: boolean

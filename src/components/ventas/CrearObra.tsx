@@ -12,7 +12,13 @@ import {
   Home,
 } from 'lucide-react'
 import type { Obra, Cliente } from '@/types'
-import type { PresupuestoFormData } from '@/services/presupuesto.service'
+
+export interface PresupuestoFormData {
+  nro_presupuesto?: number
+  valor: number
+  fecha_emision: string
+  fecha_aceptacion?: string
+}
 
 export interface ObraFormData {
   direccion: string
