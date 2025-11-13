@@ -1,7 +1,9 @@
 'use client'
 
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useActionState, useEffect } from 'react'
+import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -9,9 +11,39 @@ import { Label } from '@/components/ui/Label'
 import { Sigma } from 'lucide-react'
 import { LoginFormData, loginSchema } from '@/schemas/loginSchemas'
 import { safeParse } from 'valibot'
-import { LoginFormProps } from '@/types/index'
 
-export default function LoginForm({ onLogin }: LoginFormProps) {
+interface LoginFormProps {
+  loginAction: (
+    formData: FormData
+  ) => Promise<{ error?: string; redirectTo?: string }>
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="h-11 w-full rounded-md bg-gradient-to-r from-blue-500 to-blue-700 text-base font-semibold text-white shadow-md transition-colors hover:from-blue-600 hover:to-blue-800 disabled:bg-blue-300"
+    >
+      {pending ? 'Ingresando...' : 'Ingresar'}
+    </Button>
+  )
+}
+
+export default function LoginForm({ loginAction }: LoginFormProps) {
+  const router = useRouter()
+  const wrappedAction = async (
+    _prevState: { error?: string; redirectTo?: string },
+    formData: FormData
+  ) => {
+    return await loginAction(formData)
+  }
+
+  const [state, formAction] = useActionState(wrappedAction, {
+    error: undefined,
+    redirectTo: undefined,
+  })
   const [formData, setFormData] = useState({
     cuil: '',
     contrasenia: '',
@@ -20,10 +52,14 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   const [errors, setErrors] = useState({
     cuil: '',
     contrasenia: '',
-    general: '',
   })
 
-  const [isLoading, setIsLoading] = useState(false)
+  // Manejar redirect cuando loginAction retorna redirectTo
+  useEffect(() => {
+    if (state?.redirectTo) {
+      router.push(state.redirectTo)
+    }
+  }, [state?.redirectTo, router])
 
   const validateForm = () => {
     const dataToValidate = {
@@ -37,7 +73,6 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       const fieldErrors: typeof errors = {
         cuil: '',
         contrasenia: '',
-        general: '',
       }
 
       for (const issue of result.issues) {
@@ -51,7 +86,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       return false
     }
 
-    setErrors({ cuil: '', contrasenia: '', general: '' })
+    setErrors({ cuil: '', contrasenia: '' })
     return true
   }
 
@@ -69,26 +104,10 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     if (!validateForm()) {
+      e.preventDefault()
       return
-    }
-
-    setIsLoading(true)
-    setErrors((prev) => ({ ...prev, general: '' }))
-
-    try {
-      await onLogin(formData.cuil, formData.contrasenia)
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        general:
-          'CUIL o contraseña incorrectos. Por favor, inténtalo de nuevo.',
-      }))
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -111,11 +130,15 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           </CardHeader>
 
           <CardContent className="p-0 px-1 pb-8 sm:px-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form
+              action={formAction}
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
               <div className="mb-3">
-                {errors.general && (
+                {state?.error && (
                   <div className="!m-4 rounded-md border border-red-200 bg-red-50 p-2 !px-4">
-                    <p className="text-sm text-red-600">{errors.general}</p>
+                    <p className="text-sm text-red-600">{state.error}</p>
                   </div>
                 )}
               </div>
@@ -130,6 +153,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 <div className="px-4 pt-1">
                   <Input
                     id="usuario"
+                    name="cuil"
                     type="text"
                     value={formData.cuil}
                     onChange={(e) => handleInputChange('cuil', e.target.value)}
@@ -156,6 +180,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 <div className="px-4 pt-1">
                   <Input
                     id="contrasenia"
+                    name="contrasenia"
                     type="password"
                     value={formData.contrasenia}
                     onChange={(e) =>
@@ -177,13 +202,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               </div>
 
               <div className="px-4 pt-2">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="h-11 w-full rounded-md bg-gradient-to-r from-blue-500 to-blue-700 text-base font-semibold text-white shadow-md transition-colors hover:from-blue-600 hover:to-blue-800 disabled:bg-blue-300"
-                >
-                  {isLoading ? 'Ingresando...' : 'Ingresar'}
-                </Button>
+                <SubmitButton />
               </div>
             </form>
           </CardContent>

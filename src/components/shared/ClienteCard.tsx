@@ -3,23 +3,23 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, Phone, User, Building2, Eye, Edit, Trash2 } from 'lucide-react'
-import type { Cliente } from '@/types'
+import type { Cliente, Empleado } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
 import { deleteCliente } from '@/actions/clientes'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
-import { useAuth } from '@/context/AuthContext'
 
 interface ClienteCardProps {
   cliente: Cliente
   showActions?: boolean
+  usuario: Empleado | null
 }
 
 export default function ClienteCard({
   cliente,
   showActions = true,
+  usuario,
 }: ClienteCardProps) {
   const router = useRouter()
-  const { usuario } = useAuth()
   const [isPending, startTransition] = useTransition()
   const [showDetail, setShowDetail] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)

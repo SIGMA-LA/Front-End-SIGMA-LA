@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import VisitadorClient from '@/components/visitador/VisitadorClient'
 import { getVisitasByEmpleado } from '@/actions/visitas'
 import { getEntregasByEmpleado } from '@/actions/entregas'
-import { getUsuarioFromCookies } from '@/lib/auth-server'
+import { getUsuario } from '@/lib/cache'
 
 function VisitadorSkeleton() {
   return (
@@ -102,7 +102,7 @@ async function getVisitadorData(cuil: string) {
 }
 
 export default async function VisitadorPage() {
-  const usuario = await getUsuarioFromCookies()
+  const usuario = await getUsuario()
 
   if (!usuario) {
     redirect('/login')

@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { Users, Plus } from 'lucide-react'
 import { getClientes } from '@/actions/clientes'
+import { getUsuario } from '@/lib/cache'
 import ClienteCard from '@/components/shared/ClienteCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import Link from 'next/link'
@@ -32,6 +33,7 @@ function ClientesListSkeleton() {
 
 async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
   let clientes: Cliente[] = []
+  const usuario = await getUsuario()
 
   try {
     clientes = await getClientes(searchQuery)
@@ -61,7 +63,7 @@ async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
     <>
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {clientes.map((cliente) => (
-          <ClienteCard key={cliente.cuil} cliente={cliente} />
+          <ClienteCard key={cliente.cuil} cliente={cliente} usuario={usuario} />
         ))}
       </div>
       <div className="mt-6 text-center text-sm text-gray-600">
