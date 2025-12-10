@@ -1,4 +1,4 @@
-import { getEmpleadoActual } from '@/lib/cache'
+import { getUsuario } from '@/lib/cache'
 import { getClientes } from '@/actions/clientes'
 import { filterObras } from '@/actions/obras'
 import {
@@ -13,6 +13,7 @@ import {
   Truck,
 } from 'lucide-react'
 import Link from 'next/link'
+import { get } from 'http'
 
 async function getVentasStats() {
   try {
@@ -71,7 +72,7 @@ async function getVentasStats() {
 
 export default async function VentasPage() {
   const [empleadoResponse, stats] = await Promise.all([
-    getEmpleadoActual(),
+    getUsuario(),
     getVentasStats(),
   ])
 

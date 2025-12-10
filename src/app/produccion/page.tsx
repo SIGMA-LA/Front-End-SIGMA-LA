@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getEmpleadoActual } from '@/lib/cache'
+import { getUsuario } from '@/lib/cache'
 import {
   getNotasConOrdenEnProceso,
   getNotasSinOrdenAprobada,
@@ -42,7 +42,7 @@ async function getProduccionData() {
 
 async function ProduccionContent() {
   const [empleadoData, produccionData] = await Promise.all([
-    getEmpleadoActual(),
+    getUsuario(),
     getProduccionData(),
   ])
 

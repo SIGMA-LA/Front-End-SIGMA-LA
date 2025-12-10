@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Search,
   User,
@@ -12,6 +13,7 @@ import {
   Home,
 } from 'lucide-react'
 import type { Obra, Cliente } from '@/types'
+import { crearObra, actualizarObra } from '@/actions/obras'
 
 export interface PresupuestoFormData {
   nro_presupuesto?: number
@@ -44,11 +46,6 @@ import Link from 'next/link'
 
 interface CrearObraProps {
   clientes: Cliente[]
-  onCancel: () => void
-  onSubmit: (
-    obraData: ObraFormData,
-    presupuestos: PresupuestoFormData[]
-  ) => void
   obraExistente?: Obra | null
 }
 
@@ -62,14 +59,11 @@ const initialState: ObraFormData = {
   fecha_cancelacion: null,
 }
 
-export default function CrearObra({
-  clientes,
-  onCancel,
-  onSubmit,
-  obraExistente,
-}: CrearObraProps) {
+export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
+  const router = useRouter()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
   const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const esModoEdicion = !!obraExistente
 
   const isObraCancelada = esModoEdicion && obraExistente?.estado === 'CANCELADA'
@@ -221,15 +215,32 @@ export default function CrearObra({
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isObraCancelada) return
+    if (isObraCancelada || isSubmitting) return
     if (!formData.cuil_cliente || !formData.cod_localidad) {
       alert('Por favor, seleccione un cliente y una localidad.')
       return
     }
-    const { fecha_cancelacion, ...dataToSend } = formData
-    onSubmit(dataToSend, presupuestos)
+
+    try {
+      setIsSubmitting(true)
+      const { fecha_cancelacion, ...dataToSend } = formData
+
+      if (esModoEdicion && obraExistente) {
+        await actualizarObra(obraExistente.cod_obra, dataToSend)
+      } else {
+        await crearObra(dataToSend, presupuestos)
+      }
+
+      router.push('/ventas/obras')
+      router.refresh()
+    } catch (error) {
+      console.error('Error al guardar obra:', error)
+      alert('Error al guardar la obra. Por favor, intente nuevamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -472,17 +483,22 @@ export default function CrearObra({
               <div className="mt-8 flex gap-4 border-t border-gray-200 pt-6">
                 <button
                   type="button"
-                  onClick={onCancel}
+                  onClick={() => router.back()}
                   className="flex-1 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
-                  disabled={isObraCancelada}
+                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isObraCancelada || isSubmitting}
                 >
-                  {esModoEdicion ? 'Guardar Cambios' : 'Crear Obra'}
+                  {isSubmitting
+                    ? 'Guardando...'
+                    : esModoEdicion
+                      ? 'Guardar Cambios'
+                      : 'Crear Obra'}
                 </button>
               </div>
             </form>
