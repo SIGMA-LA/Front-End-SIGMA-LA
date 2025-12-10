@@ -12,8 +12,10 @@ import {
   MapPin,
   User,
   Building2,
+  FileText,
 } from 'lucide-react'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
+import NotaFabricaModal from '../ventas/NotaFabricaModal'
 import Link from 'next/link'
 import { deleteObra } from '@/actions/obras'
 
@@ -31,6 +33,13 @@ export default function ObraCard({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
+  const [notaFabricaModalOpen, setNotaFabricaModalOpen] = useState(false)
+  // nota_fabrica_pid contiene el public_id de Cloudinary, no nota_fabrica que es texto
+  const [notaFabricaUrl, setNotaFabricaUrl] = useState(
+    obra.nota_fabrica_pid
+      ? `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'}/image/upload/${obra.nota_fabrica_pid}.pdf`
+      : ''
+  )
 
   const provincia = useMemo(() => {
     if (obra.localidad && provincias.length > 0) {
@@ -54,6 +63,17 @@ export default function ObraCard({
     })
   }
 
+  const handleNotaFabricaSuccess = (publicId: string) => {
+    // Construir URL de Cloudinary desde el public_id
+    const cloudName =
+      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'
+    const url = publicId
+      ? `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}.pdf`
+      : ''
+    setNotaFabricaUrl(url)
+    router.refresh()
+  }
+
   const esVentas = usuarioRol === 'VENTAS'
   const esAdmin = usuarioRol === 'ADMIN'
   const esCoordinacion = usuarioRol === 'COORDINACION'
@@ -74,6 +94,15 @@ export default function ObraCard({
         loading={isPending}
         title="Eliminar Obra"
         message={`¿Está seguro que desea eliminar la obra "${obra.direccion}"? Pasará a estado "CANCELADA".`}
+      />
+
+      <NotaFabricaModal
+        isOpen={notaFabricaModalOpen}
+        onClose={() => setNotaFabricaModalOpen(false)}
+        notaUrl={notaFabricaUrl}
+        codObra={obra.cod_obra}
+        onUploadSuccess={handleNotaFabricaSuccess}
+        rolActual={usuarioRol}
       />
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
@@ -166,6 +195,13 @@ export default function ObraCard({
                   <DollarSign className="h-4 w-4" />
                   Pagos
                 </Link>
+                <button
+                  onClick={() => setNotaFabricaModalOpen(true)}
+                  className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+                >
+                  <FileText className="h-4 w-4" />
+                  {notaFabricaUrl ? 'Ver Nota' : 'Subir Nota'}
+                </button>
                 <Link
                   href={`/ventas/obras/${obra.cod_obra}/editar`}
                   className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"

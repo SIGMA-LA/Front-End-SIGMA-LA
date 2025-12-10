@@ -117,6 +117,7 @@ export async function uploadNotaFabrica(
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: file,
+        timeout: 60000, // 60 segundos para archivos grandes
       }
     )
     const data = await res.json()
@@ -210,6 +211,65 @@ export async function getNotasConOrdenEnProceso(): Promise<Obra[]> {
   } catch (error) {
     console.error('[getNotasConOrdenEnProceso]', error)
     return []
+  }
+}
+
+/**
+ * Creates a new obra
+ * @param {any} obraData - Obra data
+ * @param {any[]} presupuestos - Presupuestos array
+ * @returns {Promise<Obra>} Created obra
+ */
+export async function createObra(
+  obraData: any,
+  presupuestos: any[] = []
+): Promise<Obra> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(BASE_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...obraData, presupuestos }),
+    })
+    const data = await res.json()
+    revalidatePath('/ventas/obras')
+    return data
+  } catch (error) {
+    console.error('[crearObra]', error)
+    throw error
+  }
+}
+
+/**
+ * Updates an existing obra
+ * @param {number} codObra - Obra ID
+ * @param {any} obraData - Updated obra data
+ * @returns {Promise<Obra>} Updated obra
+ */
+export async function updateObra(
+  codObra: number,
+  obraData: any
+): Promise<Obra> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${codObra}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(obraData),
+    })
+    const data = await res.json()
+    revalidatePath('/ventas/obras')
+    revalidatePath(`/ventas/obras/${codObra}`)
+    return data
+  } catch (error) {
+    console.error('[actualizarObra]', error)
+    throw error
   }
 }
 

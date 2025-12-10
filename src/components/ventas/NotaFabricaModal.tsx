@@ -2,6 +2,7 @@
 
 import { X, Upload, FileText, Trash2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
 
 interface NotaFabricaModalProps {
@@ -23,12 +24,18 @@ export default function NotaFabricaModal({
   rolActual = '',
   onDeleteClick,
 }: NotaFabricaModalProps) {
+  const router = useRouter()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modoCambio, setModoCambio] = useState(false)
 
   if (!isOpen) return null
+
+  // Debug: verificar URL de la nota
+  if (notaUrl && process.env.NODE_ENV === 'development') {
+    console.log('[NotaFabricaModal] URL de nota:', notaUrl)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -65,7 +72,9 @@ export default function NotaFabricaModal({
 
       setSelectedFile(null)
       setModoCambio(false)
-      onUploadSuccess?.(obraActualizada.nota_fabrica || '')
+      // Devolver el public_id, no la URL
+      onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
+      router.refresh() // Recargar la página para actualizar el botón
       onClose()
     } catch (err: any) {
       setError(
@@ -81,8 +90,9 @@ export default function NotaFabricaModal({
       setLoading(true)
       setError(null)
       const obraActualizada = await deleteNotaFabrica(codObra)
-      onUploadSuccess?.(obraActualizada.nota_fabrica || '')
+      onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(false)
+      router.refresh() // Recargar la página
       onClose()
     } catch (err: any) {
       setError(
@@ -99,7 +109,7 @@ export default function NotaFabricaModal({
       setLoading(true)
       setError(null)
       const obraActualizada = await deleteNotaFabrica(codObra)
-      onUploadSuccess?.(obraActualizada.nota_fabrica || '')
+      onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(true)
       setSelectedFile(null)
     } catch (err: any) {
@@ -142,33 +152,50 @@ export default function NotaFabricaModal({
         </div>
         {notaUrl && !modoCambio ? (
           <div className="p-5 lg:p-7">
-            <iframe
-              src={notaUrl}
-              title="Nota de Fábrica"
-              className="mb-4 h-[70vh] w-full rounded border"
-            />
-            {rolActual === 'VENTAS' && (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleCambioNota}
-                  disabled={loading}
-                  className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Cambiar Nota
-                </button>
-                <button
-                  type="button"
-                  onClick={onDeleteClick}
-                  disabled={loading}
-                  className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar Nota
-                </button>
-              </div>
-            )}
+            <div className="mb-4 rounded-lg border border-gray-200">
+              <iframe
+                src={notaUrl}
+                title="Nota de Fábrica"
+                className="h-[70vh] w-full rounded"
+                onError={(e) => {
+                  console.error('Error cargando PDF en iframe:', e)
+                  setError('No se pudo cargar el PDF. Intenta descargarlo.')
+                }}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={notaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-md border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+              >
+                <FileText className="h-4 w-4" />
+                Abrir en nueva pestaña
+              </a>
+              {rolActual === 'VENTAS' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCambioNota}
+                    disabled={loading}
+                    className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Cambiar Nota
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onDeleteClick}
+                    disabled={loading}
+                    className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar Nota
+                  </button>
+                </>
+              )}
+            </div>
             {error && (
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
                 <p className="text-sm text-red-800 lg:text-base">
