@@ -4,11 +4,5 @@ import { getClientes } from '@/actions/clientes'
 export default async function CrearObraPage() {
   const clientes = await getClientes()
 
-  return (
-    <CrearObra
-      clientes={clientes}
-      onCancel={() => {}}
-      onSubmit={async (obraData, presupuesto) => {}}
-    />
-  )
+  return <CrearObra clientes={clientes} />
 }

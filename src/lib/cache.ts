@@ -42,26 +42,3 @@ export const getProvincias = cache(async (): Promise<Provincia[]> => {
     return []
   }
 })
-
-/**
- * Cache del empleado actual con Next.js Data Cache.
- * Se cachea por 5 minutos.
- */
-export const getEmpleadoActual = cache(async () => {
-  try {
-    const token = await getAccessToken()
-    const res = await fetch(`${API_URL}/empleados/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      next: { revalidate: 300 },
-    })
-
-    if (!res.ok) return null
-    return res.json()
-  } catch (error) {
-    console.error('Error obteniendo empleado actual:', error)
-    return null
-  }
-})

@@ -15,12 +15,5 @@ export default async function EditarObraPage({ params }: EditarObraPageProps) {
 
   if (!obra) return <div>Obra no encontrada</div>
 
-  return (
-    <CrearObra
-      clientes={clientes}
-      obraExistente={obra}
-      onCancel={() => {}}
-      onSubmit={async (obraData, presupuestos) => {}}
-    />
-  )
+  return <CrearObra clientes={clientes} obraExistente={obra} />
 }
