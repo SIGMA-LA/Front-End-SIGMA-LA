@@ -1,12 +1,14 @@
 export async function fetchWithErrorHandling(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit & { timeout?: number } = {}
 ) {
+  const { timeout = 10000, ...fetchOptions } = options
+  
   try {
     const res = await fetch(url, {
-      ...options,
+      ...fetchOptions,
       signal: (AbortSignal as any).timeout
-        ? (AbortSignal as any).timeout(10000)
+        ? (AbortSignal as any).timeout(timeout)
         : undefined,
     })
     if (!res.ok) {
@@ -17,7 +19,12 @@ export async function fetchWithErrorHandling(
     return res
   } catch (err: any) {
     if (err?.name === 'AbortError') throw new Error('Request timeout')
-    if (err?.cause?.code === 'ECONNREFUSED') throw new Error('ECONNREFUSED')
+    if (err?.cause?.code === 'ECONNREFUSED') {
+      throw new Error(
+        'No se puede conectar al servidor backend. Verifica que esté corriendo en ' +
+          (url.startsWith('http') ? new URL(url).origin : 'la URL configurada')
+      )
+    }
     throw err
   }
 }

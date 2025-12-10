@@ -13,7 +13,7 @@ import {
   Home,
 } from 'lucide-react'
 import type { Obra, Cliente } from '@/types'
-import { crearObra, actualizarObra } from '@/actions/obras'
+import { createObra, updateObra } from '@/actions/obras'
 
 export interface PresupuestoFormData {
   nro_presupuesto?: number
@@ -228,9 +228,9 @@ export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
       const { fecha_cancelacion, ...dataToSend } = formData
 
       if (esModoEdicion && obraExistente) {
-        await actualizarObra(obraExistente.cod_obra, dataToSend)
+        await updateObra(obraExistente.cod_obra, dataToSend)
       } else {
-        await crearObra(dataToSend, presupuestos)
+        await createObra(dataToSend, presupuestos)
       }
 
       router.push('/ventas/obras')

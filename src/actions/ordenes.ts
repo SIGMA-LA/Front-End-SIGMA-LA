@@ -394,3 +394,6 @@ export async function finishProduccion(cod_op: number) {
     }
   }
 }
+
+// Alias para compatibilidad
+export const crearOrdenProduccion = createOrdenProduccion
