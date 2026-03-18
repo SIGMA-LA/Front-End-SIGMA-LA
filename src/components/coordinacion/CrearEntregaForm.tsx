@@ -131,10 +131,16 @@ export default function CrearEntregaForm({
       }
 
       startTransition(async () => {
-        await createEntrega(entregaData)
+        try {
+          await createEntrega(entregaData)
+          router.push('/coordinacion/entregas')
+          router.refresh()
+        } catch (err: any) {
+          setError(err.message || 'Error al crear la entrega')
+        }
       })
     } catch (err: any) {
-      setError(err.message || 'Error al crear la entrega')
+      setError(err.message || 'Error de validación antes de crear la entrega')
     }
   }
 
@@ -165,8 +171,19 @@ export default function CrearEntregaForm({
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             {error && (
               <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-                <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
-                <p className="text-sm text-red-800">{error}</p>
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-600" />
+                <div className="text-sm text-red-800">
+                  {error.split('\n').map((line, idx, arr) => (
+                    <p 
+                      key={idx} 
+                      className={arr.length > 1 && idx > 0 
+                        ? "mt-2 relative pl-3.5 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500" 
+                        : "font-medium"}
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
 

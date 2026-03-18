@@ -22,8 +22,10 @@ export async function getActualViatico(): Promise<ParametroViatico> {
       next: { revalidate: 3600, tags: ['parametros', 'viatico'] }, // 1 hour cache
     })
     return await res.json()
-  } catch (error) {
-    console.error('[getActualViatico]', error)
-    return { viatico_dia_persona: 0 }
+  } catch (error: any) {
+    if (error.message !== 'Not found') {
+      console.error('[getActualViatico]', error)
+    }
+    return { viatico_dia_persona: 50000 }
   }
 }

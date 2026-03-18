@@ -146,9 +146,9 @@ export default function EntregaDetailsModal({
                     </p>
                   </div>
                   <ul className="list-disc pl-10 text-sm text-gray-700">
-                    {acompanantes.map((a) => (
-                      <li key={`${entrega.cod_entrega}-${a.empleado.cuil}`}>
-                        {a.empleado.nombre} {a.empleado.apellido}
+                    {acompanantes.map((a, i) => (
+                      <li key={a?.empleado?.cuil ? `${entrega.cod_entrega}-${a.empleado.cuil}` : `acomp-${i}`}>
+                        {a.empleado?.nombre} {a.empleado?.apellido}
                       </li>
                     ))}
                   </ul>
@@ -218,12 +218,17 @@ export default function EntregaDetailsModal({
                   <Truck className="h-5 w-5 text-gray-600" />
                   <p className="font-medium">Vehículos</p>
                 </div>
-                {entrega.vehiculos_usados &&
-                entrega.vehiculos_usados.length > 0 ? (
+                {entrega.vehiculos &&
+                entrega.vehiculos.length > 0 ? (
                   <ul className="list-disc pl-8 text-sm text-gray-700">
-                    {entrega.vehiculos_usados.map((v) => (
-                      <li key={v.patente}></li>
-                    ))}
+                    {entrega.vehiculos.map((v: any, index: number) => {
+                      const veh = v.vehiculo || v
+                      return (
+                        <li key={veh?.patente || `veh-${index}`}>
+                          {veh?.marca ? `${veh.marca} ${veh.modelo || ''} (${veh.patente})` : veh?.patente || 'Vehículo'}
+                        </li>
+                      )
+                    })}
                   </ul>
                 ) : (
                   <p className="pl-8 text-sm text-gray-500">No especificados</p>
@@ -234,12 +239,13 @@ export default function EntregaDetailsModal({
                   <Wrench className="h-5 w-5 text-gray-600" />
                   <p className="font-medium">Maquinaria</p>
                 </div>
-                {entrega.maquinarias_usadas &&
-                entrega.maquinarias_usadas.length > 0 ? (
+                {entrega.maquinarias &&
+                entrega.maquinarias.length > 0 ? (
                   <ul className="list-disc pl-8 text-sm text-gray-700">
-                    {entrega.maquinarias_usadas.map((m) => (
-                      <li key={m.cod_maquina}>{m.descripcion}</li>
-                    ))}
+                    {entrega.maquinarias.map((m: any, index: number) => {
+                      const maq = m.maquinaria || m
+                      return <li key={maq?.cod_maquina || `maq-${index}`}>{maq?.descripcion || 'Maquinaria'}</li>
+                    })}
                   </ul>
                 ) : (
                   <p className="pl-8 text-sm text-gray-500">Ninguna</p>
