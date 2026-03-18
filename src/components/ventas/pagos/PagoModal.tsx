@@ -193,7 +193,7 @@ export default function PagoModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="bg-opacity-75 absolute inset-0 bg-gray-500 backdrop-blur-sm"
+        className="bg-opacity-75 absolute inset-0 backdrop-blur-sm"
         onClick={handleClose}
       />
 

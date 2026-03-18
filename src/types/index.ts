@@ -200,6 +200,7 @@ export interface PagoFormData {
 
 // Filtros para búsqueda de pagos (nombres de la API)
 export interface PagosFilter {
+  search?: string
   cliente?: string
   fechaDesde?: string
   fechaHasta?: string
