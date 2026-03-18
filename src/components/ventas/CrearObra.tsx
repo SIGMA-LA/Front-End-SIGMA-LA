@@ -1,19 +1,30 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
+  AlertCircle,
+  Edit,
+  FileText,
+  Home,
+  Loader2,
+  MapPin,
+  Plus,
   Search,
   User,
-  Plus,
-  FileText,
-  Edit,
-  AlertCircle,
-  MapPin,
-  Home,
+  Users,
+  Calendar,
+  Layers,
 } from 'lucide-react'
-import type { Obra, Cliente } from '@/types'
+
+import { getClientes } from '@/actions/clientes'
+import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { createObra, updateObra } from '@/actions/obras'
+import useDebounce from '@/hooks/useDebounce'
+import type { Cliente, Obra, Provincia } from '@/types'
+
+import CrearPresupuestoModal from './CrearPresupuestoModal'
 
 export interface PresupuestoFormData {
   nro_presupuesto?: number
@@ -37,21 +48,19 @@ export interface ObraFormData {
     | 'ENTREGADA'
     | 'CANCELADA'
   cuil_cliente: string
+  cuil_arquitecto?: string | null
   cod_localidad: number
 }
 
-import CrearPresupuestoModal from './CrearPresupuestoModal'
-import { getLocalidadesByProvincia, getProvincias } from '@/actions/localidad'
-import Link from 'next/link'
-
 interface CrearObraProps {
-  clientes: Cliente[]
+  provincias: Provincia[]
   obraExistente?: Obra | null
 }
 
 const initialState: ObraFormData = {
   direccion: '',
   cuil_cliente: '',
+  cuil_arquitecto: null,
   cod_localidad: 0,
   fecha_ini: '',
   estado: 'EN ESPERA DE PAGO',
@@ -59,17 +68,38 @@ const initialState: ObraFormData = {
   fecha_cancelacion: null,
 }
 
-export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
+export default function CrearObra({
+  provincias,
+  obraExistente,
+}: CrearObraProps) {
   const router = useRouter()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>('')
+  const [clienteSeleccionado, setClienteSeleccionado] =
+    useState<Cliente | null>(null)
+  const [arquitectoSeleccionado, setArquitectoSeleccionado] =
+    useState<Cliente | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const esModoEdicion = !!obraExistente
 
-  const isObraCancelada = esModoEdicion && obraExistente?.estado === 'CANCELADA'
+  const isObraCancelada =
+    esModoEdicion &&
+    !!obraExistente?.estado &&
+    (obraExistente.estado as string) === 'CANCELADA'
 
-  // Estados para la nueva funcionalidad
+  // Estados para la búsqueda de clientes
   const [filtroCliente, setFiltroCliente] = useState('')
+  const [filtroArquitecto, setFiltroArquitecto] = useState('')
+
+  const debouncedFiltro = useDebounce(filtroCliente, 500)
+  const debouncedFiltroArquitecto = useDebounce(filtroArquitecto, 500)
+
+  const [clientesEncontrados, setClientesEncontrados] = useState<Cliente[]>([])
+  const [arquitectosEncontrados, setArquitectosEncontrados] = useState<
+    Cliente[]
+  >([])
+
+  const [isSearching, setIsSearching] = useState(false)
+  const [isSearchingArquitecto, setIsSearchingArquitecto] = useState(false)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [presupuestos, setPresupuestos] = useState<PresupuestoFormData[]>([])
@@ -77,9 +107,6 @@ export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
     useState<PresupuestoFormData | null>(null)
 
   // Provincias y localidades
-  const [provincias, setProvincias] = useState<
-    { cod_provincia: number; nombre: string }[]
-  >([])
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
     number | ''
   >('')
@@ -96,34 +123,156 @@ export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
       setFormData({
         direccion: obraExistente.direccion || '',
         cuil_cliente: obraExistente.cliente?.cuil || '',
+        cuil_arquitecto: obraExistente.arquitecto?.cuil || null,
         cod_localidad: obraExistente.localidad?.cod_localidad || 0,
         fecha_ini,
         nota_fabrica: obraExistente.nota_fabrica || '',
         fecha_cancelacion: null,
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
       })
-      setClienteSeleccionado(obraExistente.cliente?.cuil || '')
+      if (obraExistente.cliente) {
+        setClienteSeleccionado(obraExistente.cliente)
+        setFiltroCliente(
+          obraExistente.cliente.tipo_cliente === 'EMPRESA'
+            ? obraExistente.cliente.razon_social || ''
+            : `${obraExistente.cliente.nombre || ''} ${obraExistente.cliente.apellido || ''}`.trim()
+        )
+      }
+      if (obraExistente.arquitecto) {
+        setArquitectoSeleccionado(obraExistente.arquitecto)
+        setFiltroArquitecto(
+          obraExistente.arquitecto.tipo_cliente === 'EMPRESA'
+            ? obraExistente.arquitecto.razon_social || ''
+            : `${obraExistente.arquitecto.nombre || ''} ${obraExistente.arquitecto.apellido || ''}`.trim()
+        )
+      }
       setProvinciaSeleccionada(obraExistente.localidad?.cod_provincia || '')
       if (obraExistente.presupuesto) setPresupuestos(obraExistente.presupuesto)
     } else {
       setFormData(initialState)
-      setClienteSeleccionado('')
+      setClienteSeleccionado(null)
+      setArquitectoSeleccionado(null)
+      setFiltroCliente('')
+      setFiltroArquitecto('')
       setProvinciaSeleccionada('')
       setPresupuestos([])
     }
-  }, [obraExistente, esModoEdicion, clientes])
+  }, [obraExistente, esModoEdicion])
 
-  // Cargar provincias al inicio
-  useEffect(() => {
-    getProvincias().then(setProvincias)
+  // Búsqueda de clientes con debounce
+  const fetchClientes = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setClientesEncontrados([])
+      return
+    }
+    setIsSearching(true)
+    try {
+      const results = await getClientes(query)
+      setClientesEncontrados(results.slice(0, 5))
+    } catch (error) {
+      console.error('Error buscando clientes:', error)
+      setClientesEncontrados([])
+    } finally {
+      setIsSearching(false)
+    }
   }, [])
+
+  const fetchArquitectos = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setArquitectosEncontrados([])
+      return
+    }
+    setIsSearchingArquitecto(true)
+    try {
+      const results = await getClientes(query)
+      const soloPersonas = results.filter((c) => c.tipo_cliente !== 'EMPRESA')
+      setArquitectosEncontrados(soloPersonas.slice(0, 5))
+    } catch (error) {
+      console.error('Error buscando arquitectos:', error)
+      setArquitectosEncontrados([])
+    } finally {
+      setIsSearchingArquitecto(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Si hay un cliente seleccionado, el filtro coincide con su nombre, no buscamos.
+    const currentName = clienteSeleccionado
+      ? clienteSeleccionado.tipo_cliente === 'EMPRESA'
+        ? clienteSeleccionado.razon_social
+        : `${clienteSeleccionado.nombre || ''} ${clienteSeleccionado.apellido || ''}`.trim()
+      : ''
+
+    if (debouncedFiltro && debouncedFiltro !== currentName) {
+      fetchClientes(debouncedFiltro)
+    } else if (!debouncedFiltro) {
+      setClientesEncontrados([])
+    }
+  }, [debouncedFiltro, fetchClientes, clienteSeleccionado])
+
+  useEffect(() => {
+    // Si hay un arquitecto seleccionado y el filtro coincide, no buscamos.
+    const currentName = arquitectoSeleccionado
+      ? arquitectoSeleccionado.tipo_cliente === 'EMPRESA'
+        ? arquitectoSeleccionado.razon_social
+        : `${arquitectoSeleccionado.nombre || ''} ${arquitectoSeleccionado.apellido || ''}`.trim()
+      : ''
+
+    if (
+      debouncedFiltroArquitecto &&
+      debouncedFiltroArquitecto !== currentName
+    ) {
+      fetchArquitectos(debouncedFiltroArquitecto)
+    } else if (!debouncedFiltroArquitecto) {
+      setArquitectosEncontrados([])
+    }
+  }, [debouncedFiltroArquitecto, fetchArquitectos, arquitectoSeleccionado])
+
+  const hayPresupuestoAceptado = useMemo(
+    () =>
+      presupuestos.some((p) => p.fecha_aceptacion && p.fecha_aceptacion !== ''),
+    [presupuestos]
+  )
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'cod_localidad' ? Number(value) : value,
+    }))
+  }
+
+  const handleClienteSelect = (cliente: Cliente) => {
+    setClienteSeleccionado(cliente)
+    setFormData((prev) => ({ ...prev, cuil_cliente: cliente.cuil }))
+    setFiltroCliente(
+      cliente.tipo_cliente === 'EMPRESA'
+        ? cliente.razon_social || ''
+        : `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()
+    )
+    setClientesEncontrados([])
+  }
+
+  const handleArquitectoSelect = (cliente: Cliente) => {
+    setArquitectoSeleccionado(cliente)
+    setFormData((prev) => ({ ...prev, cuil_arquitecto: cliente.cuil }))
+    setFiltroArquitecto(
+      cliente.tipo_cliente === 'EMPRESA'
+        ? cliente.razon_social || ''
+        : `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()
+    )
+    setArquitectosEncontrados([])
+  }
 
   // Cargar localidades cuando cambia la provincia
   useEffect(() => {
     if (provinciaSeleccionada) {
       getLocalidadesByProvincia(Number(provinciaSeleccionada)).then((locs) => {
         setLocalidades(locs)
-        // Si estoy editando, seteo la localidad solo si está en la obra
         if (esModoEdicion && obraExistente?.localidad) {
           setFormData((prev) => ({
             ...prev,
@@ -144,49 +293,6 @@ export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
       }))
     }
   }, [provinciaSeleccionada, esModoEdicion, obraExistente])
-
-  const clientesFiltrados = useMemo(() => {
-    if (!filtroCliente) return clientes
-    const filtroLower = filtroCliente.toLowerCase()
-    return clientes.filter((c) => {
-      const matchCuil = c.cuil.includes(filtroCliente)
-
-      if (c.tipo_cliente === 'EMPRESA') {
-        const matchRazonSocial = c.razon_social
-          ?.toLowerCase()
-          .includes(filtroLower)
-        return matchCuil || matchRazonSocial
-      } else {
-        const nombreCompleto =
-          `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase()
-        const matchNombre = nombreCompleto.includes(filtroLower)
-        return matchCuil || matchNombre
-      }
-    })
-  }, [clientes, filtroCliente])
-
-  const hayPresupuestoAceptado = useMemo(
-    () =>
-      presupuestos.some((p) => p.fecha_aceptacion && p.fecha_aceptacion !== ''),
-    [presupuestos]
-  )
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'cod_localidad' ? Number(value) : value,
-    }))
-  }
-
-  const handleClienteSelect = (cuil: string) => {
-    setClienteSeleccionado(cuil)
-    setFormData((prev) => ({ ...prev, cuil_cliente: cuil }))
-  }
 
   const handleOpenModalParaCrear = () => {
     setPresupuestoParaEditar(null)
@@ -252,256 +358,413 @@ export default function CrearObra({ clientes, obraExistente }: CrearObraProps) {
         presupuestoExistente={presupuestoParaEditar}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-lg">
-            <h1 className="mb-8 flex items-center gap-2 text-3xl font-bold text-blue-900">
-              <Home className="h-7 w-7 text-blue-500" />
-              {esModoEdicion ? 'Editar Obra' : 'Crear Nueva Obra'}
-            </h1>
-            {isObraCancelada && (
-              <div className="mb-6 rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
-                <div className="flex items-center">
-                  <AlertCircle className="h-5 w-5 text-red-700" />
-                  <div className="ml-3">
-                    <p className="font-bold text-red-800">Obra Cancelada</p>
-                    <p className="text-sm text-red-700">
-                      Esta obra ha sido cancelada y no se puede modificar. Los
-                      datos se muestran solo a modo de consulta.
+      <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
+            {/* HEADER */}
+            <div className="border-b border-slate-100 bg-gradient-to-r from-blue-600 to-indigo-600 px-10 py-8 text-white">
+              <div className="flex items-center gap-5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-inner backdrop-blur-md">
+                  <Home className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    {esModoEdicion ? 'Editar Obra' : 'Nueva Obra'}
+                  </h1>
+                  <p className="text-sm font-medium text-blue-50/90">
+                    Gestión Integral de Proyectos y Presupuestos
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-10">
+              {isObraCancelada && (
+                <div className="mb-10 flex items-center gap-4 rounded-2xl border border-red-100 bg-red-50/50 p-5 text-red-800">
+                  <AlertCircle className="h-6 w-6 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold tracking-wide uppercase">
+                      Atención: Obra Cancelada
+                    </p>
+                    <p className="text-sm font-medium text-red-600/90">
+                      Esta obra se encuentra archivada y no permite ediciones.
                     </p>
                   </div>
                 </div>
-              </div>
-            )}
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-                {/* CLIENTE */}
-                <div className="space-y-4">
-                  <h3 className="mb-9 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <User className="h-5 w-5" />
-                    Cliente
-                  </h3>
-                  <div className="relative">
-                    <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Buscar por Razón Social o CUIL..."
-                      className="w-full rounded-lg border border-gray-300 py-2.5 pr-5 pl-10 focus:border-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
-                      value={filtroCliente}
-                      onChange={(e) => setFiltroCliente(e.target.value)}
-                      disabled={isObraCancelada}
-                    />
-                  </div>
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50">
-                    {clientesFiltrados.length > 0 ? (
-                      clientesFiltrados.map((cliente) => (
-                        <div
-                          key={cliente.cuil}
-                          className={`flex cursor-pointer items-center p-3 transition-colors ${
-                            clienteSeleccionado === cliente.cuil
-                              ? 'bg-blue-100'
-                              : 'hover:bg-blue-50'
-                          }`}
-                          onClick={() => handleClienteSelect(cliente.cuil)}
-                        >
-                          <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
-                            <User className="h-4 w-4 text-gray-600" />
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-12">
+                <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+                  {/* COLUMNA 1: PARTICIPANTES */}
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-2">
+                      <Users className="h-6 w-6 text-blue-600" />
+                      <h3 className="text-lg font-bold text-slate-800">
+                        Cliente y Arquitecto
+                      </h3>
+                    </div>
+
+                    <div className="space-y-6">
+                      {/* Cliente */}
+                      <div className="space-y-2">
+                        <label className="block pl-1 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                          Cliente
+                        </label>
+                        <div className="group relative">
+                          <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500" />
+                          <input
+                            type="text"
+                            placeholder="Buscar por nombre o CUIL..."
+                            className={`w-full rounded-2xl border px-11 py-3 text-[13px] font-medium shadow-sm transition-all focus:ring-4 focus:ring-blue-500/10 ${
+                              clienteSeleccionado
+                                ? 'border-green-200 bg-green-50/20 text-green-900 focus:border-green-300'
+                                : 'border-slate-200 bg-white text-slate-700 focus:border-blue-300'
+                            }`}
+                            value={filtroCliente}
+                            onChange={(e) => {
+                              setFiltroCliente(e.target.value)
+                              if (clienteSeleccionado) {
+                                setClienteSeleccionado(null)
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  cuil_cliente: '',
+                                }))
+                              }
+                            }}
+                            disabled={isObraCancelada}
+                          />
+                          {isSearching && (
+                            <Loader2 className="absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 animate-spin text-blue-600" />
+                          )}
+
+                          {/* Dropdown Cliente */}
+                          {clientesEncontrados.length > 0 &&
+                            !clienteSeleccionado && (
+                              <div className="animate-in fade-in zoom-in-95 absolute z-[100] mt-1 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl duration-200">
+                                {clientesEncontrados.map((cliente) => (
+                                  <button
+                                    key={cliente.cuil}
+                                    type="button"
+                                    className="flex w-full items-center border-b border-slate-50 p-3 text-left transition-colors last:border-0 hover:bg-slate-50"
+                                    onClick={() => handleClienteSelect(cliente)}
+                                  >
+                                    <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                      <User className="h-4 w-4" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm leading-none font-semibold text-slate-900">
+                                        {cliente.tipo_cliente === 'EMPRESA'
+                                          ? cliente.razon_social
+                                          : `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()}
+                                      </p>
+                                      <p className="mt-1 text-[11px] font-medium text-slate-500">
+                                        CUIL: {cliente.cuil}
+                                      </p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                        {clienteSeleccionado && (
+                          <div className="animate-in fade-in slide-in-from-top-1 flex items-center justify-between rounded-xl border border-green-100 bg-green-50/50 p-3">
+                            <span className="mr-2 truncate text-[11px] font-bold text-green-700">
+                              {clienteSeleccionado.razon_social ||
+                                `${clienteSeleccionado.nombre} ${clienteSeleccionado.apellido}`}
+                            </span>
+                            <div className="h-2 w-2 shrink-0 rounded-full bg-green-500 shadow-lg shadow-green-500/40" />
                           </div>
-                          <span className="text-gray-900">
-                            {cliente.tipo_cliente === 'EMPRESA'
-                              ? cliente.razon_social
-                              : `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()}
+                        )}
+                      </div>
+
+                      {/* Arquitecto */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between pl-1">
+                          <label className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                            Arquitecto Responsable
+                          </label>
+                          <span className="text-[10px] font-bold text-slate-300 italic">
+                            (opcional)
                           </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        No se encontraron clientes.
-                      </div>
-                    )}
-                  </div>
-                  <Link
-                    href="/ventas/clientes/crear"
-                    target="_blank"
-                    className="block w-full rounded-lg bg-blue-600 py-2.5 text-center font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:text-gray-400"
-                  >
-                    Nuevo Cliente
-                  </Link>
-                </div>
+                        <div className="group relative">
+                          <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-500" />
+                          <input
+                            type="text"
+                            placeholder="Buscar por nombre o CUIL..."
+                            className={`w-full rounded-2xl border px-11 py-3 text-[13px] font-medium shadow-sm transition-all focus:ring-4 focus:ring-blue-500/10 ${
+                              arquitectoSeleccionado
+                                ? 'border-indigo-200 bg-indigo-50/20 text-indigo-900 focus:border-indigo-300'
+                                : 'border-slate-200 bg-white text-slate-700 focus:border-blue-300'
+                            }`}
+                            value={filtroArquitecto}
+                            onChange={(e) => {
+                              setFiltroArquitecto(e.target.value)
+                              if (arquitectoSeleccionado) {
+                                setArquitectoSeleccionado(null)
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  cuil_arquitecto: null,
+                                }))
+                              }
+                            }}
+                            disabled={isObraCancelada}
+                          />
+                          {isSearchingArquitecto && (
+                            <Loader2 className="absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 animate-spin text-indigo-600" />
+                          )}
 
-                {/* DATOS DE LA OBRA */}
-                <div className="space-y-4">
-                  <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <MapPin className="h-5 w-5" />
-                    Datos de la Obra
-                  </h3>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Provincia *
-                    </label>
-                    <select
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
-                      value={provinciaSeleccionada}
-                      onChange={(e) =>
-                        setProvinciaSeleccionada(
-                          e.target.value ? Number(e.target.value) : ''
-                        )
-                      }
-                      required
-                      disabled={isObraCancelada}
-                    >
-                      <option value="">Seleccione una provincia...</option>
-                      {provincias.map((prov) => (
-                        <option
-                          key={prov.cod_provincia}
-                          value={prov.cod_provincia}
-                        >
-                          {prov.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Localidad *
-                    </label>
-                    <select
-                      name="cod_localidad"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
-                      value={formData.cod_localidad || ''}
-                      onChange={handleChange}
-                      required
-                      disabled={isObraCancelada || !provinciaSeleccionada}
-                    >
-                      <option value="">Seleccione una localidad...</option>
-                      {localidades.map((loc) => (
-                        <option
-                          key={loc.cod_localidad}
-                          value={loc.cod_localidad}
-                        >
-                          {loc.nombre_localidad}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Dirección *
-                    </label>
-                    <input
-                      name="direccion"
-                      type="text"
-                      placeholder="Ingrese la dirección"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
-                      value={formData.direccion}
-                      onChange={handleChange}
-                      required
-                      disabled={isObraCancelada}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Fecha Inicio *
-                    </label>
-                    <input
-                      name="fecha_ini"
-                      type="date"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-gray-400"
-                      value={formData.fecha_ini}
-                      onChange={handleChange}
-                      required
-                      disabled={isObraCancelada}
-                    />
-                  </div>
-                </div>
-
-                {/* PRESUPUESTOS */}
-                <div className="space-y-4">
-                  <h3 className="mb-9 flex items-center gap-2 text-lg font-semibold text-blue-800">
-                    <FileText className="h-5 w-5" />
-                    Historial de Presupuestos
-                  </h3>
-                  <div className="flex flex-col space-y-3 rounded-lg border bg-gray-50 p-4">
-                    {presupuestos.length === 0 ? (
-                      <div className="flex flex-1 flex-col items-center justify-center text-center">
-                        <FileText className="mb-2 h-10 w-10 text-gray-400" />
-                        <p className="text-sm text-gray-500">
-                          Aún no se han agregado presupuestos.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="max-h-80 space-y-2 overflow-y-auto pr-2">
-                        {presupuestos.map((p, index) => (
-                          <div
-                            key={p.nro_presupuesto || index}
-                            className="flex items-center justify-between rounded-md border bg-white p-3 shadow-sm"
-                          >
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                Valor: ${p.valor.toLocaleString('es-AR')}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Emisión:{' '}
-                                {new Date(p.fecha_emision).toLocaleDateString(
-                                  'es-AR',
-                                  { timeZone: 'UTC' }
-                                )}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenModalParaEditar(p)}
-                              className="p-1 text-blue-600 hover:text-blue-800 disabled:cursor-not-allowed disabled:text-gray-400"
-                              disabled={isObraCancelada}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
+                          {/* Dropdown Arquitecto */}
+                          {arquitectosEncontrados.length > 0 &&
+                            !arquitectoSeleccionado && (
+                              <div className="animate-in fade-in zoom-in-95 absolute z-[100] mt-1 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl duration-200">
+                                {arquitectosEncontrados.map((cliente) => (
+                                  <button
+                                    key={cliente.cuil}
+                                    type="button"
+                                    className="flex w-full items-center border-b border-slate-50 p-3 text-left transition-colors last:border-0 hover:bg-slate-50"
+                                    onClick={() =>
+                                      handleArquitectoSelect(cliente)
+                                    }
+                                  >
+                                    <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                                      <User className="h-4 w-4" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-sm leading-none font-semibold text-slate-900">
+                                        {`${cliente.nombre || ''} ${cliente.apellido || ''}`.trim()}
+                                      </p>
+                                      <p className="mt-1 text-[11px] font-medium text-slate-500">
+                                        CUIL: {cliente.cuil}
+                                      </p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                        {arquitectoSeleccionado && (
+                          <div className="animate-in fade-in slide-in-from-top-1 flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
+                            <span className="mr-2 truncate text-[11px] font-bold text-indigo-700">
+                              {`${arquitectoSeleccionado.nombre} ${arquitectoSeleccionado.apellido}`}
+                            </span>
+                            <div className="h-2 w-2 shrink-0 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/40" />
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleOpenModalParaCrear}
-                      className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2.5 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:text-gray-400"
-                      disabled={isObraCancelada || hayPresupuestoAceptado}
-                      title={
-                        hayPresupuestoAceptado
-                          ? 'Ya existe un presupuesto aceptado para esta obra'
-                          : ''
-                      }
-                    >
-                      <Plus className="h-5 w-5" />
-                      {esModoEdicion
-                        ? 'Agregar Nuevo Presupuesto'
-                        : 'Agregar Presupuesto'}
-                    </button>
+
+                      <div className="pt-4">
+                        <Link
+                          href="/ventas/clientes/crear"
+                          target="_blank"
+                          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-blue-600 transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-95"
+                        >
+                          <Plus className="h-4 w-4" />
+                          REGISTRAR NUEVO PERFIL
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* COLUMNA 2: UBICACIÓN */}
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-2">
+                      <MapPin className="h-6 w-6 text-blue-600" />
+                      <h3 className="text-lg font-bold text-slate-800">
+                        Ubicación de la Obra
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-2">
+                        <label className="block pl-1 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                          Provincia
+                        </label>
+                        <select
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50"
+                          value={provinciaSeleccionada}
+                          onChange={(e) =>
+                            setProvinciaSeleccionada(
+                              e.target.value ? Number(e.target.value) : ''
+                            )
+                          }
+                          required
+                          disabled={isObraCancelada}
+                        >
+                          <option value="">Seleccione...</option>
+                          {provincias.map((prov) => (
+                            <option
+                              key={prov.cod_provincia}
+                              value={prov.cod_provincia}
+                            >
+                              {prov.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block pl-1 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                          Localidad
+                        </label>
+                        <select
+                          name="cod_localidad"
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50"
+                          value={formData.cod_localidad || ''}
+                          onChange={handleChange}
+                          required
+                          disabled={isObraCancelada || !provinciaSeleccionada}
+                        >
+                          <option value="">Seleccione...</option>
+                          {localidades.map((loc) => (
+                            <option
+                              key={loc.cod_localidad}
+                              value={loc.cod_localidad}
+                            >
+                              {loc.nombre_localidad}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block pl-1 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                          Dirección Exacta
+                        </label>
+                        <div className="group relative">
+                          <MapPin className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500" />
+                          <input
+                            name="direccion"
+                            type="text"
+                            placeholder="Calle, Altura, Departamento..."
+                            className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10"
+                            value={formData.direccion}
+                            onChange={handleChange}
+                            required
+                            disabled={isObraCancelada}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block pl-1 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                          Fecha de Inicio
+                        </label>
+                        <div className="group relative">
+                          <Calendar className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-blue-500" />
+                          <input
+                            name="fecha_ini"
+                            type="date"
+                            className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10"
+                            value={formData.fecha_ini}
+                            onChange={handleChange}
+                            required
+                            disabled={isObraCancelada}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* COLUMNA 3: PRESUPUESTOS */}
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between border-b-2 border-slate-50 pb-2">
+                      <div className="flex items-center gap-3">
+                        <Layers className="h-6 w-6 text-emerald-500" />
+                        <h3 className="text-lg font-bold text-slate-800">
+                          Presupuestos
+                        </h3>
+                      </div>
+                      <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-bold tracking-tighter text-slate-600 uppercase">
+                        {presupuestos.length} Items
+                      </span>
+                    </div>
+
+                    <div className="relative flex h-[360px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/50 p-4 shadow-inner">
+                      <div className="scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300 flex-1 space-y-3 overflow-y-auto pr-2">
+                        {presupuestos.length === 0 ? (
+                          <div className="flex h-full flex-col items-center justify-center space-y-4 p-6 text-center">
+                            <div className="rounded-full bg-white p-4 text-slate-200 shadow-sm">
+                              <FileText className="h-10 w-10" />
+                            </div>
+                            <p className="text-[13px] font-semibold text-slate-400">
+                              Sin presupuestos activos
+                            </p>
+                          </div>
+                        ) : (
+                          presupuestos.map((p, idx) => (
+                            <div
+                              key={p.nro_presupuesto || idx}
+                              className="group animate-in zoom-in-95 flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-emerald-200 hover:shadow-md"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-[15px] leading-tight font-bold text-slate-900">
+                                  ${p.valor.toLocaleString()}
+                                </p>
+                                <p className="mt-1 text-[10px] font-bold tracking-tighter text-slate-400 uppercase">
+                                  Emitido:{' '}
+                                  {new Date(
+                                    p.fecha_emision
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenModalParaEditar(p)}
+                                className="rounded-xl p-2.5 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+                                disabled={isObraCancelada}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="mt-4">
+                        <button
+                          type="button"
+                          onClick={handleOpenModalParaCrear}
+                          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-xl transition-all hover:bg-emerald-700 active:scale-[0.97] disabled:opacity-50 disabled:grayscale"
+                          disabled={isObraCancelada || hayPresupuestoAceptado}
+                        >
+                          <Plus className="h-4 w-4" />
+                          NUEVO PRESUPUESTO
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-8 flex gap-4 border-t border-gray-200 pt-6">
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="flex-1 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 rounded-lg bg-blue-600 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isObraCancelada || isSubmitting}
-                >
-                  {isSubmitting
-                    ? 'Guardando...'
-                    : esModoEdicion
-                      ? 'Guardar Cambios'
-                      : 'Crear Obra'}
-                </button>
-              </div>
-            </form>
+                {/* ACCIONES FINALES */}
+                <div className="flex flex-col items-center gap-4 border-t-2 border-slate-50 pt-10 sm:flex-row lg:gap-6">
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-10 py-4 text-xs font-bold text-slate-500 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 sm:w-auto"
+                    disabled={isSubmitting}
+                  >
+                    DESCARTAR CAMBIOS
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-full rounded-2xl bg-blue-600 py-4 text-sm font-bold text-white shadow-2xl shadow-blue-500/30 transition-all hover:translate-y-[-2px] hover:bg-blue-700 active:translate-y-0 active:scale-[0.98] disabled:translate-y-0 disabled:opacity-50 sm:flex-1"
+                    disabled={isObraCancelada || isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        GUARDANDO PROGRESO...
+                      </span>
+                    ) : esModoEdicion ? (
+                      'ACTUALIZAR PROYECTO'
+                    ) : (
+                      'CREAR OBRA Y REGISTRAR'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
