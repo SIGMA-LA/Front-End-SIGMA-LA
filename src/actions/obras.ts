@@ -53,10 +53,10 @@ export async function getObras(filter?: string): Promise<Obra[]> {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 30, tags: ['obras'] },
+      next: { revalidate: 0, tags: ['obras'] },
     })
     const data = await res.json()
-    return Array.isArray(data) ? data : []
+    return Array.isArray(data) ? data : (data.data || [])
   } catch (error) {
     console.error('[getObras]', error)
     return []

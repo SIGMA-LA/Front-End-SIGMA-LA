@@ -70,7 +70,8 @@ export async function getEmpleadosDisponiblesEntrega(): Promise<Empleado[]> {
         next: { revalidate: 30, tags: ['empleados', 'disponibles-entrega'] },
       }
     )
-    return await res.json()
+    const result = await res.json()
+    return Array.isArray(result) ? result : (result.data || [])
   } catch (error) {
     console.error('[getEmpleadosDisponiblesEntrega]', error)
     return []
