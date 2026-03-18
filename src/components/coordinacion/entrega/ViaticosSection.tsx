@@ -24,13 +24,15 @@ export default function ViaticosSection({
   const totalPersonas = (hayEncargado ? 1 : 0) + numAcompanantes
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <h3 className="mb-4 font-semibold text-gray-900">Viáticos</h3>
-
-      <div className="mb-4">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          Días de viático
-        </label>
+    <div>
+      <label className="mb-3 block text-sm font-medium text-gray-700">
+        Gastos y Viáticos Asignados
+      </label>
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Cantidad de Días requeridos
+          </label>
         <input
           type="number"
           min="0"
@@ -51,6 +53,7 @@ export default function ViaticosSection({
           </p>
         </div>
       )}
+      </div>
     </div>
   )
 }

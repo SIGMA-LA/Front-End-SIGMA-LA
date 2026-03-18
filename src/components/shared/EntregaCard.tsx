@@ -128,12 +128,6 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
             </div>
           )}
 
-          {entrega.observaciones && (
-            <p className="mb-3 text-sm text-gray-600">
-              Obs: {entrega.observaciones}
-            </p>
-          )}
-
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowModal(true)}

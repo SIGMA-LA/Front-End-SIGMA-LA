@@ -66,6 +66,11 @@ export default function CrearEntregaForm({
     return diasViaticos * totalPersonas * viaticoPorDia
   }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
 
+  const buscarObrasPagadas = async (query: string) => {
+    const obras = await getObras(query)
+    return obras.filter((o) => o.estado === 'PAGADA TOTALMENTE')
+  }
+
   const getEmpleadoNombre = (cuil: string) => {
     const emp = empleados.find((e) => e.cuil === cuil)
     return emp ? `${emp.nombre} ${emp.apellido}` : cuil
@@ -191,13 +196,15 @@ export default function CrearEntregaForm({
               {!isFromObra && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Obra *
+                    Obra programada *
                   </label>
                   {formData.direccion ? (
-                    <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                      <p className="font-medium text-green-900">
-                        {formData.direccion}
-                      </p>
+                    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">
+                          {formData.direccion}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() =>
@@ -207,15 +214,15 @@ export default function CrearEntregaForm({
                             direccion: '',
                           }))
                         }
-                        className="mt-2 text-sm text-green-700 hover:text-green-900"
+                        className="flex-shrink-0 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
                       >
-                        Cambiar obra
+                        Modificar obra
                       </button>
                     </div>
                   ) : (
                     <ObraSearchSelect
                       onSelectObra={handleObraSelect}
-                      buscarObras={getObras}
+                      buscarObras={buscarObrasPagadas}
                       placeholder="Buscar obra por dirección o cliente..."
                     />
                   )}
@@ -246,7 +253,7 @@ export default function CrearEntregaForm({
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                   placeholder="Descripción de los elementos a entregar..."
                   required
                 />
