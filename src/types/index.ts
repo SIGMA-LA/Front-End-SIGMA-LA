@@ -110,6 +110,7 @@ export interface Obra {
   cod_obra: number
   cod_localidad: number
   cuil_cliente: string
+  cuil_arquitecto?: string
   estado:
     | 'EN ESPERA DE PAGO'
     | 'PAGADA PARCIALMENTE'
@@ -121,6 +122,7 @@ export interface Obra {
     | 'CANCELADA'
   direccion: string
   cliente: Cliente
+  arquitecto?: Cliente | null
   nota_fabrica?: string
   nota_fabrica_pid?: string
   fecha_ini: string

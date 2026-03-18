@@ -217,22 +217,30 @@ export async function getNotasConOrdenEnProceso(): Promise<Obra[]> {
 /**
  * Creates a new obra
  * @param {any} obraData - Obra data
- * @param {any[]} presupuestos - Presupuestos array
+ * @param {any} presupuesto - Presupuesto object (optional)
  * @returns {Promise<Obra>} Created obra
  */
 export async function createObra(
   obraData: any,
-  presupuestos: any[] = []
+  presupuesto: any = null
 ): Promise<Obra> {
   try {
     const token = await getAccessToken()
+    const payload = { ...obraData }
+
+    if (presupuesto) {
+      payload.presupuesto = {
+        create: presupuesto,
+      }
+    }
+
     const res = await fetchWithErrorHandling(BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ...obraData, presupuestos }),
+      body: JSON.stringify(payload),
     })
     const data = await res.json()
     revalidatePath('/ventas/obras')
