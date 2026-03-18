@@ -362,7 +362,7 @@ export default function CrearObra({
         <div className="mx-auto max-w-7xl">
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
             {/* HEADER */}
-            <div className="border-b border-slate-100 bg-gradient-to-r from-blue-600 to-indigo-600 px-10 py-8 text-white">
+            <div className="border-b border-slate-100 bg-blue-600 px-10 py-8 text-white">
               <div className="flex items-center gap-5">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-inner backdrop-blur-md">
                   <Home className="h-7 w-7 text-white" />
@@ -675,9 +675,6 @@ export default function CrearObra({
                           Presupuestos
                         </h3>
                       </div>
-                      <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[10px] font-bold tracking-tighter text-slate-600 uppercase">
-                        {presupuestos.length} Items
-                      </span>
                     </div>
 
                     <div className="relative flex h-[360px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/50 p-4 shadow-inner">

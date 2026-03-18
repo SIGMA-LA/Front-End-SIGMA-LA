@@ -68,19 +68,23 @@ export async function getCliente(cuil: string): Promise<Cliente | null> {
  * @returns {Promise<{success: boolean, data?: Cliente, error?: string}>} Operation result
  */
 export async function createCliente(
-  formData: FormData
+  formData: FormData | any
 ): Promise<{ success: boolean; error?: string; data?: Cliente }> {
   try {
     const token = await getAccessToken()
-    const raw = Object.fromEntries(formData.entries()) as Record<
-      string,
-      FormDataEntryValue
-    >
+
+    // Si ya es un objeto plano (desde useActionState), lo usamos directamente
+    const raw =
+      formData instanceof FormData
+        ? Object.fromEntries(formData.entries())
+        : formData
 
     const clienteData: Record<string, string> = {}
     for (const [key, val] of Object.entries(raw)) {
       if (typeof val === 'string') {
         clienteData[key] = val.trim()
+      } else if (val !== null && val !== undefined) {
+        clienteData[key] = String(val).trim()
       }
     }
 
