@@ -67,8 +67,7 @@ export default function CrearEntregaForm({
   }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
 
   const buscarObrasPagadas = async (query: string) => {
-    const obras = await getObras(query)
-    return obras.filter((o) => o.estado === 'PAGADA TOTALMENTE')
+    return await getObras(query)
   }
 
   const getEmpleadoNombre = (cuil: string) => {
