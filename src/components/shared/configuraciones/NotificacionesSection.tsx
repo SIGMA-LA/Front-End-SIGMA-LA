@@ -9,11 +9,12 @@ interface NotificacionesSectionProps {
     vencimientos: boolean;
   };
   onChange: (field: string, value: boolean) => void;
+  disabled?: boolean;
 }
 
-export function NotificacionesSection({ notificaciones, onChange }: NotificacionesSectionProps) {
+export function NotificacionesSection({ notificaciones, onChange, disabled }: NotificacionesSectionProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className={`rounded-xl border border-gray-200 bg-white shadow-sm ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
       <div className="border-b border-gray-200 p-6">
         <div className="flex items-center space-x-3">
           <div className="rounded-lg bg-green-100 p-2">
@@ -31,7 +32,8 @@ export function NotificacionesSection({ notificaciones, onChange }: Notificacion
             type="checkbox"
             checked={notificaciones.email}
             onChange={(e) => onChange('email', e.target.checked)}
-            className="rounded text-blue-600 focus:ring-blue-500"
+            disabled={disabled}
+            className="rounded text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
           />
         </label>
         <label className="flex cursor-pointer items-center justify-between">
@@ -40,7 +42,8 @@ export function NotificacionesSection({ notificaciones, onChange }: Notificacion
             type="checkbox"
             checked={notificaciones.visitas}
             onChange={(e) => onChange('visitas', e.target.checked)}
-            className="rounded text-blue-600 focus:ring-blue-500"
+            disabled={disabled}
+            className="rounded text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
           />
         </label>
         <label className="flex cursor-pointer items-center justify-between">
@@ -49,7 +52,8 @@ export function NotificacionesSection({ notificaciones, onChange }: Notificacion
             type="checkbox"
             checked={notificaciones.entregas}
             onChange={(e) => onChange('entregas', e.target.checked)}
-            className="rounded text-blue-600 focus:ring-blue-500"
+            disabled={disabled}
+            className="rounded text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
           />
         </label>
         <label className="flex cursor-pointer items-center justify-between">
@@ -58,7 +62,8 @@ export function NotificacionesSection({ notificaciones, onChange }: Notificacion
             type="checkbox"
             checked={notificaciones.vencimientos}
             onChange={(e) => onChange('vencimientos', e.target.checked)}
-            className="rounded text-blue-600 focus:ring-blue-500"
+            disabled={disabled}
+            className="rounded text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
           />
         </label>
       </div>
