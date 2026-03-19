@@ -19,6 +19,8 @@ interface CreateEntregaData {
     cuil: string
     rol_entrega: string
   }>
+  vehiculos?: string[]
+  maquinarias?: string[] | number[]
 }
 
 interface UpdateEntregaData {
@@ -27,6 +29,8 @@ interface UpdateEntregaData {
   observaciones?: string
   dias_viaticos?: number
   estado?: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+  vehiculos?: string[]
+  maquinarias?: string[] | number[]
 }
 
 /**
@@ -55,7 +59,13 @@ export async function getEntregasByEmpleado(
         },
       }
     )
-    return await res.json()
+    const entregas = await res.json()
+    return entregas.map((e: any) => ({
+      ...e,
+      empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
+      vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
+      maquinarias: e.uso_maquinaria || e.maquinarias || []
+    }))
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
     return []
@@ -80,6 +90,12 @@ export async function getEntregas(filter?: string): Promise<Entrega[]> {
     })
 
     let entregas: Entrega[] = await res.json()
+    entregas = entregas.map((e: any) => ({
+      ...e,
+      empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
+      vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
+      maquinarias: e.uso_maquinaria || e.maquinarias || []
+    }))
 
     // Client-side filtering if needed
     if (filter?.trim()) {
@@ -139,7 +155,17 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
       },
       next: { revalidate: 30, tags: [`entrega-${id}`] },
     })
-    return await res.json()
+    
+    let data = await res.json()
+    if (data) {
+      data = {
+        ...data,
+        empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+        vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
+        maquinarias: data.uso_maquinaria || data.maquinarias || []
+      }
+    }
+    return data
   } catch (error) {
     console.error('[getEntrega]', error)
     return null
@@ -232,15 +258,32 @@ export async function createEntrega(
   entregaData: CreateEntregaData
 ): Promise<Entrega> {
   const token = await getAccessToken()
+  const payload = {
+    ...entregaData,
+    empleados: entregaData.empleados_asignados,
+    estado: 'PENDIENTE',
+    maquinarias: entregaData.maquinarias?.map(m => Number(m)),
+  }
+
   const res = await fetchWithErrorHandling(BASE_URL, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(entregaData),
+    body: JSON.stringify(payload),
   })
-  return await res.json()
+  
+  let data = await res.json()
+  if (data) {
+    data = {
+      ...data,
+      empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+      vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
+      maquinarias: data.uso_maquinaria || data.maquinarias || []
+    }
+  }
+  return data
 }
 
 /**
@@ -254,15 +297,29 @@ export async function updateEntrega(
   entregaData: UpdateEntregaData
 ): Promise<Entrega> {
   const token = await getAccessToken()
+  const payload = {
+    ...entregaData,
+    maquinarias: entregaData.maquinarias?.map(m => Number(m)),
+  }
+
   const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(entregaData),
+    body: JSON.stringify(payload),
   })
-  return await res.json()
+  let data = await res.json()
+  if (data) {
+    data = {
+      ...data,
+      empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+      vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
+      maquinarias: data.uso_maquinaria || data.maquinarias || []
+    }
+  }
+  return data
 }
 
 /**
@@ -290,6 +347,10 @@ export async function createEntregaFromForm(formData: FormData) {
     const empleadosAsignados = JSON.parse(
       (formData.get('empleados_asignados') as string) || '[]'
     )
+    const vehiculosData = formData.get('vehiculos')
+    const vehiculos = vehiculosData ? JSON.parse(vehiculosData as string) : undefined
+    const maquinariasData = formData.get('maquinarias')
+    const maquinarias = maquinariasData ? JSON.parse(maquinariasData as string) : undefined
 
     const entregaData: CreateEntregaData = {
       cod_obra: Number(formData.get('cod_obra')),
@@ -300,6 +361,8 @@ export async function createEntregaFromForm(formData: FormData) {
         ? Number(formData.get('dias_viaticos'))
         : undefined,
       empleados_asignados: empleadosAsignados,
+      vehiculos,
+      maquinarias,
     }
 
     await createEntrega(entregaData)
@@ -319,6 +382,10 @@ export async function createEntregaFromForm(formData: FormData) {
 export async function updateEntregaFromForm(formData: FormData) {
   try {
     const codEntrega = Number(formData.get('cod_entrega'))
+    const vehiculosData = formData.get('vehiculos')
+    const vehiculos = vehiculosData ? JSON.parse(vehiculosData as string) : undefined
+    const maquinariasData = formData.get('maquinarias')
+    const maquinarias = maquinariasData ? JSON.parse(maquinariasData as string) : undefined
 
     const entregaData: UpdateEntregaData = {
       fecha_hora_entrega: formData.get('fecha_hora_entrega') as string,
@@ -327,6 +394,8 @@ export async function updateEntregaFromForm(formData: FormData) {
       dias_viaticos: formData.get('dias_viaticos')
         ? Number(formData.get('dias_viaticos'))
         : undefined,
+      vehiculos,
+      maquinarias,
     }
 
     await updateEntrega(codEntrega, entregaData)

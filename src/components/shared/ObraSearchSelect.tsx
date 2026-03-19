@@ -23,17 +23,13 @@ export default function ObraSearchSelect({
 
   useEffect(() => {
     const fetchObras = async () => {
-      if (!debouncedFiltro.trim()) {
-        setObras([])
-        setShowResults(false)
-        return
-      }
-
       setLoading(true)
       try {
         const resultados = await buscarObras(debouncedFiltro.trim())
         setObras(resultados)
-        setShowResults(true)
+        if (debouncedFiltro.trim()) {
+          setShowResults(true)
+        }
       } catch (error) {
         console.error('Error al buscar obras:', error)
         setObras([])
@@ -61,7 +57,8 @@ export default function ObraSearchSelect({
           placeholder={placeholder}
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          onFocus={() => filtro && setShowResults(true)}
+          onFocus={() => setShowResults(true)}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
           className="w-full rounded-lg border border-gray-300 py-2 pr-3 pl-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
         {loading && (
@@ -102,9 +99,9 @@ export default function ObraSearchSelect({
         </div>
       )}
 
-      {showResults && !loading && filtro && obras.length === 0 && (
+      {showResults && !loading && obras.length === 0 && (
         <div className="absolute z-20 mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-center text-sm text-gray-500 shadow-lg">
-          No se encontraron obras con "{filtro}"
+          {filtro ? `No se encontraron obras con "${filtro}"` : 'No hay obras disponibles para seleccionar'}
         </div>
       )}
     </div>

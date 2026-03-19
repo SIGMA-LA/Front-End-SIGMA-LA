@@ -66,6 +66,10 @@ export default function CrearEntregaForm({
     return diasViaticos * totalPersonas * viaticoPorDia
   }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
 
+  const buscarObrasPagadas = async (query: string) => {
+    return await getObras(query)
+  }
+
   const getEmpleadoNombre = (cuil: string) => {
     const emp = empleados.find((e) => e.cuil === cuil)
     return emp ? `${emp.nombre} ${emp.apellido}` : cuil
@@ -131,10 +135,16 @@ export default function CrearEntregaForm({
       }
 
       startTransition(async () => {
-        await createEntrega(entregaData)
+        try {
+          await createEntrega(entregaData)
+          router.push('/coordinacion/entregas')
+          router.refresh()
+        } catch (err: any) {
+          setError(err.message || 'Error al crear la entrega')
+        }
       })
     } catch (err: any) {
-      setError(err.message || 'Error al crear la entrega')
+      setError(err.message || 'Error de validación antes de crear la entrega')
     }
   }
 
@@ -165,8 +175,19 @@ export default function CrearEntregaForm({
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             {error && (
               <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-                <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-600" />
-                <p className="text-sm text-red-800">{error}</p>
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-600" />
+                <div className="text-sm text-red-800">
+                  {error.split('\n').map((line, idx, arr) => (
+                    <p 
+                      key={idx} 
+                      className={arr.length > 1 && idx > 0 
+                        ? "mt-2 relative pl-3.5 before:absolute before:left-0 before:top-2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500" 
+                        : "font-medium"}
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -174,13 +195,15 @@ export default function CrearEntregaForm({
               {!isFromObra && (
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Obra *
+                    Obra programada *
                   </label>
                   {formData.direccion ? (
-                    <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                      <p className="font-medium text-green-900">
-                        {formData.direccion}
-                      </p>
+                    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4">
+                      <div className="text-sm">
+                        <span className="font-medium text-gray-700">
+                          {formData.direccion}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() =>
@@ -190,15 +213,15 @@ export default function CrearEntregaForm({
                             direccion: '',
                           }))
                         }
-                        className="mt-2 text-sm text-green-700 hover:text-green-900"
+                        className="flex-shrink-0 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
                       >
-                        Cambiar obra
+                        Modificar obra
                       </button>
                     </div>
                   ) : (
                     <ObraSearchSelect
                       onSelectObra={handleObraSelect}
-                      buscarObras={getObras}
+                      buscarObras={buscarObrasPagadas}
                       placeholder="Buscar obra por dirección o cliente..."
                     />
                   )}
@@ -229,7 +252,7 @@ export default function CrearEntregaForm({
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                   placeholder="Descripción de los elementos a entregar..."
                   required
                 />

@@ -14,7 +14,14 @@ export async function fetchWithErrorHandling(
     if (!res.ok) {
       if (res.status === 401) throw new Error('Unauthorized')
       if (res.status === 404) throw new Error('Not found')
-      throw new Error(`HTTP ${res.status}`)
+      let errorMsg = `HTTP ${res.status}`
+      try {
+        const errorData = await res.json()
+        errorMsg = errorData.message || errorData.error || errorMsg
+      } catch (_) {
+        // Ignore parsing errors for non-JSON responses
+      }
+      throw new Error(errorMsg)
     }
     return res
   } catch (err: any) {

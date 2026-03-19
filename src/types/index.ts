@@ -81,8 +81,9 @@ export interface Entrega {
   observaciones?: string
   detalle: string
   empleados_asignados: EntregaEmpleado[]
-  maquinarias_usadas?: MaquinariaSimple[]
-  vehiculos_usados?: UsoVehiculoEntrega[]
+  maquinarias?: any[] // Support both flattened and nested
+  vehiculos?: any[]
+
   dias_viaticos?: number
   orden_de_produccion?: OrdenProduccion
 }
