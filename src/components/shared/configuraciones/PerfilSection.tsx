@@ -48,7 +48,7 @@ export function PerfilSection({ perfil, onChange, disabled }: PerfilSectionProps
             type="text"
             value={perfil.cuil}
             onChange={(e) => onChange('cuil', e.target.value)}
-            disabled={disabled}
+            disabled={true}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
         </div>

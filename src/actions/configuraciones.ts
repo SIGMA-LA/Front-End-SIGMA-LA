@@ -5,9 +5,9 @@ import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
-const BASE_URL = API_URL.endsWith('/configuraciones')
+const BASE_URL = API_URL.endsWith('/empleados/configuraciones')
   ? API_URL
-  : `${API_URL}/configuraciones`
+  : `${API_URL}/empleados/configuraciones`
 
 export interface PerfilFormData {
   nombre: string;
@@ -30,7 +30,9 @@ export async function getPerfilConfig(): Promise<PerfilFormData> {
       },
       next: { revalidate: 30, tags: ['configuraciones-perfil'] },
     })
-    return await res.json()
+    const response = await res.json()
+    // Tu backend devuelve { success: true, data: { nombre, apellido, cuil } }
+    return response.data || response
   } catch (error) {
     console.error('[getPerfilConfig]', error)
     throw error
@@ -55,7 +57,7 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
     })
     
     // Dependiendo de si tu backend retorna un JSON de respuesta o solo un 200/204
-    let result = {}
+    let result: any = {}
     if (res.status !== 204) {
       try {
         result = await res.json()
@@ -67,7 +69,10 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
     // Revalidad la ruta donde están las configuraciones
     revalidatePath('/configuraciones')
     
-    return (Object.keys(result).length > 0 ? result : data) as PerfilFormData
+    // Extraer la data del wrapper { success, data } si existe
+    const returnedData = result.data ? result.data : result
+
+    return (Object.keys(returnedData).length > 0 ? returnedData : data) as PerfilFormData
   } catch (error) {
     console.error('[updatePerfilConfig]', error)
     throw error
