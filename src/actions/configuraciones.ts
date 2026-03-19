@@ -78,3 +78,35 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
     throw error
   }
 }
+
+/**
+ * Cambia la contraseña del usuario
+ */
+export async function changePasswordConfig(currentPass: string, newPass: string): Promise<any> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/password`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
+    })
+    
+    if (res.status === 204) return { success: true }
+    return await res.json()
+  } catch (error: any) {
+    console.error('[changePasswordConfig]', error)
+    // Extraer el mensaje del error que arroja fetchWithErrorHandling
+    if (error.message) {
+      try {
+        const errorData = JSON.parse(error.message)
+        throw new Error(errorData.message || 'Error al cambiar la contraseña')
+      } catch (e) {
+        throw new Error(error.message)
+      }
+    }
+    throw error
+  }
+}
