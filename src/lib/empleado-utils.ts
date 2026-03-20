@@ -1,3 +1,5 @@
+import type { RolEmpleado, AreaTrabajo } from '@/types'
+
 export const ROLES_VALIDOS = [
   { value: 'VENTAS', label: 'Ventas' },
   { value: 'ADMIN', label: 'Administrador' },
@@ -21,11 +23,11 @@ export const AREAS_VALIDAS = [
   { value: 'FINANZAS', label: 'Finanzas' },
 ] as const
 
-export const getRolLabel = (rol: string) => {
+export const getRolLabel = (rol: RolEmpleado) => {
   return ROLES_VALIDOS.find((r) => r.value === rol)?.label || rol
 }
 
-export const getAreaLabel = (area: string) => {
+export const getAreaLabel = (area: AreaTrabajo) => {
   return AREAS_VALIDAS.find((a) => a.value === area)?.label || area
 }
 

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Visita, VisitaFormData } from '@/types'
+import type { Visita, VisitaFormData, MotivoVisita } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/visitas') ? API_URL : `${API_URL}/visitas`
@@ -264,7 +264,7 @@ export async function createVisitaFromForm(formData: FormData) {
   try {
     const visitaData: VisitaFormData = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
-      motivo_visita: formData.get('tipo') as string,
+      motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
       cod_obra: formData.get('obraId') ? Number(formData.get('obraId')) : null,
@@ -299,7 +299,7 @@ export async function updateVisitaFromForm(formData: FormData) {
 
     const visitaData: Partial<VisitaFormData> = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
-      motivo_visita: formData.get('tipo') as string,
+      motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
       cod_obra: formData.get('obraId') ? Number(formData.get('obraId')) : null,

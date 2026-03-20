@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Truck, AlertCircle } from 'lucide-react'
 import { createEntrega } from '@/actions/entregas'
 import { getObras } from '@/actions/obras'
-import type { Obra, Empleado, Vehiculo, Maquinaria } from '@/types'
+import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega } from '@/types'
 
 // Componentes
 import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
@@ -115,10 +115,10 @@ export default function CrearEntregaForm({
 
     try {
       const empleados_asignados = [
-        { cuil: encargado, rol_entrega: 'ENCARGADO' },
+        { cuil: encargado, rol_entrega: 'ENCARGADO' as RolEntrega },
         ...acompanantes.map((cuil) => ({
           cuil,
-          rol_entrega: 'ACOMPANANTE',
+          rol_entrega: 'ACOMPANANTE' as RolEntrega,
         })),
       ]
 

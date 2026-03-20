@@ -4,7 +4,13 @@ import { revalidatePath } from 'next/cache'
 import { cache } from 'react'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Obra, CreateObraInput, UpdateObraInput, PresupuestoInput } from '@/types'
+import type {
+  Obra,
+  CreateObraInput,
+  UpdateObraInput,
+  PresupuestoInput,
+  EstadoObra,
+} from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/obras') ? API_URL : `${API_URL}/obras`
@@ -74,7 +80,7 @@ export async function filterObras({
   estado,
   cod_localidad,
 }: {
-  estado?: string
+  estado?: EstadoObra
   cod_localidad?: number
 }): Promise<Obra[]> {
   try {

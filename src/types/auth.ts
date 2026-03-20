@@ -19,16 +19,16 @@ export interface CreateEmpleadoData {
   cuil: string
   nombre: string
   apellido: string
-  rol_actual: string
-  area_trabajo: string
+  rol_actual: RolEmpleado
+  area_trabajo: AreaTrabajo
   contrasenia?: string
 }
 
 export interface UpdateEmpleadoData {
   nombre?: string
   apellido?: string
-  rol_actual?: string
-  area_trabajo?: string
+  rol_actual?: RolEmpleado
+  area_trabajo?: AreaTrabajo
   contrasenia?: string
 }
 
@@ -36,7 +36,8 @@ export interface Empleado {
   cuil: string
   nombre: string
   apellido: string
-  rol_actual: string
-  area_trabajo: string
+  rol_actual: RolEmpleado
+  area_trabajo: AreaTrabajo
   contrasenia?: string
 }
+

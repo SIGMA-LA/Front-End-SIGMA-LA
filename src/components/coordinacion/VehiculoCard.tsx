@@ -11,14 +11,18 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
-import { Vehiculo } from '@/types'
+import { Vehiculo, VehiculoEstado } from '@/types'
 
 interface VehiculoCardProps {
   vehiculo: Vehiculo
-  onToggleEstado: (patente: string, estadoActual: string) => Promise<void>
+  onToggleEstado: (
+    patente: string,
+    estadoActual: VehiculoEstado
+  ) => Promise<void>
   onDelete: (patente: string) => Promise<void>
   isTogglingEstado: boolean
 }
+
 
 export default function VehiculoCard({
   vehiculo,
@@ -30,7 +34,7 @@ export default function VehiculoCard({
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const getEstadoIcon = (estado: string) => {
+  const getEstadoIcon = (estado: VehiculoEstado) => {
     switch (estado) {
       case 'DISPONIBLE':
         return <CheckCircle className="h-5 w-5 text-green-600" />
@@ -41,7 +45,7 @@ export default function VehiculoCard({
     }
   }
 
-  const getEstadoBadgeColor = (estado: string) => {
+  const getEstadoBadgeColor = (estado: VehiculoEstado) => {
     switch (estado) {
       case 'DISPONIBLE':
         return 'bg-green-100 text-green-800'

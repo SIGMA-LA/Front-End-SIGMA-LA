@@ -4,6 +4,7 @@ import { X, Upload, FileText, Trash2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
+import type { RolEmpleado } from '@/types'
 
 interface NotaFabricaModalProps {
   isOpen: boolean
@@ -11,7 +12,7 @@ interface NotaFabricaModalProps {
   notaUrl?: string | null
   codObra: number
   onUploadSuccess?: (url: string) => void
-  rolActual?: string
+  rolActual?: RolEmpleado | ''
   onDeleteClick?: () => void
 }
 

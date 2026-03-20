@@ -6,7 +6,13 @@ import { AlertTriangle, User, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
-import type { Empleado, CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
+import type {
+  Empleado,
+  CreateEmpleadoData,
+  UpdateEmpleadoData,
+  RolEmpleado,
+  AreaTrabajo,
+} from '@/types'
 import {
   ROLES_VALIDOS,
   AREAS_VALIDAS,
@@ -43,7 +49,14 @@ export default function EmpleadoFormulario({
   const router = useRouter()
   const isEdit = Boolean(empleado)
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    cuil: string
+    nombre: string
+    apellido: string
+    rol_actual: RolEmpleado
+    area_trabajo: AreaTrabajo
+    contrasenia: string
+  }>({
     cuil: '',
     nombre: '',
     apellido: '',
@@ -69,8 +82,8 @@ export default function EmpleadoFormulario({
         cuil: empleadoData.cuil ? formatCUIL(empleadoData.cuil) : '',
         nombre: empleadoData.nombre || '',
         apellido: empleadoData.apellido || '',
-        rol_actual: empleadoData.rol_actual || 'VENTAS',
-        area_trabajo: empleadoData.area_trabajo || 'VENTAS',
+        rol_actual: (empleadoData.rol_actual as RolEmpleado) || 'VENTAS',
+        area_trabajo: (empleadoData.area_trabajo as AreaTrabajo) || 'VENTAS',
         contrasenia: '',
       }
       console.log('Form data a setear:', newFormData)
@@ -131,7 +144,10 @@ export default function EmpleadoFormulario({
 
     try {
       const cuilLimpio = formData.cuil.replace(/\D/g, '')
-      const dataToSubmit: CreateEmpleadoData | UpdateEmpleadoData = { ...formData, cuil: cuilLimpio }
+      const dataToSubmit: CreateEmpleadoData | UpdateEmpleadoData = {
+        ...formData,
+        cuil: cuilLimpio,
+      } as CreateEmpleadoData | UpdateEmpleadoData
 
       if (!dataToSubmit.contrasenia || dataToSubmit.contrasenia.trim() === '') {
         const { contrasenia, ...dataWithoutPass } = dataToSubmit

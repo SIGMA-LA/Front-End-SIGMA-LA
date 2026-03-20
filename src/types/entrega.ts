@@ -20,15 +20,18 @@ export interface Entrega {
   orden_de_produccion?: OrdenProduccion
 }
 
+export type RolEntrega = 'ENCARGADO' | 'ACOMPANANTE'
+
 export interface EntregaEmpleado {
   cuil: string
   cod_obra: number
   cod_entrega: number
-  rol_entrega: string
+  rol_entrega: RolEntrega
   empleado: Empleado
   entrega: Entrega
   obra: Obra
 }
+
 
 export type EstadoOrdenProduccion = 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
 

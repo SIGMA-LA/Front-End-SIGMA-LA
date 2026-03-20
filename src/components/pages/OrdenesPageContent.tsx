@@ -3,7 +3,7 @@ import { Package, ClipboardList } from 'lucide-react'
 import { getOrdenesProduccion } from '@/actions/ordenes'
 import OrdenesProduccionContent from '@/components/coordinacion/orden_produccion/OrdenesProduccionContent'
 import SearchWrapper from '@/components/shared/SearchWrapper'
-import type { OrdenProduccion } from '@/types'
+import type { OrdenProduccion, EstadoOrdenProduccion } from '@/types'
 
 function OrdenesListSkeleton() {
   return (
@@ -42,12 +42,8 @@ async function OrdenesGrid({
   estado?: string
 }) {
   // Ajustamos el estado para que coincida con lo que espera la acción
-  const estadoFilter = estado as
-    | 'PENDIENTE'
-    | 'APROBADA'
-    | 'EN PRODUCCION'
-    | 'FINALIZADA'
-    | undefined
+  const estadoFilter = estado as EstadoOrdenProduccion | undefined
+
 
   const result = await getOrdenesProduccion(estadoFilter)
 

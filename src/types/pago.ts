@@ -1,4 +1,4 @@
-import type { Obra } from './obra'
+import type { Obra, EstadoObra } from './obra'
 import type { Cliente } from './cliente'
 
 export interface Pago {
@@ -28,7 +28,7 @@ export interface PagosFilter {
 export interface ObraConPresupuesto {
   cod_obra: number
   direccion: string
-  estado: string
+  estado: EstadoObra
   cliente: Cliente
   presupuesto: {
     nro_presupuesto: number

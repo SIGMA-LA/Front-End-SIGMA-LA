@@ -61,7 +61,10 @@ export default function VehiculosPageContent({
     return <VehiculosSkeleton />
   }
 
-  const handleToggleEstado = async (patente: string, estadoActual: string) => {
+  const handleToggleEstado = async (
+    patente: string,
+    estadoActual: VehiculoEstado
+  ) => {
     setTogglingEstado(patente)
     try {
       const nuevoEstado =

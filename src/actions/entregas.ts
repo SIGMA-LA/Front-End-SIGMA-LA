@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Entrega, EntregaEmpleado } from '@/types'
+import type { Entrega, EntregaEmpleado, EstadoEntrega, RolEntrega } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/entregas`
@@ -17,7 +17,7 @@ interface CreateEntregaData {
   dias_viaticos?: number
   empleados_asignados: Array<{
     cuil: string
-    rol_entrega: string
+    rol_entrega: RolEntrega
   }>
   vehiculos?: string[]
   maquinarias?: string[] | number[]
@@ -28,7 +28,7 @@ interface UpdateEntregaData {
   detalle?: string
   observaciones?: string
   dias_viaticos?: number
-  estado?: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+  estado?: EstadoEntrega
   vehiculos?: string[]
   maquinarias?: string[] | number[]
 }
@@ -36,12 +36,12 @@ interface UpdateEntregaData {
 /**
  * Retrieves deliveries for an employee filtered by status
  * @param {string} cuilEmpleado - Employee's CUIL identifier
- * @param {string} estado - Entrega status filter
+ * @param {EstadoEntrega} estado - Entrega status filter
  * @returns {Promise<EntregaEmpleado[]>} List of employee's deliveries
  */
 export async function getEntregasByEmpleado(
   cuilEmpleado: string,
-  estado: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+  estado: EstadoEntrega
 ): Promise<EntregaEmpleado[]> {
   try {
     const token = await getAccessToken()

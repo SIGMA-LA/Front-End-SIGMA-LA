@@ -22,6 +22,7 @@ export type {
   OrdenProduccion,
   EstadoEntrega,
   EstadoOrdenProduccion,
+  RolEntrega,
 } from './entrega'
 
 export type {
