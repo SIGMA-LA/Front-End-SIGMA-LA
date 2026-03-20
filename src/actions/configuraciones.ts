@@ -3,17 +3,14 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
+import type { PerfilFormData } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/empleados/configuraciones')
   ? API_URL
   : `${API_URL}/empleados/configuraciones`
 
-export interface PerfilFormData {
-  nombre: string;
-  apellido: string;
-  cuil: string;
-}
+
 
 /**
  * Obtiene la configuración de perfil del usuario
@@ -57,7 +54,7 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
     })
     
     // Dependiendo de si tu backend retorna un JSON de respuesta o solo un 200/204
-    let result: any = {}
+    let result: Record<string, unknown> = {}
     if (res.status !== 204) {
       try {
         result = await res.json()
@@ -82,7 +79,7 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
 /**
  * Cambia la contraseña del usuario
  */
-export async function changePasswordConfig(currentPass: string, newPass: string): Promise<any> {
+export async function changePasswordConfig(currentPass: string, newPass: string): Promise<Record<string, unknown>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(`${BASE_URL}/password`, {
@@ -96,10 +93,10 @@ export async function changePasswordConfig(currentPass: string, newPass: string)
     
     if (res.status === 204) return { success: true }
     return await res.json()
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[changePasswordConfig]', error)
     // Extraer el mensaje del error que arroja fetchWithErrorHandling
-    if (error.message) {
+    if (error instanceof Error && error.message) {
       try {
         const errorData = JSON.parse(error.message)
         throw new Error(errorData.message || 'Error al cambiar la contraseña')

@@ -35,13 +35,15 @@ function LoadingSkeleton() {
   )
 }
 
-export default async function CrearEntregaPage({
+import type { SearchParams } from '@/types'
+
+export default async function CoordinacionCrearEntregaPage({
   searchParams,
 }: {
-  searchParams?: any
+  searchParams: SearchParams
 }) {
   const sp = await searchParams
-  const obraId = sp?.obraId ?? null
+  const obraId = (typeof sp.obraId === 'string' ? sp.obraId : sp.obraId?.[0]) ?? null
 
   return (
     <Suspense fallback={<LoadingSkeleton />}>

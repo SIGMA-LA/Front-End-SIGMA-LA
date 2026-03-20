@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Obra, Provincia } from '@/types'
+import { Obra, Provincia, RolEmpleado } from '@/types'
 import EstadoObraBadge from './EstadoObraBadge'
 import {
   Calendar,
@@ -23,9 +23,10 @@ import { deleteObra, cancelObra } from '@/actions/obras'
 
 interface ObraCardProps {
   obra: Obra
-  usuarioRol: string | undefined
+  usuarioRol: RolEmpleado | undefined
   provincias: Provincia[]
 }
+
 
 export default function ObraCard({
   obra,

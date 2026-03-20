@@ -3,18 +3,17 @@
 import { useState } from 'react'
 import {
   ArrowLeft,
-  Moon,
-  Sun,
   Bell,
   User,
-  Globe,
   Shield,
   Save,
   Building,
-  DollarSign,
   Settings,
 } from 'lucide-react'
-import { ConfiguracionesProps } from '@/types'
+interface ConfiguracionesProps {
+  onBack?: () => void
+  className?: string
+}
 
 export default function Configuraciones({
   onBack,
@@ -39,10 +38,15 @@ export default function Configuraciones({
       checkboxEjemplo: true,
     },
   })
+  const [error, setError] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleConfigChange = (section: string, field: string, value: any) => {
+  const handleConfigChange = (
+    section: string,
+    field: string,
+    value: string | boolean | number
+  ) => {
     setConfiguraciones((prev) => {
       if (section === 'tema') {
         // "tema" is a string, not an object
@@ -68,12 +72,15 @@ export default function Configuraciones({
 
   const handleSave = async () => {
     setIsLoading(true)
+    setError(null) // Clear previous errors
     try {
       // Simular guardado
       await new Promise((resolve) => setTimeout(resolve, 1000))
       alert('Configuraciones guardadas exitosamente!')
-    } catch (error) {
-      alert('Error al guardar configuraciones')
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : 'Error al guardar configuraciones'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -86,20 +93,20 @@ export default function Configuraciones({
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <Settings className="h-6 w-6 text-blue-600" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+                  <Settings className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                    Configuraciones
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Edita los ajustes de tu cuenta y preferencias del negocio
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                Configuraciones
-              </h1>
-              <p className="text-sm text-gray-600">
-                Edita los ajustes de tu cuenta y preferencias del negocio
-              </p>
-            </div>
-          </div>
-          </div>
             {onBack && (
               <button
                 onClick={onBack}

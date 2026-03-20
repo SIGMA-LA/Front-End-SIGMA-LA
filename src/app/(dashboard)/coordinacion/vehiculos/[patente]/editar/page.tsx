@@ -29,8 +29,8 @@ export default function EditarVehiculoPage() {
           data.anio
         )
         setVehiculo(data)
-      } catch (error: any) {
-        setError(error.message)
+      } catch (error: unknown) {
+        setError(error instanceof Error ? error.message : 'Error desconocido')
       } finally {
         setLoading(false)
       }
@@ -47,8 +47,8 @@ export default function EditarVehiculoPage() {
       await updateVehiculo(patente, data)
       router.push('/coordinacion/vehiculos')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'Error al actualizar el vehículo')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setIsPending(false)
     }

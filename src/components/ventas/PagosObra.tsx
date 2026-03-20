@@ -3,12 +3,12 @@
 import { useEffect, useState, useMemo } from 'react'
 import { getPagosObra } from '@/actions/pagos'
 import PagoModal from './pagos/PagoModal'
-import { Pago, Obra } from '@/types'
+import { Pago, Obra, Cliente } from '@/types'
 import PagoCard from './PagoCard'
 import { User, Building2, Plus } from 'lucide-react'
 
 // Helper para mostrar el nombre del cliente correctamente
-const getClienteName = (cliente: any) => {
+const getClienteName = (cliente: Cliente) => {
   if (cliente?.razon_social) {
     return cliente.razon_social
   }
@@ -56,8 +56,8 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
         setError(null)
         const data = await getPagosObra(obra.cod_obra)
         setPagos(data)
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar los pagos')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error al cargar los pagos')
       } finally {
         setLoading(false)
       }
@@ -71,8 +71,8 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
       setError(null)
       const data = await getPagosObra(obra.cod_obra)
       setPagos(data)
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar los pagos')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar los pagos')
     } finally {
       setLoading(false)
     }
@@ -142,7 +142,6 @@ export default function PagosObra({ obra, onClose }: PagosObraProps) {
                 onRefresh={refreshPagos}
               />
             ))}
-            p
           </div>
         )}
       </div>

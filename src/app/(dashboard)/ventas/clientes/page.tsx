@@ -1,17 +1,19 @@
 import ClientesPageContent from '@/components/pages/ClientesPageContent'
 import { getUsuario } from '@/lib/cache'
 
+import type { SearchParams } from '@/types'
+
 export default async function VentasClientesPage({
   searchParams,
 }: {
-  searchParams?: any
+  searchParams: SearchParams
 }) {
   const sp = await searchParams
   const usuario = await getUsuario()
 
   return (
     <ClientesPageContent
-      searchQuery={sp?.q ?? ''}
+      searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
       canCreate={usuario?.rol_actual === 'VENTAS'}
       createUrl="/ventas/clientes/crear"
     />

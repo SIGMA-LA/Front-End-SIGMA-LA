@@ -4,17 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Maquinaria } from '@/types'
+import type { Maquinaria, MaquinariaConDisponibilidad } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/maquinarias`
-
-export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
-
-export interface MaquinariaConDisponibilidad extends Maquinaria {
-  availabilityStatus: AvailabilityStatus
-  warningMessage?: string
-}
 
 /**
  * Retrieves all maquinarias from the system

@@ -15,7 +15,13 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Visita, VisitaDetailProps } from '@/types'
+import { Visita } from '@/types'
+
+interface VisitaDetailProps {
+  visita: Visita
+  onClose: () => void
+  onCancel?: () => void
+}
 import { getVisita } from '@/actions/visitas'
 import { getStatusColor, getTipoText } from './VisitaCard'
 import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
@@ -35,8 +41,11 @@ export default function VisitaDetail({
       try {
         const data = await getVisita(visitaProp.cod_visita)
         setVisita(data)
-      } catch (err: any) {
-        setError(err?.message || 'Error al obtener los detalles de la visita.')
+      } catch (err: unknown) {
+        setError(
+          (err as { message?: string }).message ||
+            'Error al obtener los detalles de la visita.'
+        )
       } finally {
         setLoading(false)
       }

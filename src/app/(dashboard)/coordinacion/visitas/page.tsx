@@ -1,20 +1,19 @@
 import VisitasPageContent from '@/components/pages/VisitasPageContent'
-import { getUsuario } from '@/lib/cache'
+import type { SearchParams } from '@/types'
 
 export default async function CoordinacionVisitasPage({
   searchParams,
 }: {
-  searchParams?: any
+  searchParams: SearchParams
 }) {
   const sp = await searchParams
-  const usuario = await getUsuario()
 
   return (
     <VisitasPageContent
-      searchQuery={sp?.q ?? ''}
+      searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
       canCreate={true}
-      createUrl="/coordinacion/visitas/crear"
-      rolActual={usuario?.rol_actual}
+      title="Coordinación de Visitas"
+      subtitle="Gestiona y programa las visitas técnicas"
     />
   )
 }

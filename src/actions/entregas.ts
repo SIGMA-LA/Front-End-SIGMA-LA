@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Entrega, EntregaEmpleado } from '@/types'
+import type { Entrega, EntregaEmpleado, EstadoEntrega, RolEntrega } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/entregas`
@@ -17,7 +17,7 @@ interface CreateEntregaData {
   dias_viaticos?: number
   empleados_asignados: Array<{
     cuil: string
-    rol_entrega: string
+    rol_entrega: RolEntrega
   }>
   vehiculos?: string[]
   maquinarias?: string[] | number[]
@@ -28,7 +28,7 @@ interface UpdateEntregaData {
   detalle?: string
   observaciones?: string
   dias_viaticos?: number
-  estado?: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+  estado?: EstadoEntrega
   vehiculos?: string[]
   maquinarias?: string[] | number[]
 }
@@ -36,12 +36,12 @@ interface UpdateEntregaData {
 /**
  * Retrieves deliveries for an employee filtered by status
  * @param {string} cuilEmpleado - Employee's CUIL identifier
- * @param {string} estado - Entrega status filter
+ * @param {EstadoEntrega} estado - Entrega status filter
  * @returns {Promise<EntregaEmpleado[]>} List of employee's deliveries
  */
 export async function getEntregasByEmpleado(
   cuilEmpleado: string,
-  estado: 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+  estado: EstadoEntrega
 ): Promise<EntregaEmpleado[]> {
   try {
     const token = await getAccessToken()
@@ -59,13 +59,13 @@ export async function getEntregasByEmpleado(
         },
       }
     )
-    const entregas = await res.json()
-    return entregas.map((e: any) => ({
+    const rawEntregas: Record<string, unknown>[] = await res.json()
+    return rawEntregas.map((e) => ({
       ...e,
       empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
       vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
       maquinarias: e.uso_maquinaria || e.maquinarias || []
-    }))
+    })) as unknown as EntregaEmpleado[]
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
     return []
@@ -89,13 +89,13 @@ export async function getEntregas(filter?: string): Promise<Entrega[]> {
       next: { revalidate: 30, tags: ['entregas'] },
     })
 
-    let entregas: Entrega[] = await res.json()
-    entregas = entregas.map((e: any) => ({
+    const rawEntregas: Record<string, unknown>[] = await res.json()
+    let entregas: Entrega[] = rawEntregas.map((e) => ({
       ...e,
       empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
       vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
       maquinarias: e.uso_maquinaria || e.maquinarias || []
-    }))
+    })) as unknown as Entrega[]
 
     // Client-side filtering if needed
     if (filter?.trim()) {
@@ -156,7 +156,7 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
       next: { revalidate: 30, tags: [`entrega-${id}`] },
     })
     
-    let data = await res.json()
+    let data: Record<string, unknown> | null = await res.json()
     if (data) {
       data = {
         ...data,
@@ -165,7 +165,7 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
         maquinarias: data.uso_maquinaria || data.maquinarias || []
       }
     }
-    return data
+    return data as unknown as Entrega | null
   } catch (error) {
     console.error('[getEntrega]', error)
     return null
@@ -176,7 +176,7 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
  * Finalizes a Entrega
  * @param {number} codEntrega - Entrega ID
  * @param {string} observaciones - Optional final observations
- * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result
+ * @returns {Promise<{success: boolean, data?: unknown, error?: string | null}>} Operation result
  */
 export async function finalizarEntrega(
   codEntrega: number,
@@ -274,7 +274,7 @@ export async function createEntrega(
     body: JSON.stringify(payload),
   })
   
-  let data = await res.json()
+  let data: Record<string, unknown> | null = await res.json()
   if (data) {
     data = {
       ...data,
@@ -283,7 +283,7 @@ export async function createEntrega(
       maquinarias: data.uso_maquinaria || data.maquinarias || []
     }
   }
-  return data
+  return data as unknown as Entrega
 }
 
 /**
@@ -310,7 +310,7 @@ export async function updateEntrega(
     },
     body: JSON.stringify(payload),
   })
-  let data = await res.json()
+  let data: Record<string, unknown> | null = await res.json()
   if (data) {
     data = {
       ...data,
@@ -319,7 +319,7 @@ export async function updateEntrega(
       maquinarias: data.uso_maquinaria || data.maquinarias || []
     }
   }
-  return data
+  return data as unknown as Entrega
 }
 
 /**

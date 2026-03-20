@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Calendar } from 'lucide-react'
-import { CrearVisitaProps, Localidad, Visita } from '@/types'
+import { Localidad, Visita, Obra, Empleado, Provincia, Vehiculo } from '@/types'
+
+interface CrearVisitaProps {
+  preloadedObra?: Obra | null
+  empleados: Empleado[]
+  provincias: Provincia[]
+  vehiculos: Vehiculo[]
+  buscarObras: (query: string) => Promise<Obra[]>
+  buscarLocalidades: (provinciaCod: number) => Promise<Localidad[]>
+}
 import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
 import SeccionEmpleados from './visita/SeccionEmpleados'
 import SeccionDatosVisita from './visita/SeccionDatosVisita'

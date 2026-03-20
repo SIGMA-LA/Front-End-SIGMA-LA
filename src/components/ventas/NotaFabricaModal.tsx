@@ -4,6 +4,7 @@ import { X, Upload, FileText, Trash2, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
+import type { RolEmpleado } from '@/types'
 
 interface NotaFabricaModalProps {
   isOpen: boolean
@@ -11,7 +12,7 @@ interface NotaFabricaModalProps {
   notaUrl?: string | null
   codObra: number
   onUploadSuccess?: (url: string) => void
-  rolActual?: string
+  rolActual?: RolEmpleado | ''
   onDeleteClick?: () => void
 }
 
@@ -76,9 +77,9 @@ export default function NotaFabricaModal({
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       router.refresh() // Recargar la página para actualizar el botón
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message || 'Error al subir la nota de fábrica. Intenta nuevamente.'
+        err instanceof Error ? err.message : 'Error al subir la nota de fábrica. Intenta nuevamente.'
       )
     } finally {
       setLoading(false)
@@ -94,10 +95,9 @@ export default function NotaFabricaModal({
       setModoCambio(false)
       router.refresh() // Recargar la página
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message ||
-          'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
       )
     } finally {
       setLoading(false)
@@ -112,10 +112,9 @@ export default function NotaFabricaModal({
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(true)
       setSelectedFile(null)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message ||
-          'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
       )
     } finally {
       setLoading(false)
