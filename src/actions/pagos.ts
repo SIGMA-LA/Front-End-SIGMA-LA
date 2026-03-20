@@ -24,6 +24,7 @@ export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
 
     // Build query params
     const params = new URLSearchParams()
+    if (filters?.search) params.append('search', filters.search)
     if (filters?.cliente) params.append('cliente', filters.cliente)
     if (filters?.fechaDesde) params.append('fechaDesde', filters.fechaDesde)
     if (filters?.fechaHasta) params.append('fechaHasta', filters.fechaHasta)
