@@ -1,14 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
-import { getCliente, getClienteObras } from '@/actions/clientes'
-import type { Cliente, Obra } from '@/types'
-
-interface VerDetallesClienteProps {
-  cuil: string
-  onClose: () => void
-}
+import {
+  X,
+  Building2,
+  MapPin,
+  Calendar,
+  Loader2,
+  DollarSign,
+  Truck,
+  ClipboardList,
+} from 'lucide-react'
+import { getCliente } from '@/actions/clientes'
+import { getObras } from '@/actions/obras'
+import type { Cliente, Obra, VerDetallesClienteProps } from '@/types'
 
 export default function VerDetallesCliente({
   cuil,
@@ -22,11 +27,17 @@ export default function VerDetallesCliente({
     async function cargar() {
       try {
         setLoading(true)
-        const [clienteData, obrasData] = await Promise.all([
-          getCliente(cuil),
-          getClienteObras(cuil),
-        ])
+        const clienteData = await getCliente(cuil)
         setCliente(clienteData)
+
+        // Buscar obras del cliente usando su razón social o nombre
+        let obrasData: Obra[] = []
+        if (clienteData) {
+          const searchTerm =
+            clienteData.razon_social ||
+            `${clienteData.nombre} ${clienteData.apellido}`
+          obrasData = await getObras(searchTerm)
+        }
         setObras(obrasData || [])
       } catch (error) {
         console.error('Error cargando detalles:', error)
@@ -148,27 +159,84 @@ export default function VerDetallesCliente({
               </div>
             ) : (
               <div className="space-y-3">
-                {obras.map((obra) => (
-                  <div
-                    key={obra.cod_obra}
-                    className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {obra.direccion}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Estado: {obra.estado}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Inicio:{' '}
-                          {new Date(obra.fecha_ini).toLocaleDateString('es-AR')}
-                        </p>
+                {obras.map((obra) => {
+                  const pagos = obra.pagos ?? obra.pago ?? []
+                  const visitas = obra.visitas ?? obra.visita ?? []
+                  const entregas = obra.entregas ?? obra.entrega ?? []
+
+                  const cantidadPagosPendientes = pagos.length
+                  const tienePagosPendientes =
+                    obra.estado === 'EN ESPERA DE PAGO' ||
+                    obra.estado === 'PAGADA PARCIALMENTE'
+                  const tieneVisitasPendientes = visitas.some(
+                    (v) => v.estado !== 'COMPLETADA' && v.estado !== 'CANCELADA'
+                  )
+                  const tieneEntregasPendientes = entregas.some(
+                    (e) => e.estado !== 'ENTREGADO' && e.estado !== 'CANCELADO'
+                  )
+
+                  return (
+                    <div
+                      key={obra.cod_obra}
+                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-blue-300"
+                    >
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-slate-900">
+                            {obra.direccion}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Estado: {obra.estado}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            title="Pagos pendientes"
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                              tienePagosPendientes
+                                ? 'border-amber-300 bg-amber-50 text-amber-700'
+                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                            }`}
+                          >
+                            <DollarSign className="h-3.5 w-3.5" />
+                            {tienePagosPendientes
+                              ? `Pagos: ${cantidadPagosPendientes}`
+                              : 'Pagos: 0'}
+                          </span>
+
+                          <span
+                            title="Visitas pendientes"
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                              tieneVisitasPendientes
+                                ? 'border-blue-300 bg-blue-50 text-blue-700'
+                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                            }`}
+                          >
+                            <ClipboardList className="h-3.5 w-3.5" />
+                            {tieneVisitasPendientes
+                              ? 'Visitas: pendientes'
+                              : 'Visitas: ok'}
+                          </span>
+
+                          <span
+                            title="Entregas pendientes"
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                              tieneEntregasPendientes
+                                ? 'border-orange-300 bg-orange-50 text-orange-700'
+                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                            }`}
+                          >
+                            <Truck className="h-3.5 w-3.5" />
+                            {tieneEntregasPendientes
+                              ? 'Entregas: pendientes'
+                              : 'Entregas: ok'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
