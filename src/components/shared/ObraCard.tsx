@@ -15,7 +15,7 @@ import {
   FileText,
   DraftingCompass,
 } from 'lucide-react'
-import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
+import EliminarObraModal from '../ventas/EliminarObraModal'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
 import Link from 'next/link'
 import { deleteObra } from '@/actions/obras'
@@ -92,13 +92,11 @@ export default function ObraCard({
 
   return (
     <>
-      <ConfirmDeleteModal
+      <EliminarObraModal
         open={modalOpen}
-        onCancel={() => setModalOpen(false)}
         onConfirm={handleDelete}
-        loading={isPending}
-        title="Eliminar Obra"
-        message={`¿Está seguro que desea eliminar la obra "${obra.direccion}"? Pasará a estado "CANCELADA".`}
+        onClose={() => setModalOpen(false)}
+        direccion={obra.direccion}
       />
 
       <NotaFabricaModal

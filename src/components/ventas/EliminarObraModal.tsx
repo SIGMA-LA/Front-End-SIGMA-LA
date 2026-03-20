@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react'
+import { AlertCircle, ArchiveX, X } from 'lucide-react'
 
 interface EliminarObraModalProps {
   open: boolean
@@ -16,32 +16,67 @@ export default function EliminarObraModal({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
-        <div className="mb-4 flex items-center gap-3">
-          <AlertTriangle className="h-7 w-7 text-red-500" />
-          <h2 className="text-xl font-bold text-gray-900">
-            ¿Está seguro que desea eliminar la obra?
-          </h2>
-        </div>
-        <p className="mb-4 text-gray-700">
-          La obra <span className="font-semibold">{direccion}</span> pasará a
-          estado <span className="font-semibold text-red-600">"CANCELADA"</span>
-          . Esta acción no se puede deshacer.
-        </p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700"
-          >
-            Sí, cancelar obra
-          </button>
+    <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm duration-200">
+      <div className="animate-in zoom-in-95 relative w-full max-w-lg rounded-3xl bg-white shadow-2xl duration-200">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Content */}
+        <div className="p-8">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500 shadow-inner ring-4 ring-red-50/50">
+            <ArchiveX className="h-8 w-8" />
+          </div>
+
+          <div className="mb-6 space-y-2 text-center">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+              ¿Cancelar esta obra?
+            </h2>
+            <p className="text-sm font-medium text-slate-500">
+              Estás a punto de cancelar la obra ubicada en{' '}
+              <span className="font-bold text-slate-700">"{direccion}"</span>.
+            </p>
+          </div>
+
+          {/* Info Box */}
+          <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
+            <div className="flex gap-4">
+              <AlertCircle className="h-6 w-6 shrink-0 text-amber-500" />
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold tracking-wide text-amber-900 uppercase">
+                  Aclaración Importante
+                </p>
+                <p className="text-sm leading-relaxed font-medium text-amber-700/80">
+                  El registro no será borrado del sistema para mantener el
+                  historial. En su lugar, el estado pasará a ser{' '}
+                  <span className="rounded bg-amber-200/50 px-1.5 py-0.5 font-bold text-amber-900">
+                    CANCELADA
+                  </span>{' '}
+                  y la obra quedará archivada.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={onClose}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95"
+            >
+              MANTENER OBRA
+            </button>
+            <button
+              onClick={onConfirm}
+              className="w-full rounded-2xl bg-red-600 px-5 py-3.5 text-xs font-bold text-white shadow-lg shadow-red-500/30 transition-all hover:bg-red-700 hover:shadow-xl hover:shadow-red-500/40 active:scale-95"
+            >
+              SÍ, CANCELAR OBRA
+            </button>
+          </div>
         </div>
       </div>
     </div>

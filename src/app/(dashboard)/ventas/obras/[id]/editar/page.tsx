@@ -1,5 +1,5 @@
 import CrearObra from '@/components/ventas/CrearObra'
-import { getClientes } from '@/actions/clientes'
+import { getProvincias } from '@/actions/localidad'
 import { getObra } from '@/actions/obras'
 
 interface EditarObraPageProps {
@@ -8,12 +8,12 @@ interface EditarObraPageProps {
 
 export default async function EditarObraPage({ params }: EditarObraPageProps) {
   const { id } = await params
-  const [clientes, obra] = await Promise.all([
-    getClientes(),
+  const [provincias, obra] = await Promise.all([
+    getProvincias(),
     getObra(Number(id)),
   ])
 
   if (!obra) return <div>Obra no encontrada</div>
 
-  return <CrearObra clientes={clientes} obraExistente={obra} />
+  return <CrearObra provincias={provincias} obraExistente={obra} />
 }
