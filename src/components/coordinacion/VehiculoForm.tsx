@@ -81,7 +81,7 @@ export default function VehiculoForm({
   }
 
   const validateForm = () => {
-    const newErrors: any = {}
+    const newErrors: typeof errors = {}
 
     if (!tipoVehiculo) {
       newErrors.tipoVehiculo = 'El tipo de vehículo es obligatorio'

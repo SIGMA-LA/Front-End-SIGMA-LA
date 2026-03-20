@@ -37,9 +37,12 @@ export interface Obra {
   fecha_cancelacion: string | null
   localidad: Localidad
   entregas?: Entrega[]
+  entrega?: Entrega[] // Alias para el backend
   visitas?: Visita[]
+  visita?: Visita[] // Alias para el backend
   presupuesto?: Presupuesto[]
   pagos?: Pago[]
+  pago?: Pago[] // Alias para el backend
 }
 
 export interface CreateObraInput {

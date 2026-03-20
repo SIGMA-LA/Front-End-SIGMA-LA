@@ -226,7 +226,7 @@ export async function createObra(
 ): Promise<Obra> {
   try {
     const token = await getAccessToken()
-    const payload: any = { ...obraData }
+    const payload: Record<string, unknown> = { ...obraData }
 
     if (presupuesto) {
       payload.presupuesto = {
@@ -245,9 +245,9 @@ export async function createObra(
     const data = await res.json()
     revalidatePath('/ventas/obras')
     return data
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[crearObra]', error)
-    throw error
+    throw error instanceof Error ? error : new Error('Error al crear la obra')
   }
 }
 

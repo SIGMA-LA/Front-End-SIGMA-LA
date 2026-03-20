@@ -221,8 +221,8 @@ export default function EntregaDetailsModal({
                 {entrega.vehiculos &&
                 entrega.vehiculos.length > 0 ? (
                   <ul className="list-disc pl-8 text-sm text-gray-700">
-                    {entrega.vehiculos.map((v: any, index: number) => {
-                      const veh = v.vehiculo || v
+                    {entrega.vehiculos.map((v, index) => {
+                      const veh = v.vehiculo || v as any // fallback while normalizing
                       return (
                         <li key={veh?.patente || `veh-${index}`}>
                           {veh?.marca ? `${veh.marca} ${veh.modelo || ''} (${veh.patente})` : veh?.patente || 'Vehículo'}
@@ -242,8 +242,8 @@ export default function EntregaDetailsModal({
                 {entrega.maquinarias &&
                 entrega.maquinarias.length > 0 ? (
                   <ul className="list-disc pl-8 text-sm text-gray-700">
-                    {entrega.maquinarias.map((m: any, index: number) => {
-                      const maq = m.maquinaria || m
+                    {entrega.maquinarias.map((m, index) => {
+                      const maq = m.maquinaria || m as any
                       return <li key={maq?.cod_maquina || `maq-${index}`}>{maq?.descripcion || 'Maquinaria'}</li>
                     })}
                   </ul>

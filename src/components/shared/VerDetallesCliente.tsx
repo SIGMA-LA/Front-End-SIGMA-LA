@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
 import { getCliente, getClienteObras } from '@/actions/clientes'
-import type { Cliente } from '@/types'
+import type { Cliente, Obra } from '@/types'
 
 interface VerDetallesClienteProps {
   cuil: string
@@ -15,7 +15,7 @@ export default function VerDetallesCliente({
   onClose,
 }: VerDetallesClienteProps) {
   const [cliente, setCliente] = useState<Cliente | null>(null)
-  const [obras, setObras] = useState<any[]>([])
+  const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

@@ -76,9 +76,9 @@ export default function NotaFabricaModal({
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       router.refresh() // Recargar la página para actualizar el botón
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message || 'Error al subir la nota de fábrica. Intenta nuevamente.'
+        err instanceof Error ? err.message : 'Error al subir la nota de fábrica. Intenta nuevamente.'
       )
     } finally {
       setLoading(false)
@@ -94,10 +94,9 @@ export default function NotaFabricaModal({
       setModoCambio(false)
       router.refresh() // Recargar la página
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message ||
-          'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
       )
     } finally {
       setLoading(false)
@@ -112,10 +111,9 @@ export default function NotaFabricaModal({
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(true)
       setSelectedFile(null)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.message ||
-          'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
       )
     } finally {
       setLoading(false)

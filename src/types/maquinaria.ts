@@ -21,6 +21,7 @@ export interface UsoMaquinaria {
   fecha_hora_fin_est: string
   fecha_hora_fin_real?: string
   estado: string
+  maquinaria?: Maquinaria
 }
 
 export interface MaquinariaConDisponibilidad extends Maquinaria {

@@ -29,10 +29,10 @@ export default async function ObraDetallePage({
   // Cargar todos los datos en paralelo en el servidor
   const obra = await getObra(obraId)
 
-  const visitas = (obra as any)?.visita || obra?.visitas || []
-  const entregas = (obra as any)?.entrega || obra?.entregas || []
-  const pagos = (obra as any)?.pago || obra?.pagos || []
-  const presupuestos = (obra as any)?.presupuesto || obra?.presupuesto || []
+  const visitas = obra?.visita || obra?.visitas || []
+  const entregas = obra?.entrega || obra?.entregas || []
+  const pagos = obra?.pago || obra?.pagos || []
+  const presupuestos = obra?.presupuesto || []
 
   if (!obra) {
     return (

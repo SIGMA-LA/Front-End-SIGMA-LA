@@ -1,3 +1,5 @@
+import type { Visita } from './visita'
+
 export type VehiculoTipo =
   | 'CAMION CHICO'
   | 'CAMIONETA'
@@ -44,6 +46,7 @@ export interface UsoVehiculoEntrega {
   fecha_hora_ini_est: string
   fecha_hora_fin_real?: string
   estado: string
+  vehiculo?: Vehiculo
 }
 
 export interface UsoVehiculoVisita {
@@ -53,4 +56,6 @@ export interface UsoVehiculoVisita {
   fecha_hora_ini_est: string
   fecha_hora_fin_real?: string
   estado: string
+  vehiculo?: Vehiculo
+  visita?: Visita
 }

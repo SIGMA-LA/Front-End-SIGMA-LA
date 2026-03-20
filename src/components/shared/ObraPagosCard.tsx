@@ -2,13 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pago } from '@/types'
+import { Pago, Obra } from '@/types'
 import { Trash2, DollarSign, Calendar, Building2, User, ChevronDown, ChevronUp } from 'lucide-react'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
 import { deletePago } from '@/actions/pagos'
 
 interface ObraPagosCardProps {
-  obraInfo: any
+  obraInfo: Obra | undefined
   pagos: Pago[]
   totalPagado: number
   usuarioRol?: string

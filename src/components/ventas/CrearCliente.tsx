@@ -11,39 +11,44 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Cliente } from '@/types'
+import { type ActionResponse } from '@/actions/clientes'
 import Link from 'next/link'
 
-interface CrearClienteFormProps {
-  action: (prevState: any, formData: FormData) => Promise<any>
-  cliente?: Cliente
+interface CrearClienteProps {
+  action: (prevState: ActionResponse | null, formData: FormData) => Promise<ActionResponse>
+  initialData?: Cliente
   cancelUrl?: string
+  title?: string
+  subtitle?: string
 }
 
 export default function CrearCliente({
   action,
-  cliente,
+  initialData,
   cancelUrl = '/ventas/clientes',
-}: CrearClienteFormProps) {
+  title,
+  subtitle,
+}: CrearClienteProps) {
   const router = useRouter()
   const [tipoCliente, setTipoCliente] = useState<'PERSONA' | 'EMPRESA'>(
-    cliente?.tipo_cliente ?? 'PERSONA'
+    initialData?.tipo_cliente ?? 'PERSONA'
   )
   const [formState, setFormState] = useState({
-    cuil: cliente?.cuil ?? '',
-    telefono: cliente?.telefono ?? '',
-    mail: cliente?.mail ?? '',
-    razon_social: cliente?.razon_social ?? '',
-    nombre: cliente?.nombre ?? '',
-    apellido: cliente?.apellido ?? '',
-    sexo: cliente?.sexo ?? '',
+    cuil: initialData?.cuil ?? '',
+    telefono: initialData?.telefono ?? '',
+    mail: initialData?.mail ?? '',
+    razon_social: initialData?.razon_social ?? '',
+    nombre: initialData?.nombre ?? '',
+    apellido: initialData?.apellido ?? '',
+    sexo: initialData?.sexo ?? '',
   })
 
   const [state, formAction, isPending] = useActionState(action, {
     success: true,
-    error: null,
+    error: undefined,
   })
 
-  const isEdit = Boolean(cliente)
+  const isEdit = Boolean(initialData)
 
   const handleTipoClienteChange = (tipo: 'PERSONA' | 'EMPRESA') => {
     setTipoCliente(tipo)
@@ -93,12 +98,12 @@ export default function CrearCliente({
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {isEdit ? 'Editar Cliente' : 'Crear Cliente'}
+              {title || (isEdit ? 'Editar Cliente' : 'Crear Cliente')}
             </h1>
             <p className="text-sm text-gray-600">
-              {isEdit
+              {subtitle || (isEdit
                 ? 'Modifica los datos del cliente'
-                : 'Completa el formulario para registrar un nuevo cliente'}
+                : 'Completa el formulario para registrar un nuevo cliente')}
             </p>
           </div>
         </div>
@@ -123,7 +128,7 @@ export default function CrearCliente({
 
         {/* Hidden fields para edición */}
         {isEdit && (
-          <input type="hidden" name="original_cuil" value={cliente!.cuil} />
+          <input type="hidden" name="original_cuil" value={initialData!.cuil} />
         )}
 
         {/* Tipo de Cliente */}

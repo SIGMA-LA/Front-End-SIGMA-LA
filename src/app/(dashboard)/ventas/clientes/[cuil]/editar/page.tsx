@@ -1,5 +1,9 @@
 import CrearClienteForm from '@/components/ventas/CrearCliente'
-import { getCliente, updateCliente } from '@/actions/clientes'
+import {
+  getCliente,
+  updateCliente,
+  type ActionResponse,
+} from '@/actions/clientes'
 import { redirect, notFound } from 'next/navigation'
 
 export default async function EditarClientePage({
@@ -14,37 +18,41 @@ export default async function EditarClientePage({
     notFound()
   }
 
-  async function handleActualizar(prevState: any, formData: FormData) {
+  async function handleActualizar(
+    prevState: ActionResponse | null,
+    formData: FormData
+  ) {
     'use server'
 
+    let result: ActionResponse
     try {
-      const raw = Object.fromEntries(formData.entries())
-      const result = await updateCliente(cuil, raw as any)
-
-      if (!result) {
-        return {
-          success: false,
-          error: 'No se pudo actualizar el cliente',
-        }
-      }
-
-      redirect('/ventas/clientes')
-    } catch (error: any) {
-      console.error('[handleActualizar]', error)
+      result = await updateCliente(cuil, formData)
+    } catch (error: unknown) {
+      console.error('Error al actualizar cliente:', error)
       return {
         success: false,
-        error: error?.message || 'Error al actualizar el cliente',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Error al actualizar cliente',
       }
     }
+
+    if (result.success) {
+      redirect('/ventas/clientes')
+    }
+
+    return result
   }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-2xl">
         <CrearClienteForm
           action={handleActualizar}
-          cliente={cliente}
-          cancelUrl="/ventas/clientes"
+          initialData={cliente}
+          title="Editar Cliente"
+          subtitle={`Actualizando información de ${cliente.nombre || cliente.razon_social}`}
         />
       </div>
     </div>

@@ -3,9 +3,15 @@ import EmpleadoFormulario from '@/components/admin/EmpleadoFormulario'
 import { createEmpleado } from '@/actions/empleado'
 import Link from 'next/link'
 
+import type { CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
+
 export default function CrearEmpleadoPage() {
-  async function handleCreate(data: any) {
-    const result = await createEmpleado(data)
+  async function handleCreate(data: CreateEmpleadoData | UpdateEmpleadoData) {
+    const result = await createEmpleado(data as any) // createEmpleado still expects any in some places but we typify here
+    
+    // Actually, createEmpleado signature is: createEmpleado(formData: FormData | Record<string, unknown>)
+    // So we can use:
+    // const result = await createEmpleado(data as Record<string, unknown>)
 
     if (!result.success) {
       throw new Error(result.error || 'Error al crear empleado')
