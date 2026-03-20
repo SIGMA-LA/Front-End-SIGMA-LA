@@ -74,6 +74,9 @@ export default function PagoModal({
   useEffect(() => {
     if (open && obraPreseleccionada) {
       setSelectedObra(obraPreseleccionada)
+      if (obraPreseleccionada.cantidad_pagos === 0 && obraPreseleccionada.presupuesto?.valor) {
+        setMonto((obraPreseleccionada.presupuesto.valor * 0.7).toString())
+      }
       setCurrentStep('pago') // Ir directamente al paso de pago
     }
   }, [open, obraPreseleccionada])
@@ -138,6 +141,11 @@ export default function PagoModal({
   const handleObraSelect = (obra: ObraConPresupuesto | null) => {
     setSelectedObra(obra)
     if (obra) {
+      if (obra.cantidad_pagos === 0 && obra.presupuesto?.valor) {
+        setMonto((obra.presupuesto.valor * 0.7).toString())
+      } else {
+        setMonto('')
+      }
       setTimeout(() => setCurrentStep('pago'), 100)
     }
   }
@@ -453,19 +461,24 @@ export default function PagoModal({
                           step="0.01"
                           value={monto}
                           onChange={(e) => setMonto(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 py-3 pr-3 pl-8 text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          className="w-full rounded-md border border-gray-300 py-3 pr-3 pl-8 text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:opacity-50"
                           placeholder="0.00"
                           required
-                          disabled={loading}
+                          disabled={loading || selectedObra.cantidad_pagos === 0}
                         />
                       </div>
-                      {selectedObra.saldoPendiente &&
+                      {selectedObra.cantidad_pagos === 0 && (
+                        <p className="mt-1 text-sm font-medium text-blue-600">
+                          El primer pago debe ser exactamente el 70% del presupuesto.
+                        </p>
+                      )}
+                      {selectedObra.saldoPendiente !== undefined &&
                         parseFloat(monto) > selectedObra.saldoPendiente && (
                           <p className="mt-1 text-sm text-red-600">
                             El monto no puede exceder el saldo pendiente
                           </p>
                         )}
-                      {selectedObra.saldoPendiente && (
+                      {selectedObra.saldoPendiente !== undefined && selectedObra.cantidad_pagos > 0 && (
                         <div className="mt-2 flex gap-2">
                           <button
                             type="button"
@@ -474,7 +487,7 @@ export default function PagoModal({
                                 (selectedObra.saldoPendiente! * 0.7).toString()
                               )
                             }
-                            className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200"
+                            className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 transition-colors hover:bg-blue-200"
                             disabled={loading}
                           >
                             70%
@@ -484,7 +497,7 @@ export default function PagoModal({
                             onClick={() =>
                               setMonto(selectedObra.saldoPendiente!.toString())
                             }
-                            className="rounded bg-green-100 px-2 py-1 text-xs text-green-700 hover:bg-green-200"
+                            className="rounded bg-green-100 px-2 py-1 text-xs text-green-700 transition-colors hover:bg-green-200"
                             disabled={loading}
                           >
                             Total
