@@ -41,8 +41,11 @@ export default function VisitaDetail({
       try {
         const data = await getVisita(visitaProp.cod_visita)
         setVisita(data)
-      } catch (err: any) {
-        setError(err?.message || 'Error al obtener los detalles de la visita.')
+      } catch (err: unknown) {
+        setError(
+          (err as { message?: string }).message ||
+            'Error al obtener los detalles de la visita.'
+        )
       } finally {
         setLoading(false)
       }

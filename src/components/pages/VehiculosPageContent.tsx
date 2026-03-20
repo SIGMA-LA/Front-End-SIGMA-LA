@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car, Plus, CheckCircle, XCircle } from 'lucide-react'
-import { Vehiculo } from '@/types'
+import { Vehiculo, VehiculoEstado } from '@/types'
 import { updateVehiculo, deleteVehiculo } from '@/actions/vehiculos'
 import VehiculoCard from '@/components/coordinacion/VehiculoCard'
 
@@ -67,11 +67,13 @@ export default function VehiculosPageContent({
       const nuevoEstado =
         estadoActual === 'DISPONIBLE' ? 'FUERA DE SERVICIO' : 'DISPONIBLE'
 
-      await updateVehiculo(patente, { estado: nuevoEstado as any })
+      await updateVehiculo(patente, { estado: nuevoEstado as VehiculoEstado })
 
       setVehiculos((prev) =>
         prev.map((v) =>
-          v.patente === patente ? { ...v, estado: nuevoEstado as any } : v
+          v.patente === patente
+            ? { ...v, estado: nuevoEstado as VehiculoEstado }
+            : v
         )
       )
 

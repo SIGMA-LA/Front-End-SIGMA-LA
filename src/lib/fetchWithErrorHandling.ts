@@ -3,14 +3,16 @@ export async function fetchWithErrorHandling(
   options: RequestInit & { timeout?: number } = {}
 ) {
   const { timeout = 10000, ...fetchOptions } = options
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
   
   try {
     const res = await fetch(url, {
       ...fetchOptions,
-      signal: (AbortSignal as any).timeout
-        ? (AbortSignal as any).timeout(timeout)
-        : undefined,
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId)
+
     if (!res.ok) {
       if (res.status === 401) throw new Error('Unauthorized')
       if (res.status === 404) throw new Error('Not found')
