@@ -1,7 +1,10 @@
 'use client'
 
 import { FileText, Package } from 'lucide-react'
-import { TabNavigationProduccionProps } from '@/types'
+interface TabNavigationProduccionProps {
+  activeTab: 'notas' | 'ordenes'
+  onTabChange: (tab: 'notas' | 'ordenes') => void
+}
 
 export default function TabNavigation({
   activeTab,

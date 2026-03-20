@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Cliente } from '@/types'
+import type { Cliente, Obra } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/clientes') ? API_URL : `${API_URL}/clientes`
@@ -68,7 +68,7 @@ export async function getCliente(cuil: string): Promise<Cliente | null> {
  * @returns {Promise<{success: boolean, data?: Cliente, error?: string}>} Operation result
  */
 export async function createCliente(
-  formData: FormData | any
+  formData: FormData | Record<string, unknown>
 ): Promise<{ success: boolean; error?: string; data?: Cliente }> {
   try {
     const token = await getAccessToken()
@@ -222,9 +222,9 @@ export async function deleteCliente(
 /**
  * Retrieves all construction sites (obras) for a specific cliente
  * @param {string} cuil - Cliente CUIL identifier
- * @returns {Promise<any[]>} List of cliente obras
+ * @returns {Promise<Obra[]>} List of cliente obras
  */
-export async function getClienteObras(cuil: string): Promise<any[]> {
+export async function getClienteObras(cuil: string): Promise<Obra[]> {
   if (!cuil) return []
   try {
     const token = await getAccessToken()

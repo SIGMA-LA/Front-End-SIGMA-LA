@@ -14,7 +14,10 @@ import {
   DollarSign,
   Settings,
 } from 'lucide-react'
-import { ConfiguracionesProps } from '@/types'
+interface ConfiguracionesProps {
+  onBack?: () => void
+  className?: string
+}
 
 export default function Configuraciones({
   onBack,

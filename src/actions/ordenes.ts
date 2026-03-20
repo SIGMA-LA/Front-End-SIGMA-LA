@@ -13,7 +13,7 @@ const BASE_URL = API_URL.endsWith('/ordenes-produccion')
 /**
  * Retrieves a single orden de produccion by code
  * @param {number} cod_op - Orden de produccion code/ID
- * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result with orden data
+ * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result with orden data
  */
 export async function getOrdenProduccion(cod_op: number) {
   try {
@@ -46,7 +46,7 @@ export async function getOrdenProduccion(cod_op: number) {
  * Retrieves ordenes de produccion with optional filters
  * @param {string} estado - Optional estado filter (PENDIENTE, APROBADA, EN PRODUCCION, FINALIZADA)
  * @param {number} cod_obra - Optional obra code filter
- * @returns {Promise<{success: boolean, data: any[], error?: string}>} Operation result with ordenes list
+ * @returns {Promise<{success: boolean, data: OrdenProduccion[], error?: string}>} Operation result with ordenes list
  */
 export async function getOrdenesProduccion(
   estado?: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA',
@@ -221,7 +221,7 @@ export async function getOrdenesByObraAndFinalizada(
 /**
  * Creates a new orden de produccion
  * @param {FormData} formData - Form data with cod_obra and PDF file
- * @returns {Promise<{success: boolean, data?: any, error?: string}>} Operation result
+ * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result
  */
 export async function createOrdenProduccion(formData: FormData) {
   try {
@@ -284,7 +284,7 @@ export async function createOrdenProduccion(formData: FormData) {
 /**
  * Approves an orden de produccion (changes estado to APROBADA)
  * @param {number} cod_op - Orden de produccion code/ID
- * @returns {Promise<{success: boolean, data?: any, error?: string, message?: string}>} Operation result
+ * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string, message?: string}>} Operation result
  */
 export async function approveOrdenProduccion(cod_op: number) {
   try {

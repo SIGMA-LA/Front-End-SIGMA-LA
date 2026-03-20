@@ -6,7 +6,7 @@ import { AlertTriangle, User, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
-import type { Empleado } from '@/types'
+import type { Empleado, CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
 import {
   ROLES_VALIDOS,
   AREAS_VALIDAS,
@@ -16,7 +16,16 @@ import {
 
 interface EmpleadoFormularioProps {
   empleado?: Empleado | null
-  onSubmit: (data: any) => Promise<void>
+  onSubmit: (data: CreateEmpleadoData | UpdateEmpleadoData) => Promise<void>
+}
+
+interface FormErrors {
+  cuil?: string
+  nombre?: string
+  apellido?: string
+  rol_actual?: string
+  area_trabajo?: string
+  contrasenia?: string
 }
 
 const formatCUIL = (value: string): string => {
@@ -43,7 +52,7 @@ export default function EmpleadoFormulario({
     contrasenia: '',
   })
 
-  const [errors, setErrors] = useState<any>({})
+  const [errors, setErrors] = useState<FormErrors>({})
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
@@ -54,8 +63,7 @@ export default function EmpleadoFormulario({
     console.log('Empleado recibido:', empleado)
     if (empleado) {
       // Manejar si empleado viene como objeto con data o directo
-      const empleadoData =
-        'data' in empleado ? (empleado as any).data : empleado
+      const empleadoData = empleado
 
       const newFormData = {
         cuil: empleadoData.cuil ? formatCUIL(empleadoData.cuil) : '',
@@ -76,12 +84,12 @@ export default function EmpleadoFormulario({
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }))
     }
-    setErrors((prev: any) => ({ ...prev, [field]: '' }))
+    setErrors((prev: FormErrors) => ({ ...prev, [field]: '' }))
     setApiError(null)
   }
 
   const validateForm = (): boolean => {
-    const newErrors: any = {}
+    const newErrors: FormErrors = {}
 
     const cuilNumbers = formData.cuil.replace(/\D/g, '')
     if (!cuilNumbers) {
@@ -123,19 +131,20 @@ export default function EmpleadoFormulario({
 
     try {
       const cuilLimpio = formData.cuil.replace(/\D/g, '')
-      const dataToSubmit: any = { ...formData, cuil: cuilLimpio }
+      const dataToSubmit: CreateEmpleadoData | UpdateEmpleadoData = { ...formData, cuil: cuilLimpio }
 
       if (!dataToSubmit.contrasenia || dataToSubmit.contrasenia.trim() === '') {
-        delete dataToSubmit.contrasenia
+        const { contrasenia, ...dataWithoutPass } = dataToSubmit
+        await onSubmit(dataWithoutPass)
+      } else {
+        await onSubmit(dataToSubmit)
       }
-
-      await onSubmit(dataToSubmit)
       setShowConfirmModal(false)
       router.push('/admin/empleados')
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error)
-      setApiError(error.message || 'Error al procesar el empleado')
+      setApiError(error instanceof Error ? error.message : 'Error al procesar el empleado')
     } finally {
       setIsPending(false)
     }

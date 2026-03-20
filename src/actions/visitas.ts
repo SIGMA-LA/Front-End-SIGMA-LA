@@ -195,7 +195,7 @@ export async function updateVisita(
  * Finalizes a visita (changes estado to FINALIZADA)
  * @param {number} codVisita - Visita ID
  * @param {string} observaciones - Optional observations
- * @returns {Promise<{success: boolean, data: any, error: string | null}>} Operation result
+ * @returns {Promise<{success: boolean, data: unknown, error: string | null}>} Operation result
  */
 export async function finalizarVisita(
   codVisita: number,
@@ -229,7 +229,7 @@ export async function finalizarVisita(
  * Cancels a visita (changes estado to CANCELADA)
  * @param {number} codVisita - Visita ID
  * @param {string} motivo - Cancellation reason
- * @returns {Promise<{success: boolean, data: any, error: string | null}>} Operation result
+ * @returns {Promise<{success: boolean, data: unknown, error: string | null}>} Operation result
  */
 export async function cancelarVisita(codVisita: number, motivo: string) {
   try {

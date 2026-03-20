@@ -15,7 +15,13 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Visita, VisitaDetailProps } from '@/types'
+import { Visita } from '@/types'
+
+interface VisitaDetailProps {
+  visita: Visita
+  onClose: () => void
+  onCancel?: () => void
+}
 import { getVisita } from '@/actions/visitas'
 import { getStatusColor, getTipoText } from './VisitaCard'
 import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'

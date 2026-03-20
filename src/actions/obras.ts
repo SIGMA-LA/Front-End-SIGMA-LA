@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { cache } from 'react'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Obra } from '@/types'
+import type { Obra, CreateObraInput, UpdateObraInput, PresupuestoInput } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/obras') ? API_URL : `${API_URL}/obras`
@@ -216,17 +216,17 @@ export async function getNotasConOrdenEnProceso(): Promise<Obra[]> {
 
 /**
  * Creates a new obra
- * @param {any} obraData - Obra data
- * @param {any} presupuesto - Presupuesto object (optional)
- * @returns {Promise<Obra>} Created obra
+ * @param obraData - Obra data
+ * @param presupuesto - Presupuesto data (optional)
+ * @returns Created obra
  */
 export async function createObra(
-  obraData: any,
-  presupuesto: any = null
+  obraData: CreateObraInput,
+  presupuesto: PresupuestoInput[] | null = null
 ): Promise<Obra> {
   try {
     const token = await getAccessToken()
-    const payload = { ...obraData }
+    const payload: any = { ...obraData }
 
     if (presupuesto) {
       payload.presupuesto = {
@@ -253,13 +253,13 @@ export async function createObra(
 
 /**
  * Updates an existing obra
- * @param {number} codObra - Obra ID
- * @param {any} obraData - Updated obra data
- * @returns {Promise<Obra>} Updated obra
+ * @param codObra - Obra ID
+ * @param obraData - Updated obra data
+ * @returns Updated obra
  */
 export async function updateObra(
   codObra: number,
-  obraData: any
+  obraData: UpdateObraInput
 ): Promise<Obra> {
   try {
     const token = await getAccessToken()

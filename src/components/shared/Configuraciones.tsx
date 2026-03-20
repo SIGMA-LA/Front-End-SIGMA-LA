@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Save, Settings, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { ConfiguracionesProps } from '@/types'
+interface ConfiguracionesProps {
+  onBack?: () => void
+  className?: string
+}
 
 import { NotificacionesSection } from './configuraciones/NotificacionesSection'
 import { PerfilSection } from './configuraciones/PerfilSection'
