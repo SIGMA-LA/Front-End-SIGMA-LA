@@ -1,17 +1,21 @@
-import { AlertCircle, ArchiveX, X } from 'lucide-react'
+import { AlertCircle, ArchiveX, X, Trash2 } from 'lucide-react'
 
 interface EliminarObraModalProps {
   open: boolean
   onClose: () => void
-  onConfirm: () => void
+  onDelete: () => void
+  onCancel: () => void
   direccion: string
+  isEliminacion?: boolean
 }
 
 export default function EliminarObraModal({
   open,
   onClose,
-  onConfirm,
+  onDelete,
+  onCancel,
   direccion,
+  isEliminacion = false,
 }: EliminarObraModalProps) {
   if (!open) return null
 
@@ -29,34 +33,55 @@ export default function EliminarObraModal({
         {/* Content */}
         <div className="p-8">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-500 shadow-inner ring-4 ring-red-50/50">
-            <ArchiveX className="h-8 w-8" />
+            {isEliminacion ? (
+              <Trash2 className="h-8 w-8" />
+            ) : (
+              <ArchiveX className="h-8 w-8" />
+            )}
           </div>
 
           <div className="mb-6 space-y-2 text-center">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-              ¿Cancelar esta obra?
+              {isEliminacion
+                ? '¿Eliminar esta obra permanentemente?'
+                : '¿Cancelar esta obra?'}
             </h2>
             <p className="text-sm font-medium text-slate-500">
-              Estás a punto de cancelar la obra ubicada en{' '}
+              Estás a punto de {isEliminacion ? 'eliminar' : 'cancelar'} la obra
+              ubicada en{' '}
               <span className="font-bold text-slate-700">"{direccion}"</span>.
             </p>
           </div>
 
           {/* Info Box */}
-          <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50/50 p-5">
+          <div
+            className={`mb-8 rounded-2xl border p-5 ${isEliminacion ? 'border-red-200 bg-red-50/50' : 'border-amber-200 bg-amber-50/50'}`}
+          >
             <div className="flex gap-4">
-              <AlertCircle className="h-6 w-6 shrink-0 text-amber-500" />
+              <AlertCircle
+                className={`h-6 w-6 shrink-0 ${isEliminacion ? 'text-red-500' : 'text-amber-500'}`}
+              />
               <div className="space-y-1">
-                <p className="text-[11px] font-bold tracking-wide text-amber-900 uppercase">
+                <p
+                  className={`text-[11px] font-bold tracking-wide uppercase ${isEliminacion ? 'text-red-900' : 'text-amber-900'}`}
+                >
                   Aclaración Importante
                 </p>
-                <p className="text-sm leading-relaxed font-medium text-amber-700/80">
-                  El registro no será borrado del sistema para mantener el
-                  historial. En su lugar, el estado pasará a ser{' '}
-                  <span className="rounded bg-amber-200/50 px-1.5 py-0.5 font-bold text-amber-900">
-                    CANCELADA
-                  </span>{' '}
-                  y la obra quedará archivada.
+                <p
+                  className={`text-sm leading-relaxed font-medium ${isEliminacion ? 'text-red-700/80' : 'text-amber-700/80'}`}
+                >
+                  {isEliminacion ? (
+                    'El registro será borrado físicamente del sistema ya que la obra se encuentra en espera de pago y no tiene registros asociados.'
+                  ) : (
+                    <>
+                      El registro no será borrado del sistema. En su lugar, el
+                      estado pasará a ser{' '}
+                      <span className="rounded bg-amber-200/50 px-1.5 py-0.5 font-bold text-amber-900">
+                        CANCELADA
+                      </span>{' '}
+                      y la obra quedará archivada.
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -71,10 +96,10 @@ export default function EliminarObraModal({
               MANTENER OBRA
             </button>
             <button
-              onClick={onConfirm}
+              onClick={isEliminacion ? onDelete : onCancel}
               className="w-full rounded-2xl bg-red-600 px-5 py-3.5 text-xs font-bold text-white shadow-lg shadow-red-500/30 transition-all hover:bg-red-700 hover:shadow-xl hover:shadow-red-500/40 active:scale-95"
             >
-              SÍ, CANCELAR OBRA
+              {isEliminacion ? 'SÍ, ELIMINAR OBRA' : 'SÍ, CANCELAR OBRA'}
             </button>
           </div>
         </div>

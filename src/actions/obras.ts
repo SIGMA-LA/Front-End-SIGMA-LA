@@ -56,7 +56,7 @@ export async function getObras(filter?: string): Promise<Obra[]> {
       next: { revalidate: 0, tags: ['obras'] },
     })
     const data = await res.json()
-    return Array.isArray(data) ? data : (data.data || [])
+    return Array.isArray(data) ? data : data.data || []
   } catch (error) {
     console.error('[getObras]', error)
     return []
@@ -302,6 +302,35 @@ export async function deleteObra(
     return { success: true }
   } catch (error) {
     console.error('[deleteObra]', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
+ * Cancels an obra by ID
+ * @param {number} id - Obra ID
+ * @returns {Promise<{success: boolean, error?: string}>} Operation result
+ */
+export async function cancelObra(
+  id: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = await getAccessToken()
+    await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ estado: 'CANCELADA' }),
+    })
+    revalidatePath('/ventas/obras')
+    return { success: true }
+  } catch (error) {
+    console.error('[cancelObra]', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

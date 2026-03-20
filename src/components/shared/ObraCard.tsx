@@ -14,11 +14,12 @@ import {
   Building2,
   FileText,
   DraftingCompass,
+  ArchiveX,
 } from 'lucide-react'
 import EliminarObraModal from '../ventas/EliminarObraModal'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
 import Link from 'next/link'
-import { deleteObra } from '@/actions/obras'
+import { deleteObra, cancelObra } from '@/actions/obras'
 
 interface ObraCardProps {
   obra: Obra
@@ -64,6 +65,19 @@ export default function ObraCard({
     })
   }
 
+  const handleCancel = () => {
+    startTransition(async () => {
+      try {
+        await cancelObra(obra.cod_obra)
+        setModalOpen(false)
+        router.refresh()
+      } catch (error) {
+        console.error('Error al cancelar obra:', error)
+        alert('Error al cancelar la obra')
+      }
+    })
+  }
+
   const handleNotaFabricaSuccess = (publicId: string) => {
     // Construir URL de Cloudinary desde el public_id
     const cloudName =
@@ -79,6 +93,7 @@ export default function ObraCard({
   const esAdmin = usuarioRol === 'ADMIN'
   const esCoordinacion = usuarioRol === 'COORDINACION'
   const isCancelada = obra.estado === 'CANCELADA'
+  const esperaPago = obra.estado === 'EN ESPERA DE PAGO'
 
   const nombreCliente =
     obra.cliente?.tipo_cliente === 'EMPRESA'
@@ -94,9 +109,11 @@ export default function ObraCard({
     <>
       <EliminarObraModal
         open={modalOpen}
-        onConfirm={handleDelete}
+        onDelete={handleDelete}
+        onCancel={handleCancel}
         onClose={() => setModalOpen(false)}
         direccion={obra.direccion}
+        isEliminacion={esperaPago}
       />
 
       <NotaFabricaModal
@@ -230,7 +247,7 @@ export default function ObraCard({
                   <Edit className="h-4 w-4" />
                   Editar
                 </Link>
-                {!isCancelada && (
+                {!isCancelada && esperaPago && (
                   <button
                     onClick={() => setModalOpen(true)}
                     disabled={isPending}
@@ -238,6 +255,16 @@ export default function ObraCard({
                   >
                     <Trash2 className="h-4 w-4" />
                     {isPending ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                )}
+                {!isCancelada && !esperaPago && (
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    disabled={isPending}
+                    className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                  >
+                    <ArchiveX className="h-4 w-4" />
+                    {isPending ? 'Cancelando...' : 'Cancelar'}
                   </button>
                 )}
               </>
