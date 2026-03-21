@@ -5,7 +5,7 @@ import ObraPagosCard from '@/components/shared/ObraPagosCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import PagosFiltros from '@/components/shared/PagosFiltros'
 import CrearPagoButton from '@/components/ventas/pagos/CrearPagoButton'
-import { PagosFilter } from '@/types'
+import { PagosFilter, Obra } from '@/types'
 
 function PagosListSkeleton() {
   return (
@@ -61,7 +61,7 @@ async function PagosGrid({
   const totalMonto = pagosData.reduce((sum, pago) => sum + pago.monto, 0)
 
   // Group by Obra
-  const obrasMap = new Map<number, { obraInfo: any, pagos: typeof pagosData, totalPagado: number }>()
+  const obrasMap = new Map<number, { obraInfo: Obra | undefined, pagos: typeof pagosData, totalPagado: number }>()
 
   pagosData.forEach(pago => {
     // Handling case where pago does not have an obra associated directly (backend safeguard)

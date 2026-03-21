@@ -1,7 +1,13 @@
 'use client'
 
 import { X, Wrench, CheckCircle, XCircle } from 'lucide-react'
-import { VerDetallesMaquinariaModalProps } from '@/types'
+import type { Maquinaria } from '@/types'
+
+interface VerDetallesMaquinariaModalProps {
+  isOpen: boolean
+  maquinaria: Maquinaria | null
+  onClose: () => void
+}
 
 export default function VerDetallesMaquinariaModal({
   isOpen,

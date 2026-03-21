@@ -1,18 +1,20 @@
 import ObrasPageContent from '@/components/pages/ObrasPageContent'
 import { getUsuario } from '@/lib/cache'
 
+import type { SearchParams } from '@/types'
+
 export default async function AdminObrasPage({
   searchParams,
 }: {
-  searchParams?: any
+  searchParams: SearchParams
 }) {
   const sp = await searchParams
   const usuario = await getUsuario()
 
   return (
     <ObrasPageContent
-      searchQuery={sp?.q ?? ''}
-      estado={sp?.estado}
+      searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
+      estado={(typeof sp.estado === 'string' ? sp.estado : sp.estado?.[0])}
       cod_localidad={sp?.cod_localidad ? Number(sp.cod_localidad) : undefined}
       canCreate={false}
       usuarioRol={usuario?.rol_actual}

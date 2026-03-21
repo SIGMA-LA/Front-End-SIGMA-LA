@@ -19,8 +19,8 @@ export default function CrearVehiculoPage() {
       await createVehiculo(data)
       router.push('/coordinacion/vehiculos')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'Error al crear el vehículo')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setIsPending(false)
     }

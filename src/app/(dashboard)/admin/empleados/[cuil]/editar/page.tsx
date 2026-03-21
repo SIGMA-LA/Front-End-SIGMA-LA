@@ -4,6 +4,8 @@ import { updateEmpleado, getEmpleado } from '@/actions/empleado'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import type { CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
+
 export default async function EditarEmpleadoPage({
   params,
 }: {
@@ -16,15 +18,10 @@ export default async function EditarEmpleadoPage({
     notFound()
   }
 
-  async function handleUpdate(data: any) {
+  async function handleUpdate(data: CreateEmpleadoData | UpdateEmpleadoData) {
     'use server'
 
-    const { contrasenia, ...updateData } = data
-    const dataToUpdate = contrasenia
-      ? { ...updateData, contrasenia }
-      : updateData
-
-    const result = await updateEmpleado(cuil, dataToUpdate)
+    const result = await updateEmpleado(cuil, data as Record<string, unknown>)
 
     if (!result.success) {
       throw new Error(result.error || 'Error al actualizar empleado')

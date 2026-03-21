@@ -5,13 +5,15 @@ import { getVehiculosDisponibles } from '@/actions/vehiculos'
 import { getEmpleados } from '@/actions/empleado'
 import { getObras, getObra } from '@/actions/obras'
 
+import type { SearchParams } from '@/types'
+
 export default async function CrearVisitaPage({
   searchParams,
 }: {
-  searchParams?: any
+  searchParams: SearchParams
 }) {
   const sp = await searchParams
-  const obraId = sp?.obraId ?? null
+  const obraId = (typeof sp.obraId === 'string' ? sp.obraId : sp.obraId?.[0]) ?? null
 
   const [provincias, vehiculos, empleados, obraPreseleccionada] =
     await Promise.all([

@@ -48,8 +48,8 @@ export default function MaquinariaForm({
         }
         router.push('/coordinacion/maquinarias')
         router.refresh()
-      } catch (err: any) {
-        setError(err.message || 'Error al guardar la maquinaria')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error desconocido')
       }
     })
   }

@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Package, Calendar, Check, Loader2 } from 'lucide-react'
-import type { Obra, PedidosListProps } from '@/types'
+import type { Obra } from '@/types'
+
+interface PedidosListProps {
+  onSchedulePedido?: (obra: Obra) => void
+}
 import EstadoObraBadge from '../shared/EstadoObraBadge'
 import {
   getObrasParaPedidoStock,

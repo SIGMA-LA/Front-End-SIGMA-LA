@@ -147,7 +147,13 @@ export default function EntregaDetailsModal({
                   </div>
                   <ul className="list-disc pl-10 text-sm text-gray-700">
                     {acompanantes.map((a, i) => (
-                      <li key={a?.empleado?.cuil ? `${entrega.cod_entrega}-${a.empleado.cuil}` : `acomp-${i}`}>
+                      <li
+                        key={
+                          a?.empleado?.cuil
+                            ? `${entrega.cod_entrega}-${a.empleado.cuil}`
+                            : `acomp-${i}`
+                        }
+                      >
                         {a.empleado?.nombre} {a.empleado?.apellido}
                       </li>
                     ))}
@@ -218,14 +224,15 @@ export default function EntregaDetailsModal({
                   <Truck className="h-5 w-5 text-gray-600" />
                   <p className="font-medium">Vehículos</p>
                 </div>
-                {entrega.vehiculos &&
-                entrega.vehiculos.length > 0 ? (
+                {entrega.vehiculos && entrega.vehiculos.length > 0 ? (
                   <ul className="list-disc pl-8 text-sm text-gray-700">
-                    {entrega.vehiculos.map((v: any, index: number) => {
-                      const veh = v.vehiculo || v
+                    {entrega.vehiculos.map((v, index) => {
+                      const veh = v.vehiculo
                       return (
                         <li key={veh?.patente || `veh-${index}`}>
-                          {veh?.marca ? `${veh.marca} ${veh.modelo || ''} (${veh.patente})` : veh?.patente || 'Vehículo'}
+                          {veh?.marca
+                            ? `${veh.marca} ${veh.modelo || ''} (${veh.patente})`
+                            : veh?.patente || 'Vehículo'}
                         </li>
                       )
                     })}
@@ -239,12 +246,15 @@ export default function EntregaDetailsModal({
                   <Wrench className="h-5 w-5 text-gray-600" />
                   <p className="font-medium">Maquinaria</p>
                 </div>
-                {entrega.maquinarias &&
-                entrega.maquinarias.length > 0 ? (
+                {entrega.maquinarias && entrega.maquinarias.length > 0 ? (
                   <ul className="list-disc pl-8 text-sm text-gray-700">
-                    {entrega.maquinarias.map((m: any, index: number) => {
-                      const maq = m.maquinaria || m
-                      return <li key={maq?.cod_maquina || `maq-${index}`}>{maq?.descripcion || 'Maquinaria'}</li>
+                    {entrega.maquinarias.map((m, index) => {
+                      const maq = m.maquinaria
+                      return (
+                        <li key={maq?.cod_maquina || `maq-${index}`}>
+                          {maq?.descripcion || 'Maquinaria'}
+                        </li>
+                      )
                     })}
                   </ul>
                 ) : (

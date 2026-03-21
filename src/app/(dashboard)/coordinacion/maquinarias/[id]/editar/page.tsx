@@ -30,7 +30,7 @@ function LoadingSkeleton() {
 export default async function EditarMaquinariaPage({
   params,
 }: {
-  params: any
+  params: Promise<{ id: string }>
 }) {
   const { id } = await params
 

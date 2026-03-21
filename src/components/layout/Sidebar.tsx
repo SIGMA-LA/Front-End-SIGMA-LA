@@ -16,10 +16,11 @@ import {
   Wrench,
   Car,
   BarChart2,
+  LucideIcon,
 } from 'lucide-react'
 import { Empleado } from '@/types'
 
-type MenuItem = { path: string; label: string; icon: any }
+type MenuItem = { path: string; label: string; icon: LucideIcon }
 
 const menuItemsVentas: MenuItem[] = [
   { path: '/ventas', label: 'Dashboard', icon: Home },
