@@ -59,13 +59,27 @@ export async function getEntregasByEmpleado(
         },
       }
     )
-    const rawEntregas: Record<string, unknown>[] = await res.json()
-    return rawEntregas.map((e) => ({
-      ...e,
-      empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
-      vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
-      maquinarias: e.uso_maquinaria || e.maquinarias || []
-    })) as unknown as EntregaEmpleado[]
+    const entregas = await res.json()
+    return entregas.map((e: any) => {
+      const ee = (e.entrega_empleado || e.empleados_asignados || []).find(
+        (emp: any) => emp.cuil === cuilEmpleado
+      ) || {}
+
+      return {
+        cuil: cuilEmpleado,
+        cod_obra: e.cod_obra,
+        cod_entrega: e.cod_entrega,
+        rol_entrega: ee.rol_entrega || '',
+        empleado: ee.empleado,
+        entrega: {
+          ...e,
+          empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
+          vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
+          maquinarias: e.uso_maquinaria || e.maquinarias || []
+        },
+        obra: e.obra || {}
+      }
+    })
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
     return []
@@ -155,7 +169,7 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
       },
       next: { revalidate: 30, tags: [`entrega-${id}`] },
     })
-    
+
     let data: Record<string, unknown> | null = await res.json()
     if (data) {
       data = {
@@ -273,7 +287,7 @@ export async function createEntrega(
     },
     body: JSON.stringify(payload),
   })
-  
+
   let data: Record<string, unknown> | null = await res.json()
   if (data) {
     data = {
