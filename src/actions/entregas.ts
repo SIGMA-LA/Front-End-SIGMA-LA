@@ -60,12 +60,26 @@ export async function getEntregasByEmpleado(
       }
     )
     const entregas = await res.json()
-    return entregas.map((e: any) => ({
-      ...e,
-      empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
-      vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
-      maquinarias: e.uso_maquinaria || e.maquinarias || []
-    }))
+    return entregas.map((e: any) => {
+      const ee = (e.entrega_empleado || e.empleados_asignados || []).find(
+        (emp: any) => emp.cuil === cuilEmpleado
+      ) || {}
+      
+      return {
+        cuil: cuilEmpleado,
+        cod_obra: e.cod_obra,
+        cod_entrega: e.cod_entrega,
+        rol_entrega: ee.rol_entrega || '',
+        empleado: ee.empleado,
+        entrega: {
+          ...e,
+          empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
+          vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
+          maquinarias: e.uso_maquinaria || e.maquinarias || []
+        },
+        obra: e.obra || {}
+      }
+    })
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
     return []
