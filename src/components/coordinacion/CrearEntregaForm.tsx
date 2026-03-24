@@ -13,9 +13,9 @@ import DateTimeSelection from './entrega/DateTimeSelection'
 import PersonalSelection from './entrega/PersonalSelection'
 import ViaticosSection from './entrega/ViaticosSection'
 import RecursosSelection from './entrega/RecursosSelection'
-import Observaciones from './entrega/Observaciones'
 import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
 import SelectionModal from '@/components/shared/SelectionModal'
+import DateTimeModal from './entrega/DateTimeModal'
 
 interface CrearEntregaFormProps {
   preloadedObra: Obra | null
@@ -43,8 +43,15 @@ export default function CrearEntregaForm({
     fecha: '',
     hora: '',
     detalle: '',
-    observaciones: '',
   })
+  
+  const [fechaRegreso, setFechaRegreso] = useState('')
+  const [horaRegreso, setHoraRegreso] = useState('')
+  
+  const [fechaSalida, setFechaSalida] = useState('')
+  const [horaSalida, setHoraSalida] = useState('')
+
+  const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false)
 
   // Estado de personal
   const [encargado, setEncargado] = useState<string | null>(null)
@@ -100,10 +107,32 @@ export default function CrearEntregaForm({
       setError('Debe seleccionar una obra')
       return
     }
-    if (!formData.fecha || !formData.hora) {
-      setError('Debe especificar fecha y hora')
+    if (
+      !formData.fecha ||
+      !formData.hora ||
+      !fechaRegreso ||
+      !horaRegreso ||
+      !fechaSalida ||
+      !horaSalida
+    ) {
+      setError('Debe especificar la salida, llegada y el regreso estimados')
       return
     }
+
+    const fechaEntregaMs = new Date(`${formData.fecha}T${formData.hora}:00`).getTime()
+    const fechaSalidaMs = new Date(`${fechaSalida}T${horaSalida}:00`).getTime()
+    const fechaRegresoMs = new Date(`${fechaRegreso}T${horaRegreso}:00`).getTime()
+
+    if (fechaSalidaMs > fechaEntregaMs) {
+      setError('La salida de la planta no puede ser posterior a la llegada al cliente.')
+      return
+    }
+    
+    if (fechaRegresoMs <= fechaSalidaMs) {
+      setError('El regreso estimado debe ser estrictamente posterior a la salida.')
+      return
+    }
+
     if (!encargado) {
       setError('Debe asignar un encargado')
       return
@@ -126,8 +155,9 @@ export default function CrearEntregaForm({
         cod_obra: formData.obraId,
         fecha_hora_entrega: `${formData.fecha}T${formData.hora}:00`,
         detalle: formData.detalle,
-        observaciones: formData.observaciones || '',
         dias_viaticos: diasViaticos,
+        fecha_salida_estimada: `${fechaSalida}T${horaSalida}:00`,
+        fecha_regreso_estimado: `${fechaRegreso}T${horaRegreso}:00`,
         empleados_asignados,
         vehiculos: selectedVehiculos.length > 0 ? selectedVehiculos : undefined,
         maquinarias:
@@ -233,12 +263,11 @@ export default function CrearEntregaForm({
               <DateTimeSelection
                 fecha={formData.fecha}
                 hora={formData.hora}
-                onDateChange={(value) =>
-                  setFormData((prev) => ({ ...prev, fecha: value }))
-                }
-                onTimeChange={(value) =>
-                  setFormData((prev) => ({ ...prev, hora: value }))
-                }
+                fechaSalida={fechaSalida}
+                horaSalida={horaSalida}
+                fechaRegreso={fechaRegreso}
+                horaRegreso={horaRegreso}
+                onAsignarClick={() => setIsDateTimeModalOpen(true)}
               />
 
               <div>
@@ -284,13 +313,6 @@ export default function CrearEntregaForm({
                 maquinarias={maquinarias}
               />
 
-              <Observaciones
-                value={formData.observaciones}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, observaciones: value }))
-                }
-              />
-
               <div className="flex gap-3 border-t pt-6">
                 <button
                   type="button"
@@ -319,6 +341,27 @@ export default function CrearEntregaForm({
           </div>
         </div>
       </div>
+
+      <DateTimeModal
+        isOpen={isDateTimeModalOpen}
+        onClose={() => setIsDateTimeModalOpen(false)}
+        initialValues={{
+          fecha: formData.fecha,
+          hora: formData.hora,
+          fechaSalida,
+          horaSalida,
+          fechaRegreso,
+          horaRegreso
+        }}
+        onConfirm={(nf, nh, nfs, nhs, nfr, nhr) => {
+          setFormData((prev) => ({ ...prev, fecha: nf, hora: nh }))
+          setFechaSalida(nfs)
+          setHoraSalida(nhs)
+          setFechaRegreso(nfr)
+          setHoraRegreso(nhr)
+          setIsDateTimeModalOpen(false)
+        }}
+      />
 
       <AsignarPersonalModal
         isOpen={isPersonalModalOpen}

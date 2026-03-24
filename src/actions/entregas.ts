@@ -15,6 +15,8 @@ interface CreateEntregaData {
   detalle: string
   observaciones?: string
   dias_viaticos?: number
+  fecha_salida_estimada?: string
+  fecha_regreso_estimado?: string
   empleados_asignados: Array<{
     cuil: string
     rol_entrega: RolEntrega
@@ -374,6 +376,8 @@ export async function createEntregaFromForm(formData: FormData) {
       dias_viaticos: formData.get('dias_viaticos')
         ? Number(formData.get('dias_viaticos'))
         : undefined,
+      fecha_salida_estimada: formData.get('fecha_salida_estimada') as string || undefined,
+      fecha_regreso_estimado: formData.get('fecha_regreso_estimado') as string || undefined,
       empleados_asignados: empleadosAsignados,
       vehiculos,
       maquinarias,
