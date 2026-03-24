@@ -106,12 +106,16 @@ export async function getVisitas(filtro?: string): Promise<Visita[]> {
  */
 export async function getVisitasByEmpleado(
   cuil: string,
-  estados?: string[]
+  estados?: string[],
+  search?: string,
+  date?: string
 ): Promise<Visita[]> {
   try {
     const token = await getAccessToken()
     const queryParams = new URLSearchParams()
     estados?.forEach((estado) => queryParams.append('estado', estado))
+    if (search) queryParams.append('search', search)
+    if (date) queryParams.append('date', date)
 
     const response = await fetchWithErrorHandling(
       `${BASE_URL}/empleado/${cuil}?${queryParams.toString()}`,

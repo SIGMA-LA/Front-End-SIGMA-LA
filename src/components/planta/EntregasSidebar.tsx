@@ -1,6 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { EntregaEmpleado } from '@/types'
+import { Search, Calendar as CalendarIcon } from 'lucide-react'
 import EntregaCard from './EntregaCard'
 
 interface EntregasSidebarProps {
@@ -22,10 +25,32 @@ export default function EntregasSidebar({
   errorEntregas,
   onRetry,
 }: EntregasSidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
+  const [dateFilter, setDateFilter] = useState(searchParams.get('date') || '')
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchTerm) params.set('search', searchTerm)
+      else params.delete('search')
+      
+      if (dateFilter) params.set('date', dateFilter)
+      else params.delete('date')
+
+      router.push(`${pathname}?${params.toString()}`)
+    }, 400)
+
+    return () => clearTimeout(handler)
+  }, [searchTerm, dateFilter, pathname, router, searchParams])
+
   if (loadingEntregas) {
     return (
-      <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-6 lg:p-6">
-        <div className="flex h-64 items-center justify-center">
+      <div className="flex flex-col h-full w-full overflow-hidden bg-white p-2 sm:p-4 lg:space-y-6 lg:p-6">
+        <div className="flex h-64 flex-1 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
             <p className="text-sm text-gray-500 lg:text-base">
@@ -33,14 +58,14 @@ export default function EntregasSidebar({
             </p>
           </div>
         </div>
-      </aside>
+      </div>
     )
   }
 
   if (errorEntregas) {
     return (
-      <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-6 lg:p-6">
-        <div className="flex h-64 items-center justify-center">
+      <div className="flex flex-col h-full w-full overflow-hidden bg-white p-2 sm:p-4 lg:space-y-6 lg:p-6">
+        <div className="flex h-64 flex-1 items-center justify-center">
           <div className="px-4 text-center sm:px-6">
             <div className="mb-4 text-red-500">
               <svg
@@ -71,103 +96,96 @@ export default function EntregasSidebar({
             </button>
           </div>
         </div>
-      </aside>
+      </div>
     )
   }
 
   return (
-    <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-8 lg:p-6">
-      {/* Entregas Pendientes */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 pt-2 sm:mb-4 sm:space-x-3 sm:pt-3 lg:mb-5">
-          <div className="h-3 w-3 rounded-full bg-orange-500 lg:h-4 lg:w-4"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
-            Entregas Pendientes ({entregasPendientes.length})
-          </h2>
-        </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {entregasPendientes.length === 0 ? (
-            <div className="py-6 text-center sm:py-8 lg:py-12">
-              <div className="mb-3 text-gray-400 sm:mb-4">
-                <svg
-                  className="mx-auto h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                No hay entregas pendientes
-              </p>
-            </div>
-          ) : (
-            entregasPendientes.map((entregaEmpleado) => (
-              <EntregaCard
-                key={entregaEmpleado.cod_entrega}
-                entregaEmpleado={entregaEmpleado}
-                isSelected={
-                  selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega
-                }
-                onClick={() => onSelectEntrega(entregaEmpleado)}
-                variant="pendiente"
-              />
-            ))
-          )}
+    <div className="flex flex-col h-full w-full overflow-hidden bg-white">
+      {/* Filtros y Buscador */}
+      <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por cliente, detalle o dirección..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm outline-none transition-all"
+            />
+          </div>
+          <div className="relative">
+            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm outline-none transition-all text-gray-600"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Entregas Realizadas */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 sm:mb-4 sm:space-x-3 lg:mb-5">
-          <div className="h-3 w-3 rounded-full bg-green-500 lg:h-4 lg:w-4"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
-            Entregas Realizadas ({entregasRealizadas.length})
-          </h2>
-        </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {entregasRealizadas.length === 0 ? (
-            <div className="py-6 text-center sm:py-8 lg:py-12">
-              <div className="mb-3 text-gray-400 sm:mb-4">
-                <svg
-                  className="mx-auto h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-8 lg:p-6">
+        {/* Entregas Pendientes */}
+        <div>
+          <div className="mb-4 flex items-center space-x-2">
+            <div className="h-3 w-3 rounded-full bg-orange-500 lg:h-4 lg:w-4"></div>
+            <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
+              Entregas Pendientes ({entregasPendientes.length})
+            </h2>
+          </div>
+          <div className="space-y-3 lg:space-y-4">
+            {entregasPendientes.length === 0 ? (
               <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                No hay entregas realizadas
+                {searchTerm || dateFilter ? 'No se encontraron resultados' : 'No hay entregas pendientes'}
               </p>
-            </div>
-          ) : (
-            entregasRealizadas.map((entregaEmpleado) => (
-              <EntregaCard
-                key={entregaEmpleado.cod_entrega}
-                entregaEmpleado={entregaEmpleado}
-                isSelected={
-                  selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega
-                }
-                onClick={() => onSelectEntrega(entregaEmpleado)}
-                variant="realizada"
-              />
-            ))
-          )}
+            ) : (
+              entregasPendientes.map((entregaEmpleado) => (
+                <EntregaCard
+                  key={entregaEmpleado.cod_entrega}
+                  entregaEmpleado={entregaEmpleado}
+                  isSelected={
+                    selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega
+                  }
+                  onClick={() => onSelectEntrega(entregaEmpleado)}
+                  variant="pendiente"
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Entregas Realizadas */}
+        <div>
+          <div className="mb-4 flex items-center space-x-2">
+            <div className="h-3 w-3 rounded-full bg-green-500 lg:h-4 lg:w-4"></div>
+            <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
+              Entregas Realizadas ({entregasRealizadas.length})
+            </h2>
+          </div>
+          <div className="space-y-3 lg:space-y-4">
+            {entregasRealizadas.length === 0 ? (
+              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
+                {searchTerm || dateFilter ? 'No se encontraron resultados' : 'No hay entregas realizadas'}
+              </p>
+            ) : (
+              entregasRealizadas.map((entregaEmpleado) => (
+                <EntregaCard
+                  key={entregaEmpleado.cod_entrega}
+                  entregaEmpleado={entregaEmpleado}
+                  isSelected={
+                    selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega
+                  }
+                  onClick={() => onSelectEntrega(entregaEmpleado)}
+                  variant="realizada"
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
-    </aside>
+    </div>
   )
 }

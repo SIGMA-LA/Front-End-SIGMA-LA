@@ -13,9 +13,10 @@ const BASE_URL = `${API_URL}/maquinarias`
  * Retrieves all maquinarias from the system
  * @returns {Promise<Maquinaria[]>} List of all maquinarias
  */
-export async function getMaquinarias(): Promise<Maquinaria[]> {
+export async function getMaquinarias(search?: string): Promise<Maquinaria[]> {
   const token = await getAccessToken()
-  const res = await fetchWithErrorHandling(BASE_URL, {
+  const url = search ? `${BASE_URL}?search=${encodeURIComponent(search)}` : BASE_URL
+  const res = await fetchWithErrorHandling(url, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30, tags: ['maquinarias'] },
   })

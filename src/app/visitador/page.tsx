@@ -69,7 +69,7 @@ function VisitadorSkeleton() {
   )
 }
 
-async function getVisitadorData(cuil: string) {
+async function getVisitadorData(cuil: string, search: string, date: string) {
   try {
     const [
       visitasPendientes,
@@ -77,10 +77,10 @@ async function getVisitadorData(cuil: string) {
       entregasPendientes,
       entregasRealizadas,
     ] = await Promise.all([
-      getVisitasByEmpleado(cuil),
-      getVisitasByEmpleado(cuil),
-      getEntregasByEmpleado(cuil, 'PENDIENTE'),
-      getEntregasByEmpleado(cuil, 'ENTREGADO'),
+      getVisitasByEmpleado(cuil, ['PENDIENTE', 'PROGRAMADA', 'EN CURSO'], search, date),
+      getVisitasByEmpleado(cuil, ['COMPLETADA', 'FINALIZADA'], search, date),
+      getEntregasByEmpleado(cuil, 'PENDIENTE', search, date),
+      getEntregasByEmpleado(cuil, 'ENTREGADO', search, date),
     ])
 
     return {
@@ -102,14 +102,21 @@ async function getVisitadorData(cuil: string) {
   }
 }
 
-export default async function VisitadorPage() {
+export default async function VisitadorPage({
+  searchParams,
+}: {
+  searchParams: { search?: string; date?: string }
+}) {
   const usuario = await getUsuario()
 
   if (!usuario) {
     redirect('/login')
   }
 
-  const data = await getVisitadorData(usuario.cuil)
+  const search = searchParams?.search || ''
+  const date = searchParams?.date || ''
+
+  const data = await getVisitadorData(usuario.cuil, search, date)
 
   return (
     <Suspense fallback={<VisitadorSkeleton />}>

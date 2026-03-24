@@ -1,8 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { Calendar } from 'lucide-react'
+import { useState, useEffect, useMemo, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { Calendar, Car, Settings, Loader2, Building2, CheckCircle2, MapPin, ClipboardList } from 'lucide-react'
 import { Localidad, Visita, Obra, Empleado, Provincia, Vehiculo } from '@/types'
+import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
+import DateTimeSelectionVisita from './visita/DateTimeSelectionVisita'
+import PersonalSelection from './entrega/PersonalSelection'
+import RecursosSelection from './entrega/RecursosSelection'
+import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
+import DateTimeModalVisita from './visita/DateTimeModalVisita'
+import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
+import SelectionModal from '@/components/shared/SelectionModal'
 
 interface CrearVisitaProps {
   preloadedObra?: Obra | null
@@ -11,12 +20,8 @@ interface CrearVisitaProps {
   vehiculos: Vehiculo[]
   buscarObras: (query: string) => Promise<Obra[]>
   buscarLocalidades: (provinciaCod: number) => Promise<Localidad[]>
+  visitaEditar?: Visita | null
 }
-import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
-import SeccionEmpleados from './visita/SeccionEmpleados'
-import SeccionDatosVisita from './visita/SeccionDatosVisita'
-import SeccionVisitaInicial from './visita/SeccionVisitaInicial'
-import SeccionSeleccionObra from './visita/SeccionSeleccionarObra'
 
 export default function CrearVisita({
   preloadedObra,
@@ -26,58 +31,46 @@ export default function CrearVisita({
   vehiculos,
   provincias,
   empleados,
-}: CrearVisitaProps & { visitaEditar?: Visita | null }) {
+}: CrearVisitaProps) {
+  const router = useRouter()
   const isFromObra = !!preloadedObra
+  const [isPending, startTransition] = useTransition()
 
   const [formData, setFormData] = useState({
     fecha: '',
     fechaHasta: '',
     hora: '',
-    tipo: '',
+    motivo_visita: '',
     observaciones: '',
     direccion: preloadedObra?.direccion || '',
     localidad: preloadedObra?.localidad?.nombre_localidad || '',
     obraId: preloadedObra?.cod_obra ?? undefined,
     vehiculo: '',
-    nombre: '',
-    apellido: '',
-    clienteTelefono: '',
+    dias_viatico: 1,
+    nombre_cliente: '',
+    apellido_cliente: '',
+    telefono_cliente: '',
+    cod_localidad: undefined as number | undefined,
   })
 
-  const [isVisitaInicial, setIsVisitaInicial] = useState(!preloadedObra)
+  const [isVisitaInicial, setIsVisitaInicial] = useState(!preloadedObra && !visitaEditar?.obra?.cod_obra)
   const [visitadorPrincipal, setVisitadorPrincipal] = useState<string>('')
   const [selectedAcompanantes, setSelectedAcompanantes] = useState<string[]>([])
-  const [localidades, setLocalidades] = useState<Localidad[]>([])
-  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<
-    number | ''
-  >('')
+  const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false)
+  const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false)
+  const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
+  const [selectedProvincia, setSelectedProvincia] = useState<number | undefined>(undefined)
+  const [localidades, setLocalidades] = useState<{ cod_localidad: number; nombre_localidad: string }[]>([])
+  const [loadingLocalidades, setLoadingLocalidades] = useState(false)
 
-  // Filtros de empleados
-  const visitadores = useMemo(() => {
-    return Array.isArray(empleados)
-      ? empleados.filter((e) => e.rol_actual === 'VISITADOR')
-      : []
-  }, [empleados])
-
-  const empleadosParaAcompanar = useMemo(() => {
-    return Array.isArray(empleados)
-      ? empleados.filter(
-          (e) =>
-            (e.rol_actual === 'VISITADOR' || e.rol_actual === 'PLANTA') &&
-            e.cuil !== visitadorPrincipal &&
-            !selectedAcompanantes.includes(e.cuil)
-        )
-      : []
-  }, [empleados, visitadorPrincipal, selectedAcompanantes])
-
-  const diasViatico = useMemo(() => {
-    if (!formData.fecha || !formData.fechaHasta) return 1
-    const diff = Math.floor(
-      (new Date(formData.fechaHasta).getTime() -
-        new Date(formData.fecha).getTime()) /
-        (1000 * 60 * 60 * 24)
-    )
-    return diff > 0 ? diff : 1
+  // Calulate dias viatico
+  useEffect(() => {
+    if (formData.fecha && formData.fechaHasta) {
+      const start = new Date(formData.fecha)
+      const end = new Date(formData.fechaHasta)
+      const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+      setFormData(prev => ({ ...prev, dias_viatico: diff > 0 ? diff : diff === 0 ? 1 : 0 }))
+    }
   }, [formData.fecha, formData.fechaHasta])
 
   // Precarga datos si es edición
@@ -88,27 +81,27 @@ export default function CrearVisita({
         : null
 
       const fechaLocal = fechaVisita
-        ? new Date(
-            fechaVisita.getTime() - fechaVisita.getTimezoneOffset() * 60000
-          )
+        ? new Date(fechaVisita.getTime() - fechaVisita.getTimezoneOffset() * 60000)
         : null
 
       setFormData({
         fecha: fechaLocal?.toISOString().slice(0, 10) || '',
         fechaHasta: fechaLocal?.toISOString().slice(0, 10) || '',
         hora: fechaLocal?.toISOString().slice(11, 16) || '',
-        tipo: visitaEditar.motivo_visita || '',
+        motivo_visita: visitaEditar.motivo_visita || 'OTRO',
         observaciones: visitaEditar.observaciones || '',
         direccion: visitaEditar.direccion_visita || '',
         localidad: visitaEditar.localidad?.nombre_localidad || '',
         obraId: visitaEditar.obra?.cod_obra ?? undefined,
         vehiculo: visitaEditar.uso_vehiculo_visita?.patente || '',
-        nombre: visitaEditar.nombre_cliente || '',
-        apellido: visitaEditar.apellido_cliente || '',
-        clienteTelefono: visitaEditar.telefono_cliente || '',
+        dias_viatico: 1,
+        nombre_cliente: visitaEditar.nombre_cliente || '',
+        apellido_cliente: visitaEditar.apellido_cliente || '',
+        telefono_cliente: visitaEditar.telefono_cliente || '',
+        cod_localidad: visitaEditar.localidad?.cod_localidad ?? undefined,
       })
       setIsVisitaInicial(!visitaEditar.obra?.cod_obra)
-      if (visitaEditar.empleado_visita?.length > 0) {
+      if (visitaEditar.empleado_visita && visitaEditar.empleado_visita.length > 0) {
         setVisitadorPrincipal(visitaEditar.empleado_visita[0]?.cuil || '')
         setSelectedAcompanantes(
           visitaEditar.empleado_visita.slice(1).map((e) => e.cuil)
@@ -117,213 +110,511 @@ export default function CrearVisita({
     }
   }, [visitaEditar])
 
-  useEffect(() => {
-    if (provinciaSeleccionada) {
-      buscarLocalidades(provinciaSeleccionada).then(setLocalidades)
-    }
-  }, [provinciaSeleccionada, buscarLocalidades])
+  const getEmpleadoNombre = (cuil: string) => {
+    const e = empleados.find((e) => e.cuil === cuil)
+    return e ? `${e.nombre} ${e.apellido}` : cuil
+  }
 
-  const formAction = visitaEditar ? updateVisitaFromForm : createVisitaFromForm
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    startTransition(async () => {
+      const formDataObj = new FormData()
+      
+      if (visitaEditar) {
+        formDataObj.append('cod_visita', visitaEditar.cod_visita.toString())
+      }
+      formDataObj.append('fecha', formData.fecha || '')
+      formDataObj.append('hora', formData.hora || '')
+      formDataObj.append('tipo', formData.motivo_visita || '')
+      formDataObj.append('direccion', formData.direccion || '')
+      formDataObj.append('observaciones', formData.observaciones || '')
+      formDataObj.append('vehiculo', formData.vehiculo || '')
+      formDataObj.append('diasViatico', formData.dias_viatico.toString())
+      if (formData.nombre_cliente) formDataObj.append('nombre', formData.nombre_cliente)
+      if (formData.apellido_cliente) formDataObj.append('apellido', formData.apellido_cliente)
+      if (formData.telefono_cliente) formDataObj.append('clienteTelefono', formData.telefono_cliente)
+      if (formData.cod_localidad) formDataObj.append('cod_localidad', formData.cod_localidad.toString())
+      
+      const empArr = []
+      if (visitadorPrincipal) empArr.push(visitadorPrincipal)
+      empArr.push(...selectedAcompanantes)
+      
+      formDataObj.append('empleados_visita', JSON.stringify(empArr))
+      
+      // Fallback localidad logic if needed, simplify for now by avoiding strict DB links if missing
+      formDataObj.append('cod_localidad', '')
+      
+      if (formData.obraId) {
+        formDataObj.append('obraId', formData.obraId.toString())
+      }
+
+      const action = visitaEditar ? updateVisitaFromForm : createVisitaFromForm
+      await action(formDataObj)
+      router.back()
+    })
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-            <Calendar className="h-6 w-6 text-blue-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm text-white">
+            <Calendar className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-slate-800">
               {visitaEditar
                 ? 'Editar Visita'
                 : isFromObra && preloadedObra
                   ? `Nueva Visita - ${preloadedObra.direccion}`
-                  : 'Nueva Visita'}
+                  : 'Registrar Nueva Visita'}
             </h1>
-            {isFromObra && preloadedObra && (
-              <p className="text-sm text-gray-600">
-                Cliente:{' '}
-                {preloadedObra.cliente.razon_social ||
-                  `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
-              </p>
-            )}
+            <p className="text-sm text-slate-500 mt-0.5">
+              Complete los detalles para coordinar la visita operativa
+            </p>
           </div>
         </div>
 
-        <form action={formAction}>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            {visitaEditar && (
-              <input
-                type="hidden"
-                name="cod_visita"
-                value={visitaEditar.cod_visita}
-              />
-            )}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!isFromObra && (
+            <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
+              <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl px-5 py-4">
+                <div className="rounded-lg bg-pink-100/80 p-2 shadow-inner">
+                  <MapPin className="h-5 w-5 text-pink-600" />
+                </div>
+                <h3 className="font-semibold text-slate-800">Ubicación y Detalle de Obra</h3>
+              </div>
+              <div className="p-5">
+                <div className="mb-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsVisitaInicial(!isVisitaInicial)
+                      if (!isVisitaInicial) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          obraId: undefined,
+                          direccion: '',
+                          localidad: '',
+                        }))
+                      }
+                    }}
+                    className={`flex flex-col sm:flex-row w-full sm:items-center justify-between rounded-xl border-2 p-4 transition-all gap-4 ${
+                      isVisitaInicial
+                        ? 'border-pink-500 bg-pink-50 ring-2 ring-pink-100 shadow-sm'
+                        : 'border-slate-200 bg-white hover:border-pink-300 hover:bg-pink-50/50 shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
+                          isVisitaInicial ? 'bg-pink-500 shadow-inner' : 'bg-slate-100'
+                        }`}
+                      >
+                        <Building2
+                          className={`h-6 w-6 ${isVisitaInicial ? 'text-white' : 'text-slate-500'}`}
+                        />
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-semibold ${isVisitaInicial ? 'text-pink-900' : 'text-slate-700'}`}>
+                          Visita Inicial (Prospección)
+                        </p>
+                        <p className="text-sm text-slate-500 mt-0.5">Crear un registro independiente sin enlazar a una obra existente</p>
+                      </div>
+                    </div>
+                    {isVisitaInicial && (
+                      <CheckCircle2 className="h-6 w-6 text-pink-500 hidden sm:block" />
+                    )}
+                  </button>
+                </div>
 
-            <input type="hidden" name="fecha" value={formData.fecha} />
-            <input type="hidden" name="hora" value={formData.hora} />
-            <input type="hidden" name="tipo" value={formData.tipo} />
-            <input type="hidden" name="direccion" value={formData.direccion} />
-            <input
-              type="hidden"
-              name="observaciones"
-              value={formData.observaciones}
-            />
-            <input type="hidden" name="vehiculo" value={formData.vehiculo} />
-            <input type="hidden" name="diasViatico" value={diasViatico} />
-            <input
-              type="hidden"
-              name="empleados_visita"
-              value={JSON.stringify([
-                visitadorPrincipal,
-                ...selectedAcompanantes,
-              ])}
-            />
-            <input
-              type="hidden"
-              name="cod_localidad"
-              value={
-                localidades.find(
-                  (l) => l.nombre_localidad === formData.localidad
-                )?.cod_localidad ?? ''
-              }
-            />
-            {formData.obraId && (
-              <input type="hidden" name="obraId" value={formData.obraId} />
-            )}
-            {formData.nombre && (
-              <input type="hidden" name="nombre" value={formData.nombre} />
-            )}
-            {formData.apellido && (
-              <input type="hidden" name="apellido" value={formData.apellido} />
-            )}
-            {formData.clienteTelefono && (
-              <input
-                type="hidden"
-                name="clienteTelefono"
-                value={formData.clienteTelefono}
-              />
-            )}
+                {isVisitaInicial && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                    <h4 className="text-sm font-semibold text-slate-800">Datos del Prospecto</h4>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Nombre *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.nombre_cliente || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, nombre_cliente: e.target.value }))}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                          placeholder="Ej. Juan"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Apellido
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.apellido_cliente || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, apellido_cliente: e.target.value }))}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                          placeholder="Ej. Pérez"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Teléfono de Contacto
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.telefono_cliente || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, telefono_cliente: e.target.value }))}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                          placeholder="Ej. +54 9 11 1234-5678"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-            {!isFromObra && (
-              <SeccionSeleccionObra
-                isVisitaInicial={isVisitaInicial}
-                onVisitaInicialToggle={() => {
-                  setIsVisitaInicial(!isVisitaInicial)
-                  if (!isVisitaInicial) {
+                {isVisitaInicial && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
+                    <h4 className="text-sm font-semibold text-slate-800">Ubicación a Visitar</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Dirección Específica *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.direccion || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, direccion: e.target.value }))}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                          placeholder="Ej. Av. Siempreviva 742"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                            Provincia *
+                          </label>
+                          <select
+                            value={selectedProvincia ?? ''}
+                            onChange={async (e) => {
+                              const cod = Number(e.target.value)
+                              setSelectedProvincia(cod)
+                              setFormData(prev => ({ ...prev, cod_localidad: undefined, localidad: '' }))
+                              setLocalidades([])
+                              if (cod) {
+                                setLoadingLocalidades(true)
+                                try {
+                                  const locs = await buscarLocalidades(cod)
+                                  setLocalidades(locs)
+                                } finally {
+                                  setLoadingLocalidades(false)
+                                }
+                              }
+                            }}
+                            required
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                          >
+                            <option value="">Seleccionar provincia...</option>
+                            {provincias.map(p => (
+                              <option key={p.cod_provincia} value={p.cod_provincia}>{p.nombre}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                            Localidad *
+                          </label>
+                          <select
+                            value={formData.cod_localidad ?? ''}
+                            onChange={(e) => {
+                              const cod = Number(e.target.value)
+                              const loc = localidades.find(l => l.cod_localidad === cod)
+                              setFormData(prev => ({ ...prev, cod_localidad: cod, localidad: loc?.nombre_localidad || '' }))
+                            }}
+                            required
+                            disabled={!selectedProvincia || loadingLocalidades}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500 disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            <option value="">{loadingLocalidades ? 'Cargando...' : 'Seleccionar localidad...'}</option>
+                            {localidades.map(l => (
+                              <option key={l.cod_localidad} value={l.cod_localidad}>{l.nombre_localidad}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!isVisitaInicial && (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                      Obra programada *
+                    </label>
+                    {formData.direccion ? (
+                      <div className="flex items-center justify-between rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shadow-inner">
+                            <Building2 className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          <div className="text-left leading-tight">
+                            <span className="font-bold text-indigo-900 block">
+                              {formData.direccion}
+                            </span>
+                            <span className="text-xs text-indigo-600 font-medium">Obra Seleccionada</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              obraId: undefined,
+                              direccion: '',
+                            }))
+                          }
+                          className="flex-shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 shadow-sm transition-all"
+                        >
+                          Elegir Otra
+                        </button>
+                      </div>
+                    ) : (
+                      <ObraSearchSelect
+                        buscarObras={buscarObras}
+                        onSelectObra={(obra) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            obraId: obra.cod_obra,
+                            direccion: obra.direccion,
+                            localidad: obra.localidad?.nombre_localidad || '',
+                          }))
+                          setIsVisitaInicial(false)
+                        }}
+                        placeholder="Buscar obra por dirección o identificador..."
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
+            <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+              <div className="rounded-lg bg-cyan-100/80 p-2 shadow-inner">
+                <ClipboardList className="h-5 w-5 text-cyan-600" />
+              </div>
+              <h3 className="font-semibold text-slate-800">Motivo y Coordinación</h3>
+            </div>
+            
+            <div className="p-5 space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Propósito de la visita *
+                  </label>
+                  <select
+                    name="motivo_visita"
+                    value={formData.motivo_visita}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        motivo_visita: e.target.value,
+                      }))
+                    }
+                    required
+                    className="w-full rounded-xl border border-slate-300 p-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 shadow-sm text-slate-700 bg-white outline-none"
+                  >
+                    <option value="" disabled>Seleccione un motivo...</option>
+                    <option value="VISITA INICIAL">Visita inicial</option>
+                    <option value="TOMA DE MEDIDAS">Toma de medidas</option>
+                    <option value="REPLANTEO">Replanteo / Remediata</option>
+                    <option value="REPARACION">Reparación (Garantía / Mto)</option>
+                    <option value="VISITA DE ASESORAMIENTO">Asesoramiento</option>
+                    <option value="OTRO">Otro propósito</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Proyección de Viáticos
+                  </label>
+                  <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-700 shadow-sm cursor-not-allowed h-[50px] flex items-center">
+                    {formData.dias_viatico > 0 ? (
+                       <span className="font-bold text-slate-800">{formData.dias_viatico} Días Calculados</span>
+                    ) : (
+                       <span className="text-slate-400 font-medium">Sin despliegues adicionales</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Instrucciones Relevantes
+                </label>
+                <textarea
+                  name="observaciones"
+                  value={formData.observaciones}
+                  onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      obraId: undefined,
-                      direccion: '',
-                      localidad: '',
+                      observaciones: e.target.value,
                     }))
                   }
-                }}
-                obraSeleccionada={formData.direccion}
-                buscarObras={buscarObras}
-                onSelectObra={(obra) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    obraId: obra.cod_obra,
-                    direccion: obra.direccion,
-                    localidad: obra.localidad?.nombre_localidad || '',
-                  }))
-                  setIsVisitaInicial(false)
-                }}
-              />
-            )}
-
-            {isVisitaInicial && (
-              <SeccionVisitaInicial
-                formData={formData}
-                onFormChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    [e.target.name]: e.target.value,
-                  }))
-                }
-                provincias={provincias}
-                localidades={localidades}
-                provinciaSeleccionada={provinciaSeleccionada}
-                onProvinciaChange={(e) =>
-                  setProvinciaSeleccionada(Number(e.target.value) || '')
-                }
-              />
-            )}
-
-            <SeccionDatosVisita
-              formData={formData}
-              onFormChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  [e.target.name]: e.target.value,
-                }))
-              }
-              vehiculosDisponibles={vehiculos}
-              tiposVisita={[
-                {
-                  value: 'VISITA INICIAL',
-                  label: 'Visita inicial',
-                  disabled: isFromObra,
-                },
-                { value: 'REPARACION', label: 'Reparación', disabled: false },
-                {
-                  value: 'ASESORAMIENTO',
-                  label: 'Asesoramiento',
-                  disabled: false,
-                },
-                { value: 'MEDICION', label: 'Medición', disabled: false },
-                { value: 'RE-MEDICION', label: 'Re-Medición', disabled: false },
-              ]}
-              diasViatico={diasViatico}
-              costoTotalViatico={0}
-            />
-
-            <SeccionEmpleados
-              visitadores={visitadores}
-              empleadosDisponibles={empleadosParaAcompanar}
-              todosLosEmpleados={empleados}
-              visitadorPrincipal={visitadorPrincipal}
-              onVisitadorChange={setVisitadorPrincipal}
-              acompanantesSeleccionados={selectedAcompanantes}
-              onAcompanantesChange={setSelectedAcompanantes}
-            />
-
-            <section>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Observaciones
-              </label>
-              <textarea
-                value={formData.observaciones}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    observaciones: e.target.value,
-                  }))
-                }
-                rows={3}
-                className="w-full rounded-md border px-3 py-2"
-              />
-
-              <div className="flex gap-3 pt-6">
-                <button
-                  type="button"
-                  onClick={() => window.history.back()}
-                  className="rounded-lg border px-6 py-2"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
-                >
-                  {visitaEditar ? 'Guardar' : 'Crear'}
-                </button>
+                  rows={2}
+                  className="w-full resize-none rounded-xl border border-slate-300 p-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 shadow-sm text-slate-700 bg-white outline-none"
+                  placeholder="Instrucciones clave para el personal en el terreno..."
+                />
               </div>
-            </section>
+            </div>
+          </div>
+
+          <DateTimeSelectionVisita
+            fecha={formData.fecha}
+            hora={formData.hora}
+            fechaHasta={formData.fechaHasta}
+            onAsignarClick={() => setIsDateTimeModalOpen(true)}
+          />
+
+          <PersonalSelection
+            encargado={visitadorPrincipal}
+            acompanantes={selectedAcompanantes}
+            getEmpleadoNombre={getEmpleadoNombre}
+            onAsignarClick={() => setIsPersonalModalOpen(true)}
+          />
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
+            <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-4">
+              <div className="rounded-lg bg-emerald-100/80 p-2 shadow-inner">
+                <Car className="h-5 w-5 text-emerald-600" />
+              </div>
+              <h3 className="font-semibold text-slate-800">Logística y Movilidad</h3>
+            </div>
+            <div className="p-5">
+              <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/30 to-white p-4 shadow-sm h-[72px] flex flex-col justify-center">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 flex flex-col justify-center">
+                    <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-1">
+                      Vehículo Asignado
+                    </span>
+                    {formData.vehiculo ? (
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const veh = vehiculos.find(v => v.patente === formData.vehiculo)
+                          return (
+                            <span className="inline-flex items-center rounded-md bg-white border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm h-[26px]">
+                              {veh ? `${veh.tipo_vehiculo} - ${veh.patente}` : formData.vehiculo}
+                            </span>
+                          )
+                        })()}
+                        <button
+                          type="button"
+                          onClick={() => setFormData(p => ({ ...p, vehiculo: '' }))}
+                          className="text-xs font-medium text-red-500 hover:text-red-700 hover:underline h-[26px] flex items-center"
+                        >
+                          Desvincular
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 text-sm italic h-[26px] flex items-center">Ningún vehículo asignado por el momento.</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsVehiculoModalOpen(true)}
+                    className="flex-shrink-0 rounded-lg bg-emerald-500 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm hover:bg-emerald-600 transition-all h-[32px] flex items-center"
+                  >
+                    Asignar Flota
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="rounded-xl px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:ring-2 focus:ring-slate-200 outline-none"
+              disabled={isPending}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-md hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-all hover:shadow-lg"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Procesando...
+                </>
+              ) : visitaEditar ? (
+                'Guardar Cambios'
+              ) : (
+                'Confirmar Visita'
+              )}
+            </button>
           </div>
         </form>
       </div>
+
+      {/* Modals for specific data selection */}
+      <DateTimeModalVisita
+        isOpen={isDateTimeModalOpen}
+        onClose={() => setIsDateTimeModalOpen(false)}
+        initialValues={{
+          fecha: formData.fecha,
+          hora: formData.hora,
+          fechaHasta: formData.fechaHasta
+        }}
+        onConfirm={(nf, nh, nfh) => {
+          setFormData(prev => ({ ...prev, fecha: nf, hora: nh, fechaHasta: nfh }))
+          setIsDateTimeModalOpen(false)
+        }}
+      />
+
+      <AsignarPersonalModal
+        isOpen={isPersonalModalOpen}
+        title="Asignar Personal a la Visita"
+        empleados={empleados.filter(e => e.rol_actual === 'VISITADOR' || e.rol_actual === 'PLANTA')}
+        encargadoSeleccionado={visitadorPrincipal}
+        acompanantesSeleccionados={selectedAcompanantes}
+        onClose={() => setIsPersonalModalOpen(false)}
+        onConfirm={(enc, acs) => {
+          setVisitadorPrincipal(enc)
+          setSelectedAcompanantes(acs)
+          setIsPersonalModalOpen(false)
+        }}
+      />
+
+      <SelectionModal
+        isOpen={isVehiculoModalOpen}
+        title="Asignar Vehículo Principal"
+        items={vehiculos.map((v) => ({
+          id: v.patente,
+          label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
+          disabled: v.estado !== 'DISPONIBLE' && formData.vehiculo !== v.patente,
+        }))}
+        selectedItems={formData.vehiculo ? [formData.vehiculo] : []}
+        onClose={() => setIsVehiculoModalOpen(false)}
+        onConfirm={(vehic) => {
+          setFormData(prev => ({ ...prev, vehiculo: vehic[0] || '' }))
+          setIsVehiculoModalOpen(false)
+        }}
+        onSearchAsync={async (term) => {
+          const { getVehiculos } = await import('@/actions/vehiculos')
+          const results = await getVehiculos(term)
+          return results.map(v => ({
+            id: v.patente,
+            label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
+            disabled: v.estado !== 'DISPONIBLE' && formData.vehiculo !== v.patente
+          }))
+        }}
+      />
     </div>
   )
 }

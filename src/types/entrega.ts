@@ -3,7 +3,7 @@ import type { Obra } from '@/types/obra'
 import type { UsoMaquinaria } from '@/types/maquinaria'
 import type { UsoVehiculoEntrega } from '@/types/vehiculo'
 
-export type EstadoEntrega = 'ENTREGADO' | 'EN CURSO' | 'CANCELADO' | 'PENDIENTE'
+export type EstadoEntrega = 'ENTREGADO' | 'CANCELADO' | 'PENDIENTE'
 
 export interface Entrega {
   cod_entrega: number

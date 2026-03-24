@@ -16,8 +16,6 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
     switch (estado) {
       case 'PENDIENTE':
         return 'text-yellow-600 bg-yellow-50'
-      case 'EN CURSO':
-        return 'text-blue-600 bg-blue-50'
       case 'ENTREGADO':
         return 'text-green-600 bg-green-50'
       case 'CANCELADO':
@@ -30,7 +28,6 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
   const getStatusText = (estado: string) => {
     const estados: { [key: string]: string } = {
       PENDIENTE: 'Pendiente',
-      'EN CURSO': 'En Curso',
       ENTREGADO: 'Entregada',
       CANCELADO: 'Cancelada',
     }

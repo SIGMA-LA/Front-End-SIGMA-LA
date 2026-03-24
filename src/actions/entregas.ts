@@ -43,12 +43,20 @@ interface UpdateEntregaData {
  */
 export async function getEntregasByEmpleado(
   cuilEmpleado: string,
-  estado: EstadoEntrega
+  estado: EstadoEntrega,
+  search?: string,
+  date?: string
 ): Promise<EntregaEmpleado[]> {
   try {
     const token = await getAccessToken()
+    const queryParams = new URLSearchParams()
+    if (search) queryParams.append('search', search)
+    if (date) queryParams.append('date', date)
+
+    const queryStr = queryParams.toString() ? `?${queryParams.toString()}` : ''
+
     const res = await fetchWithErrorHandling(
-      `${BASE_URL}/${cuilEmpleado}/${estado}`,
+      `${BASE_URL}/${cuilEmpleado}/${estado}${queryStr}`,
       {
         method: 'GET',
         headers: {
@@ -61,27 +69,40 @@ export async function getEntregasByEmpleado(
         },
       }
     )
-    const entregas = await res.json()
-    return entregas.map((e: any) => {
-      const ee = (e.entrega_empleado || e.empleados_asignados || []).find(
-        (emp: any) => emp.cuil === cuilEmpleado
-      ) || {}
+    const rawEntregas: {
+      cod_obra: number
+      cod_entrega: number
+      entrega_empleado?: { cuil: string; rol_entrega: string; empleado: unknown }[]
+      empleados_asignados?: { cuil: string; rol_entrega: string; empleado: unknown }[]
+      uso_vehiculo_entrega?: unknown[]
+      vehiculos?: unknown[]
+      uso_maquinaria?: unknown[]
+      maquinarias?: unknown[]
+      obra?: unknown
+      [key: string]: unknown
+    }[] = await res.json()
+
+    return rawEntregas.map((e) => {
+      const empleados = e.entrega_empleado || e.empleados_asignados || []
+      const ee = empleados.find((emp) => emp.cuil === cuilEmpleado) || {}
+      const role = 'rol_entrega' in ee ? (ee.rol_entrega as string) : ''
+      const empl = 'empleado' in ee ? ee.empleado : undefined
 
       return {
         cuil: cuilEmpleado,
         cod_obra: e.cod_obra,
         cod_entrega: e.cod_entrega,
-        rol_entrega: ee.rol_entrega || '',
-        empleado: ee.empleado,
+        rol_entrega: role,
+        empleado: empl,
         entrega: {
           ...e,
-          empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
+          empleados_asignados: empleados,
           vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
           maquinarias: e.uso_maquinaria || e.maquinarias || []
         },
         obra: e.obra || {}
       }
-    })
+    }) as unknown as EntregaEmpleado[]
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
     return []
@@ -91,12 +112,23 @@ export async function getEntregasByEmpleado(
 /**
  * Retrieves all deliveries with optional filtering
  * @param {string} filter - Optional search query
+ * @param {string} estado - Optional state filter
  * @returns {Promise<Entrega[]>} List of deliveries
  */
-export async function getEntregas(filter?: string): Promise<Entrega[]> {
+export async function getEntregas(filter?: string, estado?: string): Promise<Entrega[]> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(BASE_URL, {
+    
+    let url = BASE_URL
+    const params = new URLSearchParams()
+    if (filter) params.append('q', filter)
+    if (estado) params.append('estado', estado)
+
+    if (params.toString()) {
+      url = `${BASE_URL}?${params.toString()}`
+    }
+
+    const res = await fetchWithErrorHandling(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
