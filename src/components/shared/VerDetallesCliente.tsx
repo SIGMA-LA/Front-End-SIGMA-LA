@@ -12,7 +12,7 @@ import {
   ClipboardList,
 } from 'lucide-react'
 import { getCliente } from '@/actions/clientes'
-import { getObras } from '@/actions/obras'
+import { getObrasByCliente } from '@/actions/obras'
 import type { Cliente, Obra, VerDetallesClienteProps } from '@/types'
 
 export default function VerDetallesCliente({
@@ -27,17 +27,13 @@ export default function VerDetallesCliente({
     async function cargar() {
       try {
         setLoading(true)
-        const clienteData = await getCliente(cuil)
-        setCliente(clienteData)
+        // Fetch in parallel for better performance
+        const [clienteData, obrasData] = await Promise.all([
+          getCliente(cuil),
+          getObrasByCliente(cuil),
+        ])
 
-        // Buscar obras del cliente usando su razón social o nombre
-        let obrasData: Obra[] = []
-        if (clienteData) {
-          const searchTerm =
-            clienteData.razon_social ||
-            `${clienteData.nombre} ${clienteData.apellido}`
-          obrasData = await getObras(searchTerm)
-        }
+        setCliente(clienteData)
         setObras(obrasData || [])
       } catch (error) {
         console.error('Error cargando detalles:', error)
