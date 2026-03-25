@@ -1,0 +1,93 @@
+export const ROLES_EMPLEADO = [
+  'ADMIN',
+  'VENTAS',
+  'COORDINACION',
+  'PRODUCCION',
+  'PLANTA',
+  'VISITADOR',
+] as const
+
+export const AREAS_TRABAJO = [
+  'COORDINACION',
+  'VENTAS',
+  'PRODUCCION',
+  'CORTE',
+  'MECANIZADO',
+  'ENSAMBLE',
+  'ALMACEN',
+  'ATENCION_CLIENTE',
+  'COMPRAS',
+  'RECURSOS_HUMANOS',
+  'FINANZAS',
+  'ADMINISTRACION',
+  'PLANTA',
+] as const
+
+export const TIPOS_CLIENTE = ['PERSONA', 'EMPRESA'] as const
+
+export const ESTADOS_OBRA = [
+  'EN ESPERA DE PAGO',
+  'PAGADA PARCIALMENTE',
+  'EN ESPERA DE STOCK',
+  'EN PRODUCCION',
+  'PRODUCCION FINALIZADA',
+  'PAGADA TOTALMENTE',
+  'ENTREGADA',
+  'CANCELADA',
+] as const
+
+export const ESTADOS_ENTREGA = [
+  'ENTREGADO',
+  'EN CURSO',
+  'CANCELADO',
+  'PENDIENTE',
+] as const
+
+export const ROLES_ENTREGA = ['ENCARGADO', 'ACOMPANANTE'] as const
+
+export const ESTADOS_ORDEN_PRODUCCION = [
+  'PENDIENTE',
+  'APROBADA',
+  'EN PRODUCCION',
+  'FINALIZADA',
+] as const
+
+export const MOTIVOS_VISITA = [
+  'MEDICION',
+  'RE-MEDICION',
+  'REPARACION',
+  'ASESORAMIENTO',
+  'VISITA INICIAL',
+] as const
+
+export const ESTADOS_VISITA = [
+  'PROGRAMADA',
+  'EN CURSO',
+  'CANCELADA',
+  'REPROGRAMADA',
+  'COMPLETADA',
+] as const
+
+export const TIPOS_VEHICULO = [
+  'CAMION CHICO',
+  'CAMIONETA',
+  'AUTOMOVIL',
+  'CAMION GRANDE',
+] as const
+
+export const ESTADOS_VEHICULO = [
+  'DISPONIBLE',
+  'EN USO',
+  'MANTENIMIENTO',
+  'REPARACION',
+  'FUERA DE SERVICIO',
+  'RESERVADO',
+] as const
+
+export const ESTADOS_DISPONIBILIDAD = [
+  'DISPONIBLE',
+  'ADVERTENCIA',
+  'NO_DISPONIBLE',
+] as const
+
+export const ESTADOS_MAQUINARIA = ['DISPONIBLE', 'NO DISPONIBLE'] as const

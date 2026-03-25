@@ -63,7 +63,7 @@ export default function FinalizarProduccionModal({
                 ¿Está seguro que desea finalizar la producción de esta orden?
               </p>
               <p className="mt-1 text-sm text-blue-700">
-                Esta acción marcará la orden como "FINALIZADA".
+                Esta acción marcará la orden como &quot;FINALIZADA&quot;.
               </p>
             </div>
           </div>
@@ -105,7 +105,9 @@ export default function FinalizarProduccionModal({
 
             <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
               <p className="text-xs font-medium text-amber-800">
-                <div className='flex items-center'><TriangleAlert className='pr-1'/> Advertencia</div>
+                <div className="flex items-center">
+                  <TriangleAlert className="pr-1" /> Advertencia
+                </div>
               </p>
               <p className="mt-1 text-xs text-amber-700">
                 Asegúrese de que todos los productos han sido completados antes
