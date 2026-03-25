@@ -4,10 +4,37 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Entrega, EntregaEmpleado, EstadoEntrega, RolEntrega } from '@/types'
+import type {
+  Entrega,
+  EntregaEmpleado,
+  EstadoEntrega,
+  RolEntrega,
+} from '@/types'
+import type { Empleado } from '@/types/auth'
+import type { Obra } from '@/types/obra'
+import type { UsoMaquinaria } from '@/types/maquinaria'
+import type { UsoVehiculoEntrega } from '@/types/vehiculo'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/entregas`
+
+interface EntregaEmpleadoApi {
+  cuil: string
+  rol_entrega?: RolEntrega
+  empleado?: Empleado
+}
+
+interface EntregaApiPayload {
+  cod_entrega: number
+  cod_obra: number
+  obra?: Obra
+  entrega_empleado?: EntregaEmpleadoApi[]
+  empleados_asignados?: EntregaEmpleadoApi[]
+  uso_vehiculo_entrega?: UsoVehiculoEntrega[]
+  vehiculos?: UsoVehiculoEntrega[]
+  uso_maquinaria?: UsoMaquinaria[]
+  maquinarias?: UsoMaquinaria[]
+}
 
 interface CreateEntregaData {
   cod_obra: number
@@ -61,25 +88,28 @@ export async function getEntregasByEmpleado(
         },
       }
     )
-    const entregas = await res.json()
-    return entregas.map((e: any) => {
+    const entregas: EntregaApiPayload[] = await res.json()
+    return entregas.map((e) => {
       const ee = (e.entrega_empleado || e.empleados_asignados || []).find(
-        (emp: any) => emp.cuil === cuilEmpleado
-      ) || {}
+        (emp: EntregaEmpleadoApi) => emp.cuil === cuilEmpleado
+      )
+      const empleadosAsignados = (e.entrega_empleado ||
+        e.empleados_asignados ||
+        []) as unknown as EntregaEmpleado[]
 
       return {
         cuil: cuilEmpleado,
         cod_obra: e.cod_obra,
         cod_entrega: e.cod_entrega,
-        rol_entrega: ee.rol_entrega || '',
-        empleado: ee.empleado,
+        rol_entrega: ee?.rol_entrega || 'ACOMPANANTE',
+        empleado: ee?.empleado as EntregaEmpleado['empleado'],
         entrega: {
-          ...e,
-          empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
+          ...(e as Entrega),
+          empleados_asignados: empleadosAsignados,
           vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
-          maquinarias: e.uso_maquinaria || e.maquinarias || []
+          maquinarias: e.uso_maquinaria || e.maquinarias || [],
         },
-        obra: e.obra || {}
+        obra: (e.obra || {}) as EntregaEmpleado['obra'],
       }
     })
   } catch (error) {
@@ -110,7 +140,7 @@ export async function getEntregas(filter?: string): Promise<Entrega[]> {
       ...e,
       empleados_asignados: e.entrega_empleado || e.empleados_asignados || [],
       vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
-      maquinarias: e.uso_maquinaria || e.maquinarias || []
+      maquinarias: e.uso_maquinaria || e.maquinarias || [],
     })) as unknown as Entrega[]
 
     // Client-side filtering if needed
@@ -176,9 +206,10 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
     if (data) {
       data = {
         ...data,
-        empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+        empleados_asignados:
+          data.entrega_empleado || data.empleados_asignados || [],
         vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
-        maquinarias: data.uso_maquinaria || data.maquinarias || []
+        maquinarias: data.uso_maquinaria || data.maquinarias || [],
       }
     }
     return data as unknown as Entrega | null
@@ -278,7 +309,7 @@ export async function createEntrega(
     ...entregaData,
     empleados: entregaData.empleados_asignados,
     estado: 'PENDIENTE',
-    maquinarias: entregaData.maquinarias?.map(m => Number(m)),
+    maquinarias: entregaData.maquinarias?.map((m) => Number(m)),
   }
 
   const res = await fetchWithErrorHandling(BASE_URL, {
@@ -294,9 +325,10 @@ export async function createEntrega(
   if (data) {
     data = {
       ...data,
-      empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+      empleados_asignados:
+        data.entrega_empleado || data.empleados_asignados || [],
       vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
-      maquinarias: data.uso_maquinaria || data.maquinarias || []
+      maquinarias: data.uso_maquinaria || data.maquinarias || [],
     }
   }
   return data as unknown as Entrega
@@ -315,7 +347,7 @@ export async function updateEntrega(
   const token = await getAccessToken()
   const payload = {
     ...entregaData,
-    maquinarias: entregaData.maquinarias?.map(m => Number(m)),
+    maquinarias: entregaData.maquinarias?.map((m) => Number(m)),
   }
 
   const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -330,9 +362,10 @@ export async function updateEntrega(
   if (data) {
     data = {
       ...data,
-      empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+      empleados_asignados:
+        data.entrega_empleado || data.empleados_asignados || [],
       vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
-      maquinarias: data.uso_maquinaria || data.maquinarias || []
+      maquinarias: data.uso_maquinaria || data.maquinarias || [],
     }
   }
   return data as unknown as Entrega
@@ -364,9 +397,13 @@ export async function createEntregaFromForm(formData: FormData) {
       (formData.get('empleados_asignados') as string) || '[]'
     )
     const vehiculosData = formData.get('vehiculos')
-    const vehiculos = vehiculosData ? JSON.parse(vehiculosData as string) : undefined
+    const vehiculos = vehiculosData
+      ? JSON.parse(vehiculosData as string)
+      : undefined
     const maquinariasData = formData.get('maquinarias')
-    const maquinarias = maquinariasData ? JSON.parse(maquinariasData as string) : undefined
+    const maquinarias = maquinariasData
+      ? JSON.parse(maquinariasData as string)
+      : undefined
 
     const entregaData: CreateEntregaData = {
       cod_obra: Number(formData.get('cod_obra')),
@@ -376,8 +413,10 @@ export async function createEntregaFromForm(formData: FormData) {
       dias_viaticos: formData.get('dias_viaticos')
         ? Number(formData.get('dias_viaticos'))
         : undefined,
-      fecha_salida_estimada: formData.get('fecha_salida_estimada') as string || undefined,
-      fecha_regreso_estimado: formData.get('fecha_regreso_estimado') as string || undefined,
+      fecha_salida_estimada:
+        (formData.get('fecha_salida_estimada') as string) || undefined,
+      fecha_regreso_estimado:
+        (formData.get('fecha_regreso_estimado') as string) || undefined,
       empleados_asignados: empleadosAsignados,
       vehiculos,
       maquinarias,
@@ -401,9 +440,13 @@ export async function updateEntregaFromForm(formData: FormData) {
   try {
     const codEntrega = Number(formData.get('cod_entrega'))
     const vehiculosData = formData.get('vehiculos')
-    const vehiculos = vehiculosData ? JSON.parse(vehiculosData as string) : undefined
+    const vehiculos = vehiculosData
+      ? JSON.parse(vehiculosData as string)
+      : undefined
     const maquinariasData = formData.get('maquinarias')
-    const maquinarias = maquinariasData ? JSON.parse(maquinariasData as string) : undefined
+    const maquinarias = maquinariasData
+      ? JSON.parse(maquinariasData as string)
+      : undefined
 
     const entregaData: UpdateEntregaData = {
       fecha_hora_entrega: formData.get('fecha_hora_entrega') as string,

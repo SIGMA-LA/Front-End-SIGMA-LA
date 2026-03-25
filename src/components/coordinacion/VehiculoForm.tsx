@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { AlertTriangle, Car, Save, X } from 'lucide-react'
+import { ESTADOS_VEHICULO, TIPOS_VEHICULO } from '@/constants'
 import {
   Vehiculo,
   VehiculoFormData,
@@ -45,19 +46,8 @@ export default function VehiculoForm({
     modelo?: string
   }>({})
 
-  const tiposVehiculo: VehiculoTipo[] = [
-    'CAMION CHICO',
-    'CAMIONETA',
-    'AUTOMOVIL',
-    'CAMION GRANDE',
-  ]
-  const estadosVehiculo: VehiculoEstado[] = [
-    'DISPONIBLE',
-    'EN USO',
-    'REPARACION',
-    'FUERA DE SERVICIO',
-    'RESERVADO',
-  ]
+  const tiposVehiculo = TIPOS_VEHICULO
+  const estadosVehiculo = ESTADOS_VEHICULO
 
   useEffect(() => {
     if (vehiculo) {

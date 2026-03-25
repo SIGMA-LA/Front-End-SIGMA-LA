@@ -49,7 +49,10 @@ export default function EliminarObraModal({
             <p className="text-sm font-medium text-slate-500">
               Estás a punto de {isEliminacion ? 'eliminar' : 'cancelar'} la obra
               ubicada en{' '}
-              <span className="font-bold text-slate-700">"{direccion}"</span>.
+              <span className="font-bold text-slate-700">
+                &quot;{direccion}&quot;
+              </span>
+              .
             </p>
           </div>
 

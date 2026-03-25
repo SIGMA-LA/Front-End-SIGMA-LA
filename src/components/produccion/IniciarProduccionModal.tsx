@@ -63,8 +63,8 @@ export default function IniciarProduccionModal({
                 ¿Está seguro que desea iniciar la producción de esta orden?
               </p>
               <p className="mt-1 text-sm text-green-700">
-                Esta acción cambiará el estado de la orden a "EN PRODUCCIÓN" y
-                actualizará el estado de la obra asociada.
+                Esta acción cambiará el estado de la orden a &quot;EN
+                PRODUCCIÓN&quot; y actualizará el estado de la obra asociada.
               </p>
             </div>
           </div>
