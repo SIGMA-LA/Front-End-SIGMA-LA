@@ -1,6 +1,7 @@
 import type { AvailabilityStatus } from '@/types/vehiculo'
+import { ESTADOS_MAQUINARIA } from '@/constants'
 
-export type EstadoMaquinaria = 'DISPONIBLE' | 'NO DISPONIBLE'
+export type EstadoMaquinaria = (typeof ESTADOS_MAQUINARIA)[number]
 
 export interface Maquinaria {
   cod_maquina: number

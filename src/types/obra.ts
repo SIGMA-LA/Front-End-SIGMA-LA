@@ -3,16 +3,9 @@ import type { Localidad } from '@/types/geo'
 import type { Entrega } from '@/types/entrega'
 import type { Visita } from '@/types/visita'
 import type { Pago } from '@/types/pago'
+import { ESTADOS_OBRA } from '@/constants'
 
-export type EstadoObra =
-  | 'EN ESPERA DE PAGO'
-  | 'PAGADA PARCIALMENTE'
-  | 'EN ESPERA DE STOCK'
-  | 'EN PRODUCCION'
-  | 'PRODUCCION FINALIZADA'
-  | 'PAGADA TOTALMENTE'
-  | 'ENTREGADA'
-  | 'CANCELADA'
+export type EstadoObra = (typeof ESTADOS_OBRA)[number]
 
 export interface Presupuesto {
   nro_presupuesto: number
@@ -70,4 +63,3 @@ export interface PresupuestoInput {
   fecha_emision: string
   fecha_aceptacion?: string
 }
-

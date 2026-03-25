@@ -96,7 +96,8 @@ function ModalConfirmacion({
 
         <div className="mb-4 rounded-lg bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
-            Al confirmar, la obra pasará al estado "EN ESPERA DE STOCK".
+            Al confirmar, la obra pasará al estado &quot;EN ESPERA DE
+            STOCK&quot;.
           </p>
         </div>
 
@@ -256,7 +257,7 @@ export default function RegistrarPedido({
                     </li>
                     <li>
                       Una vez realizado el pedido, marque esta obra como
-                      "Solicitado".
+                      &quot;Solicitado&quot;.
                     </li>
                   </ul>
                 </div>

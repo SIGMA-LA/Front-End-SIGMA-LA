@@ -1,4 +1,6 @@
-export type TipoCliente = 'PERSONA' | 'EMPRESA'
+import { TIPOS_CLIENTE } from '@/constants'
+
+export type TipoCliente = (typeof TIPOS_CLIENTE)[number]
 
 export interface Cliente {
   cuil: string

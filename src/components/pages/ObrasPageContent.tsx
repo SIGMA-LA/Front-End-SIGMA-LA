@@ -7,6 +7,7 @@ import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import ObrasFiltros from '@/components/shared/ObrasFiltros'
 import Link from 'next/link'
+import type { EstadoObra, RolEmpleado } from '@/types'
 
 function ObrasListSkeleton() {
   return (
@@ -42,9 +43,9 @@ async function ObrasGrid({
   usuarioRol,
 }: {
   searchQuery?: string
-  estado?: string
+  estado?: EstadoObra
   cod_localidad?: number
-  usuarioRol?: string
+  usuarioRol?: RolEmpleado | undefined
 }) {
   // Cargar provincias y obras en paralelo
   const [provincias, obrasData] = await Promise.all([
@@ -93,11 +94,11 @@ async function ObrasGrid({
 
 interface ObrasPageContentProps {
   searchQuery?: string
-  estado?: string
+  estado?: EstadoObra
   cod_localidad?: number
   canCreate?: boolean
   createUrl?: string
-  usuarioRol?: string
+  usuarioRol?: RolEmpleado | undefined
   title?: string
   subtitle?: string
 }
