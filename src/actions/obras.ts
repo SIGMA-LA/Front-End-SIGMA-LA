@@ -77,7 +77,7 @@ export async function getObras(filter?: string): Promise<Obra[]> {
 export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
   try {
     const token = await getAccessToken()
-    const url = `${API_URL}/clientes/${encodeURIComponent(cuil)}/obras`
+    const url = `${BASE_URL}/cliente/${encodeURIComponent(cuil)}`
     const res = await fetchWithErrorHandling(url, {
       method: 'GET',
       headers: {
