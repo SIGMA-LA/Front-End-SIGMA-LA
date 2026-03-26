@@ -28,30 +28,52 @@ export default function SearchWrapper({
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     const params = new URLSearchParams(searchParams.toString())
+    const normalizedValue = value.trim()
 
-    if (value.trim()) {
-      params.set(paramName, value.trim())
+    if (normalizedValue) {
+      params.set(paramName, normalizedValue)
       clearOtherParams.forEach((param) => params.delete(param))
     } else {
       params.delete(paramName)
     }
 
+    const nextQueryString = params.toString()
+    const currentQueryString = searchParams.toString()
+
+    if (nextQueryString === currentQueryString) {
+      return
+    }
+
     startTransition(() => {
-      router.push(`?${params.toString()}`)
+      const url = nextQueryString ? `?${nextQueryString}` : '?'
+      router.replace(url, { scroll: false })
     })
   }, debounceMs)
 
   useEffect(() => {
-    debouncedSearch(searchQuery)
-  }, [searchQuery, debouncedSearch])
+    setSearchQuery(initialValue)
+  }, [initialValue])
+
+  const handleChange = (value: string) => {
+    setSearchQuery(value)
+    debouncedSearch(value)
+  }
 
   const handleClear = () => {
     setSearchQuery('')
     const params = new URLSearchParams(searchParams.toString())
     params.delete(paramName)
 
+    const nextQueryString = params.toString()
+    const currentQueryString = searchParams.toString()
+
+    if (nextQueryString === currentQueryString) {
+      return
+    }
+
     startTransition(() => {
-      router.push(`?${params.toString()}`)
+      const url = nextQueryString ? `?${nextQueryString}` : '?'
+      router.replace(url, { scroll: false })
     })
   }
 
@@ -62,17 +84,15 @@ export default function SearchWrapper({
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           placeholder={placeholder}
-          disabled={isPending}
-          className="w-full rounded-lg border border-gray-300 py-2.5 pr-10 pl-10 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:opacity-50"
+          className="w-full rounded-lg border border-gray-300 py-2.5 pr-10 pl-10 shadow-sm transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={handleClear}
-            disabled={isPending}
-            className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+            className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             aria-label="Limpiar búsqueda"
           >
             <X className="h-4 w-4" />
