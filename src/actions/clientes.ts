@@ -99,7 +99,8 @@ export async function createCliente(
     console.error('[createCliente]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al crear el cliente',
+      error:
+        error instanceof Error ? error.message : 'Error al crear el cliente',
     }
   }
 }
@@ -141,7 +142,10 @@ export async function updateCliente(
     console.error('[updateCliente]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al actualizar el cliente',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Error al actualizar el cliente',
     }
   }
 }
@@ -173,34 +177,8 @@ export async function deleteCliente(
     console.error('[deleteCliente]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al eliminar el cliente',
+      error:
+        error instanceof Error ? error.message : 'Error al eliminar el cliente',
     }
-  }
-}
-
-/**
- * Retrieves all construction sites (obras) for a specific cliente
- * @param {string} cuil - Cliente CUIL identifier
- * @returns {Promise<Obra[]>} List of Obras
- */
-export async function getClienteObras(cuil: string): Promise<Obra[]> {
-  if (!cuil) return []
-  try {
-    const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(
-      `${BASE_URL}/${encodeURIComponent(cuil)}/obras`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-
-    return (await res.json()) as Obra[]
-  } catch (error) {
-    console.error('[getClienteObras]', error)
-    return []
   }
 }
