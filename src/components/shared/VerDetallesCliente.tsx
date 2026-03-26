@@ -1,27 +1,34 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  X,
-  Building2,
-  MapPin,
-  Calendar,
-  Loader2,
-  DollarSign,
-  Truck,
-  ClipboardList,
-} from 'lucide-react'
+import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
 import { getCliente } from '@/actions/clientes'
-import { getObrasByCliente } from '@/actions/obras'
-import type { Cliente, Obra, VerDetallesClienteProps } from '@/types'
+import { getClienteObras } from '@/actions/obras'
+import type { Cliente, Obra } from '@/types'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+interface VerDetallesClienteProps {
+  cuil: string
+  onClose: () => void
+}
 
 export default function VerDetallesCliente({
   cuil,
   onClose,
 }: VerDetallesClienteProps) {
+  const pathname = usePathname()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(true)
+  const canViewObraDetails = pathname.startsWith('/admin')
+
+  const getObraHref = (codObra: number) => {
+    if (pathname.startsWith('/admin')) return `/admin/obras/${codObra}`
+    if (pathname.startsWith('/ventas')) return '/ventas/obras'
+    if (pathname.startsWith('/coordinacion')) return '/coordinacion/obras'
+    return '/admin/obras'
+  }
 
   useEffect(() => {
     async function cargar() {
@@ -155,81 +162,33 @@ export default function VerDetallesCliente({
               </div>
             ) : (
               <div className="space-y-3">
-                {obras.map((obra) => {
-                  const pagos = obra.pagos ?? obra.pago ?? []
-                  const visitas = obra.visitas ?? obra.visita ?? []
-                  const entregas = obra.entregas ?? obra.entrega ?? []
-
-                  const cantidadPagosPendientes = pagos.length
-                  const tienePagosPendientes =
-                    obra.estado === 'EN ESPERA DE PAGO' ||
-                    obra.estado === 'PAGADA PARCIALMENTE'
-                  const tieneVisitasPendientes = visitas.some(
-                    (v) => v.estado !== 'COMPLETADA' && v.estado !== 'CANCELADA'
-                  )
-                  const tieneEntregasPendientes = entregas.some(
-                    (e) => e.estado !== 'ENTREGADO' && e.estado !== 'CANCELADO'
-                  )
-
-                  return (
-                    <div
-                      key={obra.cod_obra}
-                      className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-blue-300"
-                    >
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-slate-900">
-                            {obra.direccion}
-                          </p>
-                          <p className="mt-1 text-sm text-slate-600">
-                            Estado: {obra.estado}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            title="Pagos pendientes"
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                              tienePagosPendientes
-                                ? 'border-amber-300 bg-amber-50 text-amber-700'
-                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                            }`}
-                          >
-                            <DollarSign className="h-3.5 w-3.5" />
-                            {tienePagosPendientes
-                              ? `Pagos: ${cantidadPagosPendientes}`
-                              : 'Pagos: 0'}
-                          </span>
-
-                          <span
-                            title="Visitas pendientes"
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                              tieneVisitasPendientes
-                                ? 'border-blue-300 bg-blue-50 text-blue-700'
-                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                            }`}
-                          >
-                            <ClipboardList className="h-3.5 w-3.5" />
-                            {tieneVisitasPendientes
-                              ? 'Visitas: pendientes'
-                              : 'Visitas: ok'}
-                          </span>
-
-                          <span
-                            title="Entregas pendientes"
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                              tieneEntregasPendientes
-                                ? 'border-orange-300 bg-orange-50 text-orange-700'
-                                : 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                            }`}
-                          >
-                            <Truck className="h-3.5 w-3.5" />
-                            {tieneEntregasPendientes
-                              ? 'Entregas: pendientes'
-                              : 'Entregas: ok'}
-                          </span>
-                        </div>
+                {obras.map((obra) => (
+                  <div
+                    key={obra.cod_obra}
+                    className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900">
+                          {obra.direccion}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Estado: {obra.estado}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Inicio:{' '}
+                          {new Date(obra.fecha_ini).toLocaleDateString('es-AR')}
+                        </p>
                       </div>
+                      {canViewObraDetails && (
+                        <Link
+                          href={getObraHref(obra.cod_obra)}
+                          onClick={onClose}
+                          className="inline-flex items-center self-start rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 sm:self-center"
+                        >
+                          Ver Detalles
+                        </Link>
+                      )}
                     </div>
                   )
                 })}

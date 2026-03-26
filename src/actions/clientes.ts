@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Cliente, Obra } from '@/types'
+import type { Cliente } from '@/types'
 
 export interface ActionResponse {
   success: boolean
@@ -13,6 +13,32 @@ export interface ActionResponse {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/clientes') ? API_URL : `${API_URL}/clientes`
+
+function mapDeleteClienteError(error: unknown): string {
+  const fallback = 'Error al eliminar el cliente'
+
+  if (!(error instanceof Error)) {
+    return fallback
+  }
+
+  const raw = error.message || ''
+  const normalized = raw.toLowerCase()
+
+  const hasAssociationHint =
+    normalized.includes('foreign key') ||
+    normalized.includes('constraint') ||
+    normalized.includes('referenc') ||
+    normalized.includes('asociad') ||
+    normalized.includes('dependen') ||
+    normalized.includes('obra') ||
+    normalized.includes('visita')
+
+  if (hasAssociationHint) {
+    return 'No se puede eliminar este cliente porque tiene obras o visitas asociadas. Si la visita inicial no tiene obra, también debe desvincularse antes de eliminar el cliente.'
+  }
+
+  return raw || fallback
+}
 
 /**
  * Retrieves all Clientes or searches Clientes by filter
@@ -91,6 +117,7 @@ export async function createCliente(
 
     const data = await res.json()
 
+    revalidatePath('/admin/clientes')
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
 
@@ -99,7 +126,8 @@ export async function createCliente(
     console.error('[createCliente]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al crear el cliente',
+      error:
+        error instanceof Error ? error.message : 'Error al crear el cliente',
     }
   }
 }
@@ -133,6 +161,7 @@ export async function updateCliente(
 
     const data = await res.json()
 
+    revalidatePath('/admin/clientes')
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
 
@@ -141,7 +170,10 @@ export async function updateCliente(
     console.error('[updateCliente]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al actualizar el cliente',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Error al actualizar el cliente',
     }
   }
 }
@@ -165,6 +197,7 @@ export async function deleteCliente(
       },
     })
 
+    revalidatePath('/admin/clientes')
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
 
@@ -173,34 +206,7 @@ export async function deleteCliente(
     console.error('[deleteCliente]', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error al eliminar el cliente',
+      error: mapDeleteClienteError(error),
     }
-  }
-}
-
-/**
- * Retrieves all construction sites (obras) for a specific cliente
- * @param {string} cuil - Cliente CUIL identifier
- * @returns {Promise<Obra[]>} List of Obras
- */
-export async function getClienteObras(cuil: string): Promise<Obra[]> {
-  if (!cuil) return []
-  try {
-    const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(
-      `${BASE_URL}/${encodeURIComponent(cuil)}/obras`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    )
-
-    return (await res.json()) as Obra[]
-  } catch (error) {
-    console.error('[getClienteObras]', error)
-    return []
   }
 }

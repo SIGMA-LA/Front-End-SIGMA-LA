@@ -9,6 +9,10 @@ interface ConfirmDeleteModalProps {
   title?: string // <-- Nuevo prop para personalizar el título
   monto?: number
   fecha_pago?: string
+  confirmLabel?: string
+  cancelLabel?: string
+  confirmVariant?: 'danger' | 'primary'
+  hideCancel?: boolean
 }
 
 export default function ConfirmDeleteModal({
@@ -20,8 +24,17 @@ export default function ConfirmDeleteModal({
   title = 'Confirmar eliminación de pago', // <-- Valor por defecto
   monto,
   fecha_pago,
+  confirmLabel = 'Eliminar',
+  cancelLabel = 'Cancelar',
+  confirmVariant = 'danger',
+  hideCancel = false,
 }: ConfirmDeleteModalProps) {
   if (!open) return null
+
+  const confirmButtonClasses =
+    confirmVariant === 'primary'
+      ? 'rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+      : 'rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -49,19 +62,21 @@ export default function ConfirmDeleteModal({
           </div>
         )}
         <div className="flex justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="rounded bg-gray-100 px-4 py-2 text-gray-700 hover:bg-gray-200"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
+          {!hideCancel && (
+            <button
+              onClick={onCancel}
+              className="rounded bg-gray-100 px-4 py-2 text-gray-700 hover:bg-gray-200"
+              disabled={loading}
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             onClick={onConfirm}
-            className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+            className={confirmButtonClasses}
             disabled={loading}
           >
-            Eliminar
+            {confirmLabel}
           </button>
         </div>
       </div>
