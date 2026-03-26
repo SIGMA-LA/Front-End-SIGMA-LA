@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Empleado, EntregaEmpleado } from '@/types'
 import EntregasSidebar from '@/components/planta/EntregasSidebar'
 import EntregaDetails from '@/components/planta/EntregaDetails'
@@ -15,46 +15,53 @@ import {
 
 interface PlantaClientProps {
   usuario: Empleado
-  entregasPendientesInitial: EntregaEmpleado[]
-  entregasRealizadasInitial: EntregaEmpleado[]
+  entregasInitial: EntregaEmpleado[]
   errorInitial: string | null
 }
 
 export default function PlantaClient({
   usuario,
-  entregasPendientesInitial,
-  entregasRealizadasInitial,
+  entregasInitial,
   errorInitial,
 }: PlantaClientProps) {
   const [selectedEntrega, setSelectedEntrega] =
     useState<EntregaEmpleado | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
-  const [entregasPendientes, setEntregasPendientes] = useState<
-    EntregaEmpleado[]
-  >(entregasPendientesInitial)
-  const [entregasRealizadas, setEntregasRealizadas] = useState<
-    EntregaEmpleado[]
-  >(entregasRealizadasInitial)
+  const [entregas, setEntregas] = useState<EntregaEmpleado[]>(entregasInitial)
+  const [estadoFiltro, setEstadoFiltro] = useState<'PENDIENTE' | 'ENTREGADO'>('PENDIENTE')
+
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterDate, setFilterDate] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [debouncedDate, setDebouncedDate] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(errorInitial)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [finalizandoEntrega, setFinalizandoEntrega] = useState(false)
 
-  const loadEntregas = async () => {
+  // 3-second debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setDebouncedDate(filterDate)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [searchTerm, filterDate])
+
+  const loadEntregas = async (
+    estado: 'PENDIENTE' | 'ENTREGADO',
+    search: string,
+    date: string
+  ) => {
     if (!usuario?.cuil) return
 
     try {
       setLoading(true)
       setError(null)
-
-      const [pendientes, entregadas] = await Promise.all([
-        getEntregasByEmpleado(usuario.cuil, 'PENDIENTE'),
-        getEntregasByEmpleado(usuario.cuil, 'ENTREGADO'),
-      ])
-
-      setEntregasPendientes(pendientes)
-      setEntregasRealizadas(entregadas)
+      const data = await getEntregasByEmpleado(usuario.cuil, estado, search, date)
+      setEntregas(data)
     } catch (err) {
       console.error('Error al cargar entregas:', err)
       setError('Error al cargar las entregas')
@@ -63,8 +70,13 @@ export default function PlantaClient({
     }
   }
 
+  // Refetch when debounced params or status filter change
+  useEffect(() => {
+    loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
+  }, [estadoFiltro, debouncedSearch, debouncedDate])
+
   const handleRetry = async () => {
-    await loadEntregas()
+    await loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
   }
 
   const handleSelectEntrega = (entrega: EntregaEmpleado) => {
@@ -93,10 +105,13 @@ export default function PlantaClient({
         }
 
         setSelectedEntrega(entregaActualizada)
-        setEntregasPendientes((prev) =>
-          prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
-        )
-        setEntregasRealizadas((prev) => [...prev, entregaActualizada])
+        if (estadoFiltro === 'PENDIENTE') {
+          setEntregas((prev) =>
+            prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
+          )
+        } else {
+          setEntregas((prev) => [...prev, entregaActualizada])
+        }
         setShowConfirmModal(false)
         setObservacionesFinal('')
       } catch (error) {
@@ -117,7 +132,7 @@ export default function PlantaClient({
           observacionesFinal || 'No se especificó motivo.'
         )
 
-        setEntregasPendientes((prev) =>
+        setEntregas((prev) =>
           prev.filter((e) => e.cod_entrega !== selectedEntrega.cod_entrega)
         )
         setSelectedEntrega(null)
@@ -158,33 +173,19 @@ export default function PlantaClient({
             <div className="flex gap-2 sm:hidden">
               <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
                 <div className="text-base font-semibold text-blue-600">
-                  {entregasPendientes.length}
+                  {entregas.length}
                 </div>
-                <div className="text-xs text-gray-600">Pendientes</div>
-              </div>
-              <div className="rounded-lg bg-green-50 px-3 py-2 text-center">
-                <div className="text-base font-semibold text-green-600">
-                  {entregasRealizadas.length}
-                </div>
-                <div className="text-xs text-gray-600">Entregadas</div>
+                <div className="text-xs text-gray-600">Entregas listadas</div>
               </div>
             </div>
           </div>
-          <div className="hidden gap-6 sm:flex">
+          <div className="hidden sm:flex">
             <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
               <div className="text-lg font-semibold text-blue-600 lg:text-xl">
-                {entregasPendientes.length}
+                {entregas.length}
               </div>
               <div className="text-sm text-gray-600 lg:text-base">
-                Pendientes
-              </div>
-            </div>
-            <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-              <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                {entregasRealizadas.length}
-              </div>
-              <div className="text-sm text-gray-600 lg:text-base">
-                Entregadas
+                Entregas listadas
               </div>
             </div>
           </div>
@@ -193,16 +194,25 @@ export default function PlantaClient({
 
       <div className="flex flex-1 overflow-hidden">
         <div
-          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
+          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-full sm:w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
         >
           <EntregasSidebar
-            entregasPendientes={entregasPendientes}
-            entregasRealizadas={entregasRealizadas}
+            entregas={entregas}
+            estadoFiltro={estadoFiltro}
+            onEstadoFiltroChange={(estado) => {
+              setEstadoFiltro(estado)
+              loadEntregas(estado, debouncedSearch, debouncedDate)
+            }}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            filterDate={filterDate}
+            onFilterDateChange={setFilterDate}
             selectedEntrega={selectedEntrega}
             onSelectEntrega={handleSelectEntrega}
             loadingEntregas={loading}
             errorEntregas={error}
             onRetry={handleRetry}
+            onClose={() => setSidebarOpen(false)}
           />
         </div>
 
@@ -222,8 +232,8 @@ export default function PlantaClient({
           ) : (
             <EmptyState
               message="Selecciona una entrega del panel lateral para ver los detalles"
-              totalPendientes={entregasPendientes.length}
-              totalRealizadas={entregasRealizadas.length}
+              totalPendientes={entregas.length}
+              totalRealizadas={0}
             />
           )}
         </main>
