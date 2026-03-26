@@ -68,3 +68,14 @@ export type {
   ParametroViatico,
   PerfilFormData,
 } from './common'
+
+export type {
+  PagosPageContentProps,
+  ObraCardProps,
+  VerDetallesClienteProps,
+  CrearPagoButtonProps,
+  ObraSelectProps,
+  ObraSearchResultsProps,
+  PagoModalProps,
+  PagoModalStep,
+} from './componentProps'

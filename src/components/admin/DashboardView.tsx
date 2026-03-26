@@ -5,57 +5,82 @@ import {
   TrendingUp,
   Building,
   UserPlus,
-  BarChart3,
   DollarSign,
+  Eye,
+  Truck,
   Calendar,
 } from 'lucide-react'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import type { Obra, Cliente } from '@/types'
+import { Card, CardContent } from '@/components/ui/Card'
+import type { Obra, Cliente, Pago, Visita, Entrega } from '@/types'
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
+    maximumFractionDigits: 0,
   }).format(amount)
 }
 
 interface DashboardViewProps {
   obras: Obra[]
   clientes: Cliente[]
+  pagos: Pago[]
+  visitas: Visita[]
+  entregas: Entrega[]
 }
 
-export default function DashboardView({ obras, clientes }: DashboardViewProps) {
+export default function DashboardView({
+  obras,
+  clientes,
+  pagos,
+  visitas,
+  entregas,
+}: DashboardViewProps) {
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+
+  const obrasActivas = obras.filter(
+    (o) => o.estado !== 'ENTREGADA' && o.estado !== 'CANCELADA'
+  ).length
+
+  const ingresosMes = pagos
+    .filter((p) => {
+      const fecha = new Date(p.fecha_pago)
+      return (
+        fecha.getMonth() === currentMonth &&
+        fecha.getFullYear() === currentYear
+      )
+    })
+    .reduce((sum, p) => sum + p.monto, 0)
+
+  const visitasProgramadas = visitas.filter((v) => {
+    const fecha = new Date(v.fecha_hora_visita)
+    return (
+      fecha.getMonth() === currentMonth &&
+      fecha.getFullYear() === currentYear &&
+      (v.estado === 'PROGRAMADA' || v.estado === 'EN CURSO')
+    )
+  }).length
+
+  const entregasPendientes = entregas.filter((e) => {
+    const fecha = new Date(e.fecha_hora_entrega)
+    return (
+      fecha.getMonth() === currentMonth &&
+      fecha.getFullYear() === currentYear &&
+      (e.estado === 'PENDIENTE' || e.estado === 'EN CURSO')
+    )
+  }).length
+
+  const obrasEntregadas = obras.filter((o) => o.estado === 'ENTREGADA').length
+
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-blue-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-100">
-                  Obras Activas
-                </p>
-                <p className="text-3xl font-bold">
-                  {
-                    obras.filter(
-                      (o) =>
-                        o.estado === 'EN ESPERA DE PAGO' ||
-                        o.estado === 'PAGADA PARCIALMENTE' ||
-                        o.estado === 'EN ESPERA DE STOCK' ||
-                        o.estado === 'EN PRODUCCION' ||
-                        o.estado === 'PRODUCCION FINALIZADA' ||
-                        o.estado === 'PAGADA TOTALMENTE'
-                    ).length
-                  }
-                </p>
-              </div>
-              <Building className="h-10 w-10 text-blue-200" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-600 text-white">
-          <CardContent className="p-6">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Card className="border-0 bg-purple-600 text-white">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-100">
@@ -63,44 +88,48 @@ export default function DashboardView({ obras, clientes }: DashboardViewProps) {
                 </p>
                 <p className="text-3xl font-bold">{clientes.length}</p>
               </div>
-              <Users className="h-10 w-10 text-purple-200" />
+              <Users className="h-9 w-9 text-purple-200" />
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-green-600 text-white">
-          <CardContent className="p-6">
+
+        <Card className="border-0 bg-green-600 text-white">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-100">
                   Ingresos del Mes
                 </p>
-                <p className="text-3xl font-bold"></p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(ingresosMes)}
+                </p>
               </div>
-              <DollarSign className="h-10 w-10 text-green-200" />
+              <DollarSign className="h-9 w-9 text-green-200" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-blue-600 text-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-100">
+                  Obras Activas
+                </p>
+                <p className="text-3xl font-bold">{obrasActivas}</p>
+              </div>
+              <Building className="h-9 w-9 text-blue-200" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-xl font-semibold">
-            <BarChart3 className="h-5 w-5" />
-            <span>Evolución de Ventas 2024</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Aquí puedes integrar un componente de gráfico, como Chart.js o Recharts */}
-          </div>
-        </CardContent>
-      </Card>
-
+      {/* Quick Access Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Link href="/admin?section=empleados">
+        <Link href="/admin/empleados">
           <Card className="cursor-pointer transition-shadow hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-              <UserPlus className="mx-auto mb-4 h-10 w-10 text-blue-600" />
+              <UserPlus className="mx-auto mb-4 h-10 w-10 text-purple-600" />
               <h3 className="mb-2 text-lg font-semibold">
                 Gestionar Empleados
               </h3>
@@ -110,21 +139,21 @@ export default function DashboardView({ obras, clientes }: DashboardViewProps) {
             </CardContent>
           </Card>
         </Link>
-        <Link href="/admin?section=reportes">
+        <Link href="/admin/reportes">
           <Card className="cursor-pointer transition-shadow hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center p-6 text-center">
               <TrendingUp className="mx-auto mb-4 h-10 w-10 text-green-600" />
-              <h3 className="mb-2 text-lg font-semibold">Reportes de Ventas</h3>
+              <h3 className="mb-2 text-lg font-semibold">Reportes</h3>
               <p className="text-sm text-gray-600">
                 Análisis detallado de la performance
               </p>
             </CardContent>
           </Card>
         </Link>
-        <Link href="/admin?section=obras">
+        <Link href="/admin/obras">
           <Card className="cursor-pointer transition-shadow hover:shadow-lg">
             <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-              <Building className="mx-auto mb-4 h-10 w-10 text-purple-600" />
+              <Building className="mx-auto mb-4 h-10 w-10 text-blue-600" />
               <h3 className="mb-2 text-lg font-semibold">Supervisar Obras</h3>
               <p className="text-sm text-gray-600">
                 Vista general de todas las obras activas
@@ -132,6 +161,50 @@ export default function DashboardView({ obras, clientes }: DashboardViewProps) {
             </CardContent>
           </Card>
         </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Card className="border-0 bg-cyan-600 text-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-cyan-100">
+                  Visitas Pendientes
+                </p>
+                <p className="text-3xl font-bold">{visitasProgramadas}</p>
+              </div>
+              <Eye className="h-9 w-9 text-cyan-200" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-amber-500 text-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-amber-100">
+                  Entregas Pendientes
+                </p>
+                <p className="text-3xl font-bold">{entregasPendientes}</p>
+              </div>
+              <Truck className="h-9 w-9 text-amber-200" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-indigo-600 text-white">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-indigo-100">
+                  Obras Entregadas
+                </p>
+                <p className="text-3xl font-bold">{obrasEntregadas}</p>
+              </div>
+              <Calendar className="h-9 w-9 text-indigo-200" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

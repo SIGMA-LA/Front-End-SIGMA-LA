@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Obra, Provincia, RolEmpleado } from '@/types'
+import { ObraCardProps } from '@/types'
 import EstadoObraBadge from './EstadoObraBadge'
 import {
   Calendar,
@@ -20,13 +20,6 @@ import EliminarObraModal from '../ventas/EliminarObraModal'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
 import Link from 'next/link'
 import { deleteObra, cancelObra } from '@/actions/obras'
-
-interface ObraCardProps {
-  obra: Obra
-  usuarioRol: RolEmpleado | undefined
-  provincias: Provincia[]
-}
-
 
 export default function ObraCard({
   obra,
@@ -228,7 +221,7 @@ export default function ObraCard({
             {esVentas && (
               <>
                 <Link
-                  href={`/ventas/obras/${obra.cod_obra}/pagos`}
+                  href={`/ventas/pagos?q=${encodeURIComponent(obra.direccion)}`}
                   className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
                 >
                   <DollarSign className="h-4 w-4" />

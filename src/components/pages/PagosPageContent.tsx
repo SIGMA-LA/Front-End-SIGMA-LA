@@ -5,7 +5,7 @@ import ObraPagosCard from '@/components/shared/ObraPagosCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import PagosFiltros from '@/components/shared/PagosFiltros'
 import CrearPagoButton from '@/components/ventas/pagos/CrearPagoButton'
-import { PagosFilter, Obra } from '@/types'
+import { PagosFilter, Obra, PagosPageContentProps } from '@/types'
 
 function PagosListSkeleton() {
   return (
@@ -61,16 +61,19 @@ async function PagosGrid({
   const totalMonto = pagosData.reduce((sum, pago) => sum + pago.monto, 0)
 
   // Group by Obra
-  const obrasMap = new Map<number, { obraInfo: Obra | undefined, pagos: typeof pagosData, totalPagado: number }>()
+  const obrasMap = new Map<
+    number,
+    { obraInfo: Obra | undefined; pagos: typeof pagosData; totalPagado: number }
+  >()
 
-  pagosData.forEach(pago => {
+  pagosData.forEach((pago) => {
     // Handling case where pago does not have an obra associated directly (backend safeguard)
     const cod_obra = pago.cod_obra || (pago.obra ? pago.obra.cod_obra : 0)
     if (!obrasMap.has(cod_obra)) {
       obrasMap.set(cod_obra, {
         obraInfo: pago.obra,
         pagos: [],
-        totalPagado: 0
+        totalPagado: 0,
       })
     }
     const group = obrasMap.get(cod_obra)!
@@ -81,16 +84,28 @@ async function PagosGrid({
   // Convert map to array and sort by latest payment
   const obrasGrouped = Array.from(obrasMap.values()).sort((a, b) => {
     // Get latest payment for each group
-    const maxDateA = Math.max(...a.pagos.map(p => new Date(p.fecha_pago).getTime()))
-    const maxDateB = Math.max(...b.pagos.map(p => new Date(p.fecha_pago).getTime()))
+    const maxDateA = Math.max(
+      ...a.pagos.map((p) => new Date(p.fecha_pago).getTime())
+    )
+    const maxDateB = Math.max(
+      ...b.pagos.map((p) => new Date(p.fecha_pago).getTime())
+    )
     return maxDateB - maxDateA
   })
 
   return (
     <div>
-      <div className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200 inline-block">
-        Mostrando <span className="font-semibold text-gray-900">{totalPagos}</span> pagos en <span className="font-semibold text-gray-900">{obrasGrouped.length}</span> obras
-        • Total: <span className="font-semibold text-green-700">${totalMonto.toLocaleString()}</span>
+      <div className="mb-4 inline-block rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+        Mostrando{' '}
+        <span className="font-semibold text-gray-900">{totalPagos}</span> pagos
+        en{' '}
+        <span className="font-semibold text-gray-900">
+          {obrasGrouped.length}
+        </span>{' '}
+        obras • Total:{' '}
+        <span className="font-semibold text-green-700">
+          ${totalMonto.toLocaleString()}
+        </span>
       </div>
       <div className="grid gap-4 sm:gap-6">
         {obrasGrouped.map((group, index) => (
@@ -107,20 +122,9 @@ async function PagosGrid({
   )
 }
 
-interface PagosPageContentProps {
-  searchQuery?: string
-  fechaDesde?: string
-  fechaHasta?: string
-  montoMin?: number
-  montoMax?: number
-  canCreate?: boolean
-  usuarioRol?: string
-  title?: string
-  subtitle?: string
-}
-
 export default async function PagosPageContent({
   searchQuery = '',
+  direccionObra,
   fechaDesde,
   fechaHasta,
   montoMin,
@@ -130,9 +134,10 @@ export default async function PagosPageContent({
   title = 'Pagos',
   subtitle = 'Visualiza, filtra y registra los pagos de obras.',
 }: PagosPageContentProps) {
+  const effectiveSearchQuery = searchQuery || direccionObra || ''
 
   const filtros: PagosFilter = {
-    search: searchQuery, // map standard query to consolidated 'search'
+    search: effectiveSearchQuery, // map standard query to consolidated 'search'
     fechaDesde,
     fechaHasta,
     montoMin,
@@ -155,16 +160,14 @@ export default async function PagosPageContent({
               <p className="text-sm text-gray-600">{subtitle}</p>
             </div>
           </div>
-          {canCreate && (
-            <CrearPagoButton />
-          )}
+          {canCreate && <CrearPagoButton direccionObra={direccionObra} />}
         </div>
 
         {/* Buscador */}
         <div className="mb-6">
           <SearchWrapper
             placeholder="Buscar por cliente, razón social o dirección..."
-            initialValue={searchQuery}
+            initialValue={effectiveSearchQuery}
             paramName="q"
           />
         </div>
@@ -184,10 +187,7 @@ export default async function PagosPageContent({
           key={JSON.stringify(filtros)}
           fallback={<PagosListSkeleton />}
         >
-          <PagosGrid
-            filters={filtros}
-            usuarioRol={usuarioRol}
-          />
+          <PagosGrid filters={filtros} usuarioRol={usuarioRol} />
         </Suspense>
       </div>
     </div>

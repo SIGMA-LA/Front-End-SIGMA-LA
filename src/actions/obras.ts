@@ -70,6 +70,31 @@ export async function getObras(filter?: string): Promise<Obra[]> {
 }
 
 /**
+ * Retrieves obras associated with a specific client by CUIL
+ * @param {string} cuil - Client CUIL
+ * @returns {Promise<Obra[]>} List of matching obras
+ */
+export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const url = `${API_URL}/clientes/${encodeURIComponent(cuil)}/obras`
+    const res = await fetchWithErrorHandling(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 0, tags: [`obras-cliente-${cuil}`] },
+    })
+    const data = await res.json()
+    return Array.isArray(data) ? data : data.data || []
+  } catch (error) {
+    console.error('[getObrasByCliente]', error)
+    return []
+  }
+}
+
+/**
  * Filters obras by estado or localidad
  * @param {Object} params - Filter parameters
  * @param {string} params.estado - Obra estado filter

@@ -34,10 +34,12 @@ export default function VerDetallesCliente({
     async function cargar() {
       try {
         setLoading(true)
+        // Fetch in parallel for better performance
         const [clienteData, obrasData] = await Promise.all([
           getCliente(cuil),
-          getClienteObras(cuil),
+          getObrasByCliente(cuil),
         ])
+
         setCliente(clienteData)
         setObras(obrasData || [])
       } catch (error) {
@@ -188,8 +190,8 @@ export default function VerDetallesCliente({
                         </Link>
                       )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
