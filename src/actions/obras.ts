@@ -221,6 +221,33 @@ export async function getNotasConOrdenEnProceso(): Promise<Obra[]> {
 }
 
 /**
+ * Retrieves obras for a specific cliente by CUIL
+ * @param {string} cuil - Cliente CUIL identifier
+ * @returns {Promise<Obra[]>} List of Obras
+ */
+export async function getClienteObras(cuil: string): Promise<Obra[]> {
+  if (!cuil) return []
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/cliente/${encodeURIComponent(cuil)}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    return (await res.json()) as Obra[]
+  } catch (error) {
+    console.error('[getClienteObras]', error)
+    return []
+  }
+}
+
+/**
  * Creates a new obra
  * @param obraData - Obra data
  * @param presupuesto - Presupuesto data (optional)

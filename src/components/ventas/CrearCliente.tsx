@@ -15,7 +15,10 @@ import { type ActionResponse } from '@/actions/clientes'
 import Link from 'next/link'
 
 interface CrearClienteProps {
-  action: (prevState: ActionResponse | null, formData: FormData) => Promise<ActionResponse>
+  action: (
+    prevState: ActionResponse | null,
+    formData: FormData
+  ) => Promise<ActionResponse>
   initialData?: Cliente
   cancelUrl?: string
   title?: string
@@ -47,6 +50,15 @@ export default function CrearCliente({
     success: true,
     error: undefined,
   })
+
+  const handleBackToClientes = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+      return
+    }
+
+    router.push(cancelUrl)
+  }
 
   const isEdit = Boolean(initialData)
 
@@ -81,13 +93,14 @@ export default function CrearCliente({
     <div>
       {/* Header */}
       <div className="mb-6">
-        <Link
-          href={cancelUrl}
+        <button
+          type="button"
+          onClick={handleBackToClientes}
           className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver a clientes
-        </Link>
+        </button>
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
             {tipoCliente === 'EMPRESA' ? (
@@ -101,9 +114,10 @@ export default function CrearCliente({
               {title || (isEdit ? 'Editar Cliente' : 'Crear Cliente')}
             </h1>
             <p className="text-sm text-gray-600">
-              {subtitle || (isEdit
-                ? 'Modifica los datos del cliente'
-                : 'Completa el formulario para registrar un nuevo cliente')}
+              {subtitle ||
+                (isEdit
+                  ? 'Modifica los datos del cliente'
+                  : 'Completa el formulario para registrar un nuevo cliente')}
             </p>
           </div>
         </div>
@@ -334,12 +348,13 @@ export default function CrearCliente({
 
         {/* Botones */}
         <div className="flex items-center justify-end gap-3 border-t pt-6">
-          <Link
-            href={cancelUrl}
+          <button
+            type="button"
+            onClick={handleBackToClientes}
             className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             Cancelar
-          </Link>
+          </button>
 
           <button
             type="submit"
