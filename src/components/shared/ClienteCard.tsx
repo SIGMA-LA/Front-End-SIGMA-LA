@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { User, Building2, Eye, Edit, Trash2, IdCard } from 'lucide-react'
 import type { Cliente, Empleado } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
@@ -20,9 +20,13 @@ export default function ClienteCard({
   usuario,
 }: ClienteCardProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [showDetail, setShowDetail] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
+    null
+  )
 
   const esEmpresa = cliente.tipo_cliente === 'EMPRESA'
   const nombreCompleto = esEmpresa
@@ -33,8 +37,15 @@ export default function ClienteCard({
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
     : 'border-amber-200 bg-amber-50 text-amber-700'
 
-  // Solo mostrar botones de editar/eliminar si es VENTAS
-  const puedeEditarEliminar = usuario?.rol_actual === 'VENTAS'
+  const puedeEditarEliminar =
+    usuario?.rol_actual === 'VENTAS' || usuario?.rol_actual === 'ADMIN'
+
+  const getEditPath = () => {
+    if (pathname.startsWith('/admin')) {
+      return `/admin/clientes/${cliente.cuil}/editar`
+    }
+    return `/ventas/clientes/${cliente.cuil}/editar`
+  }
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -44,11 +55,18 @@ export default function ClienteCard({
           setShowDeleteModal(false)
           router.refresh()
         } else {
-          alert(result.error || 'Error al eliminar cliente')
+          setShowDeleteModal(false)
+          setDeleteErrorMessage(
+            result.error ||
+              'No se pudo eliminar el cliente. Intenta nuevamente en unos minutos.'
+          )
         }
       } catch (error) {
         console.error('Error al eliminar:', error)
-        alert('Error al eliminar el cliente')
+        setShowDeleteModal(false)
+        setDeleteErrorMessage(
+          'No se pudo eliminar el cliente. Intenta nuevamente en unos minutos.'
+        )
       }
     })
   }
@@ -101,9 +119,7 @@ export default function ClienteCard({
               {puedeEditarEliminar && (
                 <>
                   <button
-                    onClick={() =>
-                      router.push(`/ventas/clientes/${cliente.cuil}/editar`)
-                    }
+                    onClick={() => router.push(getEditPath())}
                     className="inline-flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3.5 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"
                   >
                     <Edit className="h-4 w-4" />
@@ -141,6 +157,19 @@ export default function ClienteCard({
           loading={isPending}
           title="Eliminar Cliente"
           message={`¿Está seguro que desea eliminar al cliente "${nombreCompleto}"?`}
+        />
+      )}
+
+      {deleteErrorMessage && (
+        <ConfirmDeleteModal
+          open={Boolean(deleteErrorMessage)}
+          onCancel={() => setDeleteErrorMessage(null)}
+          onConfirm={() => setDeleteErrorMessage(null)}
+          title="No se puede eliminar el cliente"
+          message={deleteErrorMessage}
+          confirmLabel="Entendido"
+          confirmVariant="primary"
+          hideCancel
         />
       )}
     </>

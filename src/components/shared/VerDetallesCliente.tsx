@@ -21,6 +21,7 @@ export default function VerDetallesCliente({
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(true)
+  const canViewObraDetails = pathname.startsWith('/admin')
 
   const getObraHref = (codObra: number) => {
     if (pathname.startsWith('/admin')) return `/admin/obras/${codObra}`
@@ -177,13 +178,15 @@ export default function VerDetallesCliente({
                           {new Date(obra.fecha_ini).toLocaleDateString('es-AR')}
                         </p>
                       </div>
-                      <Link
-                        href={getObraHref(obra.cod_obra)}
-                        onClick={onClose}
-                        className="inline-flex items-center self-start rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 sm:self-center"
-                      >
-                        Ver Detalles
-                      </Link>
+                      {canViewObraDetails && (
+                        <Link
+                          href={getObraHref(obra.cod_obra)}
+                          onClick={onClose}
+                          className="inline-flex items-center self-start rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 sm:self-center"
+                        >
+                          Ver Detalles
+                        </Link>
+                      )}
                     </div>
                   </div>
                 ))}
