@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
 import { getCliente } from '@/actions/clientes'
-import { getClienteObras } from '@/actions/obras'
+import { getObrasByCliente } from '@/actions/obras'
 import type { Cliente, Obra } from '@/types'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -190,8 +190,8 @@ export default function VerDetallesCliente({
                         </Link>
                       )}
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
