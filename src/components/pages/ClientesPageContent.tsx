@@ -4,6 +4,7 @@ import { getClientes } from '@/actions/clientes'
 import { getUsuario } from '@/lib/cache'
 import ClienteCard from '@/components/shared/ClienteCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
+import ClientesToastFromQuery from '@/components/pages/ClientesToastFromQuery'
 import Link from 'next/link'
 import type { Cliente } from '@/types'
 
@@ -74,6 +75,7 @@ async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
 
 interface ClientesPageContentProps {
   searchQuery?: string
+  toast?: string
   canCreate?: boolean
   createUrl?: string
   title?: string
@@ -82,6 +84,7 @@ interface ClientesPageContentProps {
 
 export default async function ClientesPageContent({
   searchQuery = '',
+  toast,
   canCreate = false,
   createUrl = '/ventas/clientes/crear',
   title = 'Clientes',
@@ -89,6 +92,7 @@ export default async function ClientesPageContent({
 }: ClientesPageContentProps) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <ClientesToastFromQuery toast={toast} />
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">

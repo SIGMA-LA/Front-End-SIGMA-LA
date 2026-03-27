@@ -22,6 +22,7 @@ import {
   getObrasConPresupuestoAceptado,
 } from '@/actions/pagos'
 import ObraSelect, { ObraSearchResults } from './ObraSelect'
+import { notify } from '@/lib/toast'
 
 export default function PagoModal({
   open,
@@ -184,6 +185,7 @@ export default function PagoModal({
         selectedObra.cod_obra
       )
 
+      notify.success('Pago registrado correctamente.')
       onPagoCreado(nuevoPago)
       handleClose()
     } catch (err: unknown) {
@@ -192,7 +194,9 @@ export default function PagoModal({
       const backendError = (
         err as unknown as { response?: { data?: { message?: string } } }
       )?.response?.data?.message
-      setError(backendError || errorMessage)
+      const message = backendError || errorMessage
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }

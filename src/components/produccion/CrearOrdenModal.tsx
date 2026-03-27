@@ -3,6 +3,7 @@
 import { X, Upload, FileText, Loader2 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { crearOrdenProduccion } from '@/actions/ordenes'
+import { notify } from '@/lib/toast'
 
 interface CrearOrdenModalProps {
   isOpen: boolean
@@ -62,13 +63,23 @@ export default function CrearOrdenModal({
     setError(null)
 
     startTransition(async () => {
-      const result = await crearOrdenProduccion(formData)
-      if (result.success) {
-        setSelectedFile(null)
-        onSuccess?.()
-        onClose()
-      } else {
-        setError(result.error || 'Ocurrió un error inesperado.')
+      try {
+        const result = await crearOrdenProduccion(formData)
+        if (result.success) {
+          setSelectedFile(null)
+          notify.success('Orden de produccion creada correctamente.')
+          onSuccess?.()
+          onClose()
+        } else {
+          const message = result.error || 'Ocurrió un error inesperado.'
+          setError(message)
+          notify.error(message)
+        }
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : 'Ocurrió un error inesperado.'
+        setError(message)
+        notify.error(message)
       }
     })
   }

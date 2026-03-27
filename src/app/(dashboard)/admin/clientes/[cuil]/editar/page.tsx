@@ -39,7 +39,7 @@ export default async function EditarClienteAdminPage({
     }
 
     if (result.success) {
-      redirect('/admin/clientes')
+      redirect('/admin/clientes?toast=cliente-actualizado')
     }
 
     return result

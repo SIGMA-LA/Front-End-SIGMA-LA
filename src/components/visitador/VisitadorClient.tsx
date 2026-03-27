@@ -77,6 +77,7 @@ export default function VisitadorClient({
         setShowVisitaModal(false)
         setObservacionesVisita('')
         setSelectedVisita(null)
+        notify.success('Visita finalizada correctamente.')
         router.refresh()
       } else {
         notify.error(result.error || 'Error al finalizar la visita')
@@ -100,6 +101,7 @@ export default function VisitadorClient({
         setShowVisitaModal(false)
         setObservacionesVisita('')
         setSelectedVisita(null)
+        notify.success('Visita cancelada correctamente.')
         router.refresh()
       } else {
         notify.error(result.error || 'Error al cancelar la visita')
@@ -120,6 +122,7 @@ export default function VisitadorClient({
         setShowEntregaModal(false)
         setObservacionesEntrega('')
         setSelectedEntrega(null)
+        notify.success('Entrega finalizada correctamente.')
         router.refresh()
       } else {
         notify.error(result.error || 'Error al finalizar la entrega')
@@ -140,6 +143,7 @@ export default function VisitadorClient({
         setShowEntregaModal(false)
         setObservacionesEntrega('')
         setSelectedEntrega(null)
+        notify.success('Entrega cancelada correctamente.')
         router.refresh()
       } else {
         notify.error(result.error || 'Error al cancelar la entrega')

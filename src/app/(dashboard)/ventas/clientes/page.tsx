@@ -14,6 +14,7 @@ export default async function VentasClientesPage({
   return (
     <ClientesPageContent
       searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
+      toast={(typeof sp.toast === 'string' ? sp.toast : sp.toast?.[0]) ?? ''}
       canCreate={usuario?.rol_actual === 'VENTAS'}
       createUrl="/ventas/clientes/crear"
     />

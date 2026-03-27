@@ -104,6 +104,7 @@ export default function ProduccionClient({
           },
         }
         setSelectedOrden(ordenActualizada)
+        notify.success('Produccion iniciada correctamente.')
 
         // Recargar datos del servidor
         startTransition(() => {
@@ -130,6 +131,7 @@ export default function ProduccionClient({
       if (result.success) {
         setIsFinalizarModalOpen(false)
         setSelectedOrden(null)
+        notify.success('Produccion finalizada correctamente.')
 
         // Recargar datos del servidor
         startTransition(() => {

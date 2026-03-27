@@ -100,6 +100,7 @@ export default function PlantaClient({
         setEntregasRealizadas((prev) => [...prev, entregaActualizada])
         setShowConfirmModal(false)
         setObservacionesFinal('')
+        notify.success('Entrega finalizada correctamente.')
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
         notify.error('Error al finalizar la entrega. Inténtalo de nuevo.')
@@ -124,6 +125,7 @@ export default function PlantaClient({
         setSelectedEntrega(null)
         setShowConfirmModal(false)
         setObservacionesFinal('')
+        notify.success('Entrega cancelada correctamente.')
       } catch (error) {
         console.error('Error al cancelar entrega:', error)
         notify.error('Error al cancelar la entrega. Inténtalo de nuevo.')

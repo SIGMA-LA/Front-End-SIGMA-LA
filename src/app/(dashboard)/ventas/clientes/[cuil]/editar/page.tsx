@@ -39,7 +39,7 @@ export default async function EditarClientePage({
     }
 
     if (result.success) {
-      redirect('/ventas/clientes')
+      redirect('/ventas/clientes?toast=cliente-actualizado')
     }
 
     return result

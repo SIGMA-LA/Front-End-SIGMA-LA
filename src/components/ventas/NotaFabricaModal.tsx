@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
 import type { RolEmpleado } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface NotaFabricaModalProps {
   isOpen: boolean
@@ -75,12 +76,16 @@ export default function NotaFabricaModal({
       setModoCambio(false)
       // Devolver el public_id, no la URL
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
+      notify.success('Nota de fabrica actualizada correctamente.')
       router.refresh() // Recargar la página para actualizar el botón
       onClose()
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Error al subir la nota de fábrica. Intenta nuevamente.'
-      )
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error al subir la nota de fábrica. Intenta nuevamente.'
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
@@ -93,12 +98,16 @@ export default function NotaFabricaModal({
       const obraActualizada = await deleteNotaFabrica(codObra)
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(false)
+      notify.success('Nota de fabrica eliminada correctamente.')
       router.refresh() // Recargar la página
       onClose()
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
-      )
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
@@ -112,10 +121,14 @@ export default function NotaFabricaModal({
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(true)
       setSelectedFile(null)
+      notify.info('Nota eliminada. Ya puedes subir una nueva.')
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
-      )
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
