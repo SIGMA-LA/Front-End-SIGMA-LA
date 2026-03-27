@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Upload, FileText, Trash2, RefreshCw } from 'lucide-react'
+import { X, Upload, FileText, Trash2, RefreshCw, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
@@ -14,7 +14,6 @@ interface NotaFabricaModalProps {
   codObra: number
   onUploadSuccess?: (url: string) => void
   rolActual?: RolEmpleado | ''
-  onDeleteClick?: () => void
 }
 
 export default function NotaFabricaModal({
@@ -24,11 +23,11 @@ export default function NotaFabricaModal({
   codObra,
   onUploadSuccess,
   rolActual = '',
-  onDeleteClick,
 }: NotaFabricaModalProps) {
   const router = useRouter()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modoCambio, setModoCambio] = useState(false)
 
@@ -93,6 +92,7 @@ export default function NotaFabricaModal({
 
   const handleEliminar = async () => {
     try {
+      setIsDeleting(true)
       setLoading(true)
       setError(null)
       const obraActualizada = await deleteNotaFabrica(codObra)
@@ -110,6 +110,7 @@ export default function NotaFabricaModal({
       notify.error(message)
     } finally {
       setLoading(false)
+      setIsDeleting(false)
     }
   }
 
@@ -190,20 +191,26 @@ export default function NotaFabricaModal({
                   <button
                     type="button"
                     onClick={handleCambioNota}
-                    disabled={loading}
+                    disabled={loading || isDeleting}
                     className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw
+                      className={`h-4 w-4 ${loading && !isDeleting ? 'animate-spin' : ''}`}
+                    />
                     Cambiar Nota
                   </button>
                   <button
                     type="button"
-                    onClick={onDeleteClick}
-                    disabled={loading}
+                    onClick={handleEliminar}
+                    disabled={loading || isDeleting}
                     className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    Eliminar Nota
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    {isDeleting ? 'Eliminando...' : 'Eliminar Nota'}
                   </button>
                 </>
               )}
