@@ -70,13 +70,17 @@ interface UpdateEntregaData {
  */
 export async function getEntregasByEmpleado(
   cuilEmpleado: string,
-  estado: EstadoEntrega
+  estado: EstadoEntrega,
+  search?: string,
+  date?: string
 ): Promise<EntregaEmpleado[]> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(
-      `${BASE_URL}/${cuilEmpleado}/${estado}`,
-      {
+    const url = new URL(`${BASE_URL}/${cuilEmpleado}/${estado}`)
+    if (search) url.searchParams.append('search', search)
+    if (date) url.searchParams.append('date', date)
+
+    const res = await fetchWithErrorHandling(url.toString(), {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
