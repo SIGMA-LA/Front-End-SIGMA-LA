@@ -13,6 +13,7 @@ import EntregasSidebar from '@/components/planta/EntregasSidebar'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
 import { finalizarVisita, cancelarVisita } from '@/actions/visitas'
 import { finalizarEntrega, cancelarEntrega } from '@/actions/entregas'
+import { notify } from '@/lib/toast'
 
 interface VisitadorClientProps {
   usuario: Empleado
@@ -78,14 +79,14 @@ export default function VisitadorClient({
         setSelectedVisita(null)
         router.refresh()
       } else {
-        alert(result.error || 'Error al finalizar la visita')
+        notify.error(result.error || 'Error al finalizar la visita')
       }
     })
   }
 
   const handleConfirmarCancelacion = async () => {
     if (!selectedVisita || !observacionesVisita.trim()) {
-      alert('Por favor, ingresa un motivo para la cancelación.')
+      notify.warning('Por favor, ingresa un motivo para la cancelación.')
       return
     }
 
@@ -101,7 +102,7 @@ export default function VisitadorClient({
         setSelectedVisita(null)
         router.refresh()
       } else {
-        alert(result.error || 'Error al cancelar la visita')
+        notify.error(result.error || 'Error al cancelar la visita')
       }
     })
   }
@@ -121,7 +122,7 @@ export default function VisitadorClient({
         setSelectedEntrega(null)
         router.refresh()
       } else {
-        alert(result.error || 'Error al finalizar la entrega')
+        notify.error(result.error || 'Error al finalizar la entrega')
       }
     })
   }
@@ -141,7 +142,7 @@ export default function VisitadorClient({
         setSelectedEntrega(null)
         router.refresh()
       } else {
-        alert(result.error || 'Error al cancelar la entrega')
+        notify.error(result.error || 'Error al cancelar la entrega')
       }
     })
   }

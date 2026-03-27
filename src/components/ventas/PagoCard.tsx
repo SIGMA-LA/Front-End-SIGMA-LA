@@ -3,6 +3,7 @@ import { Calendar, Trash2 } from 'lucide-react'
 import { deletePago } from '@/actions/pagos'
 import { useState } from 'react'
 import ConfirmDeleteModal from './ConfirmDeleteModal'
+import { notify } from '@/lib/toast'
 
 interface PagoCardProps {
   pago: Pago
@@ -29,7 +30,7 @@ export default function PagoCard({
       setShowConfirm(false)
       onRefresh?.()
     } catch (err) {
-      alert('Error al eliminar el pago')
+      notify.error('Error al eliminar el pago')
     } finally {
       setLoading(false)
     }

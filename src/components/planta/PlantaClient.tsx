@@ -12,6 +12,7 @@ import {
   finalizarEntrega,
   cancelarEntrega,
 } from '@/actions/entregas'
+import { notify } from '@/lib/toast'
 
 interface PlantaClientProps {
   usuario: Empleado
@@ -101,7 +102,7 @@ export default function PlantaClient({
         setObservacionesFinal('')
       } catch (error) {
         console.error('Error al finalizar entrega:', error)
-        alert('Error al finalizar la entrega. Inténtalo de nuevo.')
+        notify.error('Error al finalizar la entrega. Inténtalo de nuevo.')
       } finally {
         setFinalizandoEntrega(false)
       }
@@ -125,7 +126,7 @@ export default function PlantaClient({
         setObservacionesFinal('')
       } catch (error) {
         console.error('Error al cancelar entrega:', error)
-        alert('Error al cancelar la entrega. Inténtalo de nuevo.')
+        notify.error('Error al cancelar la entrega. Inténtalo de nuevo.')
       } finally {
         setFinalizandoEntrega(false)
       }

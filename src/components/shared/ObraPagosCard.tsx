@@ -3,9 +3,18 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pago, Obra } from '@/types'
-import { Trash2, DollarSign, Calendar, Building2, User, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  Trash2,
+  DollarSign,
+  Calendar,
+  Building2,
+  User,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
 import { deletePago } from '@/actions/pagos'
+import { notify } from '@/lib/toast'
 
 interface ObraPagosCardProps {
   obraInfo: Obra | undefined
@@ -14,7 +23,12 @@ interface ObraPagosCardProps {
   usuarioRol?: string
 }
 
-export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol }: ObraPagosCardProps) {
+export default function ObraPagosCard({
+  obraInfo,
+  pagos,
+  totalPagado,
+  usuarioRol,
+}: ObraPagosCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
@@ -31,7 +45,7 @@ export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol
         router.refresh()
       } catch (error) {
         console.error('Error al eliminar pago:', error)
-        alert('Error al eliminar el pago')
+        notify.error('Error al eliminar el pago')
       }
     })
   }
@@ -54,7 +68,10 @@ export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol
     <>
       <ConfirmDeleteModal
         open={modalOpen}
-        onCancel={() => { setModalOpen(false); setPagoToDelete(null); }}
+        onCancel={() => {
+          setModalOpen(false)
+          setPagoToDelete(null)
+        }}
         onConfirm={handleDelete}
         loading={isPending}
         title="Eliminar Pago"
@@ -63,7 +80,7 @@ export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
         {/* Header de la Obra */}
-        <div 
+        <div
           className="flex cursor-pointer items-center justify-between border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 transition-colors hover:from-blue-100 hover:to-blue-200"
           onClick={() => setIsExpanded(!isExpanded)}
         >
@@ -93,7 +110,9 @@ export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol
             </div>
             <div>
               <p className="text-xs font-medium text-gray-500">Cliente</p>
-              <p className="font-semibold text-gray-900 line-clamp-2">{nombreCliente}</p>
+              <p className="line-clamp-2 font-semibold text-gray-900">
+                {nombreCliente}
+              </p>
             </div>
           </div>
         </div>
@@ -101,16 +120,21 @@ export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol
         {/* Pagos Individuales (Desplegable) */}
         {isExpanded && (
           <div className="border-t border-gray-100 bg-gray-50 px-6 py-4">
-            <h4 className="mb-3 text-sm font-medium text-gray-700">Historial de Pagos ({pagos.length})</h4>
+            <h4 className="mb-3 text-sm font-medium text-gray-700">
+              Historial de Pagos ({pagos.length})
+            </h4>
             <div className="space-y-3">
               {pagos.map((pago) => (
-                <div key={pago.cod_pago} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+                <div
+                  key={pago.cod_pago}
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                >
                   <div className="flex items-center gap-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
                       <DollarSign className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">
+                      <p className="text-sm font-semibold text-gray-900">
                         Pago #{pago.cod_pago}
                       </p>
                       <p className="flex items-center gap-1 text-xs text-gray-500">
@@ -129,7 +153,7 @@ export default function ObraPagosCard({ obraInfo, pagos, totalPagado, usuarioRol
                       <button
                         onClick={() => confirmDelete(pago.cod_pago)}
                         disabled={isPending}
-                        className="rounded-md p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 transition-colors"
+                        className="rounded-md p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                         title="Eliminar Pago"
                       >
                         <Trash2 className="h-4 w-4" />

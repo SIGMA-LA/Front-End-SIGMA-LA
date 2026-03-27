@@ -6,6 +6,7 @@ import { Filter, Package } from 'lucide-react'
 import { ESTADOS_ORDEN_PRODUCCION } from '@/constants'
 import type { OrdenProduccion, Cliente } from '@/types'
 import { approveOrdenProduccion } from '@/actions/ordenes'
+import { notify } from '@/lib/toast'
 import OrdenProduccionCard from './OrdenProduccionCard'
 import OrdenProduccionDetailsModal from './OrdenProduccionDetailsModal'
 import OPConfirmModal from './OPConfirmModal'
@@ -73,15 +74,17 @@ export default function OrdenesProduccionContent({
       const result = await approveOrdenProduccion(ordenToApprove.cod_op)
 
       if (result.success) {
-        alert(result.message || 'Orden aprobada exitosamente')
+        notify.success(result.message || 'Orden aprobada exitosamente')
         setIsConfirmModalOpen(false)
         setOrdenToApprove(null)
         router.refresh()
       } else {
-        alert('Error: ' + (result.error || 'No se pudo aprobar la orden'))
+        notify.error(
+          'Error: ' + (result.error || 'No se pudo aprobar la orden')
+        )
       }
     } catch (err) {
-      alert(
+      notify.error(
         'Error al aprobar la orden: ' +
           (err instanceof Error ? err.message : 'Error desconocido')
       )

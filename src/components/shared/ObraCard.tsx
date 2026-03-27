@@ -20,6 +20,7 @@ import EliminarObraModal from '../ventas/EliminarObraModal'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
 import Link from 'next/link'
 import { deleteObra, cancelObra } from '@/actions/obras'
+import { notify } from '@/lib/toast'
 
 export default function ObraCard({
   obra,
@@ -54,7 +55,7 @@ export default function ObraCard({
         router.refresh()
       } catch (error) {
         console.error('Error al eliminar obra:', error)
-        alert('Error al eliminar la obra')
+        notify.error('Error al eliminar la obra')
       }
     })
   }
@@ -67,7 +68,7 @@ export default function ObraCard({
         router.refresh()
       } catch (error) {
         console.error('Error al cancelar obra:', error)
-        alert('Error al cancelar la obra')
+        notify.error('Error al cancelar la obra')
       }
     })
   }
