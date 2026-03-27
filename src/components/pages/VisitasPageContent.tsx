@@ -3,16 +3,19 @@ import { Suspense } from 'react'
 import { getVisitas } from '@/actions/visitas'
 import VisitaCard from '@/components/shared/VisitaCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
+import EstadoVisitaFilter from '@/components/shared/EstadoVisitaFilter'
 import Link from 'next/link'
 
 async function VisitasList({
   searchQuery,
+  status,
   rolActual,
 }: {
   searchQuery?: string
+  status?: string
   rolActual?: string
 }) {
-  const visitas = await getVisitas(searchQuery)
+  const visitas = await getVisitas(searchQuery, status)
 
   if (visitas.length === 0) {
     return (
@@ -86,6 +89,7 @@ function VisitasListSkeleton() {
 
 interface VisitasPageContentProps {
   searchQuery?: string
+  status?: string
   canCreate?: boolean
   createUrl?: string
   rolActual?: string
@@ -95,12 +99,14 @@ interface VisitasPageContentProps {
 
 export default async function VisitasPageContent({
   searchQuery = '',
+  status = 'ALL',
   canCreate = false,
   createUrl = '/coordinacion/visitas/crear',
   rolActual,
   title = 'Visitas',
   subtitle = 'Gestión de visitas a obras y clientes',
 }: VisitasPageContentProps) {
+  const esCoordinacion = rolActual?.trim().toUpperCase() === 'COORDINACION'
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
@@ -127,15 +133,29 @@ export default async function VisitasPageContent({
           )}
         </div>
 
-        <div className="mb-8">
-          <SearchWrapper
-            placeholder="Buscar visita por cliente, dirección, obra..."
-            initialValue={searchQuery}
-          />
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <SearchWrapper
+              placeholder="Buscar visita por cliente, dirección, obra..."
+              initialValue={searchQuery}
+            />
+          </div>
+          {esCoordinacion && (
+            <div className="w-full sm:w-64">
+              <EstadoVisitaFilter initialValue={status} />
+            </div>
+          )}
         </div>
 
-        <Suspense key={searchQuery} fallback={<VisitasListSkeleton />}>
-          <VisitasList searchQuery={searchQuery} rolActual={rolActual} />
+        <Suspense
+          key={`${searchQuery}-${status}`}
+          fallback={<VisitasListSkeleton />}
+        >
+          <VisitasList
+            searchQuery={searchQuery}
+            status={status}
+            rolActual={rolActual}
+          />
         </Suspense>
       </div>
     </div>

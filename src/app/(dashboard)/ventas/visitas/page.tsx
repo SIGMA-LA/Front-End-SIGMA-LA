@@ -14,6 +14,7 @@ export default async function VentasVisitasPage({
   return (
     <VisitasPageContent
       searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
+      status={(typeof sp.estado === 'string' ? sp.estado : sp.estado?.[0]) ?? 'ALL'}
       canCreate={false}
       rolActual={usuario?.rol_actual}
       title="Visitas"

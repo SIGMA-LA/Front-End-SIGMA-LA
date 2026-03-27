@@ -33,14 +33,27 @@ export async function getVisita(id: number): Promise<Visita | null> {
 }
 
 /**
- * Retrieves visitas with optional text filter
+ * Retrieves visitas with optional text and status filters
  * @param {string} filtro - Optional search query
+ * @param {string} status - Optional status filter
  * @returns {Promise<Visita[]>} List of visitas matching filter
  */
-export async function getVisitas(filtro?: string): Promise<Visita[]> {
+export async function getVisitas(
+  filtro?: string,
+  status?: string
+): Promise<Visita[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(BASE_URL, {
+    const queryParams = new URLSearchParams()
+    if (status && status !== 'ALL') queryParams.append('estado', status)
+    if (filtro?.trim()) queryParams.append('q', filtro.trim())
+
+    const url =
+      filtro?.trim() && !status
+        ? `${BASE_URL}/buscar?${queryParams.toString()}`
+        : `${BASE_URL}?${queryParams.toString()}`
+
+    const response = await fetchWithErrorHandling(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -51,7 +64,8 @@ export async function getVisitas(filtro?: string): Promise<Visita[]> {
 
     let visitas: Visita[] = await response.json()
 
-    // Client-side filtering if filter is provided
+    // Client-side filtering as a fallback/refinement if needed,
+    // though ideally the backend handles most of it now.
     if (filtro?.trim()) {
       const filtroLower = filtro.trim().toLowerCase()
 
@@ -107,15 +121,13 @@ export async function getVisitas(filtro?: string): Promise<Visita[]> {
 export async function getVisitasByEmpleado(
   cuil: string,
   estados?: string[],
-  search?: string,
-  date?: string
+  search?: string
 ): Promise<Visita[]> {
   try {
     const token = await getAccessToken()
     const queryParams = new URLSearchParams()
     estados?.forEach((estado) => queryParams.append('estado', estado))
     if (search) queryParams.append('search', search)
-    if (date) queryParams.append('date', date)
 
     const response = await fetchWithErrorHandling(
       `${BASE_URL}/empleado/${cuil}?${queryParams.toString()}`,
@@ -266,8 +278,14 @@ export async function cancelarVisita(codVisita: number, motivo: string) {
  */
 export async function createVisitaFromForm(formData: FormData) {
   try {
-    const visitaData: VisitaFormData = {
+    const visitaData: VisitaFormData & { fechaSalida?: string; fechaHasta?: string } = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
+      fechaSalida: formData.get('fechaSalida') && formData.get('horaSalida')
+        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00`
+        : undefined,
+      fechaHasta: formData.get('fechaRegreso') && formData.get('horaRegreso')
+        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00`
+        : undefined,
       motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -301,8 +319,14 @@ export async function updateVisitaFromForm(formData: FormData) {
   try {
     const codVisita = Number(formData.get('cod_visita'))
 
-    const visitaData: Partial<VisitaFormData> = {
+    const visitaData: Partial<VisitaFormData> & { fechaSalida?: string; fechaHasta?: string } = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
+      fechaSalida: formData.get('fechaSalida') && formData.get('horaSalida')
+        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00`
+        : undefined,
+      fechaHasta: formData.get('fechaRegreso') && formData.get('horaRegreso')
+        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00`
+        : undefined,
       motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,

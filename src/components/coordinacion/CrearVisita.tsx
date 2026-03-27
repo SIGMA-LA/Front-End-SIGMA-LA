@@ -37,8 +37,11 @@ export default function CrearVisita({
   const [isPending, startTransition] = useTransition()
 
   const [formData, setFormData] = useState({
+    fechaSalida: '',
+    horaSalida: '',
     fecha: '',
-    fechaHasta: '',
+    fechaRegreso: '',
+    horaRegreso: '',
     hora: '',
     motivo_visita: '',
     observaciones: '',
@@ -63,15 +66,25 @@ export default function CrearVisita({
   const [localidades, setLocalidades] = useState<{ cod_localidad: number; nombre_localidad: string }[]>([])
   const [loadingLocalidades, setLoadingLocalidades] = useState(false)
 
+  // Sync motivo_visita with isVisitaInicial
+  useEffect(() => {
+    if (isVisitaInicial) {
+      setFormData(prev => ({ ...prev, motivo_visita: 'VISITA INICIAL' }))
+    } else if (formData.motivo_visita === 'VISITA INICIAL') {
+      setFormData(prev => ({ ...prev, motivo_visita: '' }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisitaInicial])
+
   // Calulate dias viatico
   useEffect(() => {
-    if (formData.fecha && formData.fechaHasta) {
+    if (formData.fecha && formData.fechaRegreso) {
       const start = new Date(formData.fecha)
-      const end = new Date(formData.fechaHasta)
+      const end = new Date(formData.fechaRegreso)
       const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
       setFormData(prev => ({ ...prev, dias_viatico: diff > 0 ? diff : diff === 0 ? 1 : 0 }))
     }
-  }, [formData.fecha, formData.fechaHasta])
+  }, [formData.fecha, formData.fechaRegreso])
 
   // Precarga datos si es edición
   useEffect(() => {
@@ -85,15 +98,21 @@ export default function CrearVisita({
         : null
 
       setFormData({
+        fechaSalida: fechaLocal?.toISOString().slice(0, 10) || '',
+        horaSalida: fechaLocal?.toISOString().slice(11, 16) || '',
         fecha: fechaLocal?.toISOString().slice(0, 10) || '',
-        fechaHasta: fechaLocal?.toISOString().slice(0, 10) || '',
+        fechaRegreso: fechaLocal?.toISOString().slice(0, 10) || '',
+        horaRegreso: fechaLocal?.toISOString().slice(11, 16) || '',
         hora: fechaLocal?.toISOString().slice(11, 16) || '',
         motivo_visita: visitaEditar.motivo_visita || 'OTRO',
         observaciones: visitaEditar.observaciones || '',
         direccion: visitaEditar.direccion_visita || '',
         localidad: visitaEditar.localidad?.nombre_localidad || '',
         obraId: visitaEditar.obra?.cod_obra ?? undefined,
-        vehiculo: visitaEditar.uso_vehiculo_visita?.patente || '',
+        vehiculo: (Array.isArray(visitaEditar.uso_vehiculo_visita)
+          ? visitaEditar.uso_vehiculo_visita[0]
+          : visitaEditar.uso_vehiculo_visita
+        )?.patente || '',
         dias_viatico: 1,
         nombre_cliente: visitaEditar.nombre_cliente || '',
         apellido_cliente: visitaEditar.apellido_cliente || '',
@@ -123,8 +142,12 @@ export default function CrearVisita({
       if (visitaEditar) {
         formDataObj.append('cod_visita', visitaEditar.cod_visita.toString())
       }
+      formDataObj.append('fechaSalida', formData.fechaSalida || '')
+      formDataObj.append('horaSalida', formData.horaSalida || '')
       formDataObj.append('fecha', formData.fecha || '')
       formDataObj.append('hora', formData.hora || '')
+      formDataObj.append('fechaRegreso', formData.fechaRegreso || '')
+      formDataObj.append('horaRegreso', formData.horaRegreso || '')
       formDataObj.append('tipo', formData.motivo_visita || '')
       formDataObj.append('direccion', formData.direccion || '')
       formDataObj.append('observaciones', formData.observaciones || '')
@@ -414,26 +437,33 @@ export default function CrearVisita({
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
                     Propósito de la visita *
                   </label>
-                  <select
-                    name="motivo_visita"
-                    value={formData.motivo_visita}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        motivo_visita: e.target.value,
-                      }))
-                    }
-                    required
-                    className="w-full rounded-xl border border-slate-300 p-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 shadow-sm text-slate-700 bg-white outline-none"
-                  >
-                    <option value="" disabled>Seleccione un motivo...</option>
-                    <option value="VISITA INICIAL">Visita inicial</option>
-                    <option value="TOMA DE MEDIDAS">Toma de medidas</option>
-                    <option value="REPLANTEO">Replanteo / Remediata</option>
-                    <option value="REPARACION">Reparación (Garantía / Mto)</option>
-                    <option value="VISITA DE ASESORAMIENTO">Asesoramiento</option>
-                    <option value="OTRO">Otro propósito</option>
-                  </select>
+                  {isVisitaInicial ? (
+                    <div className="w-full rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-cyan-800 shadow-sm h-[50px] flex items-center gap-2">
+                      <span className="font-semibold text-sm">Visita inicial</span>
+                      <span className="text-xs text-cyan-500 ml-auto">(automático)</span>
+                    </div>
+                  ) : (
+                    <select
+                      name="motivo_visita"
+                      value={formData.motivo_visita}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          motivo_visita: e.target.value,
+                        }))
+                      }
+                      required
+                      className="w-full rounded-xl border border-slate-300 p-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 shadow-sm text-slate-700 bg-white outline-none"
+                    >
+                      <option value="" disabled>Seleccione un motivo...</option>
+                      <option value="VISITA INICIAL">Visita inicial</option>
+                      <option value="TOMA DE MEDIDAS">Toma de medidas</option>
+                      <option value="REPLANTEO">Replanteo / Remediata</option>
+                      <option value="REPARACION">Reparación (Garantía / Mto)</option>
+                      <option value="VISITA DE ASESORAMIENTO">Asesoramiento</option>
+                      <option value="OTRO">Otro propósito</option>
+                    </select>
+                  )}
                 </div>
 
                 <div>
@@ -472,9 +502,12 @@ export default function CrearVisita({
           </div>
 
           <DateTimeSelectionVisita
+            fechaSalida={formData.fechaSalida}
+            horaSalida={formData.horaSalida}
             fecha={formData.fecha}
             hora={formData.hora}
-            fechaHasta={formData.fechaHasta}
+            fechaRegreso={formData.fechaRegreso}
+            horaRegreso={formData.horaRegreso}
             onAsignarClick={() => setIsDateTimeModalOpen(true)}
           />
 
@@ -567,12 +600,15 @@ export default function CrearVisita({
         isOpen={isDateTimeModalOpen}
         onClose={() => setIsDateTimeModalOpen(false)}
         initialValues={{
+          fechaSalida: formData.fechaSalida,
+          horaSalida: formData.horaSalida,
           fecha: formData.fecha,
           hora: formData.hora,
-          fechaHasta: formData.fechaHasta
+          fechaRegreso: formData.fechaRegreso,
+          horaRegreso: formData.horaRegreso,
         }}
-        onConfirm={(nf, nh, nfh) => {
-          setFormData(prev => ({ ...prev, fecha: nf, hora: nh, fechaHasta: nfh }))
+        onConfirm={(nf, nh, nfs, nhs, nfr, nhr) => {
+          setFormData(prev => ({ ...prev, fecha: nf, hora: nh, fechaSalida: nfs, horaSalida: nhs, fechaRegreso: nfr, horaRegreso: nhr }))
           setIsDateTimeModalOpen(false)
         }}
       />

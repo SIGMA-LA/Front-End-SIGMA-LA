@@ -19,48 +19,38 @@ import Link from 'next/link'
 
 export function getStatusColor(estado: string) {
   switch (estado) {
-    case 'PROGRAMADA':
-      return 'bg-blue-100 text-blue-800 border-blue-200'
-    case 'EN CURSO':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    case 'PENDIENTE':
+      return 'text-yellow-600 bg-yellow-50'
     case 'COMPLETADA':
-      return 'bg-green-100 text-green-800 border-green-200'
+      return 'text-green-600 bg-green-50'
     case 'CANCELADA':
-      return 'bg-red-100 text-red-800 border-red-200'
-    case 'REPROGRAMADA':
-      return 'bg-purple-100 text-purple-800 border-purple-200'
+      return 'text-red-600 bg-red-50'
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200'
+      return 'text-gray-600 bg-gray-50'
   }
 }
 
-export function getTipoText(tipo: string) {
-  const tipos: Record<string, string> = {
-    'VISITA INICIAL': 'Visita Inicial',
-    MEDICION: 'Medición',
-    'RE-MEDICION': 'Re-Medición',
-    REPARACION: 'Reparación',
-    ASESORAMIENTO: 'Asesoramiento',
+export function getStatusText(estado: string) {
+  const estados: { [key: string]: string } = {
+    PENDIENTE: 'Pendiente',
+    PROGRAMADA: 'Pendiente',
+    COMPLETADA: 'Completada',
+    CANCELADA: 'Cancelada',
   }
-  return tipos[tipo] || tipo
+  return estados[estado] || estado
 }
 
 function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-  return localDate.toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+  return new Date(dateString).toLocaleDateString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
   })
 }
 
 function formatTime(dateString: string) {
-  const date = new Date(dateString)
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-  return localDate.toLocaleTimeString('es-AR', {
+  return new Date(dateString).toLocaleTimeString('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'America/Argentina/Buenos_Aires',
   })
 }
 
@@ -104,39 +94,34 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
     })
   }
 
+  const getVisitadorPrincipal = () => {
+    const principal = visita.empleado_visita?.[0]
+    return principal
+      ? `${principal.empleado?.nombre || ''} ${principal.empleado?.apellido || ''}`.trim() || principal.cuil
+      : 'No asignado'
+  }
+
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
-          <div className="flex items-center gap-3">
-            <MapPin className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">
-              {visita.obra?.direccion ||
-                visita.direccion_visita ||
-                'Sin dirección'}
-            </h3>
-          </div>
-          <span
-            className={`rounded-full border px-3 py-1 text-xs font-bold tracking-wide uppercase ${getStatusColor(
-              visita.estado || 'PROGRAMADA'
-            )}`}
-          >
-            {visita.estado || 'PROGRAMADA'}
-          </span>
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+        {/* Header - Matching Entregas */}
+        <div className="border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+          <h3 className="text-lg font-semibold text-gray-800">
+            {visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'}
+          </h3>
         </div>
 
-        {/* Contenido */}
+        {/* Content - Matching Entregas */}
         <div className="p-6">
-          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Fecha */}
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-blue-100 p-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
                 <Calendar className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500">Fecha</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs text-gray-500">Fecha</p>
+                <p className="font-medium text-gray-900">
                   {formatDate(visita.fecha_hora_visita)}
                 </p>
               </div>
@@ -144,74 +129,49 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
 
             {/* Hora */}
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-blue-100 p-2">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
+                <Clock className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500">Hora</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs text-gray-500">Hora</p>
+                <p className="font-medium text-gray-900">
                   {formatTime(visita.fecha_hora_visita)}
                 </p>
               </div>
             </div>
 
-            {/* Tipo */}
+            {/* Visitador */}
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-blue-100 p-2">
-                <Briefcase className="h-5 w-5 text-blue-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+                <User className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500">Tipo</p>
-                <p className="font-semibold text-gray-900">
-                  {getTipoText(visita.motivo_visita)}
+                <p className="text-xs text-gray-500">Visitador</p>
+                <p className="font-medium text-gray-900 truncate max-w-[120px]">
+                  {getVisitadorPrincipal()}
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Empleados */}
-          <div className="mb-4">
-            <div className="mb-2 flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-500" />
-              <p className="text-sm font-medium text-gray-700">
-                Empleados asignados
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {visita.empleado_visita?.length > 0 ? (
-                visita.empleado_visita.map((ev, idx) => (
-                  <span
-                    key={ev.cuil || idx}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      idx === 0
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {ev.empleado?.nombre} {ev.empleado?.apellido}
-                    {idx === 0 && ' (Principal)'}
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-gray-400 italic">
-                  Sin asignar
+            {/* Estado */}
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50">
+                <Briefcase className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Estado</p>
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
+                    visita.estado || 'PENDIENTE'
+                  )}`}
+                >
+                  {getStatusText(visita.estado || 'PENDIENTE')}
                 </span>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Observaciones */}
-          {visita.observaciones && (
-            <div className="mb-4 rounded-lg bg-gray-50 p-3">
-              <p className="text-xs font-medium text-gray-500">Observaciones</p>
-              <p className="mt-1 text-sm text-gray-700">
-                {visita.observaciones}
-              </p>
-            </div>
-          )}
-
-          {/* Botones */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowDetail(true)}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
@@ -220,7 +180,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
               Ver Detalles
             </button>
 
-            {esCoordinacion && visita.estado === 'PROGRAMADA' && (
+            {esCoordinacion && (visita.estado === 'PENDIENTE' || visita.estado === 'PROGRAMADA') && (
               <>
                 <Link
                   href={`/coordinacion/visitas/${visita.cod_visita}/editar`}

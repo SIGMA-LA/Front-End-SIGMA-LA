@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { EntregaEmpleado } from '@/types'
-import { Search, Calendar as CalendarIcon } from 'lucide-react'
+import { Search, Clock, CheckCircle } from 'lucide-react'
 import EntregaCard from './EntregaCard'
 
 interface EntregasSidebarProps {
@@ -30,22 +30,19 @@ export default function EntregasSidebar({
   const searchParams = useSearchParams()
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
-  const [dateFilter, setDateFilter] = useState(searchParams.get('date') || '')
 
   useEffect(() => {
     const handler = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString())
       if (searchTerm) params.set('search', searchTerm)
       else params.delete('search')
-      
-      if (dateFilter) params.set('date', dateFilter)
-      else params.delete('date')
+      params.delete('date')
 
       router.push(`${pathname}?${params.toString()}`)
     }, 400)
 
     return () => clearTimeout(handler)
-  }, [searchTerm, dateFilter, pathname, router, searchParams])
+  }, [searchTerm, pathname, router, searchParams])
 
   if (loadingEntregas) {
     return (
@@ -102,28 +99,17 @@ export default function EntregasSidebar({
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
-      {/* Filtros y Buscador */}
+      {/* Buscador */}
       <div className="p-4 border-b border-gray-100 bg-gray-50/50">
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por cliente, detalle o dirección..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm outline-none transition-all"
-            />
-          </div>
-          <div className="relative">
-            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm outline-none transition-all text-gray-600"
-            />
-          </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por cliente, detalle o dirección..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm outline-none transition-all"
+          />
         </div>
       </div>
 
@@ -131,7 +117,7 @@ export default function EntregasSidebar({
         {/* Entregas Pendientes */}
         <div>
           <div className="mb-4 flex items-center space-x-2">
-            <div className="h-3 w-3 rounded-full bg-orange-500 lg:h-4 lg:w-4"></div>
+            <Clock className="h-4 w-4 text-orange-500 lg:h-5 lg:w-5" />
             <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
               Entregas Pendientes ({entregasPendientes.length})
             </h2>
@@ -139,7 +125,7 @@ export default function EntregasSidebar({
           <div className="space-y-3 lg:space-y-4">
             {entregasPendientes.length === 0 ? (
               <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                {searchTerm || dateFilter ? 'No se encontraron resultados' : 'No hay entregas pendientes'}
+                {searchTerm ? 'No se encontraron resultados' : 'No hay entregas pendientes'}
               </p>
             ) : (
               entregasPendientes.map((entregaEmpleado) => (
@@ -160,7 +146,7 @@ export default function EntregasSidebar({
         {/* Entregas Realizadas */}
         <div>
           <div className="mb-4 flex items-center space-x-2">
-            <div className="h-3 w-3 rounded-full bg-green-500 lg:h-4 lg:w-4"></div>
+            <CheckCircle className="h-4 w-4 text-green-500 lg:h-5 lg:w-5" />
             <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
               Entregas Realizadas ({entregasRealizadas.length})
             </h2>
@@ -168,7 +154,7 @@ export default function EntregasSidebar({
           <div className="space-y-3 lg:space-y-4">
             {entregasRealizadas.length === 0 ? (
               <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                {searchTerm || dateFilter ? 'No se encontraron resultados' : 'No hay entregas realizadas'}
+                {searchTerm ? 'No se encontraron resultados' : 'No hay entregas realizadas'}
               </p>
             ) : (
               entregasRealizadas.map((entregaEmpleado) => (

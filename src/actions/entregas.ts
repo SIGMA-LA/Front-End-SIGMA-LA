@@ -44,14 +44,12 @@ interface UpdateEntregaData {
 export async function getEntregasByEmpleado(
   cuilEmpleado: string,
   estado: EstadoEntrega,
-  search?: string,
-  date?: string
+  search?: string
 ): Promise<EntregaEmpleado[]> {
   try {
     const token = await getAccessToken()
     const queryParams = new URLSearchParams()
     if (search) queryParams.append('search', search)
-    if (date) queryParams.append('date', date)
 
     const queryStr = queryParams.toString() ? `?${queryParams.toString()}` : ''
 

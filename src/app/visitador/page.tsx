@@ -5,6 +5,7 @@ import { getVisitasByEmpleado } from '@/actions/visitas'
 import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuario } from '@/lib/cache'
 import Navbar from '@/components/layout/Navbar'
+import type { SearchParams } from '@/types'
 
 function VisitadorSkeleton() {
   return (
@@ -69,7 +70,7 @@ function VisitadorSkeleton() {
   )
 }
 
-async function getVisitadorData(cuil: string, search: string, date: string) {
+async function getVisitadorData(cuil: string, search: string) {
   try {
     const [
       visitasPendientes,
@@ -77,10 +78,10 @@ async function getVisitadorData(cuil: string, search: string, date: string) {
       entregasPendientes,
       entregasRealizadas,
     ] = await Promise.all([
-      getVisitasByEmpleado(cuil, ['PENDIENTE', 'PROGRAMADA', 'EN CURSO'], search, date),
-      getVisitasByEmpleado(cuil, ['COMPLETADA', 'FINALIZADA'], search, date),
-      getEntregasByEmpleado(cuil, 'PENDIENTE', search, date),
-      getEntregasByEmpleado(cuil, 'ENTREGADO', search, date),
+      getVisitasByEmpleado(cuil, ['PENDIENTE', 'PROGRAMADA', 'EN CURSO'], search),
+      getVisitasByEmpleado(cuil, ['COMPLETADA', 'FINALIZADA'], search),
+      getEntregasByEmpleado(cuil, 'PENDIENTE', search),
+      getEntregasByEmpleado(cuil, 'ENTREGADO', search),
     ])
 
     return {
@@ -105,7 +106,7 @@ async function getVisitadorData(cuil: string, search: string, date: string) {
 export default async function VisitadorPage({
   searchParams,
 }: {
-  searchParams: { search?: string; date?: string }
+  searchParams: SearchParams
 }) {
   const usuario = await getUsuario()
 
@@ -113,10 +114,10 @@ export default async function VisitadorPage({
     redirect('/login')
   }
 
-  const search = searchParams?.search || ''
-  const date = searchParams?.date || ''
+  const sp = await searchParams
+  const search = (sp?.search as string) || ''
 
-  const data = await getVisitadorData(usuario.cuil, search, date)
+  const data = await getVisitadorData(usuario.cuil, search)
 
   return (
     <Suspense fallback={<VisitadorSkeleton />}>
