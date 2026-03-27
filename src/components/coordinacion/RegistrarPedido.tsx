@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { solicitarStockObra } from '@/actions/obras'
 import type { Obra } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface RegistrarPedidoProps {
   onCancel: () => void
@@ -147,13 +148,15 @@ export default function RegistrarPedido({
       const obraActualizada = await solicitarStockObra(preloadedObra.cod_obra)
 
       setShowModal(false)
+      notify.success('Pedido de stock registrado correctamente.')
       onSubmit(obraActualizada)
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error
           ? err.message
           : 'Ocurrió un error al solicitar el stock.'
-      )
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }

@@ -19,6 +19,7 @@ import {
   getRolLabel,
   getAreaLabel,
 } from '@/lib/empleado-utils'
+import { notify } from '@/lib/toast'
 
 interface EmpleadoFormularioProps {
   empleado?: Empleado | null
@@ -155,12 +156,20 @@ export default function EmpleadoFormulario({
       } else {
         await onSubmit(dataToSubmit)
       }
+      notify.success(
+        isEdit
+          ? 'Empleado actualizado correctamente.'
+          : 'Empleado creado correctamente.'
+      )
       setShowConfirmModal(false)
       router.push('/admin/empleados')
       router.refresh()
     } catch (error: unknown) {
       console.error('Error:', error)
-      setApiError(error instanceof Error ? error.message : 'Error al procesar el empleado')
+      const message =
+        error instanceof Error ? error.message : 'Error al procesar el empleado'
+      setApiError(message)
+      notify.error(message)
     } finally {
       setIsPending(false)
     }

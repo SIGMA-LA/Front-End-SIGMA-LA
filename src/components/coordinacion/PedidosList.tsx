@@ -13,6 +13,7 @@ import {
   recibirStockObra,
   filterObras,
 } from '@/actions/obras'
+import { notify } from '@/lib/toast'
 
 export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
   const [obrasParaPedir, setObrasParaPedir] = useState<Obra[]>([])
@@ -53,8 +54,9 @@ export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
       await recibirStockObra(obraId)
       // Refrescar los datos para que la obra cambie de lista
       await fetchData()
+      notify.success('Recepcion de stock confirmada correctamente.')
     } catch (err) {
-      alert('Error al confirmar la recepción del stock.')
+      notify.error('Error al confirmar la recepción del stock.')
       console.error(err)
     } finally {
       setUpdatingId(null)

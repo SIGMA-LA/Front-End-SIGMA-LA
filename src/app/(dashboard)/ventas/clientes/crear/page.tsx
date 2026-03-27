@@ -3,14 +3,17 @@ import { createCliente, type ActionResponse } from '@/actions/clientes'
 import { redirect } from 'next/navigation'
 
 export default function CrearClientePage() {
-  async function handleCrear(prevState: ActionResponse | null, formData: FormData) {
+  async function handleCrear(
+    prevState: ActionResponse | null,
+    formData: FormData
+  ) {
     'use server'
 
     try {
       const result = await createCliente(formData)
 
       if (result.success) {
-        redirect('/ventas/clientes')
+        redirect('/ventas/clientes?toast=cliente-creado')
       }
 
       return result
@@ -18,7 +21,8 @@ export default function CrearClientePage() {
       console.error('Error al crear cliente:', error)
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al crear cliente',
+        error:
+          error instanceof Error ? error.message : 'Error al crear cliente',
       }
     }
   }

@@ -19,6 +19,7 @@ import { NegocioSection } from './configuraciones/NegocioSection'
 import { SeguridadSection } from './configuraciones/SeguridadSection'
 
 import { getPerfilConfig, updatePerfilConfig } from '@/actions/configuraciones'
+import { notify } from '@/lib/toast'
 
 export default function Configuraciones({
   onBack,
@@ -106,9 +107,11 @@ export default function Configuraciones({
       // Usar el nuevo action para guardar el perfil en el backend
       await updatePerfilConfig(configuraciones.perfil)
       setSuccessStatus('Configuraciones guardadas exitosamente.')
+      notify.success('Configuraciones guardadas exitosamente.')
       setTimeout(() => setSuccessStatus(null), 4000)
     } catch (error) {
       setErrorStatus('Error al guardar las configuraciones en el servidor.')
+      notify.error('Error al guardar las configuraciones en el servidor.')
     } finally {
       setIsLoading(false)
     }

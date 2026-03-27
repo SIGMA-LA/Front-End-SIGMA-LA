@@ -16,6 +16,7 @@ import RecursosSelection from './entrega/RecursosSelection'
 import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
 import SelectionModal from '@/components/shared/SelectionModal'
 import DateTimeModal from './entrega/DateTimeModal'
+import { notify } from '@/lib/toast'
 
 interface CrearEntregaFormProps {
   preloadedObra: Obra | null
@@ -44,10 +45,10 @@ export default function CrearEntregaForm({
     hora: '',
     detalle: '',
   })
-  
+
   const [fechaRegreso, setFechaRegreso] = useState('')
   const [horaRegreso, setHoraRegreso] = useState('')
-  
+
   const [fechaSalida, setFechaSalida] = useState('')
   const [horaSalida, setHoraSalida] = useState('')
 
@@ -119,17 +120,25 @@ export default function CrearEntregaForm({
       return
     }
 
-    const fechaEntregaMs = new Date(`${formData.fecha}T${formData.hora}:00`).getTime()
+    const fechaEntregaMs = new Date(
+      `${formData.fecha}T${formData.hora}:00`
+    ).getTime()
     const fechaSalidaMs = new Date(`${fechaSalida}T${horaSalida}:00`).getTime()
-    const fechaRegresoMs = new Date(`${fechaRegreso}T${horaRegreso}:00`).getTime()
+    const fechaRegresoMs = new Date(
+      `${fechaRegreso}T${horaRegreso}:00`
+    ).getTime()
 
     if (fechaSalidaMs > fechaEntregaMs) {
-      setError('La salida de la planta no puede ser posterior a la llegada al cliente.')
+      setError(
+        'La salida de la planta no puede ser posterior a la llegada al cliente.'
+      )
       return
     }
-    
+
     if (fechaRegresoMs <= fechaSalidaMs) {
-      setError('El regreso estimado debe ser estrictamente posterior a la salida.')
+      setError(
+        'El regreso estimado debe ser estrictamente posterior a la salida.'
+      )
       return
     }
 
@@ -167,14 +176,20 @@ export default function CrearEntregaForm({
       startTransition(async () => {
         try {
           await createEntrega(entregaData)
+          notify.success('Entrega creada correctamente.')
           router.push('/coordinacion/entregas')
           router.refresh()
         } catch (err: unknown) {
-          setError(err instanceof Error ? err.message : 'Error desconocido')
+          const message =
+            err instanceof Error ? err.message : 'Error desconocido'
+          setError(message)
+          notify.error(message)
         }
       })
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      const message = err instanceof Error ? err.message : 'Error desconocido'
+      setError(message)
+      notify.error(message)
     }
   }
 
@@ -351,7 +366,7 @@ export default function CrearEntregaForm({
           fechaSalida,
           horaSalida,
           fechaRegreso,
-          horaRegreso
+          horaRegreso,
         }}
         onConfirm={(nf, nh, nfs, nhs, nfr, nhr) => {
           setFormData((prev) => ({ ...prev, fecha: nf, hora: nh }))

@@ -6,6 +6,7 @@ import { Wrench, Loader2, AlertCircle } from 'lucide-react'
 import { ESTADOS_MAQUINARIA } from '@/constants'
 import { createMaquinaria, updateMaquinaria } from '@/actions/maquinarias'
 import type { Maquinaria } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface MaquinariaFormProps {
   maquinariaToEdit?: Maquinaria
@@ -47,10 +48,17 @@ export default function MaquinariaForm({
             estado: formData.estado,
           })
         }
+        notify.success(
+          isEditing
+            ? 'Maquinaria actualizada correctamente.'
+            : 'Maquinaria creada correctamente.'
+        )
         router.push('/coordinacion/maquinarias')
         router.refresh()
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Error desconocido')
+        const message = err instanceof Error ? err.message : 'Error desconocido'
+        setError(message)
+        notify.error(message)
       }
     })
   }

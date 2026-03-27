@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import 'react-toastify/dist/ReactToastify.css'
+
+import AppToaster from '@/components/ui/AppToaster'
 
 export const metadata: Metadata = {
   title: 'SIGMA-LA',
@@ -13,7 +16,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        {children}
+        <AppToaster />
+      </body>
     </html>
   )
 }

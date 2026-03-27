@@ -10,6 +10,7 @@ import {
   Building,
   Settings,
 } from 'lucide-react'
+import { notify } from '@/lib/toast'
 interface ConfiguracionesProps {
   onBack?: () => void
   className?: string
@@ -76,7 +77,7 @@ export default function Configuraciones({
     try {
       // Simular guardado
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      alert('Configuraciones guardadas exitosamente!')
+      notify.success('Configuraciones guardadas exitosamente!')
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : 'Error al guardar configuraciones'

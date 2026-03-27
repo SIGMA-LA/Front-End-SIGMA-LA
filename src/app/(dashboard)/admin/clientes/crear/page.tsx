@@ -13,7 +13,7 @@ export default function CrearClienteAdminPage() {
       const result = await createCliente(formData)
 
       if (result.success) {
-        redirect('/admin/clientes')
+        redirect('/admin/clientes?toast=cliente-creado')
       }
 
       return result
