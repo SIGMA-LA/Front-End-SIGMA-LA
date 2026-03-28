@@ -33,6 +33,7 @@ const menuItemsAdmin = [
   { path: '/admin/empleados', label: 'Empleados' },
   { path: '/admin/reportes', label: 'Reportes' },
   { path: '/admin/obras', label: 'Obras' },
+  { path: '/admin/configuraciones', label: 'Configuraciones' },
 ]
 
 export default function MobileHeader({ user }: { user: Empleado | null }) {

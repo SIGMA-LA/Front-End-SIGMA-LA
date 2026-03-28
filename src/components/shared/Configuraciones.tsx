@@ -158,6 +158,12 @@ export default function Configuraciones({
           { id: 'vencimientos', label: 'Vencimientos de presupuestos' },
         ];
         break;
+      case 'PRODUCCION':
+        eventos = [
+          { id: 'visitas', label: 'Notificaciones de Visitas' },
+          { id: 'entregas', label: 'Notificaciones de Entregas' },
+        ];
+        break;
       case 'COORDINADOR':
       case 'COORDINACION':
       case 'LOGISTICA':
