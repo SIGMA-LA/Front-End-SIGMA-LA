@@ -1,10 +1,11 @@
 'use client'
 
-import { X, Upload, FileText, Trash2, RefreshCw } from 'lucide-react'
+import { X, Upload, FileText, Trash2, RefreshCw, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadNotaFabrica, deleteNotaFabrica } from '@/actions/obras'
 import type { RolEmpleado } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface NotaFabricaModalProps {
   isOpen: boolean
@@ -13,7 +14,6 @@ interface NotaFabricaModalProps {
   codObra: number
   onUploadSuccess?: (url: string) => void
   rolActual?: RolEmpleado | ''
-  onDeleteClick?: () => void
 }
 
 export default function NotaFabricaModal({
@@ -23,11 +23,11 @@ export default function NotaFabricaModal({
   codObra,
   onUploadSuccess,
   rolActual = '',
-  onDeleteClick,
 }: NotaFabricaModalProps) {
   const router = useRouter()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modoCambio, setModoCambio] = useState(false)
 
@@ -75,12 +75,16 @@ export default function NotaFabricaModal({
       setModoCambio(false)
       // Devolver el public_id, no la URL
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
+      notify.success('Nota de fabrica actualizada correctamente.')
       router.refresh() // Recargar la página para actualizar el botón
       onClose()
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Error al subir la nota de fábrica. Intenta nuevamente.'
-      )
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error al subir la nota de fábrica. Intenta nuevamente.'
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
@@ -88,19 +92,25 @@ export default function NotaFabricaModal({
 
   const handleEliminar = async () => {
     try {
+      setIsDeleting(true)
       setLoading(true)
       setError(null)
       const obraActualizada = await deleteNotaFabrica(codObra)
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(false)
+      notify.success('Nota de fabrica eliminada correctamente.')
       router.refresh() // Recargar la página
       onClose()
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
-      )
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
+      setIsDeleting(false)
     }
   }
 
@@ -112,10 +122,14 @@ export default function NotaFabricaModal({
       onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
       setModoCambio(true)
       setSelectedFile(null)
+      notify.info('Nota eliminada. Ya puedes subir una nueva.')
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
-      )
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Error al eliminar la nota de fábrica. Intenta nuevamente.'
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
@@ -177,20 +191,26 @@ export default function NotaFabricaModal({
                   <button
                     type="button"
                     onClick={handleCambioNota}
-                    disabled={loading}
+                    disabled={loading || isDeleting}
                     className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                   >
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw
+                      className={`h-4 w-4 ${loading && !isDeleting ? 'animate-spin' : ''}`}
+                    />
                     Cambiar Nota
                   </button>
                   <button
                     type="button"
-                    onClick={onDeleteClick}
-                    disabled={loading}
+                    onClick={handleEliminar}
+                    disabled={loading || isDeleting}
                     className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    Eliminar Nota
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    {isDeleting ? 'Eliminando...' : 'Eliminar Nota'}
                   </button>
                 </>
               )}

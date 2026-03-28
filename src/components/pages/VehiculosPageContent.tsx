@@ -6,6 +6,7 @@ import { Car, Plus, CheckCircle, XCircle } from 'lucide-react'
 import { Vehiculo, VehiculoEstado } from '@/types'
 import { updateVehiculo, deleteVehiculo } from '@/actions/vehiculos'
 import VehiculoCard from '@/components/coordinacion/VehiculoCard'
+import { notify } from '@/lib/toast'
 
 interface VehiculosPageContentProps {
   vehiculos: Vehiculo[]
@@ -80,18 +81,31 @@ export default function VehiculosPageContent({
         )
       )
 
+      notify.success(
+        nuevoEstado === 'DISPONIBLE'
+          ? 'Vehiculo marcado como disponible.'
+          : 'Vehiculo marcado como fuera de servicio.'
+      )
+
       router.refresh()
     } catch (error) {
       console.error('Error al cambiar estado:', error)
+      notify.error('Error al cambiar el estado del vehiculo.')
     } finally {
       setTogglingEstado(null)
     }
   }
 
   const handleDelete = async (patente: string) => {
-    await deleteVehiculo(patente)
-    setVehiculos((prev) => prev.filter((v) => v.patente !== patente))
-    router.refresh()
+    try {
+      await deleteVehiculo(patente)
+      setVehiculos((prev) => prev.filter((v) => v.patente !== patente))
+      notify.success('Vehiculo eliminado correctamente.')
+      router.refresh()
+    } catch (error) {
+      console.error('Error al eliminar vehiculo:', error)
+      notify.error('No se pudo eliminar el vehiculo.')
+    }
   }
 
   return (

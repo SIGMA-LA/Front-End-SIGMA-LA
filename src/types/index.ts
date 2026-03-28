@@ -1,12 +1,30 @@
 export type { Cliente, TipoCliente } from './cliente'
 
-export type { Empleado, RolEmpleado, AreaTrabajo, CreateEmpleadoData, UpdateEmpleadoData } from './auth'
+export type {
+  Empleado,
+  RolEmpleado,
+  AreaTrabajo,
+  CreateEmpleadoData,
+  UpdateEmpleadoData,
+} from './auth'
 
 export type { Provincia, Localidad } from './geo'
 
-export type { Obra, EstadoObra, Presupuesto, CreateObraInput, UpdateObraInput, PresupuestoInput } from './obra'
+export type {
+  Obra,
+  EstadoObra,
+  Presupuesto,
+  CreateObraInput,
+  UpdateObraInput,
+  PresupuestoInput,
+} from './obra'
 
-export type { Pago, PagoFormData, PagosFilter, ObraConPresupuesto } from './pago'
+export type {
+  Pago,
+  PagoFormData,
+  PagosFilter,
+  ObraConPresupuesto,
+} from './pago'
 
 export type {
   Visita,
@@ -44,4 +62,20 @@ export type {
   MaquinariaConDisponibilidad,
 } from './maquinaria'
 
-export type { ApiResponse, SearchParams, ParametroViatico, PerfilFormData } from './common'
+export type {
+  ApiResponse,
+  SearchParams,
+  ParametroViatico,
+  PerfilFormData,
+} from './common'
+
+export type {
+  PagosPageContentProps,
+  ObraCardProps,
+  VerDetallesClienteProps,
+  CrearPagoButtonProps,
+  ObraSelectProps,
+  ObraSearchResultsProps,
+  PagoModalProps,
+  PagoModalStep,
+} from './componentProps'

@@ -2,21 +2,11 @@ import type { Empleado } from '@/types/auth'
 import type { Obra } from '@/types/obra'
 import type { Localidad } from '@/types/geo'
 import type { UsoVehiculoVisita } from '@/types/vehiculo'
+import { ESTADOS_VISITA, MOTIVOS_VISITA } from '@/constants'
 
-export type MotivoVisita =
-  | 'MEDICION'
-  | 'RE-MEDICION'
-  | 'REPARACION'
-  | 'ASESORAMIENTO'
-  | 'VISITA INICIAL'
+export type MotivoVisita = (typeof MOTIVOS_VISITA)[number]
 
-export type EstadoVisita =
-  | 'PENDIENTE'
-  | 'PROGRAMADA'
-  | 'EN CURSO'
-  | 'CANCELADA'
-  | 'REPROGRAMADA'
-  | 'COMPLETADA'
+export type EstadoVisita = (typeof ESTADOS_VISITA)[number]
 
 export interface EmpleadoVisita {
   cuil: string

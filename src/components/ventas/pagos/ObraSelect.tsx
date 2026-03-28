@@ -6,20 +6,12 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Label } from '@/components/ui/Label'
-import { ObraConPresupuesto } from '@/types'
+import type {
+  ObraConPresupuesto,
+  ObraSelectProps,
+  ObraSearchResultsProps,
+} from '@/types'
 import { getObrasConPresupuestoAceptado } from '@/actions/pagos'
-
-interface ObraSelectProps {
-  selectedObra: ObraConPresupuesto | null
-  onObraSelect: (obra: ObraConPresupuesto | null) => void
-  placeholder?: string
-  required?: boolean
-  showResults?: boolean
-  searchResults?: ObraConPresupuesto[]
-  loading?: boolean
-  error?: string | null
-  onSearchChange?: (searchTerm: string) => void
-}
 
 export default function ObraSelect({
   selectedObra,
@@ -31,8 +23,9 @@ export default function ObraSelect({
   loading: externalLoading = false,
   error: externalError = null,
   onSearchChange,
+  initialSearchTerm = '',
 }: ObraSelectProps) {
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm)
   const [internalObras, setInternalObras] = useState<ObraConPresupuesto[]>([])
   const [internalLoading, setInternalLoading] = useState(false)
   const [internalError, setInternalError] = useState<string | null>(null)
@@ -178,15 +171,6 @@ export default function ObraSelect({
       </div>
     </div>
   )
-}
-
-// Componente separado para mostrar los resultados de búsqueda
-interface ObraSearchResultsProps {
-  obras: ObraConPresupuesto[]
-  loading: boolean
-  error: string | null
-  searchTerm: string
-  onObraSelect: (obra: ObraConPresupuesto) => void
 }
 
 export function ObraSearchResults({

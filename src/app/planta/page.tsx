@@ -7,17 +7,12 @@ import Navbar from '@/components/layout/Navbar'
 
 async function getEntregasData(cuil: string) {
   try {
-    const [pendientes, entregadas] = await Promise.all([
-      getEntregasByEmpleado(cuil, 'PENDIENTE'),
-      getEntregasByEmpleado(cuil, 'ENTREGADO'),
-    ])
-
-    return { pendientes, entregadas, error: null }
+    const entregas = await getEntregasByEmpleado(cuil, 'PENDIENTE')
+    return { entregas, error: null }
   } catch (error) {
     console.error('Error al cargar entregas:', error)
     return {
-      pendientes: [],
-      entregadas: [],
+      entregas: [],
       error: 'Error al cargar las entregas',
     }
   }
@@ -92,15 +87,14 @@ export default async function PlantaPage() {
     redirect('/login')
   }
 
-  const { pendientes, entregadas, error } = await getEntregasData(usuario.cuil)
+  const { entregas, error } = await getEntregasData(usuario.cuil)
 
   return (
     <Suspense fallback={<PlantaSkeleton />}>
       <Navbar usuario={usuario} />
       <PlantaClient
         usuario={usuario}
-        entregasPendientesInitial={pendientes}
-        entregasRealizadasInitial={entregadas}
+        entregasInitial={entregas}
         errorInitial={error}
       />
     </Suspense>

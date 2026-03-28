@@ -11,29 +11,27 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { ObraConPresupuesto, Pago } from '@/types'
+import type {
+  ObraConPresupuesto,
+  Pago,
+  PagoModalProps,
+  PagoModalStep,
+} from '@/types'
 import {
   createPagoForObra,
   getObrasConPresupuestoAceptado,
 } from '@/actions/pagos'
 import ObraSelect, { ObraSearchResults } from './ObraSelect'
-
-interface PagoModalProps {
-  open: boolean
-  onClose: () => void
-  onPagoCreado: (pago: Pago) => void
-  obraPreseleccionada?: ObraConPresupuesto
-}
-
-type Step = 'obra' | 'pago'
+import { notify } from '@/lib/toast'
 
 export default function PagoModal({
   open,
   onClose,
   onPagoCreado,
   obraPreseleccionada,
+  direccionObra,
 }: PagoModalProps) {
-  const [currentStep, setCurrentStep] = useState<Step>('obra')
+  const [currentStep, setCurrentStep] = useState<PagoModalStep>('obra')
   const [selectedObra, setSelectedObra] = useState<ObraConPresupuesto | null>(
     null
   )
@@ -41,7 +39,7 @@ export default function PagoModal({
   const [error, setError] = useState<string | null>(null)
 
   // Estados para la búsqueda de obras
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(direccionObra ?? '')
   const [searchResults, setSearchResults] = useState<ObraConPresupuesto[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
@@ -187,6 +185,7 @@ export default function PagoModal({
         selectedObra.cod_obra
       )
 
+      notify.success('Pago registrado correctamente.')
       onPagoCreado(nuevoPago)
       handleClose()
     } catch (err: unknown) {
@@ -195,7 +194,9 @@ export default function PagoModal({
       const backendError = (
         err as unknown as { response?: { data?: { message?: string } } }
       )?.response?.data?.message
-      setError(backendError || errorMessage)
+      const message = backendError || errorMessage
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
@@ -269,6 +270,7 @@ export default function PagoModal({
                     placeholder="Buscar obra por dirección, cliente..."
                     showResults={false}
                     onSearchChange={handleSearchChange}
+                    initialSearchTerm={searchTerm}
                   />
                 </div>
 

@@ -3,8 +3,10 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wrench, Loader2, AlertCircle } from 'lucide-react'
+import { ESTADOS_MAQUINARIA } from '@/constants'
 import { createMaquinaria, updateMaquinaria } from '@/actions/maquinarias'
 import type { Maquinaria } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface MaquinariaFormProps {
   maquinariaToEdit?: Maquinaria
@@ -21,7 +23,7 @@ export default function MaquinariaForm({
 
   const [formData, setFormData] = useState({
     descripcion: maquinariaToEdit?.descripcion || '',
-    estado: maquinariaToEdit?.estado || 'DISPONIBLE',
+    estado: maquinariaToEdit?.estado || ESTADOS_MAQUINARIA[0],
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,10 +48,17 @@ export default function MaquinariaForm({
             estado: formData.estado,
           })
         }
+        notify.success(
+          isEditing
+            ? 'Maquinaria actualizada correctamente.'
+            : 'Maquinaria creada correctamente.'
+        )
         router.push('/coordinacion/maquinarias')
         router.refresh()
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Error desconocido')
+        const message = err instanceof Error ? err.message : 'Error desconocido'
+        setError(message)
+        notify.error(message)
       }
     })
   }
@@ -108,17 +117,20 @@ export default function MaquinariaForm({
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${
-                    formData.estado === 'DISPONIBLE'
+                    formData.estado === ESTADOS_MAQUINARIA[0]
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:bg-gray-50'
                   }`}
                 >
                   <input
                     type="radio"
-                    value="DISPONIBLE"
-                    checked={formData.estado === 'DISPONIBLE'}
+                    value={ESTADOS_MAQUINARIA[0]}
+                    checked={formData.estado === ESTADOS_MAQUINARIA[0]}
                     onChange={() =>
-                      setFormData((prev) => ({ ...prev, estado: 'DISPONIBLE' }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        estado: ESTADOS_MAQUINARIA[0],
+                      }))
                     }
                     className="h-4 w-4 text-green-600"
                   />
@@ -130,19 +142,19 @@ export default function MaquinariaForm({
 
                 <label
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${
-                    formData.estado === 'NO DISPONIBLE'
+                    formData.estado === ESTADOS_MAQUINARIA[1]
                       ? 'border-red-500 bg-red-50'
                       : 'border-gray-200 hover:bg-gray-50'
                   }`}
                 >
                   <input
                     type="radio"
-                    value="NO DISPONIBLE"
-                    checked={formData.estado === 'NO DISPONIBLE'}
+                    value={ESTADOS_MAQUINARIA[1]}
+                    checked={formData.estado === ESTADOS_MAQUINARIA[1]}
                     onChange={() =>
                       setFormData((prev) => ({
                         ...prev,
-                        estado: 'NO DISPONIBLE',
+                        estado: ESTADOS_MAQUINARIA[1],
                       }))
                     }
                     className="h-4 w-4 text-red-600"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, User, Shield, Users } from 'lucide-react'
 import type { Empleado } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface AsignarPersonalModalProps {
   isOpen: boolean
@@ -23,20 +24,33 @@ export default function AsignarPersonalModal({
   onClose,
   onConfirm,
 }: AsignarPersonalModalProps) {
-  const [internalEncargado, setInternalEncargado] = useState<string | null>(null)
-  const [internalAcompanantes, setInternalAcompanantes] = useState<string[]>([])
+  const [internalEncargado, setInternalEncargado] = useState<string | null>(
+    encargadoSeleccionado
+  )
+  const [internalAcompanantes, setInternalAcompanantes] = useState<string[]>(
+    acompanantesSeleccionados
+  )
+
+  useEffect(() => {
+    if (isOpen) {
+      setInternalEncargado(encargadoSeleccionado)
+      setInternalAcompanantes(acompanantesSeleccionados)
+    }
+  }, [isOpen, encargadoSeleccionado, acompanantesSeleccionados])
 
   useEffect(() => {
     if (internalEncargado && internalAcompanantes.includes(internalEncargado)) {
-      setInternalAcompanantes(prev => prev.filter(id => id !== internalEncargado))
+      setInternalAcompanantes((prev) =>
+        prev.filter((id) => id !== internalEncargado)
+      )
     }
-  }, [internalEncargado])
+  }, [internalEncargado, internalAcompanantes])
 
   if (!isOpen) return null
 
   const handleToggleAcompanante = (cuil: string) => {
-    setInternalAcompanantes(prev =>
-      prev.includes(cuil) ? prev.filter(id => id !== cuil) : [...prev, cuil]
+    setInternalAcompanantes((prev) =>
+      prev.includes(cuil) ? prev.filter((id) => id !== cuil) : [...prev, cuil]
     )
   }
 
@@ -45,13 +59,13 @@ export default function AsignarPersonalModal({
       onConfirm(internalEncargado, internalAcompanantes)
       onClose()
     } else {
-      alert('Debe seleccionar un encargado para la entrega.')
+      notify.warning('Debe seleccionar un encargado para la entrega.')
     }
   }
 
   // Los acompañantes no pueden ser el mismo que el encargado.
   const empleadosParaAcompanantes = empleados.filter(
-    emp => emp.cuil !== internalEncargado
+    (emp) => emp.cuil !== internalEncargado
   )
 
   return (
@@ -69,14 +83,18 @@ export default function AsignarPersonalModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-gray-800">Seleccionar Encargado (1)</h3>
+              <h3 className="font-semibold text-gray-800">
+                Seleccionar Encargado (1)
+              </h3>
             </div>
             <div className="space-y-2">
-              {empleados.map(emp => (
+              {empleados.map((emp) => (
                 <label
                   key={emp.cuil}
                   className={`flex cursor-pointer items-center rounded-lg border p-3 ${
-                    internalEncargado === emp.cuil ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                    internalEncargado === emp.cuil
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'hover:bg-gray-50'
                   }`}
                 >
                   <input
@@ -86,7 +104,9 @@ export default function AsignarPersonalModal({
                     onChange={() => setInternalEncargado(emp.cuil)}
                     className="h-4 w-4 text-blue-600"
                   />
-                  <span className="ml-3 text-sm">{emp.nombre} {emp.apellido}</span>
+                  <span className="ml-3 text-sm">
+                    {emp.nombre} {emp.apellido}
+                  </span>
                 </label>
               ))}
             </div>
@@ -96,14 +116,18 @@ export default function AsignarPersonalModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-green-600" />
-              <h3 className="font-semibold text-gray-800">Seleccionar Acompañantes</h3>
+              <h3 className="font-semibold text-gray-800">
+                Seleccionar Acompañantes
+              </h3>
             </div>
             <div className="space-y-2">
-              {empleadosParaAcompanantes.map(emp => (
+              {empleadosParaAcompanantes.map((emp) => (
                 <label
                   key={emp.cuil}
                   className={`flex cursor-pointer items-center rounded-lg border p-3 ${
-                    internalAcompanantes.includes(emp.cuil) ? 'border-green-500 bg-green-50' : 'hover:bg-gray-50'
+                    internalAcompanantes.includes(emp.cuil)
+                      ? 'border-green-500 bg-green-50'
+                      : 'hover:bg-gray-50'
                   }`}
                 >
                   <input
@@ -112,7 +136,9 @@ export default function AsignarPersonalModal({
                     onChange={() => handleToggleAcompanante(emp.cuil)}
                     className="h-4 w-4 rounded text-green-600"
                   />
-                  <span className="ml-3 text-sm">{emp.nombre} {emp.apellido}</span>
+                  <span className="ml-3 text-sm">
+                    {emp.nombre} {emp.apellido}
+                  </span>
                 </label>
               ))}
             </div>

@@ -2,8 +2,13 @@ import type { Empleado } from '@/types/auth'
 import type { Obra } from '@/types/obra'
 import type { UsoMaquinaria } from '@/types/maquinaria'
 import type { UsoVehiculoEntrega } from '@/types/vehiculo'
+import {
+  ESTADOS_ENTREGA,
+  ESTADOS_ORDEN_PRODUCCION,
+  ROLES_ENTREGA,
+} from '@/constants'
 
-export type EstadoEntrega = 'ENTREGADO' | 'CANCELADO' | 'PENDIENTE'
+export type EstadoEntrega = (typeof ESTADOS_ENTREGA)[number]
 
 export interface Entrega {
   cod_entrega: number
@@ -20,7 +25,7 @@ export interface Entrega {
   orden_de_produccion?: OrdenProduccion
 }
 
-export type RolEntrega = 'ENCARGADO' | 'ACOMPANANTE'
+export type RolEntrega = (typeof ROLES_ENTREGA)[number]
 
 export interface EntregaEmpleado {
   cuil: string
@@ -32,8 +37,7 @@ export interface EntregaEmpleado {
   obra: Obra
 }
 
-
-export type EstadoOrdenProduccion = 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA'
+export type EstadoOrdenProduccion = (typeof ESTADOS_ORDEN_PRODUCCION)[number]
 
 export interface OrdenProduccion {
   cod_op: number

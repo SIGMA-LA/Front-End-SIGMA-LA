@@ -16,6 +16,7 @@ import VisitaDetail from './VisitaDetails'
 import { cancelarVisita } from '@/actions/visitas'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { notify } from '@/lib/toast'
 
 export function getStatusColor(estado: string) {
   switch (estado) {
@@ -69,7 +70,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
 
   const handleCancelarVisita = () => {
     if (!motivoCancelacion.trim()) {
-      alert('Por favor, ingresa un motivo de cancelación')
+      notify.warning('Por favor, ingresa un motivo de cancelación')
       return
     }
 
@@ -85,11 +86,11 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
           setMotivoCancelacion('')
           router.refresh()
         } else {
-          alert(result.error || 'Error al cancelar la visita')
+          notify.error(result.error || 'Error al cancelar la visita')
         }
       } catch (error) {
         console.error('Error al cancelar:', error)
-        alert('Error al cancelar la visita')
+        notify.error('Error al cancelar la visita')
       }
     })
   }

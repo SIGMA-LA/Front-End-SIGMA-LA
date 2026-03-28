@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Wrench } from 'lucide-react'
 import type { Maquinaria } from '@/types'
 import { deleteMaquinaria } from '@/actions/maquinarias'
+import { notify } from '@/lib/toast'
 import MaquinariaCard from '@/components/coordinacion/maquinaria/MaquinariaCard'
 import VerDetallesMaquinariaModal from '@/components/coordinacion/maquinaria/VerDetallesMaquinariaModal'
 import ConfirmDeleteModal from '@/components/coordinacion/maquinaria/ConfirmDeleteModal'
@@ -49,7 +50,7 @@ export default function MaquinariasPageContent({
         router.refresh()
       } catch (error) {
         console.error('Error al eliminar maquinaria:', error)
-        alert('Error al eliminar la maquinaria')
+        notify.error('Error al eliminar la maquinaria')
       }
     })
   }

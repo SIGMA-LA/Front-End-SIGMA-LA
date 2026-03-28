@@ -3,8 +3,10 @@
 import { useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Filter, Package } from 'lucide-react'
+import { ESTADOS_ORDEN_PRODUCCION } from '@/constants'
 import type { OrdenProduccion, Cliente } from '@/types'
 import { approveOrdenProduccion } from '@/actions/ordenes'
+import { notify } from '@/lib/toast'
 import OrdenProduccionCard from './OrdenProduccionCard'
 import OrdenProduccionDetailsModal from './OrdenProduccionDetailsModal'
 import OPConfirmModal from './OPConfirmModal'
@@ -31,7 +33,7 @@ export default function OrdenesProduccionContent({
 
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState<string>(
-    searchParams.get('estado') || 'PENDIENTE'
+    searchParams.get('estado') || ESTADOS_ORDEN_PRODUCCION[0]
   )
   const [filtroCliente, setFiltroCliente] = useState<string>('')
 
@@ -72,15 +74,17 @@ export default function OrdenesProduccionContent({
       const result = await approveOrdenProduccion(ordenToApprove.cod_op)
 
       if (result.success) {
-        alert(result.message || 'Orden aprobada exitosamente')
+        notify.success(result.message || 'Orden aprobada exitosamente')
         setIsConfirmModalOpen(false)
         setOrdenToApprove(null)
         router.refresh()
       } else {
-        alert('Error: ' + (result.error || 'No se pudo aprobar la orden'))
+        notify.error(
+          'Error: ' + (result.error || 'No se pudo aprobar la orden')
+        )
       }
     } catch (err) {
-      alert(
+      notify.error(
         'Error al aprobar la orden: ' +
           (err instanceof Error ? err.message : 'Error desconocido')
       )
@@ -128,10 +132,11 @@ export default function OrdenesProduccionContent({
               className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="">Todos los estados</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="APROBADA">Aprobada</option>
-              <option value="EN PRODUCCION">En Producción</option>
-              <option value="FINALIZADA">Finalizada</option>
+              {ESTADOS_ORDEN_PRODUCCION.map((estado) => (
+                <option key={estado} value={estado}>
+                  {estado}
+                </option>
+              ))}
             </select>
           </div>
 

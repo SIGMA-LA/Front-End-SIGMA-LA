@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { solicitarStockObra } from '@/actions/obras'
 import type { Obra } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface RegistrarPedidoProps {
   onCancel: () => void
@@ -96,7 +97,8 @@ function ModalConfirmacion({
 
         <div className="mb-4 rounded-lg bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
-            Al confirmar, la obra pasará al estado "EN ESPERA DE STOCK".
+            Al confirmar, la obra pasará al estado &quot;EN ESPERA DE
+            STOCK&quot;.
           </p>
         </div>
 
@@ -146,13 +148,15 @@ export default function RegistrarPedido({
       const obraActualizada = await solicitarStockObra(preloadedObra.cod_obra)
 
       setShowModal(false)
+      notify.success('Pedido de stock registrado correctamente.')
       onSubmit(obraActualizada)
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error
           ? err.message
           : 'Ocurrió un error al solicitar el stock.'
-      )
+      setError(message)
+      notify.error(message)
     } finally {
       setLoading(false)
     }
@@ -256,7 +260,7 @@ export default function RegistrarPedido({
                     </li>
                     <li>
                       Una vez realizado el pedido, marque esta obra como
-                      "Solicitado".
+                      &quot;Solicitado&quot;.
                     </li>
                   </ul>
                 </div>

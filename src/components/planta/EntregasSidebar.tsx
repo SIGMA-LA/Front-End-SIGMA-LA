@@ -1,34 +1,42 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { EntregaEmpleado } from '@/types'
-import { Calendar, Search, Filter } from 'lucide-react'
+import { Calendar, Search, Filter, X } from 'lucide-react'
 import EntregaCard from './EntregaCard'
 
 interface EntregasSidebarProps {
-  entregasPendientes: EntregaEmpleado[]
-  entregasRealizadas: EntregaEmpleado[]
+  entregas: EntregaEmpleado[]
+  estadoFiltro?: 'PENDIENTE' | 'ENTREGADO'
+  onEstadoFiltroChange?: (estado: 'PENDIENTE' | 'ENTREGADO') => void
+  searchTerm?: string
+  onSearchTermChange?: (term: string) => void
+  filterDate?: string
+  onFilterDateChange?: (date: string) => void
   selectedEntrega: EntregaEmpleado | null
   onSelectEntrega: (entrega: EntregaEmpleado) => void
   loadingEntregas: boolean
   errorEntregas: string | null
   onRetry: () => void
+  onClose?: () => void
 }
 
 export default function EntregasSidebar({
-  entregasPendientes,
-  entregasRealizadas,
+  entregas,
   selectedEntrega,
   onSelectEntrega,
   loadingEntregas,
   errorEntregas,
   onRetry,
+  onClose,
 }: EntregasSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
-  const [date, setDate] = useState(searchParams.get('date') || '')
+  const [searchTerm, setSearchTermState] = useState(searchParams.get('search') || '')
+  const [date, setDateState] = useState(searchParams.get('date') || '')
   const [activeTab, setActiveTab] = useState<'pendiente' | 'realizada'>(
     (searchParams.get('tab') as 'pendiente' | 'realizada') || 'pendiente'
   )
@@ -78,10 +86,25 @@ export default function EntregasSidebar({
     )
   }
 
+  const entregasPendientes = entregas.filter(e => e.entrega?.estado === 'PENDIENTE')
+  const entregasRealizadas = entregas.filter(e => e.entrega?.estado === 'ENTREGADO')
   const currentList = activeTab === 'pendiente' ? entregasPendientes : entregasRealizadas
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
+      {/* Mobile-only Header */}
+      {onClose && (
+        <div className="flex justify-between items-center lg:hidden px-4 py-3 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-800">Menú de Entregas</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-md transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      )}
+
       {/* Search and Filters Header */}
       <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
         {/* Search Bar */}
@@ -91,7 +114,7 @@ export default function EntregasSidebar({
             type="text"
             placeholder="Buscar por cliente, detalle o dirección..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTermState(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white shadow-sm outline-none transition-all placeholder:text-gray-400"
           />
         </div>
@@ -103,7 +126,7 @@ export default function EntregasSidebar({
             <input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => setDateState(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white outline-none transition-all cursor-pointer"
             />
           </div>
@@ -111,7 +134,7 @@ export default function EntregasSidebar({
           {/* Clear Date Button */}
           {date && (
             <button
-              onClick={() => setDate('')}
+              onClick={() => setDateState('')}
               className="px-2 py-1.5 text-[10px] font-bold text-gray-500 hover:text-red-500 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm"
             >
               LIMPIAR

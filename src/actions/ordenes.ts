@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import { OrdenProduccion } from '@/types'
+import type { EstadoOrdenProduccion, OrdenProduccion } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/ordenes-produccion')
@@ -49,7 +49,7 @@ export async function getOrdenProduccion(cod_op: number) {
  * @returns {Promise<{success: boolean, data: OrdenProduccion[], error?: string}>} Operation result with ordenes list
  */
 export async function getOrdenesProduccion(
-  estado?: 'PENDIENTE' | 'APROBADA' | 'EN PRODUCCION' | 'FINALIZADA',
+  estado?: EstadoOrdenProduccion,
   cod_obra?: number
 ) {
   try {

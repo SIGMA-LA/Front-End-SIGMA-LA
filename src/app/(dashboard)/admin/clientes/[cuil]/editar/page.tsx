@@ -6,7 +6,7 @@ import {
 } from '@/actions/clientes'
 import { redirect, notFound } from 'next/navigation'
 
-export default async function EditarClientePage({
+export default async function EditarClienteAdminPage({
   params,
 }: {
   params: Promise<{ cuil: string }>
@@ -28,7 +28,7 @@ export default async function EditarClientePage({
     try {
       result = await updateCliente(cuil, formData)
     } catch (error: unknown) {
-      console.error('Error al actualizar cliente:', error)
+      console.error('Error al actualizar cliente (admin):', error)
       return {
         success: false,
         error:
@@ -39,7 +39,7 @@ export default async function EditarClientePage({
     }
 
     if (result.success) {
-      redirect('/ventas/clientes?toast=cliente-actualizado')
+      redirect('/admin/clientes?toast=cliente-actualizado')
     }
 
     return result
@@ -51,6 +51,7 @@ export default async function EditarClientePage({
         <CrearClienteForm
           action={handleActualizar}
           initialData={cliente}
+          cancelUrl="/admin/clientes"
           title="Editar Cliente"
           subtitle={`Actualizando información de ${cliente.nombre || cliente.razon_social}`}
         />

@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
-import { getCliente, getClienteObras } from '@/actions/clientes'
+import { getCliente } from '@/actions/clientes'
+import { getObrasByCliente } from '@/actions/obras'
 import type { Cliente, Obra } from '@/types'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 interface VerDetallesClienteProps {
   cuil: string
@@ -14,18 +17,29 @@ export default function VerDetallesCliente({
   cuil,
   onClose,
 }: VerDetallesClienteProps) {
+  const pathname = usePathname()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(true)
+  const canViewObraDetails = pathname.startsWith('/admin')
+
+  const getObraHref = (codObra: number) => {
+    if (pathname.startsWith('/admin')) return `/admin/obras/${codObra}`
+    if (pathname.startsWith('/ventas')) return '/ventas/obras'
+    if (pathname.startsWith('/coordinacion')) return '/coordinacion/obras'
+    return '/admin/obras'
+  }
 
   useEffect(() => {
     async function cargar() {
       try {
         setLoading(true)
+        // Fetch in parallel for better performance
         const [clienteData, obrasData] = await Promise.all([
           getCliente(cuil),
-          getClienteObras(cuil),
+          getObrasByCliente(cuil),
         ])
+
         setCliente(clienteData)
         setObras(obrasData || [])
       } catch (error) {
@@ -153,8 +167,8 @@ export default function VerDetallesCliente({
                     key={obra.cod_obra}
                     className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300"
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
                         <p className="font-semibold text-gray-900">
                           {obra.direccion}
                         </p>
@@ -166,6 +180,15 @@ export default function VerDetallesCliente({
                           {new Date(obra.fecha_ini).toLocaleDateString('es-AR')}
                         </p>
                       </div>
+                      {canViewObraDetails && (
+                        <Link
+                          href={getObraHref(obra.cod_obra)}
+                          onClick={onClose}
+                          className="inline-flex items-center self-start rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 sm:self-center"
+                        >
+                          Ver Detalles
+                        </Link>
+                      )}
                     </div>
                   </div>
                 ))}

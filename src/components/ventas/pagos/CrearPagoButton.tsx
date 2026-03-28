@@ -3,9 +3,12 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import type { CrearPagoButtonProps } from '@/types'
 import PagoModal from './PagoModal'
 
-export default function CrearPagoButton() {
+export default function CrearPagoButton({
+  direccionObra,
+}: CrearPagoButtonProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const router = useRouter()
 
@@ -22,6 +25,7 @@ export default function CrearPagoButton() {
       {modalOpen && (
         <PagoModal
           open={modalOpen}
+          direccionObra={direccionObra}
           onClose={() => setModalOpen(false)}
           onPagoCreado={() => {
             setModalOpen(false)

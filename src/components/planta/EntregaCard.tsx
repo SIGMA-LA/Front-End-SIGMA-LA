@@ -54,12 +54,12 @@ export default function EntregaCard({
   return (
     <button
       onClick={onClick}
-      className={`w-full rounded-lg border p-3 text-left shadow-sm transition-all duration-200 lg:p-4 ${
+      className={`w-full rounded-lg border p-2 text-left shadow-sm transition-all duration-200 lg:p-3 ${
         isSelected ? styles[variant].selected : styles[variant].default
       }`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex-grow space-y-1.5">
+        <div className="flex-grow space-y-1.5 min-w-0 pr-3">
           {/* Fecha principal */}
           <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
             {formatDate(entregaEmpleado.entrega.fecha_hora_entrega)}
@@ -68,27 +68,11 @@ export default function EntregaCard({
           {/* Dirección con icono */}
           <div className="flex items-start space-x-1">
             <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
-            <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
+            <p className="text-sm leading-relaxed text-gray-600 lg:text-base break-words min-w-0">
               {entregaEmpleado.obra.direccion.split(',')[0]},{' '}
               {entregaEmpleado.obra.localidad.nombre_localidad}
             </p>
           </div>
-
-          {/* Cliente si está disponible */}
-          {entregaEmpleado.obra.cliente?.razon_social && (
-            <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
-              Cliente:{' '}
-              <span className="font-medium">
-                {entregaEmpleado.obra.cliente.razon_social}
-              </span>
-            </p>
-          )}
-
-          {/* Rol */}
-          <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
-            Rol:{' '}
-            <span className="font-medium">{entregaEmpleado.rol_entrega}</span>
-          </p>
         </div>
 
         {/* Badge arriba a la derecha */}

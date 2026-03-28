@@ -1,19 +1,8 @@
-export type RolEmpleado = 'ADMIN' | 'VENTAS' | 'COORDINACION' | 'PRODUCCION' | 'PLANTA' | 'VISITADOR'
+import { AREAS_TRABAJO, ROLES_EMPLEADO } from '@/constants'
 
-export type AreaTrabajo = 
-  | 'COORDINACION' 
-  | 'VENTAS' 
-  | 'PRODUCCION' 
-  | 'CORTE' 
-  | 'MECANIZADO' 
-  | 'ENSAMBLE' 
-  | 'ALMACEN' 
-  | 'ATENCION_CLIENTE' 
-  | 'COMPRAS' 
-  | 'RECURSOS_HUMANOS' 
-  | 'FINANZAS'
-  | 'ADMINISTRACION'
-  | 'PLANTA'
+export type RolEmpleado = (typeof ROLES_EMPLEADO)[number]
+
+export type AreaTrabajo = (typeof AREAS_TRABAJO)[number]
 
 export interface CreateEmpleadoData {
   cuil: string
@@ -40,4 +29,3 @@ export interface Empleado {
   area_trabajo: AreaTrabajo
   contrasenia?: string
 }
-

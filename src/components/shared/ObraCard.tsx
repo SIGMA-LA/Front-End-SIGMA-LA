@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useTransition } from 'react'
+import { useState, useMemo, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Obra, Provincia, RolEmpleado } from '@/types'
+import { ObraCardProps } from '@/types'
 import EstadoObraBadge from './EstadoObraBadge'
 import {
   Calendar,
@@ -20,29 +20,31 @@ import EliminarObraModal from '../ventas/EliminarObraModal'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
 import Link from 'next/link'
 import { deleteObra, cancelObra } from '@/actions/obras'
-
-interface ObraCardProps {
-  obra: Obra
-  usuarioRol: RolEmpleado | undefined
-  provincias: Provincia[]
-}
-
+import { notify } from '@/lib/toast'
 
 export default function ObraCard({
   obra,
   usuarioRol,
   provincias,
 }: ObraCardProps) {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'
+  const getNotaUrl = (publicId?: string | null) =>
+    publicId
+      ? `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}.pdf`
+      : ''
+
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [notaFabricaModalOpen, setNotaFabricaModalOpen] = useState(false)
   // nota_fabrica_pid contiene el public_id de Cloudinary, no nota_fabrica que es texto
   const [notaFabricaUrl, setNotaFabricaUrl] = useState(
-    obra.nota_fabrica_pid
-      ? `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'}/image/upload/${obra.nota_fabrica_pid}.pdf`
-      : ''
+    getNotaUrl(obra.nota_fabrica_pid)
   )
+
+  useEffect(() => {
+    setNotaFabricaUrl(getNotaUrl(obra.nota_fabrica_pid))
+  }, [obra.nota_fabrica_pid])
 
   const provincia = useMemo(() => {
     if (obra.localidad && provincias.length > 0) {
@@ -56,12 +58,18 @@ export default function ObraCard({
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        await deleteObra(obra.cod_obra)
+        const success = await deleteObra(obra.cod_obra)
+        if (!success) {
+          notify.error('No se pudo eliminar la obra. Intente nuevamente.')
+          return
+        } else {
+          notify.success('Obra eliminada correctamente.')
+        }
         setModalOpen(false)
         router.refresh()
       } catch (error) {
         console.error('Error al eliminar obra:', error)
-        alert('Error al eliminar la obra')
+        notify.error('Error al eliminar la obra')
       }
     })
   }
@@ -69,24 +77,23 @@ export default function ObraCard({
   const handleCancel = () => {
     startTransition(async () => {
       try {
-        await cancelObra(obra.cod_obra)
+        const success = await cancelObra(obra.cod_obra)
+        if (!success) {
+          notify.error('No se pudo cancelar la obra. Intente nuevamente.')
+          return
+        }
+        notify.success('Obra cancelada correctamente.')
         setModalOpen(false)
         router.refresh()
       } catch (error) {
         console.error('Error al cancelar obra:', error)
-        alert('Error al cancelar la obra')
+        notify.error('Error al cancelar la obra')
       }
     })
   }
 
   const handleNotaFabricaSuccess = (publicId: string) => {
-    // Construir URL de Cloudinary desde el public_id
-    const cloudName =
-      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'
-    const url = publicId
-      ? `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}.pdf`
-      : ''
-    setNotaFabricaUrl(url)
+    setNotaFabricaUrl(getNotaUrl(publicId))
     router.refresh()
   }
 
@@ -228,7 +235,7 @@ export default function ObraCard({
             {esVentas && (
               <>
                 <Link
-                  href={`/ventas/obras/${obra.cod_obra}/pagos`}
+                  href={`/ventas/pagos?q=${encodeURIComponent(obra.direccion)}`}
                   className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
                 >
                   <DollarSign className="h-4 w-4" />

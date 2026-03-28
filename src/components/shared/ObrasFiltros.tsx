@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Filter } from 'lucide-react'
+import { ESTADOS_OBRA } from '@/constants'
 import type { Provincia, Localidad } from '@/types'
 
 interface ObrasFiltrosProps {
@@ -181,12 +182,11 @@ export default function ObrasFiltros({
             className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
           >
             <option value="">Todos los estados</option>
-            <option value="EN ESPERA DE PAGO">EN ESPERA DE PAGO</option>
-            <option value="EN PRODUCCION">EN PRODUCCION</option>
-            <option value="PAGADA TOTALMENTE">PAGADA TOTALMENTE</option>
-            <option value="ENTREGADA">ENTREGADA</option>
-            <option value="EN ESPERA DE STOCK">EN ESPERA DE STOCK</option>
-            <option value="CANCELADA">CANCELADA</option>
+            {ESTADOS_OBRA.map((estado) => (
+              <option key={estado} value={estado}>
+                {estado}
+              </option>
+            ))}
           </select>
         </div>
       </div>

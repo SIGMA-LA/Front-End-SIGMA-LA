@@ -2,7 +2,7 @@ import CrearClienteForm from '@/components/ventas/CrearCliente'
 import { createCliente, type ActionResponse } from '@/actions/clientes'
 import { redirect } from 'next/navigation'
 
-export default function CrearClientePage() {
+export default function CrearClienteAdminPage() {
   async function handleCrear(
     prevState: ActionResponse | null,
     formData: FormData
@@ -13,12 +13,12 @@ export default function CrearClientePage() {
       const result = await createCliente(formData)
 
       if (result.success) {
-        redirect('/ventas/clientes?toast=cliente-creado')
+        redirect('/admin/clientes?toast=cliente-creado')
       }
 
       return result
     } catch (error: unknown) {
-      console.error('Error al crear cliente:', error)
+      console.error('Error al crear cliente (admin):', error)
       return {
         success: false,
         error:
@@ -32,6 +32,7 @@ export default function CrearClientePage() {
       <div className="mx-auto max-w-2xl">
         <CrearClienteForm
           action={handleCrear}
+          cancelUrl="/admin/clientes"
           title="Nuevo Cliente"
           subtitle="Registra un nuevo cliente en el sistema"
         />

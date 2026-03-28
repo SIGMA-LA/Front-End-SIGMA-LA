@@ -13,6 +13,7 @@ import OrdenProduccionDetails from './OrdenProduccionDetails'
 import CrearOrdenModal from './CrearOrdenModal'
 import IniciarProduccionModal from './IniciarProduccionModal'
 import FinalizarProduccionModal from './FinalizarProduccionModal'
+import { notify } from '@/lib/toast'
 
 interface ProduccionClientProps {
   usuario: Empleado
@@ -103,17 +104,18 @@ export default function ProduccionClient({
           },
         }
         setSelectedOrden(ordenActualizada)
+        notify.success('Produccion iniciada correctamente.')
 
         // Recargar datos del servidor
         startTransition(() => {
           router.refresh()
         })
       } else {
-        alert(result.error || 'Error al iniciar la producción')
+        notify.error(result.error || 'Error al iniciar la producción')
       }
     } catch (error) {
       console.error('Error al iniciar producción:', error)
-      alert('Error al iniciar la producción. Intente nuevamente.')
+      notify.error('Error al iniciar la producción. Intente nuevamente.')
     } finally {
       setIsProduccionLoading(false)
     }
@@ -129,17 +131,18 @@ export default function ProduccionClient({
       if (result.success) {
         setIsFinalizarModalOpen(false)
         setSelectedOrden(null)
+        notify.success('Produccion finalizada correctamente.')
 
         // Recargar datos del servidor
         startTransition(() => {
           router.refresh()
         })
       } else {
-        alert(result.error || 'Error al finalizar la producción')
+        notify.error(result.error || 'Error al finalizar la producción')
       }
     } catch (error) {
       console.error('Error al finalizar producción:', error)
-      alert('Error al finalizar la producción. Intente nuevamente.')
+      notify.error('Error al finalizar la producción. Intente nuevamente.')
     } finally {
       setIsProduccionLoading(false)
     }

@@ -22,6 +22,7 @@ import { getClientes } from '@/actions/clientes'
 import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { createObra, updateObra } from '@/actions/obras'
 import useDebounce from '@/hooks/useDebounce'
+import { notify } from '@/lib/toast'
 import type { Cliente, Obra, Provincia } from '@/types'
 
 import CrearPresupuestoModal from './CrearPresupuestoModal'
@@ -325,7 +326,7 @@ export default function CrearObra({
     e.preventDefault()
     if (isObraCancelada || isSubmitting) return
     if (!formData.cuil_cliente || !formData.cod_localidad) {
-      alert('Por favor, seleccione un cliente y una localidad.')
+      notify.warning('Por favor, seleccione un cliente y una localidad.')
       return
     }
 
@@ -339,11 +340,17 @@ export default function CrearObra({
         await createObra(dataToSend, presupuestos)
       }
 
+      notify.success(
+        esModoEdicion
+          ? 'Obra actualizada correctamente.'
+          : 'Obra creada correctamente.'
+      )
+
       router.push('/ventas/obras')
       router.refresh()
     } catch (error) {
       console.error('Error al guardar obra:', error)
-      alert('Error al guardar la obra. Por favor, intente nuevamente.')
+      notify.error('Error al guardar la obra. Por favor, intente nuevamente.')
     } finally {
       setIsSubmitting(false)
     }
@@ -360,11 +367,11 @@ export default function CrearObra({
 
       <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-10">
         <div className="mx-auto max-w-7xl">
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60">
             {/* HEADER */}
             <div className="border-b border-slate-100 bg-blue-600 px-10 py-8 text-white">
               <div className="flex items-center gap-5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 shadow-inner backdrop-blur-md">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/10 shadow-inner backdrop-blur-md">
                   <Home className="h-7 w-7 text-white" />
                 </div>
                 <div>
@@ -380,7 +387,7 @@ export default function CrearObra({
 
             <div className="p-10">
               {isObraCancelada && (
-                <div className="mb-10 flex items-center gap-4 rounded-2xl border border-red-100 bg-red-50/50 p-5 text-red-800">
+                <div className="mb-10 flex items-center gap-4 rounded-xl border border-red-100 bg-red-50/50 p-5 text-red-800">
                   <AlertCircle className="h-6 w-6 shrink-0" />
                   <div>
                     <p className="text-sm font-bold tracking-wide uppercase">
@@ -415,7 +422,7 @@ export default function CrearObra({
                           <input
                             type="text"
                             placeholder="Buscar por nombre o CUIL..."
-                            className={`w-full rounded-2xl border px-11 py-3 text-[13px] font-medium shadow-sm transition-all focus:ring-4 focus:ring-blue-500/10 ${
+                            className={`w-full rounded-xl border px-11 py-3 text-[13px] font-medium shadow-sm transition-all focus:ring-4 focus:ring-blue-500/10 ${
                               clienteSeleccionado
                                 ? 'border-green-200 bg-green-50/20 text-green-900 focus:border-green-300'
                                 : 'border-slate-200 bg-white text-slate-700 focus:border-blue-300'
@@ -440,7 +447,7 @@ export default function CrearObra({
                           {/* Dropdown Cliente */}
                           {clientesEncontrados.length > 0 &&
                             !clienteSeleccionado && (
-                              <div className="animate-in fade-in zoom-in-95 absolute z-[100] mt-1 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl duration-200">
+                              <div className="animate-in fade-in zoom-in-95 absolute z-[100] mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl duration-200">
                                 {clientesEncontrados.map((cliente) => (
                                   <button
                                     key={cliente.cuil}
@@ -492,7 +499,7 @@ export default function CrearObra({
                           <input
                             type="text"
                             placeholder="Buscar por nombre o CUIL..."
-                            className={`w-full rounded-2xl border px-11 py-3 text-[13px] font-medium shadow-sm transition-all focus:ring-4 focus:ring-blue-500/10 ${
+                            className={`w-full rounded-xl border px-11 py-3 text-[13px] font-medium shadow-sm transition-all focus:ring-4 focus:ring-blue-500/10 ${
                               arquitectoSeleccionado
                                 ? 'border-indigo-200 bg-indigo-50/20 text-indigo-900 focus:border-indigo-300'
                                 : 'border-slate-200 bg-white text-slate-700 focus:border-blue-300'
@@ -517,7 +524,7 @@ export default function CrearObra({
                           {/* Dropdown Arquitecto */}
                           {arquitectosEncontrados.length > 0 &&
                             !arquitectoSeleccionado && (
-                              <div className="animate-in fade-in zoom-in-95 absolute z-[100] mt-1 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl duration-200">
+                              <div className="animate-in fade-in zoom-in-95 absolute z-[100] mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl duration-200">
                                 {arquitectosEncontrados.map((cliente) => (
                                   <button
                                     key={cliente.cuil}
@@ -557,7 +564,7 @@ export default function CrearObra({
                         <Link
                           href="/ventas/clientes/crear"
                           target="_blank"
-                          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-blue-600 transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-95"
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-blue-600 transition-all hover:border-blue-200 hover:bg-blue-50 active:scale-95"
                         >
                           <Plus className="h-4 w-4" />
                           REGISTRAR NUEVO PERFIL
@@ -581,7 +588,7 @@ export default function CrearObra({
                           Provincia
                         </label>
                         <select
-                          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50"
                           value={provinciaSeleccionada}
                           onChange={(e) =>
                             setProvinciaSeleccionada(
@@ -609,7 +616,7 @@ export default function CrearObra({
                         </label>
                         <select
                           name="cod_localidad"
-                          className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-50"
                           value={formData.cod_localidad || ''}
                           onChange={handleChange}
                           required
@@ -637,7 +644,7 @@ export default function CrearObra({
                             name="direccion"
                             type="text"
                             placeholder="Calle, Altura, Departamento..."
-                            className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-11 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10"
                             value={formData.direccion}
                             onChange={handleChange}
                             required
@@ -655,7 +662,7 @@ export default function CrearObra({
                           <input
                             name="fecha_ini"
                             type="date"
-                            className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-11 py-3 text-[13px] font-medium text-slate-700 shadow-sm transition-all focus:border-blue-300 focus:ring-4 focus:ring-blue-500/10"
                             value={formData.fecha_ini}
                             onChange={handleChange}
                             required
@@ -677,7 +684,7 @@ export default function CrearObra({
                       </div>
                     </div>
 
-                    <div className="relative flex h-[360px] flex-col rounded-3xl border border-slate-200/60 bg-slate-50/50 p-4 shadow-inner">
+                    <div className="relative flex h-[360px] flex-col rounded-2xl border border-slate-200/60 bg-slate-50/50 p-4 shadow-inner">
                       <div className="scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300 flex-1 space-y-3 overflow-y-auto pr-2">
                         {presupuestos.length === 0 ? (
                           <div className="flex h-full flex-col items-center justify-center space-y-4 p-6 text-center">
@@ -692,7 +699,7 @@ export default function CrearObra({
                           presupuestos.map((p, idx) => (
                             <div
                               key={p.nro_presupuesto || idx}
-                              className="group animate-in zoom-in-95 flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-emerald-200 hover:shadow-md"
+                              className="group animate-in zoom-in-95 flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-emerald-200 hover:shadow-md"
                             >
                               <div className="min-w-0">
                                 <p className="text-[15px] leading-tight font-bold text-slate-900">
@@ -722,7 +729,7 @@ export default function CrearObra({
                         <button
                           type="button"
                           onClick={handleOpenModalParaCrear}
-                          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-xl transition-all hover:bg-emerald-700 active:scale-[0.97] disabled:opacity-50 disabled:grayscale"
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-xs font-bold text-white shadow-xl transition-all hover:bg-emerald-700 active:scale-[0.97] disabled:opacity-50 disabled:grayscale"
                           disabled={isObraCancelada || hayPresupuestoAceptado}
                         >
                           <Plus className="h-4 w-4" />
@@ -738,14 +745,14 @@ export default function CrearObra({
                   <button
                     type="button"
                     onClick={() => router.back()}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-10 py-4 text-xs font-bold text-slate-500 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 sm:w-auto"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-10 py-4 text-xs font-bold text-slate-500 transition-all hover:border-slate-300 hover:bg-slate-50 active:scale-95 sm:w-auto"
                     disabled={isSubmitting}
                   >
                     DESCARTAR CAMBIOS
                   </button>
                   <button
                     type="submit"
-                    className="w-full rounded-2xl bg-blue-600 py-4 text-sm font-bold text-white shadow-2xl shadow-blue-500/30 transition-all hover:translate-y-[-2px] hover:bg-blue-700 active:translate-y-0 active:scale-[0.98] disabled:translate-y-0 disabled:opacity-50 sm:flex-1"
+                    className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white shadow-2xl shadow-blue-500/30 transition-all hover:translate-y-[-2px] hover:bg-blue-700 active:translate-y-0 active:scale-[0.98] disabled:translate-y-0 disabled:opacity-50 sm:flex-1"
                     disabled={isObraCancelada || isSubmitting}
                   >
                     {isSubmitting ? (

@@ -4,22 +4,22 @@ import { getClientes } from '@/actions/clientes'
 import { getUsuario } from '@/lib/cache'
 import ClienteCard from '@/components/shared/ClienteCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
+import ClientesToastFromQuery from '@/components/pages/ClientesToastFromQuery'
 import Link from 'next/link'
 import type { Cliente } from '@/types'
 
 function ClientesListSkeleton() {
   return (
-    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:gap-5">
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <div
           key={i}
-          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
         >
-          <div className="mb-3 h-6 w-3/4 animate-pulse rounded bg-gray-200"></div>
-          <div className="space-y-2">
+          <div className="mb-3 h-5 w-28 animate-pulse rounded-full bg-gray-200"></div>
+          <div className="space-y-3">
+            <div className="h-5 w-2/3 animate-pulse rounded bg-gray-200"></div>
             <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
-            <div className="h-4 w-full animate-pulse rounded bg-gray-200"></div>
-            <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200"></div>
           </div>
           <div className="mt-4 flex gap-2">
             <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
@@ -61,7 +61,7 @@ async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
 
   return (
     <>
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-5">
         {clientes.map((cliente) => (
           <ClienteCard key={cliente.cuil} cliente={cliente} usuario={usuario} />
         ))}
@@ -75,6 +75,7 @@ async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
 
 interface ClientesPageContentProps {
   searchQuery?: string
+  toast?: string
   canCreate?: boolean
   createUrl?: string
   title?: string
@@ -83,6 +84,7 @@ interface ClientesPageContentProps {
 
 export default async function ClientesPageContent({
   searchQuery = '',
+  toast,
   canCreate = false,
   createUrl = '/ventas/clientes/crear',
   title = 'Clientes',
@@ -90,6 +92,7 @@ export default async function ClientesPageContent({
 }: ClientesPageContentProps) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      <ClientesToastFromQuery toast={toast} />
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">

@@ -1,18 +1,13 @@
 import type { Visita } from './visita'
+import {
+  ESTADOS_DISPONIBILIDAD,
+  ESTADOS_VEHICULO,
+  TIPOS_VEHICULO,
+} from '@/constants'
 
-export type VehiculoTipo =
-  | 'CAMION CHICO'
-  | 'CAMIONETA'
-  | 'AUTOMOVIL'
-  | 'CAMION GRANDE'
+export type VehiculoTipo = (typeof TIPOS_VEHICULO)[number]
 
-export type VehiculoEstado =
-  | 'DISPONIBLE'
-  | 'EN USO'
-  | 'MANTENIMIENTO'
-  | 'REPARACION'
-  | 'FUERA DE SERVICIO'
-  | 'RESERVADO'
+export type VehiculoEstado = (typeof ESTADOS_VEHICULO)[number]
 
 export interface Vehiculo {
   patente: string
@@ -32,7 +27,7 @@ export interface VehiculoFormData {
   modelo?: string
 }
 
-export type AvailabilityStatus = 'DISPONIBLE' | 'ADVERTENCIA' | 'NO_DISPONIBLE'
+export type AvailabilityStatus = (typeof ESTADOS_DISPONIBILIDAD)[number]
 
 export interface VehiculoConDisponibilidad extends Vehiculo {
   availabilityStatus: AvailabilityStatus
