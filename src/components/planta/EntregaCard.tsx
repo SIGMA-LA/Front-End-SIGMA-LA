@@ -7,7 +7,7 @@ interface EntregaCardProps {
   entregaEmpleado: EntregaEmpleado
   isSelected: boolean
   onClick: () => void
-  variant: 'pendiente' | 'realizada'
+  variant: 'pendiente' | 'realizada' | 'cancelada'
 }
 
 const formatDate = (dateString: string) =>
@@ -49,6 +49,12 @@ export default function EntregaCard({
         'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
       badge: getEstadoBadge('ENTREGADO'),
     },
+    cancelada: {
+      selected: 'border-red-400 bg-red-50 ring-2 ring-red-300 shadow-lg',
+      default:
+        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      badge: getEstadoBadge('CANCELADO'),
+    },
   }
 
   return (
@@ -80,7 +86,7 @@ export default function EntregaCard({
           <span
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${styles[variant].badge}`}
           >
-            {variant === 'pendiente' ? 'Pendiente' : 'Entregada'}
+            {variant === 'pendiente' ? 'PENDIENTE' : variant === 'cancelada' ? 'CANCELADA' : 'ENTREGADA'}
           </span>
         </div>
       </div>

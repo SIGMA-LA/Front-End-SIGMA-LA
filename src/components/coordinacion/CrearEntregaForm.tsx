@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import { useEffect, useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Truck, AlertCircle } from 'lucide-react'
+import { Loader2, Truck, AlertCircle, MapPin, Building2 } from 'lucide-react'
 import { createEntrega } from '@/actions/entregas'
 import { getObras } from '@/actions/obras'
+import { getVehiculos } from '@/actions/vehiculos'
+import { getMaquinarias } from '@/actions/maquinarias'
 import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega } from '@/types'
 
 // Componentes
@@ -62,6 +64,16 @@ export default function CrearEntregaForm({
   // Estado de viáticos
   const [diasViaticos, setDiasViaticos] = useState(0)
   const viaticoPorDia = 50000
+
+  useEffect(() => {
+    if (fechaSalida && fechaRegreso) {
+      const diff = Math.floor(
+        (new Date(fechaRegreso).getTime() - new Date(fechaSalida).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+      setDiasViaticos(diff > 0 ? diff : diff === 0 ? 1 : 0)
+    }
+  }, [fechaSalida, fechaRegreso])
 
   // Estado de recursos
   const [selectedVehiculos, setSelectedVehiculos] = useState<string[]>([])
@@ -197,163 +209,184 @@ export default function CrearEntregaForm({
     <>
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-              <Truck className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {isFromObra
-                  ? `Nueva Entrega - ${preloadedObra?.direccion}`
-                  : 'Nueva Entrega'}
-              </h1>
-              {isFromObra && preloadedObra && (
-                <p className="text-sm text-gray-600">
-                  Cliente:{' '}
-                  {preloadedObra.cliente.razon_social ||
-                    `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
-                </p>
-              )}
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50/30 p-4 border border-blue-100/50 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-inner">
+                <Truck className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">
+                  {isFromObra
+                    ? `Nueva Entrega - ${preloadedObra?.direccion}`
+                    : 'Nueva Entrega'}
+                </h1>
+                {isFromObra && preloadedObra && (
+                  <p className="text-sm text-gray-600">
+                    Cliente:{' '}
+                    {preloadedObra.cliente.razon_social ||
+                      `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            {error && (
-              <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-                <div className="text-sm text-red-800">
-                  {error.split('\n').map((line, idx, arr) => (
-                    <p
-                      key={idx}
-                      className={
-                        arr.length > 1 && idx > 0
-                          ? 'relative mt-2 pl-3.5 before:absolute before:top-2 before:left-0 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500'
-                          : 'font-medium'
-                      }
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </div>
+          {error && (
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+              <div className="text-sm text-red-800">
+                {error.split('\n').map((line, idx, arr) => (
+                  <p
+                    key={idx}
+                    className={
+                      arr.length > 1 && idx > 0
+                        ? 'relative mt-2 pl-3.5 before:absolute before:top-2 before:left-0 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500'
+                        : 'font-medium'
+                    }
+                  >
+                    {line}
+                  </p>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {!isFromObra && (
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Obra programada *
-                  </label>
-                  {formData.direccion ? (
-                    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4">
-                      <div className="text-sm">
-                        <span className="font-medium text-gray-700">
-                          {formData.direccion}
-                        </span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md mb-6">
+              <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl px-5 py-4">
+                <div className="rounded-lg bg-emerald-100/80 p-2 shadow-inner">
+                  <MapPin className="h-5 w-5 text-emerald-600" />
+                </div>
+                <h3 className="font-semibold text-slate-800">Ubicación y Detalle</h3>
+              </div>
+              
+              <div className="p-5 space-y-5">
+                {!isFromObra && (
+                  <div>
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Obra programada *
+                    </label>
+                    {formData.direccion ? (
+                      <div className="flex items-center justify-between rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shadow-inner">
+                            <Building2 className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          <div className="text-left leading-tight">
+                            <span className="font-bold text-indigo-900 block">
+                              {formData.direccion}
+                            </span>
+                            <span className="text-xs text-indigo-600 font-medium">Obra Seleccionada</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              obraId: null,
+                              direccion: '',
+                            }))
+                          }
+                          className="flex-shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 shadow-sm transition-all"
+                        >
+                          Modificar
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() =>
+                    ) : (
+                      <ObraSearchSelect
+                        buscarObras={buscarObrasPagadas}
+                        onSelectObra={(obra) => {
                           setFormData((prev) => ({
                             ...prev,
-                            obraId: null,
-                            direccion: '',
+                            obraId: obra.cod_obra,
+                            direccion: obra.direccion,
+                            localidad: obra.localidad?.nombre_localidad || '',
                           }))
-                        }
-                        className="flex-shrink-0 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-                      >
-                        Modificar obra
-                      </button>
-                    </div>
-                  ) : (
-                    <ObraSearchSelect
-                      onSelectObra={handleObraSelect}
-                      buscarObras={buscarObrasPagadas}
-                      placeholder="Buscar obra por dirección o cliente..."
-                    />
-                  )}
+                        }}
+                        placeholder="Buscar obra por dirección o cliente..."
+                      />
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Detalle de la Entrega *
+                  </label>
+                  <textarea
+                    name="detalle"
+                    value={formData.detalle}
+                    onChange={(e) => setFormData((p) => ({ ...p, detalle: e.target.value }))}
+                    required
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-slate-300 p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 shadow-sm text-slate-700 bg-white"
+                    placeholder="Describa el material o equipos a entregar..."
+                  />
                 </div>
-              )}
-
-              <DateTimeSelection
-                fecha={formData.fecha}
-                hora={formData.hora}
-                fechaSalida={fechaSalida}
-                horaSalida={horaSalida}
-                fechaRegreso={fechaRegreso}
-                horaRegreso={horaRegreso}
-                onAsignarClick={() => setIsDateTimeModalOpen(true)}
-              />
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Detalle de la Entrega *
-                </label>
-                <textarea
-                  value={formData.detalle}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      detalle: e.target.value,
-                    }))
-                  }
-                  rows={3}
-                  className="w-full rounded-lg border border-gray-300 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-                  placeholder="Descripción de los elementos a entregar..."
-                  required
-                />
               </div>
+            </div>
 
-              <PersonalSelection
-                encargado={encargado}
-                acompanantes={acompanantes}
-                getEmpleadoNombre={getEmpleadoNombre}
-                onAsignarClick={() => setIsPersonalModalOpen(true)}
-              />
+            <DateTimeSelection
+              fecha={formData.fecha}
+              hora={formData.hora}
+              fechaSalida={fechaSalida}
+              horaSalida={horaSalida}
+              fechaRegreso={fechaRegreso}
+              horaRegreso={horaRegreso}
+              onAsignarClick={() => setIsDateTimeModalOpen(true)}
+            />
 
-              <ViaticosSection
-                diasViaticos={diasViaticos}
-                onDiasViaticosChange={setDiasViaticos}
-                totalViaticos={totalViaticos}
-                viaticoPorDia={viaticoPorDia}
-                numAcompanantes={acompanantes.length}
-                hayEncargado={!!encargado}
-              />
+            <PersonalSelection
+              encargado={encargado}
+              acompanantes={acompanantes}
+              getEmpleadoNombre={getEmpleadoNombre}
+              onAsignarClick={() => setIsPersonalModalOpen(true)}
+            />
 
-              <RecursosSelection
-                selectedVehiculos={selectedVehiculos}
-                onSelectVehiculosClick={() => setIsVehiculoModalOpen(true)}
-                selectedMaquinaria={selectedMaquinaria}
-                onSelectMaquinariaClick={() => setIsMaquinariaModalOpen(true)}
-                maquinarias={maquinarias}
-              />
+            <ViaticosSection
+              diasViaticos={diasViaticos}
+              totalViaticos={totalViaticos}
+              viaticoPorDia={viaticoPorDia}
+              numAcompanantes={acompanantes.length}
+              hayEncargado={!!encargado}
+            />
 
-              <div className="flex gap-3 border-t pt-6">
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                  disabled={isPending}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending || !encargado}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Creando...
-                    </>
-                  ) : (
-                    'Crear Entrega'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            <RecursosSelection
+              selectedVehiculos={selectedVehiculos}
+              onSelectVehiculosClick={() => setIsVehiculoModalOpen(true)}
+              selectedMaquinaria={selectedMaquinaria}
+              onSelectMaquinariaClick={() => setIsMaquinariaModalOpen(true)}
+              maquinarias={maquinarias}
+            />
+
+            <div className="flex justify-end gap-3 pt-6">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="rounded-lg px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                disabled={isPending}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isPending || !encargado}
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-md hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition-all hover:shadow-lg"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Guardando...
+                  </>
+                ) : isFromObra ? (
+                  'Guardar Entrega'
+                ) : (
+                  'Crear Entrega'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -398,6 +431,14 @@ export default function CrearEntregaForm({
         selectedItems={selectedVehiculos}
         onClose={() => setIsVehiculoModalOpen(false)}
         onConfirm={setSelectedVehiculos}
+        onSearchAsync={async (term) => {
+          const results = await getVehiculos(term)
+          return results.map(v => ({
+            id: v.patente,
+            label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
+            disabled: v.estado !== 'DISPONIBLE'
+          }))
+        }}
       />
 
       <SelectionModal
@@ -411,6 +452,14 @@ export default function CrearEntregaForm({
         selectedItems={selectedMaquinaria}
         onClose={() => setIsMaquinariaModalOpen(false)}
         onConfirm={setSelectedMaquinaria}
+        onSearchAsync={async (term) => {
+          const results = await getMaquinarias(term)
+          return results.map(m => ({
+            id: m.cod_maquina.toString(),
+            label: `${m.descripcion} (${m.estado})`,
+            disabled: m.estado !== 'DISPONIBLE'
+          }))
+        }}
       />
     </>
   )

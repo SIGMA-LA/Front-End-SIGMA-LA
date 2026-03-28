@@ -10,6 +10,7 @@ interface AsignarPersonalModalProps {
   empleados: Empleado[]
   encargadoSeleccionado: string | null
   acompanantesSeleccionados: string[]
+  title?: string
   onClose: () => void
   onConfirm: (encargadoId: string, acompananteIds: string[]) => void
 }
@@ -19,13 +20,23 @@ export default function AsignarPersonalModal({
   empleados,
   encargadoSeleccionado,
   acompanantesSeleccionados,
+  title,
   onClose,
   onConfirm,
 }: AsignarPersonalModalProps) {
   const [internalEncargado, setInternalEncargado] = useState<string | null>(
-    null
+    encargadoSeleccionado
   )
-  const [internalAcompanantes, setInternalAcompanantes] = useState<string[]>([])
+  const [internalAcompanantes, setInternalAcompanantes] = useState<string[]>(
+    acompanantesSeleccionados
+  )
+
+  useEffect(() => {
+    if (isOpen) {
+      setInternalEncargado(encargadoSeleccionado)
+      setInternalAcompanantes(acompanantesSeleccionados)
+    }
+  }, [isOpen, encargadoSeleccionado, acompanantesSeleccionados])
 
   useEffect(() => {
     if (internalEncargado && internalAcompanantes.includes(internalEncargado)) {
@@ -33,7 +44,7 @@ export default function AsignarPersonalModal({
         prev.filter((id) => id !== internalEncargado)
       )
     }
-  }, [internalEncargado])
+  }, [internalEncargado, internalAcompanantes])
 
   if (!isOpen) return null
 
@@ -61,13 +72,8 @@ export default function AsignarPersonalModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b p-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            Asignar Personal a la Entrega
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
-          >
+          <h2 className="text-xl font-bold text-gray-900">{title || 'Asignar Personal a la Entrega'}</h2>
+          <button onClick={onClose} className="rounded-full p-2 text-gray-500 hover:bg-gray-100">
             <X className="h-5 w-5" />
           </button>
         </div>

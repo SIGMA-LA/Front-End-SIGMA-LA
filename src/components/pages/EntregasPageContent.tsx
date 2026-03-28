@@ -3,6 +3,7 @@ import { Truck, Plus } from 'lucide-react'
 import { getEntregas } from '@/actions/entregas'
 import EntregaCard from '@/components/shared/EntregaCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
+import EstadoEntregaFilter from '@/components/shared/EstadoEntregaFilter'
 import Link from 'next/link'
 
 function EntregasListSkeleton() {
@@ -38,8 +39,8 @@ function EntregasListSkeleton() {
   )
 }
 
-async function EntregasList({ searchQuery }: { searchQuery?: string }) {
-  const entregas = await getEntregas(searchQuery)
+async function EntregasList({ searchQuery, estado }: { searchQuery?: string; estado?: string }) {
+  const entregas = await getEntregas(searchQuery, estado)
 
   if (entregas.length === 0) {
     return (
@@ -75,6 +76,7 @@ async function EntregasList({ searchQuery }: { searchQuery?: string }) {
 
 interface EntregasPageContentProps {
   searchQuery?: string
+  estado?: string
   canCreate?: boolean
   createUrl?: string
   title?: string
@@ -83,6 +85,7 @@ interface EntregasPageContentProps {
 
 export default async function EntregasPageContent({
   searchQuery = '',
+  estado = '',
   canCreate = false,
   createUrl = '/coordinacion/entregas/crear',
   title = 'Entregas',
@@ -114,15 +117,18 @@ export default async function EntregasPageContent({
           )}
         </div>
 
-        <div className="mb-8">
-          <SearchWrapper
-            placeholder="Buscar entrega por obra, cliente, empleado..."
-            initialValue={searchQuery}
-          />
+        <div className="mb-8 flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <SearchWrapper
+              placeholder="Buscar entrega por obra, cliente, empleado..."
+              initialValue={searchQuery}
+            />
+          </div>
+          <EstadoEntregaFilter />
         </div>
 
-        <Suspense key={searchQuery} fallback={<EntregasListSkeleton />}>
-          <EntregasList searchQuery={searchQuery} />
+        <Suspense key={`${searchQuery}-${estado}`} fallback={<EntregasListSkeleton />}>
+          <EntregasList searchQuery={searchQuery} estado={estado} />
         </Suspense>
       </div>
     </div>

@@ -30,7 +30,7 @@ export default function PlantaClient({
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
   const [entregas, setEntregas] = useState<EntregaEmpleado[]>(entregasInitial)
-  const [estadoFiltro, setEstadoFiltro] = useState<'PENDIENTE' | 'ENTREGADO'>('PENDIENTE')
+  const [estadoFiltro, setEstadoFiltro] = useState<'PENDIENTE' | 'ENTREGADO' | 'CANCELADO'>('PENDIENTE')
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDate, setFilterDate] = useState('')
@@ -52,7 +52,7 @@ export default function PlantaClient({
   }, [searchTerm, filterDate])
 
   const loadEntregas = async (
-    estado: 'PENDIENTE' | 'ENTREGADO',
+    estado: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO',
     search: string,
     date: string
   ) => {
@@ -178,7 +178,7 @@ export default function PlantaClient({
                 <div className="text-base font-semibold text-blue-600">
                   {entregas.length}
                 </div>
-                <div className="text-xs text-gray-600">Entregas listadas</div>
+                <div className="text-xs text-gray-600 font-bold">ENTREGAS LISTADAS</div>
               </div>
             </div>
           </div>
@@ -187,8 +187,8 @@ export default function PlantaClient({
               <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                 {entregas.length}
               </div>
-              <div className="text-sm text-gray-600 lg:text-base">
-                Entregas listadas
+              <div className="text-sm text-gray-600 lg:text-base font-bold">
+                ENTREGAS LISTADAS
               </div>
             </div>
           </div>
@@ -235,8 +235,9 @@ export default function PlantaClient({
           ) : (
             <EmptyState
               message="Selecciona una entrega del panel lateral para ver los detalles"
-              totalPendientes={entregas.length}
-              totalRealizadas={0}
+              totalPendientes={estadoFiltro === 'PENDIENTE' ? entregas.length : 0}
+              totalRealizadas={estadoFiltro === 'ENTREGADO' ? entregas.length : 0}
+              totalCanceladas={estadoFiltro === 'CANCELADO' ? entregas.length : 0}
             />
           )}
         </main>

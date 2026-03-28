@@ -108,14 +108,14 @@ export async function getEntregasByEmpleado(
         rol_entrega: ee?.rol_entrega || 'ACOMPANANTE',
         empleado: ee?.empleado as EntregaEmpleado['empleado'],
         entrega: {
-          ...(e as Entrega),
+          ...(e as unknown as Entrega),
           empleados_asignados: empleadosAsignados,
           vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
           maquinarias: e.uso_maquinaria || e.maquinarias || [],
         },
         obra: (e.obra || {}) as EntregaEmpleado['obra'],
       }
-    })
+    }) as unknown as EntregaEmpleado[]
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
     return []
@@ -125,12 +125,23 @@ export async function getEntregasByEmpleado(
 /**
  * Retrieves all deliveries with optional filtering
  * @param {string} filter - Optional search query
+ * @param {string} estado - Optional state filter
  * @returns {Promise<Entrega[]>} List of deliveries
  */
-export async function getEntregas(filter?: string): Promise<Entrega[]> {
+export async function getEntregas(filter?: string, estado?: string): Promise<Entrega[]> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(BASE_URL, {
+    
+    let url = BASE_URL
+    const params = new URLSearchParams()
+    if (filter) params.append('q', filter)
+    if (estado) params.append('estado', estado)
+
+    if (params.toString()) {
+      url = `${BASE_URL}?${params.toString()}`
+    }
+
+    const res = await fetchWithErrorHandling(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

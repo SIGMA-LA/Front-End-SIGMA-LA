@@ -18,10 +18,11 @@ const BASE_URL = API_URL.endsWith('/vehiculos')
  * Retrieves all vehiculos
  * @returns {Promise<Vehiculo[]>} List of all vehiculos
  */
-export async function getVehiculos(): Promise<Vehiculo[]> {
+export async function getVehiculos(search?: string): Promise<Vehiculo[]> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(BASE_URL, {
+    const url = search ? `${BASE_URL}?search=${encodeURIComponent(search)}` : BASE_URL
+    const res = await fetchWithErrorHandling(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

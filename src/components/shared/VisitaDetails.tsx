@@ -14,17 +14,29 @@ import {
   Building2,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/Button'
 import { Visita } from '@/types'
+import { getVisita } from '@/actions/visitas'
+import { getStatusColor } from './VisitaCard'
+
+const getTipoText = (tipo: string) => {
+  const tipos: Record<string, string> = {
+    'VISITA INICIAL': 'Visita Inicial',
+    MEDICION: 'Medición',
+    'RE-MEDICION': 'Re-Medición',
+    REPARACION: 'Reparación',
+    ASESORAMIENTO: 'Asesoramiento',
+    'TOMA DE MEDIDAS': 'Toma de medidas',
+    'REPLANTEO': 'Replanteo',
+  }
+  return tipos[tipo] || tipo
+}
+import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
 
 interface VisitaDetailProps {
   visita: Visita
   onClose: () => void
   onCancel?: () => void
 }
-import { getVisita } from '@/actions/visitas'
-import { getStatusColor, getTipoText } from './VisitaCard'
-import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
 
 export default function VisitaDetail({
   visita: visitaProp,
@@ -53,36 +65,23 @@ export default function VisitaDetail({
     fetchVisita()
   }, [visitaProp.cod_visita])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const localDate = new Date(
-      date.getTime() - date.getTimezoneOffset() * 60000
-    )
-    return localDate.toLocaleDateString('es-AR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
+  const formatDateTime = (dateString?: string | Date) => {
+    if (!dateString) return 'No especificado'
+    return new Intl.DateTimeFormat('es-AR', {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric',
-    })
-  }
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const localDate = new Date(
-      date.getTime() - date.getTimezoneOffset() * 60000
-    )
-    return localDate.toLocaleTimeString('es-AR', {
       hour: '2-digit',
       minute: '2-digit',
-    })
+    }).format(new Date(dateString))
   }
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-3xl rounded-xl bg-white p-12 text-center shadow-2xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-2xl bg-white p-12 text-center shadow-2xl">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-          <p className="mt-4 text-gray-600">Cargando detalles...</p>
+          <p className="mt-4 text-gray-600 font-medium tracking-tight">Cargando detalles de visita...</p>
         </div>
       </div>
     )
@@ -90,221 +89,223 @@ export default function VisitaDetail({
 
   if (error || !visita) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-3xl rounded-xl bg-white p-12 text-center shadow-2xl">
-          <p className="text-red-600">{error || 'No se encontró la visita.'}</p>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
+          <div className="mb-4 flex justify-center text-red-500">
+            <X className="h-12 w-12 rounded-full bg-red-50 p-2" />
+          </div>
+          <p className="text-gray-700 font-bold">{error || 'No se encontró la visita.'}</p>
           <button
             onClick={onClose}
-            className="mt-4 rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+            className="mt-6 w-full rounded-xl bg-blue-600 py-3 font-bold text-white transition-all hover:bg-blue-700"
           >
-            Cerrar
+            Cerrar Ventana
           </button>
         </div>
       </div>
     )
   }
 
-  const direccion =
-    visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'
-  const cliente = visita.obra?.cliente
-    ? visita.obra.cliente.razon_social ||
-      `${visita.obra.cliente.nombre || ''} ${visita.obra.cliente.apellido || ''}`.trim()
-    : visita.nombre_cliente && visita.apellido_cliente
-      ? `${visita.nombre_cliente} ${visita.apellido_cliente}`
-      : 'Sin cliente'
+  const direccion = visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'
+  const nombreCliente = visita.obra?.cliente
+    ? (visita.obra.cliente.tipo_cliente === 'EMPRESA'
+        ? visita.obra.cliente.razon_social
+        : `${visita.obra.cliente.nombre ?? ''} ${visita.obra.cliente.apellido ?? ''}`.trim())
+    : `${visita.nombre_cliente ?? ''} ${visita.apellido_cliente ?? ''}`.trim() || 'No identificado'
 
-  const telefono =
-    visita.obra?.cliente?.telefono || visita.telefono_cliente || 'Sin teléfono'
-  const email = visita.obra?.cliente?.mail || visita.mail_cliente || 'Sin email'
+  const usoVehiculo = Array.isArray(visita.uso_vehiculo_visita) 
+    ? visita.uso_vehiculo_visita[0]
+    : visita.uso_vehiculo_visita
+
+  const fechaSalida = usoVehiculo?.fecha_hora_ini_uso
+  const fechaRegreso = usoVehiculo?.fecha_hora_ini_est
+
+  const encargado = visita.empleado_visita?.[0]
+  const acompañantes = visita.empleado_visita?.slice(1)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-white/20 p-2">
-              <Building2 className="h-6 w-6 text-white" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl overflow-hidden">
+        
+        {/* Encabezado */}
+        <div className="flex flex-shrink-0 items-center justify-between border-b bg-white p-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+              <Calendar className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">
-                Detalles de la Visita
+              <h2 className="text-xl font-bold text-gray-900">
+                Detalles de Visita #{visita.cod_visita}
               </h2>
-              <p className="text-sm text-blue-100">#{visita.cod_visita}</p>
+              <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  visita.estado === 'COMPLETADA' ? 'bg-green-100 text-green-800' :
+                  visita.estado === 'CANCELADA' ? 'bg-red-100 text-red-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {(visita.estado || 'PENDIENTE').toUpperCase()}
+                </span>
+                <span>•</span>
+                <span>{getTipoText(visita.motivo_visita)}</span>
+              </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-white transition-colors hover:bg-white/20"
+            className="rounded-full p-2 text-gray-500 hover:bg-gray-100 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Body scrolleable */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Estado y Tipo */}
-          <div className="mb-6 flex flex-wrap items-center gap-3">
-            <span
-              className={`inline-flex rounded-full border px-4 py-2 text-sm font-bold tracking-wide uppercase ${getStatusColor(
-                visita.estado || 'PROGRAMADA'
-              )}`}
-            >
-              {visita.estado || 'PROGRAMADA'}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-              <Briefcase className="h-4 w-4" />
-              {getTipoText(visita.motivo_visita)}
-            </span>
+        {/* Cuerpo Scrollable */}
+        <div className="space-y-6 overflow-y-auto p-6 bg-gray-50/50">
+          
+          {/* Tarjeta 1: Obra y Cliente */}
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wider">Destino Geográfico</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-gray-100 p-2">
+                  <MapPin className="h-5 w-5 text-gray-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Dirección</p>
+                  <p className="font-semibold text-gray-900">{direccion}</p>
+                  {visita.localidad && (
+                    <p className="text-xs text-gray-500">{visita.localidad.nombre_localidad}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-gray-100 p-2">
+                  <UserIcon className="h-5 w-5 text-gray-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Cliente Titular</p>
+                  <p className="font-semibold text-gray-900">{nombreCliente}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Grid de información */}
-          <div className="mb-6 grid gap-6 md:grid-cols-2">
-            {/* Fecha y Hora */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                Fecha y Hora
-              </div>
-              <p className="mb-1 text-lg font-bold text-gray-900">
-                {formatDate(visita.fecha_hora_visita)}
-              </p>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>{formatTime(visita.fecha_hora_visita)}</span>
-              </div>
-            </div>
-
-            {/* Cliente */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <UserIcon className="h-5 w-5 text-blue-600" />
-                Cliente
-              </div>
-              <p className="mb-2 text-lg font-bold text-gray-900">{cliente}</p>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone className="h-4 w-4" />
-                  <span>{telefono}</span>
+          {/* Tarjeta 2: Tiempos y Fechas */}
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-5 shadow-sm">
+            <h3 className="mb-4 text-sm font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+              <Clock className="h-4 w-4" /> Cronograma Logístico
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <p className="text-xs font-medium text-indigo-600/80 mb-1">Visita en el Lugar (Pactada)</p>
+                <div className="font-medium text-indigo-900 bg-white border border-indigo-100 rounded-lg px-3 py-2 text-sm">
+                  {formatDateTime(visita.fecha_hora_visita)}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Mail className="h-4 w-4" />
-                  <span className="truncate">{email}</span>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Salida de Planta Estimada</p>
+                <div className="font-medium text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50">
+                  {formatDateTime(fechaSalida || visita.fecha_hora_visita)}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Regreso a Planta Estimado</p>
+                <div className="font-medium text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50/50">
+                  {formatDateTime(fechaRegreso)}
                 </div>
               </div>
             </div>
-
-            {/* Dirección */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <MapPin className="h-5 w-5 text-blue-600" />
-                Dirección
-              </div>
-              <p className="text-base font-semibold text-gray-900">
-                {direccion}
-              </p>
-              {visita.localidad && (
-                <p className="mt-1 text-sm text-gray-600">
-                  {visita.localidad.nombre_localidad},{' '}
-                  {visita.localidad.provincia?.nombre}
-                </p>
-              )}
-            </div>
-
-            {/* Vehículo */}
-            {visita.uso_vehiculo_visita && (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Car className="h-5 w-5 text-blue-600" />
-                  Vehículo Asignado
-                </div>
-                <p className="text-lg font-bold text-gray-900">
-                  {visita.uso_vehiculo_visita.patente}
-                </p>
-              </div>
-            )}
           </div>
 
-          {/* Empleados */}
-          <div className="mb-6">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <UserIcon className="h-5 w-5 text-blue-600" />
-              Empleados Asignados
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {/* Columna Izquierda: Personal Asignado */}
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wider">Equipo Técnico</h3>
+              <div className="space-y-4">
+                {encargado ? (
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-blue-100 p-2 text-blue-600 font-bold text-xs w-8 h-8 flex items-center justify-center">
+                      {encargado.empleado?.nombre[0]}{encargado.empleado?.apellido[0]}
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Visitador Responsable</p>
+                      <p className="font-semibold text-gray-900">
+                        {encargado.empleado?.nombre} {encargado.empleado?.apellido}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No hay personal designado.</p>
+                )}
+
+                {acompañantes && acompañantes.length > 0 && (
+                   <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
+                    <div className="rounded-lg bg-green-50 p-2 mt-1">
+                      <Briefcase className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Acompañantes ({acompañantes.length})</p>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {acompañantes.map((a, i) => (
+                          <span key={i} className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                            {a.empleado?.nombre} {a.empleado?.apellido}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {visita.empleado_visita?.length > 0 ? (
-                visita.empleado_visita.map((ev, idx) => (
-                  <div
-                    key={ev.cuil}
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
-                      idx === 0
-                        ? 'bg-blue-600 text-white'
-                        : 'border border-gray-300 bg-white text-gray-700'
-                    }`}
-                  >
-                    <UserIcon className="h-4 w-4" />
-                    <span>
-                      {ev.empleado?.nombre} {ev.empleado?.apellido}
-                    </span>
-                    {idx === 0 && (
-                      <span className="ml-1 rounded bg-blue-500 px-2 py-0.5 text-xs">
-                        Principal
-                      </span>
+
+            {/* Columna Derecha: Vehículo y Viáticos */}
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm flex-1">
+                <h3 className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wider">Transporte</h3>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-gray-100 p-2">
+                    <Car className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Vehículo Asignado</p>
+                    {usoVehiculo ? (
+                      <div>
+                        <p className="font-bold text-gray-900">{usoVehiculo.vehiculo?.patente || usoVehiculo.patente}</p>
+                        <p className="text-xs text-gray-500">{usoVehiculo.vehiculo?.marca} {usoVehiculo.vehiculo?.modelo}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">Sin vehículo asignado</p>
                     )}
                   </div>
-                ))
-              ) : (
-                <span className="text-sm text-gray-400 italic">
-                  Sin empleados asignados
-                </span>
+                </div>
+              </div>
+
+              {visita.dias_viaticos && visita.dias_viaticos > 0 && (
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
+                  <h3 className="mb-2 text-sm font-bold text-yellow-900 uppercase tracking-wider">Viáticos</h3>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-yellow-700">Días proyectados:</p>
+                    <p className="text-xl font-black text-yellow-900">{visita.dias_viaticos}</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Observaciones */}
-          {visita.observaciones && (
-            <div className="mb-6">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <FileText className="h-5 w-5 text-blue-600" />
-                Observaciones
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <p className="text-sm text-gray-700">{visita.observaciones}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Días de viático */}
-          {visita.dias_viaticos && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="text-sm font-medium text-blue-900">
-                Días de viático:{' '}
-                <span className="font-bold">{visita.dias_viaticos}</span>
+          {/* Fila Inferior: Notas de Carga/Coordinación */}
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-500" /> Notas de Coordinación
+            </h3>
+            <div className="bg-blue-50/30 p-4 rounded-lg border border-blue-50/50">
+              <p className="text-gray-800 text-sm leading-relaxed bg-white rounded-md p-3 border border-blue-100 shadow-sm">
+                {visita.observaciones || 'Sin observaciones adicionales proporcionadas.'}
               </p>
             </div>
-          )}
-        </div>
-
-        {/* Footer con acciones */}
-        <div className="border-t bg-gray-50 px-6 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              onClick={() => navegarADireccion(direccion)}
-              className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
-            >
-              <MapPin className="mr-2 h-4 w-4" />
-              Cómo llegar
-            </Button>
-            <Button
-              onClick={() => abrirGoogleMaps(direccion)}
-              className="flex-1 bg-green-600 text-white hover:bg-green-700"
-            >
-              <MapPin className="mr-2 h-4 w-4" />
-              Ver en el mapa
-            </Button>
           </div>
         </div>
       </div>
     </div>
   )
 }
+

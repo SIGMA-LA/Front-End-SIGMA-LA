@@ -94,7 +94,7 @@ export default function VisitaDetails({
         <div className="flex items-start justify-between space-x-4">
           <div className="flex-1">
             <h2 className="mb-2 text-2xl font-bold text-gray-900 lg:text-4xl">
-              Detalles de la Visita
+              Visita #{visita.cod_visita}
             </h2>
             <p className="mb-3 text-lg text-gray-600 lg:text-xl">
               {visita.obra?.cliente.razon_social || 'Visita sin obra asignada'}
@@ -114,7 +114,7 @@ export default function VisitaDetails({
             </div>
           </div>
           <div className="flex-shrink-0">
-            <UserIcon className="h-12 w-12 text-gray-300 sm:h-14 sm:w-14 lg:h-20 lg:w-20" />
+            <UserIcon className="h-16 w-16 text-gray-300 sm:h-14 sm:w-14 lg:h-20 lg:w-20" />
           </div>
         </div>
 

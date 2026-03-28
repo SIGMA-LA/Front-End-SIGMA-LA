@@ -187,12 +187,25 @@ function formatCurrency(value: number) {
 }
 
 
-function CurrencyTooltip({ active, payload, label }: any) {
+interface ChartPayloadEntry {
+  value: number
+  name: string
+  color: string
+  payload: any
+}
+
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: ChartPayloadEntry[]
+  label?: string
+}
+
+function CurrencyTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-lg">
       <p className="mb-1 text-sm font-medium text-gray-600">{label}</p>
-      {payload.map((entry: any, i: number) => (
+      {payload.map((entry, i) => (
         <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
           {entry.name}: {formatCurrency(entry.value)}
         </p>
@@ -201,12 +214,12 @@ function CurrencyTooltip({ active, payload, label }: any) {
   )
 }
 
-function CountTooltip({ active, payload, label }: any) {
+function CountTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-lg">
       <p className="mb-1 text-sm font-medium text-gray-600">{label}</p>
-      {payload.map((entry: any, i: number) => (
+      {payload.map((entry, i) => (
         <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
           {entry.name}: {entry.value}
         </p>
@@ -357,7 +370,7 @@ export default function ReportesView({
                     <BarChart data={ventasMensuales} margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tickFormatter={(v) => formatCurrency(v)} tick={{ fontSize: 11 }} width={90} />
+                      <YAxis tickFormatter={(v: number) => formatCurrency(v)} tick={{ fontSize: 11 }} width={90} />
                       <Tooltip content={<CurrencyTooltip />} />
                       <Bar
                         dataKey="ventas"
@@ -399,7 +412,7 @@ export default function ReportesView({
                         outerRadius={95}
                         paddingAngle={3}
                         dataKey="value"
-                        label={({ name, value }) => `${name} (${value})`}
+                        label={({ name, value }: { name?: string; value?: number }) => `${name || ''} (${value || 0})`}
                         labelLine={{ strokeWidth: 1 }}
                       >
                         {obrasPorEstado.map((entry) => (
@@ -410,9 +423,9 @@ export default function ReportesView({
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value, _name, props) => [
-                          `${value} obras`,
-                          props.payload.name,
+                        formatter={(value: string | number | readonly (string | number)[] | null | undefined) => [
+                          `${value ? (Array.isArray(value) ? value.join(', ') : value) : 0} obras`,
+                          'Cantidad',
                         ]}
                       />
                       <Legend

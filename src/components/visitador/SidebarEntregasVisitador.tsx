@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { EntregaEmpleado } from '@/types'
 import { Calendar, Search, Filter, X } from 'lucide-react'
-import EntregaCard from './EntregaCard'
+import EntregaCard from '@/components/planta/EntregaCard'
+import TabNavigation from './TabNavigation'
 
-interface EntregasSidebarProps {
+interface SidebarEntregasVisitadorProps {
+  activeCategory: 'VISITAS' | 'ENTREGAS'
+  onCategoryChange: (category: 'VISITAS' | 'ENTREGAS') => void
+  statusFilter: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA'
+  onStatusChange: (status: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA') => void
   entregas: EntregaEmpleado[]
-  estadoFiltro?: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO'
-  onEstadoFiltroChange?: (estado: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO') => void
   searchTerm?: string
   onSearchTermChange?: (term: string) => void
   filterDate?: string
@@ -22,13 +23,15 @@ interface EntregasSidebarProps {
   onClose?: () => void
 }
 
-export default function EntregasSidebar({
+export default function SidebarEntregasVisitador({
+  activeCategory,
+  onCategoryChange,
+  statusFilter,
+  onStatusChange,
   entregas,
-  estadoFiltro,
-  onEstadoFiltroChange,
-  searchTerm,
+  searchTerm = '',
   onSearchTermChange,
-  filterDate,
+  filterDate = '',
   onFilterDateChange,
   selectedEntrega,
   onSelectEntrega,
@@ -36,7 +39,7 @@ export default function EntregasSidebar({
   errorEntregas,
   onRetry,
   onClose,
-}: EntregasSidebarProps) {
+}: SidebarEntregasVisitadorProps) {
   const currentList = entregas
 
   if (loadingEntregas) {
@@ -81,7 +84,10 @@ export default function EntregasSidebar({
         </div>
       )}
 
-      {/* Search and Filters Header */}
+      {/* 1. Category Switcher (TOP) */}
+      <TabNavigation activeTab={activeCategory} onTabChange={onCategoryChange} />
+
+      {/* 2. Search and Filters Header (MIDDLE) */}
       <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
         {/* Search Bar */}
         <div className="relative group">
@@ -119,13 +125,13 @@ export default function EntregasSidebar({
         </div>
       </div>
 
-      {/* Tab Switcher */}
+      {/* 3. Status Switcher (BOTTOM of header) */}
       <div className="px-4 py-3 border-b border-gray-50 bg-white">
         <div className="flex p-1 bg-gray-100/80 rounded-xl">
           <button
-            onClick={() => onEstadoFiltroChange?.('PENDIENTE')}
+            onClick={() => onStatusChange('PENDIENTE')}
             className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
-              estadoFiltro === 'PENDIENTE'
+              statusFilter === 'PENDIENTE'
                 ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -133,9 +139,9 @@ export default function EntregasSidebar({
             PENDIENTES
           </button>
           <button
-            onClick={() => onEstadoFiltroChange?.('ENTREGADO')}
+            onClick={() => onStatusChange('REALIZADA')}
             className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
-              estadoFiltro === 'ENTREGADO'
+              statusFilter === 'REALIZADA'
                 ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -143,9 +149,9 @@ export default function EntregasSidebar({
             REALIZADAS
           </button>
           <button
-            onClick={() => onEstadoFiltroChange?.('CANCELADO')}
+            onClick={() => onStatusChange('CANCELADA')}
             className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
-              estadoFiltro === 'CANCELADO'
+              statusFilter === 'CANCELADA'
                 ? 'bg-white text-red-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -161,7 +167,7 @@ export default function EntregasSidebar({
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-8 w-8 text-gray-200 mb-3" />
             <p className="text-sm font-medium text-gray-500">
-              {searchTerm || filterDate ? 'No se encontraron resultados' : `No hay entregas ${estadoFiltro === 'PENDIENTE' ? 'pendiente' : 'realizada'}as`}
+              No hay entregas para mostrar
             </p>
           </div>
         ) : (
@@ -172,9 +178,9 @@ export default function EntregasSidebar({
               isSelected={selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega}
               onClick={() => onSelectEntrega(entregaEmpleado)}
               variant={
-                estadoFiltro === 'PENDIENTE' 
+                statusFilter === 'PENDIENTE' 
                   ? 'pendiente' 
-                  : estadoFiltro === 'CANCELADO' 
+                  : statusFilter === 'CANCELADA' 
                     ? 'cancelada' 
                     : 'realizada'
               }

@@ -17,6 +17,7 @@ interface SelectionModalProps {
   selectedItems: string[]
   onClose: () => void
   onConfirm: (selectedIds: string[]) => void
+  onSearchAsync?: (searchTerm: string) => Promise<Item[]>
 }
 
 export default function SelectionModal({
@@ -26,16 +27,42 @@ export default function SelectionModal({
   selectedItems,
   onClose,
   onConfirm,
+  onSearchAsync,
 }: SelectionModalProps) {
   const [internalSelection, setInternalSelection] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [asyncItems, setAsyncItems] = useState<Item[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       setInternalSelection(selectedItems)
       setSearchTerm('')
+      setAsyncItems(items)
+      setIsSearching(false)
     }
-  }, [isOpen, selectedItems])
+  }, [isOpen, selectedItems, items])
+
+  useEffect(() => {
+    if (onSearchAsync && isOpen) {
+      setIsSearching(true)
+      const handler = setTimeout(async () => {
+        try {
+          const results = await onSearchAsync(searchTerm)
+          setAsyncItems(results)
+        } catch (err) {
+          console.error('Error fetching modal search:', err)
+        } finally {
+          setIsSearching(false)
+        }
+      }, 400)
+      return () => clearTimeout(handler)
+    } else {
+      setAsyncItems(
+        items.filter(item => item.label.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+  }, [searchTerm, items, onSearchAsync, isOpen])
 
   if (!isOpen) return null
 
@@ -49,10 +76,6 @@ export default function SelectionModal({
     onConfirm(internalSelection)
     onClose()
   }
-
-  const filteredItems = items.filter(item =>
-    item.label.toLowerCase().includes(searchTerm.toLowerCase())
-  )
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -73,10 +96,24 @@ export default function SelectionModal({
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4"
             />
+            {isSearching && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+              </div>
+            )}
           </div>
-          <div className="max-h-64 space-y-3 overflow-y-auto pr-2">
-            {filteredItems.map(item => (
-              <div key={item.id}>
+          <div className="max-h-64 min-h-[160px] space-y-3 overflow-y-auto pr-2 relative">
+            {isSearching && asyncItems.length === 0 ? (
+              <div className="flex justify-center items-center h-full pt-8 text-sm text-gray-500">
+                Buscando...
+              </div>
+            ) : asyncItems.length === 0 ? (
+              <div className="flex justify-center items-center h-full pt-8 text-sm text-gray-500">
+                No se encontraron resultados.
+              </div>
+            ) : (
+              asyncItems.map(item => (
+                <div key={item.id}>
                 <label
                   className={`flex cursor-pointer items-center rounded-lg border p-4 transition-all ${
                     internalSelection.includes(item.id)
@@ -106,7 +143,7 @@ export default function SelectionModal({
                   </div>
                 )}
               </div>
-            ))}
+            )))}
           </div>
         </div>
         <div className="flex justify-end gap-4 border-t bg-gray-50 p-6">

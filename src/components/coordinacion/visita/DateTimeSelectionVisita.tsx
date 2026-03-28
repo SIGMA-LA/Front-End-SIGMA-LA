@@ -2,7 +2,7 @@
 
 import { CalendarClock, ArrowRightLeft } from 'lucide-react'
 
-interface DateTimeSelectionProps {
+interface DateTimeSelectionVisitaProps {
   fecha: string
   hora: string
   fechaSalida: string
@@ -12,7 +12,7 @@ interface DateTimeSelectionProps {
   onAsignarClick: () => void
 }
 
-export default function DateTimeSelection({
+export default function DateTimeSelectionVisita({
   fecha,
   hora,
   fechaSalida,
@@ -20,7 +20,7 @@ export default function DateTimeSelection({
   fechaRegreso,
   horaRegreso,
   onAsignarClick,
-}: DateTimeSelectionProps) {
+}: DateTimeSelectionVisitaProps) {
   const isComplete =
     fecha !== '' &&
     hora !== '' &&
@@ -43,7 +43,7 @@ export default function DateTimeSelection({
       return '--'
     }
   }
-  
+
   const formatFull = (d: string, t: string) => {
     try {
       if (!d || !t) return 'Sin establecer'
@@ -78,10 +78,10 @@ export default function DateTimeSelection({
           {isComplete ? 'Modificar Tiempos' : 'Asignar Horarios'}
         </button>
       </div>
-      
+
       <div className="p-5">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
-          {/* Main Appointment */}
+          {/* Llegada al cliente */}
           <div className="flex-1 rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white p-5 shadow-sm">
             <span className="block text-xs font-bold uppercase tracking-wider text-indigo-500 mb-1">Llegada al Cliente (Pactado)</span>
             <span className="text-xl font-bold text-slate-800 capitalize">
@@ -90,24 +90,24 @@ export default function DateTimeSelection({
             {!isComplete && <p className="mt-2 text-sm text-amber-600">Falta programación de tiempos de ruta.</p>}
           </div>
 
-          {/* Route details */}
+          {/* Salida + Regreso */}
           <div className="flex-[1.2] flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 p-5">
             <div className="flex-1 w-full flex flex-col items-center sm:items-start text-center sm:text-left gap-1">
-               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Salida Planta</span>
-               <span className="font-semibold text-sm text-slate-700 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
-                 {formatShort(fechaSalida, horaSalida)}
-               </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Salida</span>
+              <span className="font-semibold text-sm text-slate-700 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
+                {formatShort(fechaSalida, horaSalida)}
+              </span>
             </div>
 
             <div className="hidden sm:flex text-slate-300">
-               <ArrowRightLeft className="h-5 w-5" />
+              <ArrowRightLeft className="h-5 w-5" />
             </div>
 
             <div className="flex-1 w-full flex flex-col items-center sm:items-end text-center sm:text-right gap-1">
-               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Regreso Planta</span>
-               <span className="font-semibold text-sm text-slate-700 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
-                 {formatShort(fechaRegreso, horaRegreso)}
-               </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Regreso</span>
+              <span className="font-semibold text-sm text-slate-700 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
+                {formatShort(fechaRegreso, horaRegreso)}
+              </span>
             </div>
           </div>
         </div>

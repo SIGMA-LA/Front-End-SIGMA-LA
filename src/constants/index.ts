@@ -61,6 +61,7 @@ export const MOTIVOS_VISITA = [
 ] as const
 
 export const ESTADOS_VISITA = [
+  'PENDIENTE',
   'PROGRAMADA',
   'EN CURSO',
   'CANCELADA',

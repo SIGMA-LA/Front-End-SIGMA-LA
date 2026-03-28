@@ -105,7 +105,7 @@ export async function filterObras({
   estado,
   cod_localidad,
 }: {
-  estado?: EstadoObra
+  estado?: EstadoObra | string
   cod_localidad?: number
 }): Promise<Obra[]> {
   try {

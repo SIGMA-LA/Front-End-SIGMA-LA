@@ -1,75 +1,187 @@
+'use client'
+
 import type { Visita } from '@/types'
-import { Clock, CheckCircle } from 'lucide-react'
+import { Calendar, Search, Filter, X } from 'lucide-react'
 import VisitaCardVisitador from './VisitaCardVisitador'
+import TabNavigation from './TabNavigation'
 
 interface SidebarVisitasProps {
-  visitasPendientes: Visita[]
-  visitasRealizadas: Visita[]
+  activeCategory: 'VISITAS' | 'ENTREGAS'
+  onCategoryChange: (category: 'VISITAS' | 'ENTREGAS') => void
+  statusFilter: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA'
+  onStatusChange: (status: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA') => void
+  visitas: Visita[]
+  searchTerm?: string
+  onSearchTermChange?: (term: string) => void
+  filterDate?: string
+  onFilterDateChange?: (date: string) => void
   selectedVisita: Visita | null
   onSelectVisita: (visita: Visita) => void
+  loadingVisitas: boolean
+  errorVisitas: string | null
+  onRetry: () => void
+  onClose?: () => void
 }
 
 export default function SidebarVisitas({
-  visitasPendientes,
-  visitasRealizadas,
+  activeCategory,
+  onCategoryChange,
+  statusFilter,
+  onStatusChange,
+  visitas,
+  searchTerm = '',
+  onSearchTermChange,
+  filterDate = '',
+  onFilterDateChange,
   selectedVisita,
   onSelectVisita,
+  loadingVisitas,
+  errorVisitas,
+  onRetry,
+  onClose,
 }: SidebarVisitasProps) {
-  return (
-    <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-8 lg:p-6">
-      {/* Visitas Pendientes */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 pt-2 sm:mb-4 sm:space-x-3 sm:pt-3 lg:mb-5">
-          <Clock className="h-6 w-6 text-orange-500 sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
-          <h2 className="text-base font-bold text-gray-800 sm:text-lg lg:text-xl">
-            Visitas Pendientes ({visitasPendientes.length})
-          </h2>
+  const currentList = visitas
+
+  if (loadingVisitas) {
+    return (
+      <div className="flex flex-col h-full w-full items-center justify-center bg-white p-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <p className="mt-4 text-sm text-gray-500 font-medium tracking-tight">Cargando visitas...</p>
+      </div>
+    )
+  }
+
+  if (errorVisitas) {
+    return (
+      <div className="flex flex-col h-full w-full items-center justify-center p-8 text-center bg-white">
+        <div className="mb-4 text-red-500 bg-red-50 p-4 rounded-full">
+          <Filter className="h-8 w-8" />
         </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {visitasPendientes.length === 0 ? (
-            <p className="px-1 text-sm text-gray-500 sm:text-base">
-              No hay visitas pendientes
-            </p>
-          ) : (
-            visitasPendientes.map((visita) => (
-              <VisitaCardVisitador
-                key={visita.cod_visita}
-                visita={visita}
-                isSelected={selectedVisita?.cod_visita === visita.cod_visita}
-                onClick={() => onSelectVisita(visita)}
-                isPendiente={true}
-              />
-            ))
+        <p className="mb-2 text-base font-bold text-gray-900">Error al cargar visitas</p>
+        <p className="mb-6 text-xs text-gray-500 font-medium leading-relaxed">{errorVisitas}</p>
+        <button
+          onClick={onRetry}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full w-full overflow-hidden bg-white">
+      {/* Mobile-only Header */}
+      {onClose && (
+        <div className="flex justify-between items-center lg:hidden px-4 py-3 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-800">Menú de Visitas</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-md transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      )}
+
+      {/* 1. Category Switcher (TOP) */}
+      <TabNavigation activeTab={activeCategory} onTabChange={onCategoryChange} />
+
+      {/* 2. Search and Filters Header (MIDDLE) */}
+      <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
+        {/* Search Bar */}
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Buscar por cliente, motivo o dirección..."
+            value={searchTerm}
+            onChange={(e) => onSearchTermChange?.(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white shadow-sm outline-none transition-all placeholder:text-gray-400"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          {/* Date Filter */}
+          <div className="relative flex-1">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => onFilterDateChange?.(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white outline-none transition-all cursor-pointer"
+            />
+          </div>
+          
+          {/* Clear Date Button */}
+          {filterDate && (
+            <button
+              onClick={() => onFilterDateChange?.('')}
+              className="px-2 py-1.5 text-[10px] font-bold text-gray-500 hover:text-red-500 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm"
+            >
+              LIMPIAR
+            </button>
           )}
         </div>
       </div>
 
-      {/* Visitas Realizadas */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 sm:mb-4 sm:space-x-3 lg:mb-5">
-          <CheckCircle className="h-6 w-6 text-green-500 sm:h-8 sm:w-8 lg:h-10 lg:w-10" />
-          <h2 className="text-base font-bold text-gray-800 sm:text-lg lg:text-xl">
-            Visitas Realizadas ({visitasRealizadas.length})
-          </h2>
-        </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {visitasRealizadas.length === 0 ? (
-            <p className="px-1 text-sm text-gray-500 sm:text-base">
-              No hay visitas realizadas
-            </p>
-          ) : (
-            visitasRealizadas.map((visita) => (
-              <VisitaCardVisitador
-                key={visita.cod_visita}
-                visita={visita}
-                isSelected={selectedVisita?.cod_visita === visita.cod_visita}
-                onClick={() => onSelectVisita(visita)}
-                isPendiente={false}
-              />
-            ))
-          )}
+      {/* 3. Status Switcher (BOTTOM of header) */}
+      <div className="px-4 py-3 border-b border-gray-50 bg-white">
+        <div className="flex p-1 bg-gray-100/80 rounded-xl">
+          <button
+            onClick={() => onStatusChange('PENDIENTE')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              statusFilter === 'PENDIENTE'
+                ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            PENDIENTES
+          </button>
+          <button
+            onClick={() => onStatusChange('REALIZADA')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              statusFilter === 'REALIZADA'
+                ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            REALIZADAS
+          </button>
+          <button
+            onClick={() => onStatusChange('CANCELADA')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              statusFilter === 'CANCELADA'
+                ? 'bg-white text-red-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            CANCELADAS
+          </button>
         </div>
       </div>
-    </aside>
+
+      {/* List content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 lg:p-6 custom-scrollbar bg-gray-50/30">
+        {currentList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Filter className="h-8 w-8 text-gray-200 mb-3" />
+            <p className="text-sm font-medium text-gray-500">
+              No hay visitas para mostrar
+            </p>
+          </div>
+        ) : (
+          currentList.map((visita) => (
+            <VisitaCardVisitador
+              key={visita.cod_visita}
+              visita={visita}
+              isSelected={selectedVisita?.cod_visita === visita.cod_visita}
+              onClick={() => onSelectVisita(visita)}
+              isPendiente={visita.estado === 'PENDIENTE' || visita.estado === 'PROGRAMADA' || visita.estado === 'EN CURSO'}
+            />
+          ))
+        )}
+      </div>
+    </div>
   )
 }
