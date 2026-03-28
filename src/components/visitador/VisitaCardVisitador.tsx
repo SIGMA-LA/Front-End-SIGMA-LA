@@ -14,66 +14,67 @@ export default function VisitaCardVisitador({
   onClick,
   isPendiente,
 }: VisitaCardVisitadorProps) {
-  const getCardStyle = () => {
-    if (isSelected) {
-      return 'border-indigo-500 bg-indigo-50/30 ring-1 ring-indigo-500 shadow-sm'
-    }
-    return 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+  const styles = {
+    pendiente: {
+      selected: 'border-orange-400 bg-orange-50 ring-2 ring-orange-300 shadow-lg',
+      default: 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      badge: 'bg-orange-500',
+    },
+    realizada: {
+      selected: 'border-green-400 bg-green-50 ring-2 ring-green-300 shadow-lg',
+      default: 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      badge: 'bg-green-500',
+    },
+    cancelada: {
+      selected: 'border-red-400 bg-red-50 ring-2 ring-red-300 shadow-lg',
+      default: 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      badge: 'bg-red-500',
+    },
   }
 
-  const getStatusInfo = () => {
-    const estado = visita.estado || (isPendiente ? 'PENDIENTE' : 'COMPLETADA')
-    switch (estado) {
-      case 'PENDIENTE':
-      case 'PROGRAMADA':
-        return { text: 'Pendiente', color: 'text-yellow-600 bg-yellow-50 border-yellow-100' }
-      case 'COMPLETADA':
-        return { text: 'Completada', color: 'text-green-600 bg-green-50 border-green-100' }
-      case 'CANCELADA':
-        return { text: 'Cancelada', color: 'text-red-600 bg-red-50 border-red-100' }
-      default:
-        return { text: estado, color: 'text-gray-600 bg-gray-50 border-gray-100' }
-    }
-  }
-
-  const status = getStatusInfo()
-  const clienteNombre = visita.obra?.cliente
-    ? visita.obra.cliente.razon_social || 
-      `${visita.obra.cliente.nombre || ''} ${visita.obra.cliente.apellido || ''}`.trim()
-    : `${visita.nombre_cliente || ''} ${visita.apellido_cliente || ''}`.trim() || 'Sin cliente'
+  const variant = isPendiente 
+    ? 'pendiente' 
+    : visita.estado === 'CANCELADA' 
+      ? 'cancelada' 
+      : 'realizada'
 
   return (
     <button
       onClick={onClick}
-      className={`group w-full rounded-xl border p-4 text-left transition-all duration-200 flex flex-col gap-2 ${getCardStyle()}`}
+      className={`w-full rounded-lg border p-2 text-left shadow-sm transition-all duration-200 lg:p-3 ${
+        isSelected ? styles[variant].selected : styles[variant].default
+      }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 mb-1">
-            <Clock className="h-3.5 w-3.5 text-indigo-500" />
+      <div className="flex items-start justify-between">
+        <div className="flex-grow space-y-1.5 min-w-0 pr-3">
+          {/* Fecha y Hora */}
+          <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
             {formatDate(visita.fecha_hora_visita)} - {formatTime(visita.fecha_hora_visita)}
-          </div>
-          <h4 className="text-sm font-bold text-gray-800 leading-tight truncate">
-            {getMotivoText(visita.motivo_visita)}
-          </h4>
-        </div>
-        
-        <span className={`flex-shrink-0 px-2.5 py-0.5 rounded-full border text-[10px] font-bold uppercase ${status.color}`}>
-          {status.text}
-        </span>
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 text-gray-600">
-          <User className="h-3.5 w-3.5 text-gray-400" />
-          <p className="text-xs font-semibold truncate">{clienteNombre}</p>
-        </div>
-
-        <div className="flex items-start gap-2 text-gray-500">
-          <MapPin className="h-3.5 w-3.5 mt-0.5 text-gray-400 flex-shrink-0" />
-          <p className="text-xs font-medium leading-normal line-clamp-1 italic">
-            {visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'}
           </p>
+
+          {/* Motivo/Detalle */}
+          <div className="flex items-center gap-1.5">
+            <h4 className="text-sm font-bold text-gray-700 leading-tight truncate lg:text-base">
+              {getMotivoText(visita.motivo_visita)}
+            </h4>
+          </div>
+
+          {/* Dirección con icono */}
+          <div className="flex items-start space-x-1">
+            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
+            <p className="text-sm leading-relaxed text-gray-600 lg:text-base break-words min-w-0">
+              {visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'}
+            </p>
+          </div>
+        </div>
+
+        {/* Badge arriba a la derecha */}
+        <div className="ml-3 flex flex-col items-end space-y-1">
+          <span
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${styles[variant].badge}`}
+          >
+            {variant === 'pendiente' ? 'PENDIENTE' : variant === 'cancelada' ? 'CANCELADA' : 'REALIZADA'}
+          </span>
         </div>
       </div>
     </button>

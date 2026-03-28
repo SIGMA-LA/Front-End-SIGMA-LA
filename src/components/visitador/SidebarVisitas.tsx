@@ -1,64 +1,102 @@
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+'use client'
+
 import type { Visita } from '@/types'
-import { Calendar, Search, Filter } from 'lucide-react'
+import { Calendar, Search, Filter, X } from 'lucide-react'
 import VisitaCardVisitador from './VisitaCardVisitador'
+import TabNavigation from './TabNavigation'
 
 interface SidebarVisitasProps {
-  visitasPendientes: Visita[]
-  visitasRealizadas: Visita[]
+  activeCategory: 'VISITAS' | 'ENTREGAS'
+  onCategoryChange: (category: 'VISITAS' | 'ENTREGAS') => void
+  statusFilter: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA'
+  onStatusChange: (status: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA') => void
+  visitas: Visita[]
+  searchTerm?: string
+  onSearchTermChange?: (term: string) => void
+  filterDate?: string
+  onFilterDateChange?: (date: string) => void
   selectedVisita: Visita | null
   onSelectVisita: (visita: Visita) => void
+  loadingVisitas: boolean
+  errorVisitas: string | null
+  onRetry: () => void
+  onClose?: () => void
 }
 
 export default function SidebarVisitas({
-  visitasPendientes,
-  visitasRealizadas,
+  activeCategory,
+  onCategoryChange,
+  statusFilter,
+  onStatusChange,
+  visitas,
+  searchTerm = '',
+  onSearchTermChange,
+  filterDate = '',
+  onFilterDateChange,
   selectedVisita,
   onSelectVisita,
+  loadingVisitas,
+  errorVisitas,
+  onRetry,
+  onClose,
 }: SidebarVisitasProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const currentList = visitas
 
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
-  const [date, setDate] = useState(searchParams.get('date') || '')
-  const [activeTab, setActiveTab] = useState<'pendiente' | 'realizada'>(
-    (searchParams.get('tab') as 'pendiente' | 'realizada') || 'pendiente'
-  )
+  if (loadingVisitas) {
+    return (
+      <div className="flex flex-col h-full w-full items-center justify-center bg-white p-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <p className="mt-4 text-sm text-gray-500 font-medium tracking-tight">Cargando visitas...</p>
+      </div>
+    )
+  }
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      
-      if (searchTerm) params.set('search', searchTerm)
-      else params.delete('search')
-      
-      if (date) params.set('date', date)
-      else params.delete('date')
-
-      params.set('tab', activeTab)
-
-      router.push(`${pathname}?${params.toString()}`)
-    }, 400)
-
-    return () => clearTimeout(handler)
-  }, [searchTerm, date, activeTab, pathname, router, searchParams])
-
-  const currentList = activeTab === 'pendiente' ? visitasPendientes : visitasRealizadas
+  if (errorVisitas) {
+    return (
+      <div className="flex flex-col h-full w-full items-center justify-center p-8 text-center bg-white">
+        <div className="mb-4 text-red-500 bg-red-50 p-4 rounded-full">
+          <Filter className="h-8 w-8" />
+        </div>
+        <p className="mb-2 text-base font-bold text-gray-900">Error al cargar visitas</p>
+        <p className="mb-6 text-xs text-gray-500 font-medium leading-relaxed">{errorVisitas}</p>
+        <button
+          onClick={onRetry}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-white">
-      {/* Search and Filters Header */}
+      {/* Mobile-only Header */}
+      {onClose && (
+        <div className="flex justify-between items-center lg:hidden px-4 py-3 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-800">Menú de Visitas</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-md transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      )}
+
+      {/* 1. Category Switcher (TOP) */}
+      <TabNavigation activeTab={activeCategory} onTabChange={onCategoryChange} />
+
+      {/* 2. Search and Filters Header (MIDDLE) */}
       <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
         {/* Search Bar */}
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
           <input
             type="text"
-            placeholder="Buscar por cliente, obra o motivo..."
+            placeholder="Buscar por cliente, motivo o dirección..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => onSearchTermChange?.(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white shadow-sm outline-none transition-all placeholder:text-gray-400"
           />
         </div>
@@ -69,16 +107,16 @@ export default function SidebarVisitas({
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
             <input
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={filterDate}
+              onChange={(e) => onFilterDateChange?.(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white outline-none transition-all cursor-pointer"
             />
           </div>
           
           {/* Clear Date Button */}
-          {date && (
+          {filterDate && (
             <button
-              onClick={() => setDate('')}
+              onClick={() => onFilterDateChange?.('')}
               className="px-2 py-1.5 text-[10px] font-bold text-gray-500 hover:text-red-500 transition-colors bg-white border border-gray-200 rounded-lg shadow-sm"
             >
               LIMPIAR
@@ -87,38 +125,38 @@ export default function SidebarVisitas({
         </div>
       </div>
 
-      {/* Tab Switcher */}
+      {/* 3. Status Switcher (BOTTOM of header) */}
       <div className="px-4 py-3 border-b border-gray-50 bg-white">
         <div className="flex p-1 bg-gray-100/80 rounded-xl">
           <button
-            onClick={() => setActiveTab('pendiente')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'pendiente'
-                ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200'
+            onClick={() => onStatusChange('PENDIENTE')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              statusFilter === 'PENDIENTE'
+                ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Pendientes
-            <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-              activeTab === 'pendiente' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200 text-gray-500'
-            }`}>
-              {visitasPendientes.length}
-            </span>
+            PENDIENTES
           </button>
           <button
-            onClick={() => setActiveTab('realizada')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'realizada'
+            onClick={() => onStatusChange('REALIZADA')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              statusFilter === 'REALIZADA'
                 ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Realizadas
-            <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-              activeTab === 'realizada' ? 'bg-green-50 text-green-600' : 'bg-gray-200 text-gray-500'
-            }`}>
-              {visitasRealizadas.length}
-            </span>
+            REALIZADAS
+          </button>
+          <button
+            onClick={() => onStatusChange('CANCELADA')}
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
+              statusFilter === 'CANCELADA'
+                ? 'bg-white text-red-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            CANCELADAS
           </button>
         </div>
       </div>
@@ -129,7 +167,7 @@ export default function SidebarVisitas({
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-8 w-8 text-gray-200 mb-3" />
             <p className="text-sm font-medium text-gray-500">
-              {searchTerm || date ? 'No se encontraron resultados' : `No hay visitas ${activeTab}s`}
+              No hay visitas para mostrar
             </p>
           </div>
         ) : (
@@ -139,7 +177,7 @@ export default function SidebarVisitas({
               visita={visita}
               isSelected={selectedVisita?.cod_visita === visita.cod_visita}
               onClick={() => onSelectVisita(visita)}
-              isPendiente={activeTab === 'pendiente'}
+              isPendiente={visita.estado === 'PENDIENTE' || visita.estado === 'PROGRAMADA' || visita.estado === 'EN CURSO'}
             />
           ))
         )}

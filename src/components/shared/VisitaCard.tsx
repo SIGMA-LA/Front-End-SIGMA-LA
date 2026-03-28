@@ -33,10 +33,10 @@ export function getStatusColor(estado: string) {
 
 export function getStatusText(estado: string) {
   const estados: { [key: string]: string } = {
-    PENDIENTE: 'Pendiente',
-    PROGRAMADA: 'Pendiente',
-    COMPLETADA: 'Completada',
-    CANCELADA: 'Cancelada',
+    PENDIENTE: 'PENDIENTE',
+    PROGRAMADA: 'PENDIENTE',
+    COMPLETADA: 'COMPLETADA',
+    CANCELADA: 'CANCELADA',
   }
   return estados[estado] || estado
 }

@@ -143,7 +143,7 @@ export default function VisitaDetail({
                   visita.estado === 'CANCELADA' ? 'bg-red-100 text-red-800' :
                   'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {visita.estado || 'PENDIENTE'}
+                  {(visita.estado || 'PENDIENTE').toUpperCase()}
                 </span>
                 <span>•</span>
                 <span>{getTipoText(visita.motivo_visita)}</span>

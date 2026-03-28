@@ -27,9 +27,9 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
 
   const getStatusText = (estado: string) => {
     const estados: { [key: string]: string } = {
-      PENDIENTE: 'Pendiente',
-      ENTREGADO: 'Entregada',
-      CANCELADO: 'Cancelada',
+      PENDIENTE: 'PENDIENTE',
+      ENTREGADO: 'ENTREGADA',
+      CANCELADO: 'CANCELADA',
     }
     return estados[estado] || estado
   }
