@@ -28,11 +28,12 @@ export default function Configuraciones({
   const [configuraciones, setConfiguraciones] = useState({
     notificaciones: {
       email: true,
+      whatsapp: false,
       push: true,
       visitas: true,
       entregas: true,
       vencimientos: true,
-    },
+    } as Record<string, boolean>,
     perfil: {
       nombre: 'Usuario',
       apellido: 'Aberturas',
@@ -175,7 +176,14 @@ export default function Configuraciones({
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
             <NotificacionesSection
-              notificaciones={configuraciones.notificaciones}
+              options={[
+                { id: 'email', label: 'Notificaciones por email' },
+                { id: 'whatsapp', label: 'Notificaciones por WhatsApp', description: 'Recibir alertas por WhatsApp' },
+                { id: 'visitas', label: 'Notificaciones de Visitas' },
+                { id: 'entregas', label: 'Notificaciones de Entregas' },
+                { id: 'vencimientos', label: 'Vencimientos de presupuestos' },
+              ]}
+              values={configuraciones.notificaciones}
               onChange={(field, value) =>
                 handleConfigChange('notificaciones', field, value)
               }
