@@ -1,9 +1,10 @@
 'use client'
 import { Empleado } from '@/types'
 import { useState, useTransition } from 'react'
-import { LogOut, Sigma } from 'lucide-react'
+import { LogOut, Sigma, Settings } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { logoutAction } from '@/actions/auth'
+import Link from 'next/link'
 
 type NavbarProps = {
   usuario: Empleado | null
@@ -27,14 +28,14 @@ export default function Navbar({ usuario }: NavbarProps) {
     <>
       <header className="sticky top-0 z-30 bg-slate-900 px-1.5 py-3 text-white shadow-md sm:px-6 sm:py-6">
         <div className="flex w-full max-w-full items-center justify-between">
-          <div className="flex min-w-0 items-center space-x-2 sm:space-x-3">
+          <Link href={`/${usuario.rol_actual.toLowerCase()}`} className="flex min-w-0 items-center space-x-2 sm:space-x-3 transition-opacity hover:opacity-80">
             <Sigma className="h-7 w-7 flex-shrink-0 text-white sm:h-10 sm:w-10" />
             <h1 className="truncate text-lg font-bold sm:text-2xl">
               SIGMA - LA
             </h1>
-          </div>
+          </Link>
           <div className="flex min-w-0 items-center space-x-2 sm:space-x-4">
-            <div className="min-w-0 text-right">
+            <div className="min-w-0 text-right mr-3">
               <p className="truncate text-xs font-medium sm:text-xl">
                 {usuario.nombre} {usuario.apellido}
               </p>
@@ -42,6 +43,16 @@ export default function Navbar({ usuario }: NavbarProps) {
                 {usuario.rol_actual}
               </p>
             </div>
+            <Link href={`/${usuario.rol_actual.toLowerCase()}/configuraciones`}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-10 px-0 sm:w-auto sm:px-4 text-white hover:bg-slate-800"
+              >
+                <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="hidden sm:inline sm:ml-2">Configuraciones</span>
+              </Button>
+            </Link>
             <Button
               onClick={() => setShowModal(true)}
               variant="destructive"

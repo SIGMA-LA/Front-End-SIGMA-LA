@@ -138,3 +138,23 @@ export async function logoutAction(): Promise<void> {
     redirect('/login')
   }
 }
+
+/**
+ * Retrieves the current user from cookies
+ * @returns {Promise<any>} The parsed user object or null
+ */
+export async function getCurrentUser(): Promise<any | null> {
+  const cookieStore = await cookies()
+  const usuarioCookie = cookieStore.get('usuario')?.value
+  
+  if (!usuarioCookie) {
+    return null
+  }
+
+  try {
+    return JSON.parse(usuarioCookie)
+  } catch (error) {
+    console.error('[getCurrentUser] Error parsing user cookie:', error)
+    return null
+  }
+}

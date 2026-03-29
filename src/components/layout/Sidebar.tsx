@@ -59,6 +59,7 @@ const menuItemsAdmin: MenuItem[] = [
   { path: '/admin/clientes', label: 'Clientes', icon: UserStar },
   { path: '/admin/obras', label: 'Obras', icon: Building2 },
   { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
+  { path: '/admin/configuraciones', label: 'Configuraciones', icon: Settings },
 ]
 
 export default function Sidebar({ user }: { user: Empleado | null }) {
