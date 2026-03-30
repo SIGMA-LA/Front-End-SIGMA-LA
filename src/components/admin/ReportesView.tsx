@@ -191,7 +191,7 @@ interface ChartPayloadEntry {
   value: number
   name: string
   color: string
-  payload: any
+  payload: unknown
 }
 
 interface CustomTooltipProps {
