@@ -1,0 +1,178 @@
+import {
+  Calendar,
+  Mail,
+  MapPin,
+  Phone,
+  Package,
+  FileText,
+  Play,
+  CheckCircle,
+} from 'lucide-react'
+import type { OrdenProduccion } from '@/types'
+import { Button } from '@/components/ui/Button'
+import { Card, CardContent } from '@/components/ui/Card'
+import { useState } from 'react'
+
+interface OrdenProduccionDetailsProps {
+  orden: OrdenProduccion
+  onIniciarProduccion?: () => void
+  onFinalizarProduccion?: () => void
+}
+
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+
+const getEstadoBadge = (estado: OrdenProduccion['estado']) => {
+  const badges = {
+    PENDIENTE: 'bg-gray-100 text-gray-800',
+    APROBADA: 'bg-blue-100 text-blue-800',
+    'EN PRODUCCION': 'bg-yellow-100 text-yellow-800',
+    FINALIZADA: 'bg-green-100 text-green-800',
+  }
+  return badges[estado] || 'bg-gray-100 text-gray-800'
+}
+
+export default function OrdenProduccionDetails({
+  orden,
+  onIniciarProduccion,
+  onFinalizarProduccion,
+}: OrdenProduccionDetailsProps) {
+  const [pdfLoading, setPdfLoading] = useState(true)
+
+  const canIniciar = orden.estado === 'APROBADA'
+  const canFinalizar = orden.estado === 'EN PRODUCCION'
+
+  const handleOpenPdf = () => {
+    if (orden.url) {
+      window.open(orden.url, '_blank')
+    }
+  }
+
+  return (
+    <Card className="mx-auto max-w-6xl border-gray-200 bg-white shadow-lg">
+      <CardContent className="space-y-6 p-6 lg:space-y-8 lg:p-12">
+        {/* Header */}
+        <div className="flex items-start justify-between space-x-4">
+          <div className="flex-1">
+            <h2 className="mb-2 text-2xl font-bold text-gray-900 lg:text-4xl">
+              Orden de Producción #{orden.cod_op}
+            </h2>
+            <p className="mb-3 text-lg text-gray-600 lg:text-xl">
+              {orden.obra.cliente.razon_social}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span
+                className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold lg:px-5 lg:text-base ${getEstadoBadge(orden.estado)}`}
+              >
+                {orden.estado}
+              </span>
+              {orden.fecha_validacion && (
+                <span className="text-sm text-gray-500 lg:text-base">
+                  Validada:{' '}
+                  <span className="font-medium">
+                    {formatDate(orden.fecha_validacion)}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <Package className="h-12 w-12 text-gray-300 sm:h-14 sm:w-14 lg:h-20 lg:w-20" />
+          </div>
+        </div>
+
+        {/* Información de contacto */}
+        <div className="grid grid-cols-1 gap-4 border-t pt-6 text-sm sm:grid-cols-2 lg:gap-6 lg:pt-8 lg:text-base">
+          <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-3 lg:space-x-4">
+            <Phone className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
+            <span className="break-all">{orden.obra.cliente.telefono}</span>
+          </div>
+          <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-3 lg:space-x-4">
+            <Mail className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
+            <span className="break-all">{orden.obra.cliente.mail}</span>
+          </div>
+          <div className="col-span-1 flex items-center space-x-3 rounded-lg bg-gray-50 p-3 sm:col-span-2 lg:space-x-4">
+            <MapPin className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
+            <span className="break-words">
+              {orden.obra.direccion}
+              {orden.obra.localidad &&
+                `, ${orden.obra.localidad.nombre_localidad}`}
+            </span>
+          </div>
+          <div className="col-span-1 flex items-center space-x-3 rounded-lg bg-gray-50 p-3 sm:col-span-2 lg:space-x-4">
+            <Calendar className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
+            <span>
+              Fecha de confección: {formatDate(orden.fecha_confeccion)}
+            </span>
+          </div>
+        </div>
+
+        {/* PDF de la orden */}
+        {orden.url && (
+          <div>
+            <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
+              Orden de Producción (PDF)
+            </h4>
+            <div className="space-y-4">
+              <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                <iframe
+                  src={`${orden.url}#view=FitH`}
+                  className="w-full"
+                  style={{ height: '600px' }}
+                  title="Orden de Producción PDF"
+                  onLoad={() => setPdfLoading(false)}
+                  onError={() => setPdfLoading(false)}
+                />
+                {pdfLoading && (
+                  <div className="bg-opacity-90 absolute inset-0 flex items-center justify-center bg-white">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
+                      <p className="text-sm text-gray-500 lg:text-base">
+                        Cargando PDF...
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleOpenPdf}
+                className="w-full rounded-md border-2 border-blue-500 bg-white px-5 py-3 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 lg:px-6 lg:py-4 lg:text-base"
+              >
+                <FileText className="mr-2 inline-block h-5 w-5 lg:h-6 lg:w-6" />
+                Abrir PDF en nueva pestaña
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Botones para iniciar/finalizar producción */}
+        {(canIniciar || canFinalizar) && (
+          <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-4 lg:pt-8">
+            {canIniciar && onIniciarProduccion && (
+              <Button
+                onClick={onIniciarProduccion}
+                className="flex-1 cursor-pointer bg-green-600 py-4 text-base text-white hover:bg-green-700 lg:py-5 lg:text-lg"
+              >
+                <Play className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+                <span>Iniciar Producción</span>
+              </Button>
+            )}
+            {canFinalizar && onFinalizarProduccion && (
+              <Button
+                onClick={onFinalizarProduccion}
+                className="flex-1 cursor-pointer bg-blue-600 py-4 text-base text-white hover:bg-blue-700 lg:py-5 lg:text-lg"
+              >
+                <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+                <span>Finalizar Producción</span>
+              </Button>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
