@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import type { Empleado } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
@@ -139,11 +140,12 @@ export async function logoutAction(): Promise<void> {
   }
 }
 
+
 /**
  * Retrieves the current user from cookies
- * @returns {Promise<any>} The parsed user object or null
+ * @returns {Promise<Empleado | null>} The parsed user object or null
  */
-export async function getCurrentUser(): Promise<any | null> {
+export async function getCurrentUser(): Promise<Empleado | null> {
   const cookieStore = await cookies()
   const usuarioCookie = cookieStore.get('usuario')?.value
   
