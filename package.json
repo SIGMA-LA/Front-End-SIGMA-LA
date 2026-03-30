@@ -12,6 +12,7 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.46.0",
     "axios": "^1.11.0",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",

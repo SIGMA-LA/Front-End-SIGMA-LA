@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/nextjs'
+
 /**
  * Logger utility for conditional logging
  * Only logs in development environment
@@ -38,7 +40,7 @@ export const logger = {
 }
 
 /**
- * Always log errors (production too) but sanitized
+ * Always log errors (production too) and send to Sentry
  */
 export const logError = (error: unknown, context?: string) => {
   const errorMessage = error instanceof Error ? error.message : String(error)
@@ -46,7 +48,12 @@ export const logError = (error: unknown, context?: string) => {
   if (isDevelopment) {
     console.error(`[${context || 'Error'}]:`, error)
   } else {
-    // In production, log sanitized errors (could send to monitoring service)
+    // In production, log sanitized errors
     console.error(`[${context || 'Error'}]:`, errorMessage)
   }
+
+  // Always send to Sentry regardless of environment (or you can filter here)
+  Sentry.captureException(error, {
+    extra: { context },
+  })
 }
