@@ -64,6 +64,12 @@ export async function loginAction(
     })
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return {
+          error:
+            'Se supero el limite de intentos de inicio de sesion. Intente nuevamente mas tarde.',
+        }
+      }
       return { error: 'CUIL o contraseña incorrectos' }
     }
 
@@ -140,7 +146,6 @@ export async function logoutAction(): Promise<void> {
   }
 }
 
-
 /**
  * Retrieves the current user from cookies
  * @returns {Promise<Empleado | null>} The parsed user object or null
@@ -148,7 +153,7 @@ export async function logoutAction(): Promise<void> {
 export async function getCurrentUser(): Promise<Empleado | null> {
   const cookieStore = await cookies()
   const usuarioCookie = cookieStore.get('usuario')?.value
-  
+
   if (!usuarioCookie) {
     return null
   }
