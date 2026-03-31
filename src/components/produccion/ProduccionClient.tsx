@@ -206,13 +206,13 @@ export default function ProduccionClient({
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
         >
-          <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
+          <aside className="flex h-full w-full flex-shrink-0 flex-col border-r border-gray-200 bg-white">
             <TabNavigation
               activeTab={activeTab}
               onTabChange={handleTabChange}
             />
 
-            <div className="space-y-4 p-3 lg:space-y-6">
+            <div className="flex-1 overflow-hidden">
               {activeTab === 'notas' ? (
                 <SidebarNotasFabrica
                   obrasSinOrden={obrasSinOrden}

@@ -1,4 +1,7 @@
-import { FileText } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { FileText, Search, Calendar, Filter } from 'lucide-react'
 import type { Obra } from '@/types'
 import NotaFabricaCard from './NotaFabricaCard'
 
@@ -11,6 +14,8 @@ interface SidebarNotasFabricaProps {
   error?: string | null
 }
 
+type TabType = 'PENDIENTE' | 'EN_PROCESO' | 'FINALIZADA'
+
 export default function SidebarNotasFabrica({
   obrasSinOrden,
   obrasEnProceso,
@@ -19,126 +24,137 @@ export default function SidebarNotasFabrica({
   loading = false,
   error = null,
 }: SidebarNotasFabricaProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterDate, setFilterDate] = useState('')
+  const [statusFilter, setStatusFilter] = useState<TabType>('PENDIENTE')
+
   if (loading) {
     return (
-      <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:p-6">
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
-            <p className="text-sm text-gray-500 lg:text-base">
-              Cargando obras...
-            </p>
-          </div>
-        </div>
-      </aside>
+      <div className="flex h-full w-full flex-col items-center justify-center bg-white p-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <p className="mt-4 text-sm font-medium tracking-tight text-gray-500">
+          Cargando notas...
+        </p>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:p-6">
-        <div className="flex h-64 items-center justify-center">
-          <div className="px-4 text-center sm:px-6">
-            <div className="mb-4 text-red-500">
-              <svg
-                className="mx-auto h-12 w-12 lg:h-16 lg:w-16"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <p className="mb-3 text-base font-medium text-red-600 lg:text-lg">
-              Error al cargar obras
-            </p>
-            <p className="text-sm text-gray-500 lg:text-base">{error}</p>
-          </div>
+      <div className="flex h-full w-full flex-col items-center justify-center bg-white p-8 text-center">
+        <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500">
+          <Filter className="h-8 w-8" />
         </div>
-      </aside>
+        <p className="mb-2 text-base font-bold text-gray-900">
+          Error al cargar notas
+        </p>
+        <p className="mb-6 text-xs leading-relaxed font-medium text-gray-500">
+          {error}
+        </p>
+      </div>
     )
   }
 
+  let currentList: Obra[] = []
+  if (statusFilter === 'PENDIENTE') currentList = obrasSinOrden
+  else if (statusFilter === 'EN_PROCESO') currentList = obrasEnProceso
+
   return (
-    <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-8 lg:p-6">
-      {/* Notas Sin Orden Aprobada */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 pt-2 sm:mb-4 sm:space-x-3 sm:pt-3 lg:mb-5">
-          <div className="h-3 w-3 rounded-full bg-orange-500 lg:h-4 lg:w-4"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
-            Notas Con Orden Pendiente ({obrasSinOrden.length})
-          </h2>
+    <div className="flex h-full w-full flex-col overflow-hidden bg-white">
+      {/* Search and Filters Header */}
+      <div className="space-y-3 border-b border-gray-100 bg-gray-50/50 p-4">
+        {/* Search Bar */}
+        <div className="group relative">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-blue-500" />
+          <input
+            type="text"
+            placeholder="Buscar nota de fábrica..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm shadow-sm transition-all outline-none placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+          />
         </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {obrasSinOrden.length === 0 ? (
-            <div className="py-6 text-center sm:py-8 lg:py-12">
-              <div className="mb-3 text-gray-400 sm:mb-4">
-                <FileText className="mx-auto h-8 w-8 sm:h-10 sm:w-10 lg:h-14 lg:w-14" />
-              </div>
-              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                No hay notas pendientes
-              </p>
-            </div>
-          ) : (
-            obrasSinOrden.map((obra) => (
-              <NotaFabricaCard
-                key={obra.cod_obra}
-                obra={obra}
-                isSelected={selectedObra?.cod_obra === obra.cod_obra}
-                onClick={() => onSelectObra(obra)}
-              />
-            ))
+
+        <div className="flex gap-2">
+          {/* Date Filter */}
+          <div className="relative flex-1">
+            <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+            />
+          </div>
+
+          {/* Clear Date Button */}
+          {filterDate && (
+            <button
+              onClick={() => setFilterDate('')}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[10px] font-bold text-gray-500 shadow-sm transition-colors hover:text-red-500"
+            >
+              LIMPIAR
+            </button>
           )}
         </div>
       </div>
 
-      {/* Notas Con Orden En Proceso */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 sm:mb-4 sm:space-x-3 lg:mb-5">
-          <div className="h-3 w-3 rounded-full bg-blue-500 lg:h-4 lg:w-4"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
-            Obras En Proceso ({obrasEnProceso.length})
-          </h2>
-        </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {obrasEnProceso.length === 0 ? (
-            <div className="py-6 text-center sm:py-8 lg:py-12">
-              <div className="mb-3 text-gray-400 sm:mb-4">
-                <svg
-                  className="mx-auto h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                No hay notas en proceso
-              </p>
-            </div>
-          ) : (
-            obrasEnProceso.map((obra) => (
-              <NotaFabricaCard
-                key={obra.cod_obra}
-                obra={obra}
-                isSelected={selectedObra?.cod_obra === obra.cod_obra}
-                onClick={() => onSelectObra(obra)}
-              />
-            ))
-          )}
+      {/* Status Switcher */}
+      <div className="border-b border-gray-50 bg-white px-4 py-3">
+        <div className="flex rounded-xl bg-gray-100/80 p-1">
+          <button
+            onClick={() => setStatusFilter('PENDIENTE')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'PENDIENTE'
+                ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            SIN ORDEN
+          </button>
+          <button
+            onClick={() => setStatusFilter('EN_PROCESO')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'EN_PROCESO'
+                ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            EN PROCESO
+          </button>
+          <button
+            onClick={() => setStatusFilter('FINALIZADA')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'FINALIZADA'
+                ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            FINALIZADAS
+          </button>
         </div>
       </div>
-    </aside>
+
+      {/* List content */}
+      <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto bg-gray-50/30 p-4 lg:p-6">
+        {currentList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Filter className="mb-3 h-8 w-8 text-gray-200" />
+            <p className="text-sm font-medium text-gray-500">
+              No hay notas para mostrar
+            </p>
+          </div>
+        ) : (
+          currentList.map((obra) => (
+            <NotaFabricaCard
+              key={obra.cod_obra}
+              obra={obra}
+              isSelected={selectedObra?.cod_obra === obra.cod_obra}
+              onClick={() => onSelectObra(obra)}
+            />
+          ))
+        )}
+      </div>
+    </div>
   )
 }
