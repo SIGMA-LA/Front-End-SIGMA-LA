@@ -585,12 +585,20 @@ export default function ProduccionClient({
                   Selecciona una orden de producción para ver los detalles
                 </p>
                 <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
+                  <div className="rounded-lg bg-amber-50 px-4 py-2 text-center">
+                    <div className="text-lg font-semibold text-amber-600 lg:text-xl">
+                      {ordenesPendientesCount}
+                    </div>
+                    <div className="text-xs text-gray-600 lg:text-sm">
+                      Pendientes
+                    </div>
+                  </div>
                   <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
                     <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                       {ordenesAprobadasCount}
                     </div>
                     <div className="text-xs text-gray-600 lg:text-sm">
-                      Por Iniciar
+                      Aprobadas
                     </div>
                   </div>
                   <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
