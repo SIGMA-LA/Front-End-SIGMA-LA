@@ -7,17 +7,13 @@ export default function AppToaster() {
     <ToastContainer
       newestOnTop
       limit={3}
-      closeButton={false}
-      hideProgressBar
+      closeButton={true}
+      hideProgressBar={false}
       pauseOnFocusLoss={false}
-      toastClassName="!text-sm !font-semibold !text-slate-700"
-      toastStyle={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '14px',
-        boxShadow: '0 14px 34px rgba(15, 23, 42, 0.14)',
-        color: '#0f172a',
-      }}
+      theme="colored"
+      position="top-right"
+      className="!z-[9999]"
+      toastClassName="!rounded-xl !shadow-2xl !mb-3 !font-semibold !text-sm"
     />
   )
 }

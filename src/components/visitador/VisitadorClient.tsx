@@ -73,8 +73,8 @@ export default function VisitadorClient({
     try {
       if (categoryFilter === 'VISITAS') {
         let estados: string[] = []
-        if (statusFilter === 'PENDIENTE') estados = ['PENDIENTE']
-        else if (statusFilter === 'REALIZADA') estados = ['FINALIZADA']
+        if (statusFilter === 'PENDIENTE') estados = ['PROGRAMADA', 'EN CURSO']
+        else if (statusFilter === 'REALIZADA') estados = ['COMPLETADA']
         else if (statusFilter === 'CANCELADA') estados = ['CANCELADA']
         
         const data = await getVisitasByEmpleado(usuario.cuil, estados, debouncedSearch, debouncedDate)

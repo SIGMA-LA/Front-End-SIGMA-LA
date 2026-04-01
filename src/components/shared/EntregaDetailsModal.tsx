@@ -14,9 +14,10 @@ import {
   Info,
   CalendarRange
 } from 'lucide-react'
-import type { Entrega, Vehiculo, Maquinaria } from '@/types'
+import type { Entrega, Vehiculo, Maquinaria, OrdenProduccion } from '@/types'
 import { getActualViatico } from '@/actions/parametros'
 import { getEntrega } from '@/actions/entregas'
+import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
 interface EntregaDetailsModalProps {
   isOpen: boolean
@@ -51,6 +52,10 @@ export default function EntregaDetailsModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
+  const [activeOpIndex, setActiveOpIndex] = useState(0)
+  const [viewerUrl, setViewerUrl] = useState('')
+  const [viewerTitle, setViewerTitle] = useState('')
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
 
   useEffect(() => {
     if (isOpen && entrega) {
@@ -76,6 +81,12 @@ export default function EntregaDetailsModal({
       setEstaEntrega(null)
     }
   }, [isOpen, entrega?.cod_entrega])
+
+  // Reset active OP tab on entrega change
+  useEffect(() => {
+    setActiveOpIndex(0)
+    setIsViewerOpen(false)
+  }, [estaEntrega?.cod_entrega])
 
   const totalViaticos = useMemo(() => {
     if (!estaEntrega || !estaEntrega.dias_viaticos || viaticoPorDia <= 0) {
@@ -136,8 +147,9 @@ export default function EntregaDetailsModal({
   const fechaRegreso = vehiculoData?.fecha_hora_ini_est
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl overflow-hidden">
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl overflow-hidden">
         
         {/* Encabezado */}
         <div className="flex flex-shrink-0 items-center justify-between border-b bg-white p-6">
@@ -146,9 +158,16 @@ export default function EntregaDetailsModal({
               <Truck className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Detalles de Entrega #{estaEntrega.cod_entrega}
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Detalles de Entrega #{estaEntrega.cod_entrega}
+                </h2>
+                <span className={`px-2.5 py-0.5 text-[0.65rem] font-bold rounded-full border tracking-wider uppercase shadow-sm ${
+                  estaEntrega.esFinal ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-cyan-100 text-cyan-700 border-cyan-200'
+                }`}>
+                  {estaEntrega.esFinal ? 'Final' : 'Parcial'}
+                </span>
+              </div>
               <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                   estaEntrega.estado === 'ENTREGADO' ? 'bg-green-100 text-green-800' :
@@ -275,7 +294,7 @@ export default function EntregaDetailsModal({
                   <div className="flex items-end justify-between mt-3">
                     <div>
                       <p className="text-xs text-yellow-700">
-                        Total {estaEntrega.dias_viaticos} días x {estaEntrega.empleados_asignados.length} pers.
+                        Total {estaEntrega.dias_viaticos} días x {estaEntrega.empleados_asignados?.length || 0} pers.
                       </p>
                       <p className="text-xs text-yellow-600">Valor diario: {formatCurrency(viaticoPorDia)}</p>
                     </div>
@@ -290,29 +309,69 @@ export default function EntregaDetailsModal({
             {/* Columna Derecha: OP, Recursos y Detalles */}
             <div className="flex flex-col gap-6 h-full">
               
-              {estaEntrega.orden_de_produccion && (
-                <div className="flex items-center justify-between rounded-xl border border-purple-200 bg-purple-50 p-5 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-purple-100 p-2">
-                       <Package className="h-5 w-5 text-purple-600" />
+              {/* Sección de Órdenes de Producción */}
+              {(() => {
+                const ops = estaEntrega.ordenes_de_produccion
+                if (!ops || ops.length === 0) return null
+
+                const activeOp: OrdenProduccion = ops[activeOpIndex] ?? ops[0]
+
+                return (
+                  <div className="rounded-xl border border-purple-200 bg-purple-50 p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-bold text-purple-900 uppercase tracking-wider flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        {ops.length === 1 ? 'Orden de Producción Asociada' : `Órdenes de Producción (${ops.length})`}
+                      </h3>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-purple-600/80">Orden Asociada</p>
-                      <p className="font-bold text-purple-900 text-lg">
-                        OP #{estaEntrega.orden_de_produccion.cod_op}
-                      </p>
+
+                    {/* Tabs si hay más de 1 OP */}
+                    {ops.length > 1 && (
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {ops.map((op, idx) => (
+                          <button
+                            key={op.cod_op}
+                            onClick={() => setActiveOpIndex(idx)}
+                            className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
+                              activeOpIndex === idx
+                                ? 'bg-purple-600 text-white shadow-md'
+                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                            }`}
+                          >
+                            OP #{op.cod_op}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Info de la OP activa */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-purple-100 p-2">
+                          <Package className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-purple-600/80">Orden Seleccionada</p>
+                          <p className="font-bold text-purple-900 text-lg">OP #{activeOp.cod_op}</p>
+                          <p className="text-xs text-purple-600/70">
+                            Confeccionada: {new Date(activeOp.fecha_confeccion).toLocaleDateString('es-AR')}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setViewerUrl(activeOp.url)
+                          setViewerTitle(`Orden de Producción #${activeOp.cod_op}`)
+                          setIsViewerOpen(true)
+                        }}
+                        className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-purple-700 transition"
+                      >
+                        Ver Documento
+                      </button>
                     </div>
                   </div>
-                  <a
-                    href={estaEntrega.orden_de_produccion.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-purple-700 transition"
-                  >
-                    Ver PDF
-                  </a>
-                </div>
-              )}
+                )
+              })()} 
 
               <div className="flex-1 rounded-xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col">
                 <h3 className="mb-4 text-sm font-bold text-gray-900 uppercase tracking-wider">Flota y Maquinaria</h3>
@@ -381,7 +440,7 @@ export default function EntregaDetailsModal({
                   {estaEntrega.detalle || 'Sin detalle de carga proporcionado'}
                 </p>
               </div>
-              
+
               {(estaEntrega.estado === 'ENTREGADO' || estaEntrega.estado === 'CANCELADO') && (
                 <div className="pt-4 border-t border-blue-200">
                   <span className="font-semibold text-gray-900 block mb-1.5">Observaciones Extras:</span>
@@ -395,5 +454,13 @@ export default function EntregaDetailsModal({
         </div>
       </div>
     </div>
+
+      <DocumentViewer
+        url={viewerUrl}
+        title={viewerTitle}
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+      />
+    </>
   )
 }

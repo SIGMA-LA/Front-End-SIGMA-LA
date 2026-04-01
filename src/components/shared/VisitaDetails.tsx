@@ -118,7 +118,7 @@ export default function VisitaDetail({
     : visita.uso_vehiculo_visita
 
   const fechaSalida = usoVehiculo?.fecha_hora_ini_uso
-  const fechaRegreso = usoVehiculo?.fecha_hora_ini_est
+  const fechaRegreso = usoVehiculo?.fecha_hora_fin_est
 
   const encargado = visita.empleado_visita?.[0]
   const acompañantes = visita.empleado_visita?.slice(1)
@@ -141,12 +141,14 @@ export default function VisitaDetail({
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                   visita.estado === 'COMPLETADA' ? 'bg-green-100 text-green-800' :
                   visita.estado === 'CANCELADA' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
+                  'bg-orange-100 text-orange-800 border border-orange-200'
                 }`}>
-                  {(visita.estado || 'PENDIENTE').toUpperCase()}
+                  {visita.estado === 'PROGRAMADA' ? 'PENDIENTE' : (visita.estado || 'PENDIENTE').toUpperCase()}
                 </span>
                 <span>•</span>
-                <span>{getTipoText(visita.motivo_visita)}</span>
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  {getTipoText(visita.motivo_visita)}
+                </span>
               </div>
             </div>
           </div>

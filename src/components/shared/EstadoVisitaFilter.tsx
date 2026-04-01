@@ -27,7 +27,7 @@ export default function EstadoVisitaFilter({ initialValue = '' }: { initialValue
         className="w-full pl-9 pr-10 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm outline-none transition-colors appearance-none cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       >
         <option value="ALL">Todos los Estados</option>
-        <option value="PENDIENTE">Pendiente</option>
+        <option value="PROGRAMADA">Pendiente</option>
         <option value="COMPLETADA">Completada</option>
         <option value="CANCELADA">Cancelada</option>
       </select>

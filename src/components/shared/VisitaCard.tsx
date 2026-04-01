@@ -21,8 +21,11 @@ import { notify } from '@/lib/toast'
 export function getStatusColor(estado: string) {
   switch (estado) {
     case 'PENDIENTE':
-      return 'text-yellow-600 bg-yellow-50'
+    case 'PROGRAMADA':
+    case 'EN CURSO':
+      return 'text-orange-600 bg-orange-50'
     case 'COMPLETADA':
+    case 'FINALIZADA':
       return 'text-green-600 bg-green-50'
     case 'CANCELADA':
       return 'text-red-600 bg-red-50'
@@ -35,7 +38,9 @@ export function getStatusText(estado: string) {
   const estados: { [key: string]: string } = {
     PENDIENTE: 'PENDIENTE',
     PROGRAMADA: 'PENDIENTE',
+    'EN CURSO': 'EN CURSO',
     COMPLETADA: 'COMPLETADA',
+    FINALIZADA: 'COMPLETADA',
     CANCELADA: 'CANCELADA',
   }
   return estados[estado] || estado
@@ -172,20 +177,20 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-gray-100">
             <button
               onClick={() => setShowDetail(true)}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition-all hover:bg-blue-100 shadow-sm"
             >
               <Eye className="h-4 w-4" />
               Ver Detalles
             </button>
 
             {esCoordinacion && (visita.estado === 'PENDIENTE' || visita.estado === 'PROGRAMADA') && (
-              <>
+              <div className="flex gap-2">
                 <Link
                   href={`/coordinacion/visitas/${visita.cod_visita}/editar`}
-                  className="flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 transition-colors hover:bg-yellow-100"
+                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-700 shadow-md hover:shadow-lg active:scale-95"
                 >
                   <Pencil className="h-4 w-4" />
                   Editar
@@ -193,12 +198,12 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
                 <button
                   onClick={() => setShowCancelModal(true)}
                   disabled={isPending}
-                  className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 shadow-sm active:scale-95"
                 >
                   <XCircle className="h-4 w-4" />
                   {isPending ? 'Cancelando...' : 'Cancelar'}
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>

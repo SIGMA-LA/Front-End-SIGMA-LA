@@ -3,7 +3,7 @@ import { getVisita } from '@/actions/visitas'
 import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
 import { getVehiculosDisponibles } from '@/actions/vehiculos'
-import { getEmpleadosDisponiblesEntrega } from '@/actions/empleado'
+import { getVisitadores } from '@/actions/empleado'
 import { getObras } from '@/actions/obras'
 
 export default async function EditarVisitaPage({
@@ -17,7 +17,7 @@ export default async function EditarVisitaPage({
     getVisita(Number(id)),
     getProvincias(),
     getVehiculosDisponibles(),
-    getEmpleadosDisponiblesEntrega(),
+    getVisitadores(),
   ])
 
   return (

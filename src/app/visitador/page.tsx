@@ -78,8 +78,8 @@ async function getVisitadorData(cuil: string, search: string, date: string) {
       entregasPendientes,
       entregasRealizadas,
     ] = await Promise.all([
-      getVisitasByEmpleado(cuil, ['PENDIENTE', 'PROGRAMADA', 'EN CURSO'], search, date),
-      getVisitasByEmpleado(cuil, ['COMPLETADA', 'FINALIZADA'], search, date),
+      getVisitasByEmpleado(cuil, ['PROGRAMADA', 'EN CURSO'], search, date),
+      getVisitasByEmpleado(cuil, ['COMPLETADA'], search, date),
       getEntregasByEmpleado(cuil, 'PENDIENTE', search, date),
       getEntregasByEmpleado(cuil, 'ENTREGADO', search, date),
     ])

@@ -3,11 +3,13 @@
 import { useEffect, useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Truck, AlertCircle, MapPin, Building2 } from 'lucide-react'
-import { createEntrega } from '@/actions/entregas'
-import { getObras } from '@/actions/obras'
+import { createEntrega, updateEntrega } from '@/actions/entregas'
+import { getObrasParaEntrega } from '@/actions/obras'
 import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinarias } from '@/actions/maquinarias'
-import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega } from '@/types'
+import { getOrdenesByObraAndFinalizada } from '@/actions/ordenes'
+import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega, OrdenProduccion, Entrega } from '@/types'
+import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
 // Componentes
 import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
@@ -22,6 +24,7 @@ import { notify } from '@/lib/toast'
 
 interface CrearEntregaFormProps {
   preloadedObra: Obra | null
+  entregaToEdit?: Entrega | null
   empleados: Empleado[]
   vehiculos: Vehiculo[]
   maquinarias: Maquinaria[]
@@ -29,6 +32,7 @@ interface CrearEntregaFormProps {
 
 export default function CrearEntregaForm({
   preloadedObra,
+  entregaToEdit,
   empleados,
   vehiculos,
   maquinarias,
@@ -61,6 +65,8 @@ export default function CrearEntregaForm({
   const [acompanantes, setAcompanantes] = useState<string[]>([])
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false)
 
+  const [esFinal, setEsFinal] = useState(false)
+
   // Estado de viáticos
   const [diasViaticos, setDiasViaticos] = useState(0)
   const viaticoPorDia = 50000
@@ -81,13 +87,116 @@ export default function CrearEntregaForm({
   const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
   const [isMaquinariaModalOpen, setIsMaquinariaModalOpen] = useState(false)
 
+  // Sync with edit mode
+  useEffect(() => {
+    if (entregaToEdit) {
+      const date = new Date(entregaToEdit.fecha_hora_entrega)
+      const dateStr = date.toISOString().split('T')[0]
+      const timeStr = date.toTimeString().split(' ')[0].substring(0, 5)
+
+      setFormData({
+        obraId: entregaToEdit.cod_obra,
+        direccion: entregaToEdit.obra?.direccion || '',
+        fecha: dateStr,
+        hora: timeStr,
+        detalle: entregaToEdit.detalle || '',
+      })
+
+      // Try to get dates from usage records if available
+      const vUsage = entregaToEdit.vehiculos?.[0] || entregaToEdit.uso_vehiculo_entrega?.[0]
+      if (vUsage) {
+        const dSalida = new Date(vUsage.fecha_hora_ini_uso)
+        setFechaSalida(dSalida.toISOString().split('T')[0])
+        setHoraSalida(dSalida.toTimeString().split(' ')[0].substring(0, 5))
+        
+        const dRegreso = new Date(vUsage.fecha_hora_fin_est || date)
+        setFechaRegreso(dRegreso.toISOString().split('T')[0])
+        setHoraRegreso(dRegreso.toTimeString().split(' ')[0].substring(0, 5))
+      } else {
+        setFechaSalida(dateStr)
+        setHoraSalida(timeStr)
+        setFechaRegreso(dateStr)
+        setHoraRegreso(timeStr)
+      }
+
+      setEsFinal(entregaToEdit.esFinal || false)
+      setDiasViaticos(entregaToEdit.dias_viaticos || 0)
+
+      const empList = entregaToEdit.empleados_asignados || entregaToEdit.entrega_empleado || []
+      const enc = empList.find(e => e.rol_entrega === 'ENCARGADO')
+      if (enc) setEncargado(enc.cuil)
+
+      const acs = empList.filter(e => e.rol_entrega === 'ACOMPANANTE').map(e => e.cuil)
+      setAcompanantes(acs)
+
+      const vehs = (entregaToEdit.vehiculos || entregaToEdit.uso_vehiculo_entrega || []).map(v => v.patente)
+      setSelectedVehiculos(vehs)
+
+      const maqs = (entregaToEdit.maquinarias || entregaToEdit.uso_maquinaria || []).map(m => m.cod_maquina)
+      setSelectedMaquinaria(maqs.map(String))
+      
+      const ops = (entregaToEdit.ordenes_de_produccion || []).map(op => op.cod_op)
+      setSelectedOPs(ops)
+
+      // Sync esFinal state
+      const esEntregaFinal = !!entregaToEdit.esFinal
+      setEsFinal(esEntregaFinal)
+    }
+  }, [entregaToEdit])
+
+  // Estado de Ordenes de Producción
+  const [availableOPs, setAvailableOPs] = useState<OrdenProduccion[]>([])
+  const [selectedOPs, setSelectedOPs] = useState<number[]>([])
+  const [isFetchingOPs, setIsFetchingOPs] = useState(false)
+  
+  const [viewerUrl, setViewerUrl] = useState('')
+  const [viewerTitle, setViewerTitle] = useState('')
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
+
+  useEffect(() => {
+    if (formData.obraId) {
+      setIsFetchingOPs(true)
+      getOrdenesByObraAndFinalizada(formData.obraId)
+        .then((ops) => {
+          // Unimos las OPs disponibles con las que ya están vinculadas a la entrega (si estamos editando)
+          const editOPs = entregaToEdit?.ordenes_de_produccion || []
+          const combined = [...ops]
+          
+          editOPs.forEach((op) => {
+            if (!combined.find((c) => c.cod_op === op.cod_op)) {
+              combined.push(op)
+            }
+          })
+          
+          setAvailableOPs(combined)
+          
+          // Refuerzo de selección inicial para edición
+          if (entregaToEdit) {
+            const currentOPs = (entregaToEdit.ordenes_de_produccion || []).map(o => o.cod_op)
+            setSelectedOPs(prev => {
+              // Mantenemos las actuales y añadimos las de la entrega si no están
+              const unique = new Set([...prev, ...currentOPs])
+              return Array.from(unique)
+            })
+          }
+        })
+        .catch((err) => {
+          console.error('[getOrdenesByObraAndFinalizada]', err)
+        })
+        .finally(() => setIsFetchingOPs(false))
+    } else {
+      setAvailableOPs([])
+      setSelectedOPs([])
+    }
+  }, [formData.obraId])
+
   const totalViaticos = useMemo(() => {
     const totalPersonas = (encargado ? 1 : 0) + acompanantes.length
     return diasViaticos * totalPersonas * viaticoPorDia
   }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
 
-  const buscarObrasPagadas = async (query: string) => {
-    return await getObras(query)
+  const buscarObrasSegunTipo = async (query: string) => {
+    return await getObrasParaEntrega(query, esFinal)
   }
 
   const getEmpleadoNombre = (cuil: string) => {
@@ -117,7 +226,9 @@ export default function CrearEntregaForm({
     setError(null)
 
     if (!formData.obraId) {
-      setError('Debe seleccionar una obra')
+      const msg = 'Debe seleccionar una obra'
+      setError(msg)
+      notify.error('Error en el formulario. Revise los detalles.')
       return
     }
     if (
@@ -128,7 +239,9 @@ export default function CrearEntregaForm({
       !fechaSalida ||
       !horaSalida
     ) {
-      setError('Debe especificar la salida, llegada y el regreso estimados')
+      const msg = 'Debe especificar la salida, llegada y el regreso estimados'
+      setError(msg)
+      notify.error('Error en el formulario. Revise los detalles.')
       return
     }
 
@@ -141,25 +254,29 @@ export default function CrearEntregaForm({
     ).getTime()
 
     if (fechaSalidaMs > fechaEntregaMs) {
-      setError(
-        'La salida de la planta no puede ser posterior a la llegada al cliente.'
-      )
+      const msg = 'La salida de la planta no puede ser posterior a la llegada al cliente.'
+      setError(msg)
+      notify.error('Error en el formulario. Revise los detalles.')
       return
     }
 
     if (fechaRegresoMs <= fechaSalidaMs) {
-      setError(
-        'El regreso estimado debe ser estrictamente posterior a la salida.'
-      )
+      const msg = 'El regreso estimado debe ser estrictamente posterior a la salida.'
+      setError(msg)
+      notify.error('Error en el formulario. Revise los detalles.')
       return
     }
 
     if (!encargado) {
-      setError('Debe asignar un encargado')
+      const msg = 'Debe asignar un encargado'
+      setError(msg)
+      notify.error('Error en el formulario. Revise los detalles.')
       return
     }
     if (!formData.detalle.trim()) {
-      setError('Debe agregar un detalle de la entrega')
+      const msg = 'Debe agregar un detalle de la entrega'
+      setError(msg)
+      notify.error('Error en el formulario. Revise los detalles.')
       return
     }
 
@@ -174,34 +291,55 @@ export default function CrearEntregaForm({
 
       const entregaData = {
         cod_obra: formData.obraId,
-        fecha_hora_entrega: `${formData.fecha}T${formData.hora}:00`,
+        fecha_hora_entrega: `${formData.fecha}T${formData.hora}:00Z`,
         detalle: formData.detalle,
         dias_viaticos: diasViaticos,
-        fecha_salida_estimada: `${fechaSalida}T${horaSalida}:00`,
-        fecha_regreso_estimado: `${fechaRegreso}T${horaRegreso}:00`,
+        fecha_salida_estimada: `${fechaSalida}T${horaSalida}:00Z`,
+        fecha_regreso_estimado: `${fechaRegreso}T${horaRegreso}:00Z`,
         empleados_asignados,
         vehiculos: selectedVehiculos.length > 0 ? selectedVehiculos : undefined,
         maquinarias:
           selectedMaquinaria.length > 0 ? selectedMaquinaria : undefined,
+        esFinal,
+        cod_ops: selectedOPs.length > 0 ? selectedOPs : undefined,
       }
 
       startTransition(async () => {
         try {
-          await createEntrega(entregaData)
-          notify.success('Entrega creada correctamente.')
+          if (entregaToEdit) {
+            // Filtrar solo los campos permitidos para actualización (UpdateEntregaData)
+            const updatePayload = {
+              fecha_hora_entrega: entregaData.fecha_hora_entrega,
+              detalle: entregaData.detalle,
+              dias_viaticos: entregaData.dias_viaticos,
+              fecha_salida_estimada: entregaData.fecha_salida_estimada,
+              fecha_regreso_estimado: entregaData.fecha_regreso_estimado,
+              empleados: entregaData.empleados_asignados,
+              vehiculos: entregaData.vehiculos,
+              maquinarias: entregaData.maquinarias,
+              cod_ops: selectedOPs,
+            }
+            await updateEntrega(entregaToEdit.cod_entrega, updatePayload)
+            notify.success('Entrega actualizada correctamente.')
+          } else {
+            await createEntrega(entregaData)
+            notify.success('Entrega creada correctamente.')
+          }
           router.push('/coordinacion/entregas')
           router.refresh()
         } catch (err: unknown) {
-          const message =
-            err instanceof Error ? err.message : 'Error desconocido'
+          const message = err instanceof Error ? err.message : 'Error desconocido'
+          if (message.includes('NEXT_REDIRECT') || (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
+             throw err
+          }
           setError(message)
-          notify.error(message)
+          notify.error(`Error al procesar la entrega.`)
         }
       })
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error desconocido'
       setError(message)
-      notify.error(message)
+      notify.error(`Error al procesar la entrega.`)
     }
   }
 
@@ -215,39 +353,43 @@ export default function CrearEntregaForm({
                 <Truck className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">
-                  {isFromObra
-                    ? `Nueva Entrega - ${preloadedObra?.direccion}`
-                    : 'Nueva Entrega'}
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent">
+                  {entregaToEdit ? 'Editar Entrega Operativa' : 'Programar Nueva Entrega'}
                 </h1>
-                {isFromObra && preloadedObra && (
-                  <p className="text-sm text-gray-600">
-                    Cliente:{' '}
-                    {preloadedObra.cliente.razon_social ||
-                      `${preloadedObra.cliente.nombre} ${preloadedObra.cliente.apellido}`}
-                  </p>
-                )}
+                <p className="text-sm font-medium text-slate-500">
+                  {entregaToEdit ? `Modificando entrega #${entregaToEdit.cod_entrega}` : 'Coordinación de logística y personal de planta'}
+                </p>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="mb-6 flex items-start gap-4 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-              <div className="text-sm text-red-800">
-                {error.split('\n').map((line, idx, arr) => (
-                  <p
-                    key={idx}
-                    className={
-                      arr.length > 1 && idx > 0
-                        ? 'relative mt-2 pl-3.5 before:absolute before:top-2 before:left-0 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500'
-                        : 'font-medium'
-                    }
-                  >
-                    {line}
-                  </p>
-                ))}
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-red-800">Se detectaron problemas:</h4>
+                <div className="mt-1 text-sm text-red-700 whitespace-pre-wrap leading-relaxed">
+                  {error.split('\n').map((line, idx, arr) => (
+                    <p
+                      key={idx}
+                      className={
+                        arr.length > 1 && idx > 0
+                          ? 'relative mt-2 pl-3.5 before:absolute before:top-2 before:left-0 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500'
+                          : 'font-medium'
+                      }
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
               </div>
+              <button 
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-600 transition-colors"
+                type="button"
+              >
+                <AlertCircle className="h-4 w-4" />
+              </button>
             </div>
           )}
 
@@ -261,24 +403,66 @@ export default function CrearEntregaForm({
               </div>
               
               <div className="p-5 space-y-5">
+                {/* Bloque de Tipo de Entrega */}
                 {!isFromObra && (
                   <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Obra programada *
+                      Tipo de Entrega *
                     </label>
-                    {formData.direccion ? (
-                      <div className="flex items-center justify-between rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shadow-inner">
-                            <Building2 className="h-5 w-5 text-indigo-600" />
-                          </div>
-                          <div className="text-left leading-tight">
-                            <span className="font-bold text-indigo-900 block">
-                              {formData.direccion}
-                            </span>
-                            <span className="text-xs text-indigo-600 font-medium">Obra Seleccionada</span>
-                          </div>
+                    <div className="flex bg-slate-100 p-1 rounded-xl mb-4 w-full md:w-max">
+                      <button
+                        type="button"
+                        disabled={!!entregaToEdit}
+                        onClick={() => {
+                          setEsFinal(false)
+                          if(formData.obraId) setFormData((prev) => ({ ...prev, obraId: null, direccion: '' }))
+                        }}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all ${
+                          !esFinal
+                            ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100'
+                            : 'text-slate-500 hover:text-slate-700'
+                        } ${!!entregaToEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        Entrega Parcial
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!!entregaToEdit}
+                        onClick={() => {
+                          setEsFinal(true)
+                          if(formData.obraId) setFormData((prev) => ({ ...prev, obraId: null, direccion: '' }))
+                        }}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all ${
+                          esFinal
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'text-slate-500 hover:text-slate-700'
+                        } ${!!entregaToEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        Entrega Final
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bloque de Obra Seleccionada - Siempre visible si hay contexto */}
+                <div>
+                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Obra programada *
+                  </label>
+                  {formData.direccion ? (
+                    <div className="flex items-center justify-between rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shadow-inner">
+                          <Building2 className="h-5 w-5 text-indigo-600" />
                         </div>
+                        <div className="text-left leading-tight">
+                          <span className="font-bold text-indigo-900 block">
+                            {formData.direccion}
+                          </span>
+                          <span className="text-xs text-indigo-600 font-medium">Obra Seleccionada</span>
+                        </div>
+                      </div>
+                      {(!entregaToEdit && !isFromObra) && (
                         <button
                           type="button"
                           onClick={() =>
@@ -288,24 +472,91 @@ export default function CrearEntregaForm({
                               direccion: '',
                             }))
                           }
-                          className="flex-shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 shadow-sm transition-all"
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors"
                         >
-                          Modificar
+                          Cambiar
                         </button>
+                      )}
+                    </div>
+                  ) : (
+                    <ObraSearchSelect
+                      key={esFinal ? 'final' : 'parcial'}
+                      buscarObras={buscarObrasSegunTipo}
+                      onSelectObra={(obra) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          obraId: obra.cod_obra,
+                          direccion: obra.direccion,
+                          localidad: obra.localidad?.nombre_localidad || '',
+                        }))
+                      }}
+                      placeholder={esFinal ? "Buscar obra PAGADA TOTALMENTE..." : "Buscar obra por dirección o cliente..."}
+                    />
+                  )}
+                </div>
+
+                {/* Selección de Órdenes de Producción */}
+                {formData.obraId && (
+                  <div className="border-t border-slate-100 pt-5 mt-5">
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Órdenes de Producción Finalizadas
+                    </label>
+                    {isFetchingOPs ? (
+                      <div className="flex items-center gap-2 p-3 text-sm text-slate-500 bg-slate-50 rounded-lg">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando documentos...
+                      </div>
+                    ) : availableOPs.length === 0 ? (
+                      <div className="p-3 text-sm text-slate-600 bg-amber-50 border border-amber-100/50 rounded-lg shadow-sm">
+                        No hay Órdenes de Producción finalizadas y sin entregar para esta obra. Puede continuar sin asignarlas si lo desea.
                       </div>
                     ) : (
-                      <ObraSearchSelect
-                        buscarObras={buscarObrasPagadas}
-                        onSelectObra={(obra) => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            obraId: obra.cod_obra,
-                            direccion: obra.direccion,
-                            localidad: obra.localidad?.nombre_localidad || '',
-                          }))
-                        }}
-                        placeholder="Buscar obra por dirección o cliente..."
-                      />
+                      <div className="space-y-3">
+                        {availableOPs.map((op) => {
+                          const isSelected = selectedOPs.includes(op.cod_op)
+                          return (
+                            <div
+                              key={op.cod_op}
+                              className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-all duration-200 ${
+                                isSelected
+                                  ? 'border-indigo-300 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-200 ring-opacity-50'
+                                  : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                              }`}
+                            >
+                              <label className="flex items-center gap-3 flex-grow cursor-pointer mb-3 sm:mb-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) setSelectedOPs((prev) => [...prev, op.cod_op])
+                                    else setSelectedOPs((prev) => prev.filter((id) => id !== op.cod_op))
+                                  }}
+                                  className="h-4.5 w-4.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                />
+                                <div>
+                                  <span className={`block font-semibold ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                                    OP #{op.cod_op}
+                                  </span>
+                                  <span className="text-xs text-slate-500 font-medium">
+                                    Confeccionada el: {new Date(op.fecha_confeccion).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setViewerUrl(op.url)
+                                  setViewerTitle(`Orden de Producción #${op.cod_op}`)
+                                  setIsViewerOpen(true)
+                                }}
+                                className="text-xs font-semibold text-indigo-700 bg-white px-4 py-2 rounded-lg border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 transition-colors shadow-sm w-full sm:w-auto text-center"
+                              >
+                                Ver Documento
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
                 )}
@@ -389,6 +640,13 @@ export default function CrearEntregaForm({
           </form>
         </div>
       </div>
+
+      <DocumentViewer
+        url={viewerUrl}
+        title={viewerTitle}
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+      />
 
       <DateTimeModal
         isOpen={isDateTimeModalOpen}

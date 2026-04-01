@@ -45,7 +45,8 @@ export async function getVisitadores(): Promise<Empleado[]> {
       },
       next: { revalidate: 30, tags: ['empleados', 'visitadores'] },
     })
-    return await res.json()
+    const result = await res.json()
+    return Array.isArray(result) ? result : (result.data || [])
   } catch (error) {
     console.error('[getVisitadores]', error)
     return []
