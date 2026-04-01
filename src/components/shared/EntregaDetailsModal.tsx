@@ -294,7 +294,7 @@ export default function EntregaDetailsModal({
                   <div className="flex items-end justify-between mt-3">
                     <div>
                       <p className="text-xs text-yellow-700">
-                        Total {estaEntrega.dias_viaticos} días x {estaEntrega.empleados_asignados.length} pers.
+                        Total {estaEntrega.dias_viaticos} días x {estaEntrega.empleados_asignados?.length || 0} pers.
                       </p>
                       <p className="text-xs text-yellow-600">Valor diario: {formatCurrency(viaticoPorDia)}</p>
                     </div>
