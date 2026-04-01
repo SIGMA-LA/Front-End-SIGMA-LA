@@ -50,6 +50,7 @@ interface CreateEntregaData {
   }>
   vehiculos?: string[]
   maquinarias?: string[] | number[]
+  esFinal?: boolean
 }
 
 interface UpdateEntregaData {

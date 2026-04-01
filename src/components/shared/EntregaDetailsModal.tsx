@@ -146,9 +146,16 @@ export default function EntregaDetailsModal({
               <Truck className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Detalles de Entrega #{estaEntrega.cod_entrega}
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Detalles de Entrega #{estaEntrega.cod_entrega}
+                </h2>
+                <span className={`px-2.5 py-0.5 text-[0.65rem] font-bold rounded-full border tracking-wider uppercase shadow-sm ${
+                  estaEntrega.esFinal ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-cyan-100 text-cyan-700 border-cyan-200'
+                }`}>
+                  {estaEntrega.esFinal ? 'Final' : 'Parcial'}
+                </span>
+              </div>
               <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                   estaEntrega.estado === 'ENTREGADO' ? 'bg-green-100 text-green-800' :

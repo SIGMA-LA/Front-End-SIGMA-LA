@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Truck, AlertCircle, MapPin, Building2 } from 'lucide-react'
 import { createEntrega } from '@/actions/entregas'
-import { getObras } from '@/actions/obras'
+import { getObrasParaEntrega } from '@/actions/obras'
 import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinarias } from '@/actions/maquinarias'
 import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega } from '@/types'
@@ -61,6 +61,8 @@ export default function CrearEntregaForm({
   const [acompanantes, setAcompanantes] = useState<string[]>([])
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false)
 
+  const [esFinal, setEsFinal] = useState(false)
+
   // Estado de viáticos
   const [diasViaticos, setDiasViaticos] = useState(0)
   const viaticoPorDia = 50000
@@ -86,8 +88,8 @@ export default function CrearEntregaForm({
     return diasViaticos * totalPersonas * viaticoPorDia
   }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
 
-  const buscarObrasPagadas = async (query: string) => {
-    return await getObras(query)
+  const buscarObrasSegunTipo = async (query: string) => {
+    return await getObrasParaEntrega(query, esFinal)
   }
 
   const getEmpleadoNombre = (cuil: string) => {
@@ -183,6 +185,7 @@ export default function CrearEntregaForm({
         vehiculos: selectedVehiculos.length > 0 ? selectedVehiculos : undefined,
         maquinarias:
           selectedMaquinaria.length > 0 ? selectedMaquinaria : undefined,
+        esFinal,
       }
 
       startTransition(async () => {
@@ -264,6 +267,40 @@ export default function CrearEntregaForm({
                 {!isFromObra && (
                   <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Tipo de Entrega *
+                    </label>
+                    <div className="flex bg-slate-100 p-1 rounded-xl mb-4 w-full md:w-max">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEsFinal(false)
+                          if(formData.obraId) setFormData((prev) => ({ ...prev, obraId: null, direccion: '' }))
+                        }}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all ${
+                          !esFinal
+                            ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        Entrega Parcial
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEsFinal(true)
+                          if(formData.obraId) setFormData((prev) => ({ ...prev, obraId: null, direccion: '' }))
+                        }}
+                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all ${
+                          esFinal
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        Entrega Final
+                      </button>
+                    </div>
+
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
                       Obra programada *
                     </label>
                     {formData.direccion ? (
@@ -295,7 +332,8 @@ export default function CrearEntregaForm({
                       </div>
                     ) : (
                       <ObraSearchSelect
-                        buscarObras={buscarObrasPagadas}
+                        key={esFinal ? 'final' : 'parcial'}
+                        buscarObras={buscarObrasSegunTipo}
                         onSelectObra={(obra) => {
                           setFormData((prev) => ({
                             ...prev,
@@ -304,7 +342,7 @@ export default function CrearEntregaForm({
                             localidad: obra.localidad?.nombre_localidad || '',
                           }))
                         }}
-                        placeholder="Buscar obra por dirección o cliente..."
+                        placeholder={esFinal ? "Buscar obra PAGADA TOTALMENTE..." : "Buscar obra por dirección o cliente..."}
                       />
                     )}
                   </div>

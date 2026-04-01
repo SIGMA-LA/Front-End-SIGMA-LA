@@ -70,6 +70,42 @@ export async function getObras(filter?: string): Promise<Obra[]> {
 }
 
 /**
+ * Searches obras filtered for creation of entregas
+ * @param {string} filter - Optional search query
+ * @param {boolean} esFinal - Boolean to filter by Entrega Final or Entrega Parcial
+ * @returns {Promise<Obra[]>} List of matching obras
+ */
+export async function getObrasParaEntrega(
+  filter: string = '',
+  esFinal: boolean = false
+): Promise<Obra[]> {
+  try {
+    const token = await getAccessToken()
+    const params = new URLSearchParams()
+    if (filter.trim().length > 0) {
+      params.append('q', filter.trim())
+    }
+    params.append('esFinal', String(esFinal))
+
+    const url = `${BASE_URL}/para-entrega?${params.toString()}`
+    
+    const res = await fetchWithErrorHandling(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 0, tags: ['obras'] },
+    })
+    const data = await res.json()
+    return Array.isArray(data) ? data : data.data || []
+  } catch (error) {
+    console.error('[getObrasParaEntrega]', error)
+    return []
+  }
+}
+
+/**
  * Retrieves obras associated with a specific client by CUIL
  * @param {string} cuil - Client CUIL
  * @returns {Promise<Obra[]>} List of matching obras

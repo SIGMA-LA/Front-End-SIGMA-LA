@@ -60,10 +60,19 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-        <div className="border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
+        <div className="flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
           <h3 className="text-lg font-semibold text-gray-800">
             {entrega.obra?.direccion || 'Dirección no disponible'}
           </h3>
+          <span
+            className={`rounded-full border px-3 py-1 text-xs font-bold shadow-sm ${
+              entrega.esFinal
+                ? 'border-indigo-200 bg-indigo-100 text-indigo-700'
+                : 'border-cyan-200 bg-cyan-100 text-cyan-700'
+            }`}
+          >
+            {entrega.esFinal ? 'Entrega Final' : 'Entrega Parcial'}
+          </span>
         </div>
 
         <div className="p-6">

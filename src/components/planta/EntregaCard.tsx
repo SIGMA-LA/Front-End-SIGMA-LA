@@ -66,10 +66,20 @@ export default function EntregaCard({
     >
       <div className="flex items-start justify-between">
         <div className="flex-grow space-y-1.5 min-w-0 pr-3">
-          {/* Fecha principal */}
-          <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
-            {formatDate(entregaEmpleado.entrega.fecha_hora_entrega)}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
+              {formatDate(entregaEmpleado.entrega.fecha_hora_entrega)}
+            </p>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[0.65rem] font-bold shadow-sm border tracking-wider ${
+                entregaEmpleado.entrega.esFinal
+                  ? 'border-indigo-200 bg-indigo-100 text-indigo-700'
+                  : 'border-cyan-200 bg-cyan-100 text-cyan-700'
+              }`}
+            >
+              {entregaEmpleado.entrega.esFinal ? 'FINAL' : 'PARCIAL'}
+            </span>
+          </div>
 
           {/* Dirección con icono */}
           <div className="flex items-start space-x-1">
@@ -82,7 +92,7 @@ export default function EntregaCard({
         </div>
 
         {/* Badge arriba a la derecha */}
-        <div className="ml-3 flex flex-col items-end space-y-1">
+        <div className="ml-3 flex flex-col items-end space-y-2">
           <span
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${styles[variant].badge}`}
           >

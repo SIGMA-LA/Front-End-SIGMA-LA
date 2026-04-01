@@ -22,6 +22,7 @@ export interface Entrega {
   maquinarias?: UsoMaquinaria[]
   vehiculos?: UsoVehiculoEntrega[]
   dias_viaticos?: number
+  esFinal: boolean
   orden_de_produccion?: OrdenProduccion
 }
 

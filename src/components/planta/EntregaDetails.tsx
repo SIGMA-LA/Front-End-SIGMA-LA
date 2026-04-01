@@ -94,6 +94,15 @@ export default function EntregaDetails({
                     ? 'CANCELADA' 
                     : 'PENDIENTE'}
               </span>
+              <span
+                className={`inline-flex rounded-full px-3 py-1.5 text-xs font-bold border lg:px-4 lg:py-2 lg:text-sm tracking-wider shadow-sm uppercase ${
+                  entrega.entrega.esFinal
+                    ? 'border-indigo-200 bg-indigo-100 text-indigo-800'
+                    : 'border-cyan-200 bg-cyan-100 text-cyan-800'
+                }`}
+              >
+                {entrega.entrega.esFinal ? 'ENTREGA FINAL' : 'ENTREGA PARCIAL'}
+              </span>
               <span className="text-sm text-gray-500 lg:text-base">
                 Rol: <span className="font-medium">{entrega.rol_entrega}</span>
               </span>
