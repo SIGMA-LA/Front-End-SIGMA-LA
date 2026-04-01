@@ -1,32 +1,47 @@
 'use client'
 
-import { useState } from 'react'
-import { FileText, Search, Calendar, Filter } from 'lucide-react'
-import type { Obra } from '@/types'
+import { Calendar, Filter } from 'lucide-react'
+import type { Obra, EstadoNotaFabricaProduccion } from '@/types'
 import NotaFabricaCard from './NotaFabricaCard'
 
+type TabType = EstadoNotaFabricaProduccion
+
+interface SidebarNotasFabricaFilters {
+  fechaDesde: string
+  fechaHasta: string
+}
+
 interface SidebarNotasFabricaProps {
-  obrasSinOrden: Obra[]
-  obrasEnProceso: Obra[]
+  obras: Obra[]
+  statusFilter: TabType
+  onStatusChange: (status: TabType) => void
+  filters: SidebarNotasFabricaFilters
+  onFiltersChange: (filters: SidebarNotasFabricaFilters) => void
   selectedObra: Obra | null
   onSelectObra: (obra: Obra) => void
   loading?: boolean
   error?: string | null
+  onRetry: () => void
 }
 
-type TabType = 'PENDIENTE' | 'EN_PROCESO' | 'FINALIZADA'
-
 export default function SidebarNotasFabrica({
-  obrasSinOrden,
-  obrasEnProceso,
+  obras,
+  statusFilter,
+  onStatusChange,
+  filters,
+  onFiltersChange,
   selectedObra,
   onSelectObra,
   loading = false,
   error = null,
+  onRetry,
 }: SidebarNotasFabricaProps) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterDate, setFilterDate] = useState('')
-  const [statusFilter, setStatusFilter] = useState<TabType>('PENDIENTE')
+  const hasActiveFilters =
+    Boolean(filters.fechaDesde) || Boolean(filters.fechaHasta)
+
+  const handleClearFilters = () => {
+    onFiltersChange({ fechaDesde: '', fechaHasta: '' })
+  }
 
   if (loading) {
     return (
@@ -51,61 +66,63 @@ export default function SidebarNotasFabrica({
         <p className="mb-6 text-xs leading-relaxed font-medium text-gray-500">
           {error}
         </p>
+        <button
+          onClick={onRetry}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+        >
+          Reintentar
+        </button>
       </div>
     )
   }
 
-  let currentList: Obra[] = []
-  if (statusFilter === 'PENDIENTE') currentList = obrasSinOrden
-  else if (statusFilter === 'EN_PROCESO') currentList = obrasEnProceso
-
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-white">
-      {/* Search and Filters Header */}
+      {/* Filters Header */}
       <div className="space-y-3 border-b border-gray-100 bg-gray-50/50 p-4">
-        {/* Search Bar */}
-        <div className="group relative">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-blue-500" />
-          <input
-            type="text"
-            placeholder="Buscar nota de fábrica..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-4 pl-9 text-sm shadow-sm transition-all outline-none placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          {/* Date Filter */}
-          <div className="relative flex-1">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="relative">
             <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
             <input
               type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
+              value={filters.fechaDesde}
+              onChange={(e) =>
+                onFiltersChange({ ...filters, fechaDesde: e.target.value })
+              }
               className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
             />
           </div>
 
-          {/* Clear Date Button */}
-          {filterDate && (
-            <button
-              onClick={() => setFilterDate('')}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[10px] font-bold text-gray-500 shadow-sm transition-colors hover:text-red-500"
-            >
-              LIMPIAR
-            </button>
-          )}
+          <div className="relative">
+            <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="date"
+              value={filters.fechaHasta}
+              onChange={(e) =>
+                onFiltersChange({ ...filters, fechaHasta: e.target.value })
+              }
+              className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+            />
+          </div>
         </div>
+
+        {hasActiveFilters && (
+          <button
+            onClick={handleClearFilters}
+            className="self-end rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[10px] font-bold text-gray-500 shadow-sm transition-colors hover:text-red-500"
+          >
+            LIMPIAR FILTROS
+          </button>
+        )}
       </div>
 
       {/* Status Switcher */}
       <div className="border-b border-gray-50 bg-white px-4 py-3">
         <div className="flex rounded-xl bg-gray-100/80 p-1">
           <button
-            onClick={() => setStatusFilter('PENDIENTE')}
+            onClick={() => onStatusChange('SIN_ORDEN')}
             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
-              statusFilter === 'PENDIENTE'
+              statusFilter === 'SIN_ORDEN'
                 ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -113,17 +130,17 @@ export default function SidebarNotasFabrica({
             SIN ORDEN
           </button>
           <button
-            onClick={() => setStatusFilter('EN_PROCESO')}
+            onClick={() => onStatusChange('EN_PRODUCCION')}
             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
-              statusFilter === 'EN_PROCESO'
+              statusFilter === 'EN_PRODUCCION'
                 ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            EN PROCESO
+            EN PRODUCCION
           </button>
           <button
-            onClick={() => setStatusFilter('FINALIZADA')}
+            onClick={() => onStatusChange('FINALIZADA')}
             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
               statusFilter === 'FINALIZADA'
                 ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
@@ -137,7 +154,7 @@ export default function SidebarNotasFabrica({
 
       {/* List content */}
       <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto bg-gray-50/30 p-4 lg:p-6">
-        {currentList.length === 0 ? (
+        {obras.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="mb-3 h-8 w-8 text-gray-200" />
             <p className="text-sm font-medium text-gray-500">
@@ -145,7 +162,7 @@ export default function SidebarNotasFabrica({
             </p>
           </div>
         ) : (
-          currentList.map((obra) => (
+          obras.map((obra) => (
             <NotaFabricaCard
               key={obra.cod_obra}
               obra={obra}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Package, ExternalLink, Calendar, FileText } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import { getOrdenesByObra } from '@/actions/ordenes'
@@ -31,11 +31,7 @@ export default function OrdenesProduccionList({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadOrdenes()
-  }, [cod_obra])
-
-  const loadOrdenes = async () => {
+  const loadOrdenes = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -47,7 +43,11 @@ export default function OrdenesProduccionList({
     } finally {
       setLoading(false)
     }
-  }
+  }, [cod_obra])
+
+  useEffect(() => {
+    void loadOrdenes()
+  }, [loadOrdenes])
 
   const handleOpenPdf = (url: string) => {
     window.open(url, '_blank')

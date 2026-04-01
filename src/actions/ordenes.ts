@@ -43,60 +43,25 @@ export async function getOrdenProduccion(cod_op: number) {
 }
 
 /**
- * Retrieves ordenes de produccion with optional filters
- * @param {string} estado - Optional estado filter (PENDIENTE, APROBADA, EN PRODUCCION, FINALIZADA)
- * @param {number} cod_obra - Optional obra code filter
+ * Retrieves ordenes de produccion with optional estado/date filters.
+ * Accepts either a plain estado string or a filters object.
  * @returns {Promise<{success: boolean, data: OrdenProduccion[], error?: string}>} Operation result with ordenes list
  */
 export async function getOrdenesProduccion(
-  estado?: EstadoOrdenProduccion,
-  cod_obra?: number
+  filtersOrEstado?:
+    | EstadoOrdenProduccion
+    | OrdenesProduccionBusquedaAvanzadaFilters
 ) {
   try {
-    let url = BASE_URL
-
-    // Use specific endpoint for certain estados
-    if (estado === 'APROBADA') {
-      url = `${BASE_URL}/validadas`
-    } else if (estado === 'EN PRODUCCION') {
-      url = `${BASE_URL}/en-produccion`
-    }
-
-    // Use obra-specific endpoint if cod_obra is provided
-    if (cod_obra) {
-      url = `${BASE_URL}/obra/${cod_obra}`
-    }
-
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      next: { revalidate: 30, tags: ['ordenes-produccion'] },
-    })
-
-    const ordenes = await response.json()
-
-    // Filter manually if estado is specified and not a specific endpoint
-    if (
-      estado &&
-      estado !== 'APROBADA' &&
-      estado !== 'EN PRODUCCION' &&
-      !cod_obra
-    ) {
-      return {
-        success: true,
-        data: ordenes.filter(
-          (orden: OrdenProduccion) => orden.estado === estado
-        ),
-      }
-    }
+    const filters =
+      typeof filtersOrEstado === 'string' ||
+      typeof filtersOrEstado === 'undefined'
+        ? { estado: filtersOrEstado }
+        : filtersOrEstado
 
     return {
       success: true,
-      data: ordenes,
+      data: await getOrdenesProduccionBusquedaAvanzada(filters),
     }
   } catch (error) {
     console.error('[getOrdenesProduccion]', error)
@@ -109,49 +74,102 @@ export async function getOrdenesProduccion(
 }
 
 /**
- * Retrieves validated ordenes de produccion (estado APROBADA)
- * @returns {Promise<OrdenProduccion[]>} List of validated ordenes
+ * Filters used by Produccion page to fetch ordenes lazily by estado.
  */
-export async function getOrdenesValidadas() {
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${BASE_URL}/validadas`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      next: { revalidate: 30, tags: ['ordenes-validadas'] },
-    })
+export interface OrdenesProduccionEstadoFechasFilters {
+  estado?: EstadoOrdenProduccion
+  fechaDesde?: string
+  fechaHasta?: string
+}
 
-    return await response.json()
+export interface OrdenesProduccionBusquedaAvanzadaFilters
+  extends OrdenesProduccionEstadoFechasFilters {}
+
+async function fetchOrdenesConFiltros(
+  filters: OrdenesProduccionBusquedaAvanzadaFilters,
+  revalidate: number,
+  tags: string[]
+): Promise<OrdenProduccion[]> {
+  const params = new URLSearchParams()
+  if (filters.estado) params.set('estado', filters.estado)
+  if (filters.fechaDesde) params.set('fechaDesde', filters.fechaDesde)
+  if (filters.fechaHasta) params.set('fechaHasta', filters.fechaHasta)
+
+  const url = `${BASE_URL}${params.toString() ? `?${params.toString()}` : ''}`
+  const token = await getAccessToken()
+  const response = await fetchWithErrorHandling(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    next: { revalidate, tags },
+  })
+
+  const data = await response.json()
+  return Array.isArray(data) ? data : []
+}
+
+/**
+ * Retrieves ordenes for Produccion view by estado and optional date filters.
+ */
+export async function getOrdenesProduccionPorEstadoYFechas({
+  estado,
+  fechaDesde,
+  fechaHasta,
+}: OrdenesProduccionEstadoFechasFilters): Promise<OrdenProduccion[]> {
+  try {
+    const estadoTag = estado ? estado.replace(/\s+/g, '-').toLowerCase() : 'all'
+
+    return await fetchOrdenesConFiltros({ estado, fechaDesde, fechaHasta }, 0, [
+      'ordenes-produccion',
+      `ordenes-produccion-${estadoTag}`,
+    ])
   } catch (error) {
-    console.error('[getOrdenesValidadas]', error)
+    if (error instanceof Error && error.message === 'Not found') {
+      return []
+    }
+    console.error('[getOrdenesProduccionPorEstadoYFechas]', error)
     return []
   }
 }
 
 /**
- * Retrieves ordenes de produccion in production (estado EN PRODUCCION)
- * @returns {Promise<OrdenProduccion[]>} List of ordenes in production
+ * Retrieves ordenes for Coordinacion by estado and optional date filters.
  */
-export async function getOrdenesEnProduccion() {
+export async function getOrdenesProduccionBusquedaAvanzada({
+  estado,
+  fechaDesde,
+  fechaHasta,
+}: OrdenesProduccionBusquedaAvanzadaFilters): Promise<OrdenProduccion[]> {
   try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${BASE_URL}/en-produccion`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      next: { revalidate: 30, tags: ['ordenes-produccion'] },
-    })
-
-    return await response.json()
+    return await fetchOrdenesConFiltros(
+      { estado, fechaDesde, fechaHasta },
+      30,
+      ['ordenes-produccion']
+    )
   } catch (error) {
-    console.error('[getOrdenesEnProduccion]', error)
+    if (error instanceof Error && error.message === 'Not found') {
+      return []
+    }
+    console.error('[getOrdenesProduccionBusquedaAvanzada]', error)
     return []
   }
+}
+
+/**
+ * Retrieves ordenes de produccion by estado and optional filters.
+ */
+export async function getOrdenesProduccionFiltradas({
+  estado,
+  fechaDesde,
+  fechaHasta,
+}: OrdenesProduccionEstadoFechasFilters): Promise<OrdenProduccion[]> {
+  return getOrdenesProduccionPorEstadoYFechas({
+    estado,
+    fechaDesde,
+    fechaHasta,
+  })
 }
 
 /**
@@ -179,8 +197,12 @@ export async function getOrdenesByObra(
       }
     )
 
-    return await response.json()
+    const data = await response.json()
+    return Array.isArray(data) ? data : []
   } catch (error) {
+    if (error instanceof Error && error.message === 'Not found') {
+      return []
+    }
     console.error('[getOrdenesByObra]', error)
     return []
   }
@@ -194,28 +216,8 @@ export async function getOrdenesByObra(
 export async function getOrdenesByObraAndFinalizada(
   cod_obra: number
 ): Promise<OrdenProduccion[]> {
-  try {
-    const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
-      `${BASE_URL}/obra/${cod_obra}/finalizada`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        next: {
-          revalidate: 30,
-          tags: ['ordenes-produccion', `ordenes-obra-${cod_obra}`],
-        },
-      }
-    )
-
-    return await response.json()
-  } catch (error) {
-    console.error('[getOrdenesByObraAndFinalizada]', error)
-    return []
-  }
+  const ordenes = await getOrdenesByObra(cod_obra)
+  return ordenes.filter((orden) => orden.estado === 'FINALIZADA')
 }
 
 /**

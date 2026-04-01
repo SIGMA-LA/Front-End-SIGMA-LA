@@ -10,6 +10,7 @@ import type {
   UpdateObraInput,
   PresupuestoInput,
   EstadoObra,
+  EstadoNotaFabricaProduccion,
 } from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
@@ -187,60 +188,48 @@ export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
   }
 }
 
-/**
- * Retrieves obras with nota fabrica but no approved or in-production orders
- * @returns {Promise<Obra[]>} List of obras
- */
-export async function getNotasSinOrdenAprobada(): Promise<Obra[]> {
-  try {
-    const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(
-      `${BASE_URL}/notas-sin-orden-aprobada`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        next: {
-          revalidate: 30,
-          tags: ['notas-sin-orden'],
-        },
-      }
-    )
-    const data = await res.json()
-    return Array.isArray(data) ? data : []
-  } catch (error) {
-    console.error('[getNotasSinOrdenAprobada]', error)
-    return []
-  }
+export interface NotasFabricaFilters {
+  estado: EstadoNotaFabricaProduccion
+  fechaDesde?: string
+  fechaHasta?: string
 }
 
 /**
- * Retrieves obras in production with nota fabrica and orders in process
- * @returns {Promise<Obra[]>} List of obras
+ * Retrieves notas de fabrica for produccion by estado and optional filters.
  */
-export async function getNotasConOrdenEnProceso(): Promise<Obra[]> {
+export async function getNotasFabricaProduccion({
+  estado,
+  fechaDesde,
+  fechaHasta,
+}: NotasFabricaFilters): Promise<Obra[]> {
   try {
+    const params = new URLSearchParams()
+    params.set('estado', estado)
+    if (fechaDesde) params.set('fechaDesde', fechaDesde)
+    if (fechaHasta) params.set('fechaHasta', fechaHasta)
+
+    const url = `${BASE_URL}/notas-fabrica?${params.toString()}`
+
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(
-      `${BASE_URL}/notas-con-orden-proceso`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        next: {
-          revalidate: 30,
-          tags: ['notas-con-orden'],
-        },
-      }
-    )
+    const res = await fetchWithErrorHandling(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: {
+        revalidate: 0,
+        tags: ['notas-fabrica', `notas-fabrica-${estado.toLowerCase()}`],
+      },
+    })
+
     const data = await res.json()
     return Array.isArray(data) ? data : []
   } catch (error) {
-    console.error('[getNotasConOrdenEnProceso]', error)
+    if (error instanceof Error && error.message === 'Not found') {
+      return []
+    }
+    console.error('[getNotasFabricaProduccion]', error)
     return []
   }
 }
