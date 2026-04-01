@@ -269,7 +269,6 @@ export default function ProduccionClient({
 
   const handleNotasFiltersChange = (filters: ProduccionFilters) => {
     setNotasFilters(filters)
-    setSelectedObra(null)
   }
 
   const handleOrdenesTabChange = (status: OrdenesTab) => {
@@ -279,7 +278,6 @@ export default function ProduccionClient({
 
   const handleOrdenesFiltersChange = (filters: ProduccionFilters) => {
     setOrdenesFilters(filters)
-    setSelectedOrden(null)
   }
 
   const handleRetryNotas = () => {

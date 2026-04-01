@@ -12,19 +12,13 @@ import type { OrdenProduccion } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { useState } from 'react'
+import { formatDateOnly } from '@/lib/utils'
 
 interface OrdenProduccionDetailsProps {
   orden: OrdenProduccion
   onIniciarProduccion?: () => void
   onFinalizarProduccion?: () => void
 }
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 const getEstadoBadge = (estado: OrdenProduccion['estado']) => {
   const badges = {
@@ -74,7 +68,7 @@ export default function OrdenProduccionDetails({
                 <span className="text-sm text-gray-500 lg:text-base">
                   Validada:{' '}
                   <span className="font-medium">
-                    {formatDate(orden.fecha_validacion)}
+                    {formatDateOnly(orden.fecha_validacion)}
                   </span>
                 </span>
               )}
@@ -106,7 +100,7 @@ export default function OrdenProduccionDetails({
           <div className="col-span-1 flex items-center space-x-3 rounded-lg bg-gray-50 p-3 sm:col-span-2 lg:space-x-4">
             <Calendar className="h-5 w-5 text-gray-400 lg:h-6 lg:w-6" />
             <span>
-              Fecha de confección: {formatDate(orden.fecha_confeccion)}
+              Fecha de confección: {formatDateOnly(orden.fecha_confeccion)}
             </span>
           </div>
         </div>

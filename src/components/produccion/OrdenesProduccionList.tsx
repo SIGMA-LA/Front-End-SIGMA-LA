@@ -2,17 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { Package, ExternalLink, Calendar, FileText } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import { getOrdenesByObra } from '@/actions/ordenes'
+import { formatDateOnly } from '@/lib/utils'
 
 interface OrdenesProduccionListProps {
   cod_obra: number
 }
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 const getEstadoBadge = (estado: string) => {
   const badges = {
@@ -105,12 +99,16 @@ export default function OrdenesProduccionList({
             <div className="flex items-center space-x-4 text-sm text-gray-600">
               <div className="flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
-                <span>Confección: {formatDate(orden.fecha_confeccion)}</span>
+                <span>
+                  Confección: {formatDateOnly(orden.fecha_confeccion)}
+                </span>
               </div>
               {orden.fecha_validacion && (
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-4 w-4" />
-                  <span>Validación: {formatDate(orden.fecha_validacion)}</span>
+                  <span>
+                    Validación: {formatDateOnly(orden.fecha_validacion)}
+                  </span>
                 </div>
               )}
             </div>

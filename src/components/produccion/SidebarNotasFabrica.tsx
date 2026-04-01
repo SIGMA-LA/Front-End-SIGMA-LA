@@ -43,7 +43,7 @@ export default function SidebarNotasFabrica({
     onFiltersChange({ fechaDesde: '', fechaHasta: '' })
   }
 
-  if (loading) {
+  if (loading && obras.length === 0) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center bg-white p-12">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
@@ -80,29 +80,42 @@ export default function SidebarNotasFabrica({
     <div className="flex h-full w-full flex-col overflow-hidden bg-white">
       {/* Filters Header */}
       <div className="space-y-3 border-b border-gray-100 bg-gray-50/50 p-4">
+        <p className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+          Filtrar por fecha (inicio de obra)
+        </p>
         <div className="grid grid-cols-2 gap-2">
-          <div className="relative">
-            <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="date"
-              value={filters.fechaDesde}
-              onChange={(e) =>
-                onFiltersChange({ ...filters, fechaDesde: e.target.value })
-              }
-              className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-            />
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-gray-500">
+              Fecha desde
+            </label>
+            <div className="relative">
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="date"
+                value={filters.fechaDesde}
+                onChange={(e) =>
+                  onFiltersChange({ ...filters, fechaDesde: e.target.value })
+                }
+                className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+              />
+            </div>
           </div>
 
-          <div className="relative">
-            <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="date"
-              value={filters.fechaHasta}
-              onChange={(e) =>
-                onFiltersChange({ ...filters, fechaHasta: e.target.value })
-              }
-              className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
-            />
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-gray-500">
+              Fecha hasta
+            </label>
+            <div className="relative">
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="date"
+                value={filters.fechaHasta}
+                onChange={(e) =>
+                  onFiltersChange({ ...filters, fechaHasta: e.target.value })
+                }
+                className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+              />
+            </div>
           </div>
         </div>
 
@@ -166,6 +179,7 @@ export default function SidebarNotasFabrica({
             <NotaFabricaCard
               key={obra.cod_obra}
               obra={obra}
+              status={statusFilter}
               isSelected={selectedObra?.cod_obra === obra.cod_obra}
               onClick={() => onSelectObra(obra)}
             />

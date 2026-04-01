@@ -1,5 +1,6 @@
 import type { OrdenProduccion } from '@/types'
 import { MapPin, Package, Calendar } from 'lucide-react'
+import { formatDateOnly } from '@/lib/utils'
 
 interface OrdenProduccionCardProps {
   orden: OrdenProduccion
@@ -7,13 +8,6 @@ interface OrdenProduccionCardProps {
   onClick: () => void
   estado: OrdenProduccion['estado']
 }
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 export default function OrdenProduccionCard({
   orden,
@@ -80,7 +74,7 @@ export default function OrdenProduccionCard({
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
               <p className="text-xs leading-relaxed text-gray-500 lg:text-sm">
-                Validada: {formatDate(orden.fecha_validacion)}
+                Validada: {formatDateOnly(orden.fecha_validacion)}
               </p>
             </div>
           )}
