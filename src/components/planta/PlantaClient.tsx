@@ -233,11 +233,8 @@ export default function PlantaClient({
               onFinalizarEntrega={() => setShowConfirmModal(true)}
             />
           ) : (
-            <EmptyState
+          <EmptyState
               message="Selecciona una entrega del panel lateral para ver los detalles"
-              totalPendientes={estadoFiltro === 'PENDIENTE' ? entregas.length : 0}
-              totalRealizadas={estadoFiltro === 'ENTREGADO' ? entregas.length : 0}
-              totalCanceladas={estadoFiltro === 'CANCELADO' ? entregas.length : 0}
             />
           )}
         </main>

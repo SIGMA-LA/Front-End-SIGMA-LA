@@ -36,6 +36,10 @@ export interface Visita {
 
 export type VisitaFormData = {
   fecha_hora_visita: string
+  fechaSalida?: string
+  horaSalida?: string
+  fechaRegreso?: string
+  horaRegreso?: string
   motivo_visita: MotivoVisita
   observaciones: string
   direccion_visita: string

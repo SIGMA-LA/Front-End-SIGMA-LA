@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
@@ -62,6 +62,10 @@ interface UpdateEntregaData {
   estado?: EstadoEntrega
   vehiculos?: string[]
   maquinarias?: string[] | number[]
+  empleados?: Array<{ cuil: string; rol_entrega: RolEntrega }>
+  fecha_salida_estimada?: string
+  fecha_regreso_estimado?: string
+  cod_ops?: number[]
 }
 
 /**
@@ -262,6 +266,7 @@ export async function finalizarEntrega(
 
     const data = await res.json()
 
+    revalidateTag(`entrega-${codEntrega}`)
     revalidatePath('/visitador')
     revalidatePath('/planta')
     revalidatePath('/coordinacion/entregas')
@@ -299,10 +304,10 @@ export async function cancelarEntrega(
       body: JSON.stringify({ motivo }),
     })
 
+    revalidateTag(`entrega-${codEntrega}`)
     revalidatePath('/visitador')
     revalidatePath('/planta')
     revalidatePath('/coordinacion/entregas')
-
     return { success: true }
   } catch (error) {
     console.error('[cancelarEntrega]', error)
@@ -348,6 +353,9 @@ export async function createEntrega(
       maquinarias: data.uso_maquinaria || data.maquinarias || [],
     }
   }
+  
+  revalidatePath('/coordinacion/entregas')
+  revalidatePath('/planta/entregas')
   return data as unknown as Entrega
 }
 
@@ -365,6 +373,7 @@ export async function updateEntrega(
   const payload = {
     ...entregaData,
     maquinarias: entregaData.maquinarias?.map((m) => Number(m)),
+    cod_ops: entregaData.cod_ops,
   }
 
   const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -375,6 +384,7 @@ export async function updateEntrega(
     },
     body: JSON.stringify(payload),
   })
+
   let data: Record<string, unknown> | null = await res.json()
   if (data) {
     data = {
@@ -385,6 +395,11 @@ export async function updateEntrega(
       maquinarias: data.uso_maquinaria || data.maquinarias || [],
     }
   }
+
+  revalidateTag(`entrega-${id}`)
+  revalidatePath('/coordinacion/entregas')
+  revalidatePath(`/coordinacion/entregas/${id}/editar`)
+
   return data as unknown as Entrega
 }
 
@@ -402,6 +417,9 @@ export async function deleteEntrega(id: number): Promise<void> {
       'Content-Type': 'application/json',
     },
   })
+  
+  revalidateTag(`entrega-${id}`)
+  revalidatePath('/coordinacion/entregas')
 }
 
 /**
@@ -424,16 +442,18 @@ export async function createEntregaFromForm(formData: FormData) {
 
     const entregaData: CreateEntregaData = {
       cod_obra: Number(formData.get('cod_obra')),
-      fecha_hora_entrega: formData.get('fecha_hora_entrega') as string,
+      fecha_hora_entrega: `${formData.get('fecha_hora_entrega')}Z`,
       detalle: formData.get('detalle') as string,
       observaciones: (formData.get('observaciones') as string) || undefined,
       dias_viaticos: formData.get('dias_viaticos')
         ? Number(formData.get('dias_viaticos'))
         : undefined,
-      fecha_salida_estimada:
-        (formData.get('fecha_salida_estimada') as string) || undefined,
-      fecha_regreso_estimado:
-        (formData.get('fecha_regreso_estimado') as string) || undefined,
+      fecha_salida_estimada: formData.get('fecha_salida_estimada')
+        ? `${formData.get('fecha_salida_estimada')}Z`
+        : undefined,
+      fecha_regreso_estimado: formData.get('fecha_regreso_estimado')
+        ? `${formData.get('fecha_regreso_estimado')}Z`
+        : undefined,
       empleados_asignados: empleadosAsignados,
       vehiculos,
       maquinarias,
@@ -454,8 +474,8 @@ export async function createEntregaFromForm(formData: FormData) {
  * @param {FormData} formData - Form submission data
  */
 export async function updateEntregaFromForm(formData: FormData) {
+  const codEntrega = Number(formData.get('cod_entrega'))
   try {
-    const codEntrega = Number(formData.get('cod_entrega'))
     const vehiculosData = formData.get('vehiculos')
     const vehiculos = vehiculosData
       ? JSON.parse(vehiculosData as string)
@@ -466,7 +486,7 @@ export async function updateEntregaFromForm(formData: FormData) {
       : undefined
 
     const entregaData: UpdateEntregaData = {
-      fecha_hora_entrega: formData.get('fecha_hora_entrega') as string,
+      fecha_hora_entrega: `${formData.get('fecha_hora_entrega')}Z`,
       detalle: formData.get('detalle') as string,
       observaciones: (formData.get('observaciones') as string) || undefined,
       dias_viaticos: formData.get('dias_viaticos')

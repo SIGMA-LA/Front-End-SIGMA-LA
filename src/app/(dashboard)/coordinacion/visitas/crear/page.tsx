@@ -2,8 +2,8 @@ import CrearVisita from '@/components/coordinacion/CrearVisita'
 import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { getProvincias } from '@/lib/cache'
 import { getVehiculosDisponibles } from '@/actions/vehiculos'
-import { getEmpleados } from '@/actions/empleado'
 import { getObras, getObra } from '@/actions/obras'
+import { getVisitadores } from '@/actions/empleado'
 
 import type { SearchParams } from '@/types'
 
@@ -19,7 +19,7 @@ export default async function CrearVisitaPage({
     await Promise.all([
       getProvincias(),
       getVehiculosDisponibles(),
-      getEmpleados(),
+      getVisitadores(),
       obraId ? getObra(Number(obraId)) : null,
     ])
 

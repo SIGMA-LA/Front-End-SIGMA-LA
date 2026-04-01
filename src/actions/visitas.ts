@@ -173,6 +173,7 @@ export async function createVisita(
     })
     const result = await response.json()
     revalidatePath('/coordinacion/visitas')
+    revalidatePath('/visitador')
     return result
   } catch (error) {
     console.error('[createVisita]', error)
@@ -202,6 +203,8 @@ export async function updateVisita(
     })
     const result = await response.json()
     revalidatePath('/coordinacion/visitas')
+    revalidatePath('/visitador')
+    revalidatePath(`/coordinacion/visitas/${id}/editar`)
     return result
   } catch (error) {
     console.error('[updateVisita]', error)
@@ -281,12 +284,12 @@ export async function cancelarVisita(codVisita: number, motivo: string) {
 export async function createVisitaFromForm(formData: FormData) {
   try {
     const visitaData: VisitaFormData & { fechaSalida?: string; fechaHasta?: string } = {
-      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00Z`,
       fechaSalida: formData.get('fechaSalida') && formData.get('horaSalida')
-        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00`
+        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00Z`
         : undefined,
       fechaHasta: formData.get('fechaRegreso') && formData.get('horaRegreso')
-        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00`
+        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00Z`
         : undefined,
       motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
@@ -309,8 +312,6 @@ export async function createVisitaFromForm(formData: FormData) {
     console.error('[createVisitaFromForm]', error)
     throw error
   }
-
-  redirect('/coordinacion/visitas')
 }
 
 /**
@@ -322,12 +323,12 @@ export async function updateVisitaFromForm(formData: FormData) {
     const codVisita = Number(formData.get('cod_visita'))
 
     const visitaData: Partial<VisitaFormData> & { fechaSalida?: string; fechaHasta?: string } = {
-      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00`,
+      fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00Z`,
       fechaSalida: formData.get('fechaSalida') && formData.get('horaSalida')
-        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00`
+        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00Z`
         : undefined,
       fechaHasta: formData.get('fechaRegreso') && formData.get('horaRegreso')
-        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00`
+        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00Z`
         : undefined,
       motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
@@ -349,6 +350,4 @@ export async function updateVisitaFromForm(formData: FormData) {
     console.error('[updateVisitaFromForm]', error)
     throw error
   }
-
-  redirect('/coordinacion/visitas')
 }

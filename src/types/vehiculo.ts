@@ -38,7 +38,7 @@ export interface UsoVehiculoEntrega {
   patente: string
   cod_entrega: number
   fecha_hora_ini_uso: string
-  fecha_hora_ini_est: string
+  fecha_hora_fin_est: string
   fecha_hora_fin_real?: string
   estado: string
   vehiculo?: Vehiculo
@@ -48,7 +48,7 @@ export interface UsoVehiculoVisita {
   patente: string
   cod_visita: number
   fecha_hora_ini_uso: string
-  fecha_hora_ini_est: string
+  fecha_hora_fin_est: string
   fecha_hora_fin_real?: string
   estado: string
   vehiculo?: Vehiculo

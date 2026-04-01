@@ -8,13 +8,6 @@ const baseOptions: ToastOptions = {
   draggable: true,
 }
 
-function buildToastId(
-  type: 'success' | 'error' | 'info' | 'warning',
-  message: string
-) {
-  return `${type}:${message.trim().toLowerCase()}`
-}
-
 function withDefaults(
   type: 'success' | 'error' | 'info' | 'warning',
   message: string,
@@ -22,7 +15,6 @@ function withDefaults(
 ): ToastOptions {
   return {
     ...baseOptions,
-    toastId: options?.toastId ?? buildToastId(type, message),
     ...options,
   }
 }
