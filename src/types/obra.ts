@@ -6,6 +6,10 @@ import type { Pago } from '@/types/pago'
 import { ESTADOS_OBRA } from '@/constants'
 
 export type EstadoObra = (typeof ESTADOS_OBRA)[number]
+export type EstadoNotaFabricaProduccion =
+  | 'SIN_ORDEN'
+  | 'EN_PRODUCCION'
+  | 'FINALIZADA'
 
 export interface Presupuesto {
   nro_presupuesto: number

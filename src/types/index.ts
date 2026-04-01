@@ -13,6 +13,7 @@ export type { Provincia, Localidad } from './geo'
 export type {
   Obra,
   EstadoObra,
+  EstadoNotaFabricaProduccion,
   Presupuesto,
   CreateObraInput,
   UpdateObraInput,

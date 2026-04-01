@@ -1,9 +1,8 @@
 import { Suspense } from 'react'
-import { Package, ClipboardList } from 'lucide-react'
+import { ClipboardList } from 'lucide-react'
 import { getOrdenesProduccion } from '@/actions/ordenes'
 import OrdenesProduccionContent from '@/components/coordinacion/orden_produccion/OrdenesProduccionContent'
-import SearchWrapper from '@/components/shared/SearchWrapper'
-import type { OrdenProduccion, EstadoOrdenProduccion } from '@/types'
+import type { EstadoOrdenProduccion } from '@/types'
 
 function OrdenesListSkeleton() {
   return (
@@ -34,18 +33,11 @@ function OrdenesListSkeleton() {
   )
 }
 
-async function OrdenesGrid({
-  searchQuery,
-  estado,
-}: {
-  searchQuery?: string
-  estado?: string
-}) {
+async function OrdenesGrid({ estado }: { estado?: string }) {
   // Ajustamos el estado para que coincida con lo que espera la acción
   const estadoFilter = estado as EstadoOrdenProduccion | undefined
 
-
-  const result = await getOrdenesProduccion(estadoFilter)
+  const result = await getOrdenesProduccion({ estado: estadoFilter })
 
   if (!result.success) {
     return (
@@ -57,50 +49,26 @@ async function OrdenesGrid({
     )
   }
 
-  let ordenes = result.data || []
-
-  // Filtrado por texto en el servidor si hay searchQuery
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase()
-    ordenes = ordenes.filter((o: OrdenProduccion) => {
-      const codStr = o.cod_op.toString().toLowerCase()
-      const direccion = o.obra?.direccion?.toLowerCase() || ''
-      const clienteNombre = o.obra?.cliente?.nombre?.toLowerCase() || ''
-      const clienteApellido = o.obra?.cliente?.apellido?.toLowerCase() || ''
-      const razonSocial = o.obra?.cliente?.razon_social?.toLowerCase() || ''
-
-      return (
-        codStr.includes(q) ||
-        direccion.includes(q) ||
-        clienteNombre.includes(q) ||
-        clienteApellido.includes(q) ||
-        razonSocial.includes(q)
-      )
-    })
-  }
-
-  return <OrdenesProduccionContent ordenes={ordenes} />
+  return <OrdenesProduccionContent ordenes={result.data || []} />
 }
 
 interface OrdenesPageContentProps {
-  searchQuery?: string
   estadoInitial?: string
 }
 
 export default async function OrdenesPageContent({
-  searchQuery = '',
   estadoInitial = 'PENDIENTE',
 }: OrdenesPageContentProps) {
   // El filtro 'estadoInitial' lo usa el componente cliente para su estado por defecto
   // y nosotros para la búsqueda inicial en el servidor.
-  
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 shadow-sm border border-blue-200">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-blue-200 bg-blue-100 shadow-sm">
               <ClipboardList className="h-6 w-6 text-blue-600" />
             </div>
             <div>
@@ -114,21 +82,9 @@ export default async function OrdenesPageContent({
           </div>
         </div>
 
-        {/* Buscador */}
-        <div className="mb-6">
-          <SearchWrapper
-            placeholder="Buscar por código, dirección de obra o cliente..."
-            initialValue={searchQuery}
-            clearOtherParams={['estado']}
-          />
-        </div>
-
         {/* Listado con Suspense */}
-        <Suspense
-          key={`${searchQuery}-${estadoInitial}`}
-          fallback={<OrdenesListSkeleton />}
-        >
-          <OrdenesGrid searchQuery={searchQuery} estado={estadoInitial} />
+        <Suspense key={estadoInitial} fallback={<OrdenesListSkeleton />}>
+          <OrdenesGrid estado={estadoInitial} />
         </Suspense>
       </div>
     </div>

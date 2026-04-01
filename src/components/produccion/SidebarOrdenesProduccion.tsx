@@ -1,146 +1,201 @@
-import { Package } from 'lucide-react'
-import type { OrdenProduccion } from '@/types'
+'use client'
+
+import { Calendar, Filter } from 'lucide-react'
+import type { OrdenProduccion, EstadoOrdenProduccion } from '@/types'
 import OrdenProduccionCard from './OrdenProduccionCard'
 
+type TabType = EstadoOrdenProduccion
+
+interface SidebarOrdenesFilters {
+  fechaDesde: string
+  fechaHasta: string
+}
+
 interface SidebarOrdenesProduccionProps {
-  ordenesAprobadas: OrdenProduccion[]
-  ordenesEnProduccion: OrdenProduccion[]
+  ordenes: OrdenProduccion[]
+  statusFilter: TabType
+  onStatusChange: (status: TabType) => void
+  filters: SidebarOrdenesFilters
+  onFiltersChange: (filters: SidebarOrdenesFilters) => void
   selectedOrden: OrdenProduccion | null
   onSelectOrden: (orden: OrdenProduccion) => void
   loading?: boolean
   error?: string | null
+  onRetry: () => void
 }
 
 export default function SidebarOrdenesProduccion({
-  ordenesAprobadas,
-  ordenesEnProduccion,
+  ordenes,
+  statusFilter,
+  onStatusChange,
+  filters,
+  onFiltersChange,
   selectedOrden,
   onSelectOrden,
   loading = false,
   error = null,
+  onRetry,
 }: SidebarOrdenesProduccionProps) {
-  if (loading) {
+  const hasActiveFilters =
+    Boolean(filters.fechaDesde) || Boolean(filters.fechaHasta)
+
+  const handleClearFilters = () => {
+    onFiltersChange({ fechaDesde: '', fechaHasta: '' })
+  }
+
+  if (loading && ordenes.length === 0) {
     return (
-      <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:p-6">
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600 lg:h-10 lg:w-10"></div>
-            <p className="text-sm text-gray-500 lg:text-base">
-              Cargando órdenes...
-            </p>
-          </div>
-        </div>
-      </aside>
+      <div className="flex h-full w-full flex-col items-center justify-center bg-white p-12">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <p className="mt-4 text-sm font-medium tracking-tight text-gray-500">
+          Cargando órdenes...
+        </p>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <aside className="h-full w-full flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:p-6">
-        <div className="flex h-64 items-center justify-center">
-          <div className="px-4 text-center sm:px-6">
-            <div className="mb-4 text-red-500">
-              <svg
-                className="mx-auto h-12 w-12 lg:h-16 lg:w-16"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <p className="mb-3 text-base font-medium text-red-600 lg:text-lg">
-              Error al cargar órdenes
-            </p>
-            <p className="text-sm text-gray-500 lg:text-base">{error}</p>
-          </div>
+      <div className="flex h-full w-full flex-col items-center justify-center bg-white p-8 text-center">
+        <div className="mb-4 rounded-full bg-red-50 p-4 text-red-500">
+          <Filter className="h-8 w-8" />
         </div>
-      </aside>
+        <p className="mb-2 text-base font-bold text-gray-900">
+          Error al cargar órdenes
+        </p>
+        <p className="mb-6 text-xs leading-relaxed font-medium text-gray-500">
+          {error}
+        </p>
+        <button
+          onClick={onRetry}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+        >
+          Reintentar
+        </button>
+      </div>
     )
   }
 
   return (
-    <aside className="h-full w-full flex-shrink-0 space-y-4 overflow-y-auto border-r border-gray-200 bg-white p-2 sm:p-4 lg:space-y-8 lg:p-6">
-      {/* Órdenes Aprobadas (Por Iniciar) */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 pt-2 sm:mb-4 sm:space-x-3 sm:pt-3 lg:mb-5">
-          <div className="h-3 w-3 rounded-full bg-blue-500 lg:h-4 lg:w-4"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
-            Órdenes Aprobadas ({ordenesAprobadas.length})
-          </h2>
-        </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {ordenesAprobadas.length === 0 ? (
-            <div className="py-6 text-center sm:py-8 lg:py-12">
-              <div className="mb-3 text-gray-400 sm:mb-4">
-                <Package className="mx-auto h-8 w-8 sm:h-10 sm:w-10 lg:h-14 lg:w-14" />
-              </div>
-              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                No hay órdenes aprobadas
-              </p>
-            </div>
-          ) : (
-            ordenesAprobadas.map((orden) => (
-              <OrdenProduccionCard
-                key={orden.cod_op}
-                orden={orden}
-                isSelected={selectedOrden?.cod_op === orden.cod_op}
-                onClick={() => onSelectOrden(orden)}
-                estado={orden.estado}
+    <div className="flex h-full w-full flex-col overflow-hidden bg-white">
+      {/* Filters Header */}
+      <div className="space-y-3 border-b border-gray-100 bg-gray-50/50 p-4">
+        <p className="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
+          Filtrar por fecha (confección de OP)
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-gray-500">
+              Fecha desde
+            </label>
+            <div className="relative">
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="date"
+                value={filters.fechaDesde}
+                onChange={(e) =>
+                  onFiltersChange({ ...filters, fechaDesde: e.target.value })
+                }
+                className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
               />
-            ))
-          )}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-gray-500">
+              Fecha hasta
+            </label>
+            <div className="relative">
+              <Calendar className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="date"
+                value={filters.fechaHasta}
+                onChange={(e) =>
+                  onFiltersChange({ ...filters, fechaHasta: e.target.value })
+                }
+                className="w-full cursor-pointer rounded-lg border border-gray-200 bg-white py-1.5 pr-3 pl-9 text-xs font-medium transition-all outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+              />
+            </div>
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <button
+            onClick={handleClearFilters}
+            className="self-end rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-[10px] font-bold text-gray-500 shadow-sm transition-colors hover:text-red-500"
+          >
+            LIMPIAR FILTROS
+          </button>
+        )}
+      </div>
+
+      {/* Status Switcher */}
+      <div className="border-b border-gray-50 bg-white px-4 py-3">
+        <div className="flex rounded-xl bg-gray-100/80 p-1">
+          <button
+            onClick={() => onStatusChange('PENDIENTE')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'PENDIENTE'
+                ? 'bg-white text-amber-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            PENDIENTES
+          </button>
+          <button
+            onClick={() => onStatusChange('APROBADA')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'APROBADA'
+                ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            APROBADAS
+          </button>
+          <button
+            onClick={() => onStatusChange('EN PRODUCCION')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'EN PRODUCCION'
+                ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            EN PRODUCCIÓN
+          </button>
+          <button
+            onClick={() => onStatusChange('FINALIZADA')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'FINALIZADA'
+                ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            FINALIZADAS
+          </button>
         </div>
       </div>
 
-      {/* Órdenes En Producción */}
-      <div className="px-1 sm:px-2 lg:px-3">
-        <div className="mb-3 flex items-center space-x-2 px-1 sm:mb-4 sm:space-x-3 lg:mb-5">
-          <div className="h-3 w-3 rounded-full bg-green-500 lg:h-4 lg:w-4"></div>
-          <h2 className="text-xs font-semibold tracking-wider text-gray-700 uppercase sm:text-sm lg:text-base">
-            En Producción ({ordenesEnProduccion.length})
-          </h2>
-        </div>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          {ordenesEnProduccion.length === 0 ? (
-            <div className="py-6 text-center sm:py-8 lg:py-12">
-              <div className="mb-3 text-gray-400 sm:mb-4">
-                <svg
-                  className="mx-auto h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <p className="text-xs text-gray-500 sm:text-sm lg:text-base">
-                No hay órdenes en producción
-              </p>
-            </div>
-          ) : (
-            ordenesEnProduccion.map((orden) => (
-              <OrdenProduccionCard
-                key={orden.cod_op}
-                orden={orden}
-                isSelected={selectedOrden?.cod_op === orden.cod_op}
-                onClick={() => onSelectOrden(orden)}
-                estado={orden.estado}
-              />
-            ))
-          )}
-        </div>
+      {/* List content */}
+      <div className="custom-scrollbar flex-1 space-y-4 overflow-y-auto bg-gray-50/30 p-4 lg:p-6">
+        {ordenes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Filter className="mb-3 h-8 w-8 text-gray-200" />
+            <p className="text-sm font-medium text-gray-500">
+              No hay órdenes para mostrar
+            </p>
+          </div>
+        ) : (
+          ordenes.map((orden) => (
+            <OrdenProduccionCard
+              key={orden.cod_op}
+              orden={orden}
+              isSelected={selectedOrden?.cod_op === orden.cod_op}
+              onClick={() => onSelectOrden(orden)}
+              estado={orden.estado}
+            />
+          ))
+        )}
       </div>
-    </aside>
+    </div>
   )
 }

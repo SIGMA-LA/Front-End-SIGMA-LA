@@ -11,19 +11,13 @@ import type { Obra } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { useState } from 'react'
+import { formatDateOnly } from '@/lib/utils'
 import OrdenesProduccionList from './OrdenesProduccionList'
 
 interface NotaFabricaDetailsProps {
   obra: Obra
   onCrearOrden: () => void
 }
-
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 const getEstadoBadge = (estado: Obra['estado']) => {
   const badges = {
@@ -43,6 +37,11 @@ export default function NotaFabricaDetails({
   obra,
   onCrearOrden,
 }: NotaFabricaDetailsProps) {
+  const clienteNombre =
+    obra.cliente.razon_social?.trim() ||
+    `${obra.cliente.nombre ?? ''} ${obra.cliente.apellido ?? ''}`.trim() ||
+    'Sin nombre'
+
   const [pdfLoading, setPdfLoading] = useState(true)
   const [pdfError, setPdfError] = useState(false)
 
@@ -68,7 +67,7 @@ export default function NotaFabricaDetails({
               Nota de Fábrica - Obra #{obra.cod_obra}
             </h2>
             <p className="mb-3 text-lg text-gray-600 lg:text-xl">
-              {obra.cliente.razon_social}
+              {clienteNombre}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span
@@ -79,7 +78,7 @@ export default function NotaFabricaDetails({
               <span className="text-sm text-gray-500 lg:text-base">
                 Iniciada:{' '}
                 <span className="font-medium">
-                  {formatDate(obra.fecha_ini)}
+                  {formatDateOnly(obra.fecha_ini)}
                 </span>
               </span>
             </div>

@@ -1,29 +1,48 @@
-import type { Obra } from '@/types'
-import { MapPin, FileText } from 'lucide-react'
+import type { Obra, EstadoNotaFabricaProduccion } from '@/types'
+import { MapPin } from 'lucide-react'
+import { formatDateOnly } from '@/lib/utils'
 
 interface NotaFabricaCardProps {
   obra: Obra
+  status: EstadoNotaFabricaProduccion
   isSelected: boolean
   onClick: () => void
 }
 
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-
 export default function NotaFabricaCard({
   obra,
+  status,
   isSelected,
   onClick,
 }: NotaFabricaCardProps) {
+  const clienteNombre =
+    obra.cliente.razon_social?.trim() ||
+    `${obra.cliente.nombre ?? ''} ${obra.cliente.apellido ?? ''}`.trim() ||
+    'Sin nombre'
+
+  const statusStyles = {
+    SIN_ORDEN: {
+      selected: 'border-orange-400 bg-orange-50 ring-2 ring-orange-300',
+      default:
+        'border-orange-200 bg-orange-50/40 hover:border-orange-300 hover:bg-orange-50',
+    },
+    EN_PRODUCCION: {
+      selected: 'border-blue-400 bg-blue-50 ring-2 ring-blue-300',
+      default:
+        'border-blue-200 bg-blue-50/40 hover:border-blue-300 hover:bg-blue-50',
+    },
+    FINALIZADA: {
+      selected: 'border-green-400 bg-green-50 ring-2 ring-green-300',
+      default:
+        'border-green-200 bg-green-50/40 hover:border-green-300 hover:bg-green-50',
+    },
+  }[status]
+
   const getCardStyle = () => {
     if (isSelected) {
-      return 'border-orange-400 bg-orange-50 ring-2 ring-orange-300'
+      return statusStyles.selected
     }
-    return 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+    return statusStyles.default
   }
 
   return (
@@ -31,37 +50,23 @@ export default function NotaFabricaCard({
       onClick={onClick}
       className={`w-full rounded-lg border p-3 text-left shadow-sm transition-colors lg:p-4 ${getCardStyle()}`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-grow space-y-1.5">
-          {/* Fecha de inicio */}
-          <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
-            Iniciada: {formatDate(obra.fecha_ini)}
+      <div className="space-y-1.5">
+        {/* Fecha de inicio */}
+        <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
+          Iniciada: {formatDateOnly(obra.fecha_ini)}
+        </p>
+
+        {/* Cliente */}
+        <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
+          Cliente: <span className="font-medium">{clienteNombre}</span>
+        </p>
+
+        {/* Dirección */}
+        <div className="flex items-start space-x-1">
+          <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
+          <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
+            {obra.direccion}
           </p>
-
-          {/* Cliente */}
-          <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
-            Cliente:{' '}
-            <span className="font-medium">
-              {obra.cliente.razon_social}
-            </span>
-          </p>
-
-          {/* Dirección */}
-          <div className="flex items-start space-x-1">
-            <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
-            <p className="text-sm leading-relaxed text-gray-500 lg:text-base">
-              {obra.direccion}
-            </p>
-          </div>
-        </div>
-
-        {/* Badge arriba a la derecha */}
-        <div className="ml-3 flex flex-col items-end space-y-1">
-          <span
-            className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm"
-          >
-            Pendiente
-          </span>
         </div>
       </div>
     </button>

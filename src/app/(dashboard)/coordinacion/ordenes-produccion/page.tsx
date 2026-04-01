@@ -17,7 +17,6 @@ export default async function CoordinacionOrdenesPage({
 
   return (
     <OrdenesPageContent
-      searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
       estadoInitial={typeof sp.estado === 'string' ? sp.estado : sp.estado?.[0]}
     />
   )

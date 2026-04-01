@@ -1,49 +1,23 @@
 import { Suspense } from 'react'
 import { getUsuario } from '@/lib/cache'
-import {
-  getNotasConOrdenEnProceso,
-  getNotasSinOrdenAprobada,
-} from '@/actions/obras'
-import { getOrdenesValidadas, getOrdenesEnProduccion } from '@/actions/ordenes'
+import { getNotasFabricaProduccion } from '@/actions/obras'
 import Navbar from '@/components/layout/Navbar'
 import ProduccionClient from '@/components/produccion/ProduccionClient'
 import ProduccionSkeleton from '@/components/produccion/ProduccionSkeleton'
 
-async function getProduccionData() {
+async function getInitialNotasData() {
   try {
-    const [
-      obrasSinOrden,
-      obrasEnProceso,
-      ordenesAprobadas,
-      ordenesEnProduccion,
-    ] = await Promise.all([
-      getNotasSinOrdenAprobada(),
-      getNotasConOrdenEnProceso(),
-      getOrdenesValidadas(),
-      getOrdenesEnProduccion(),
-    ])
-
-    return {
-      obrasSinOrden,
-      obrasEnProceso,
-      ordenesAprobadas,
-      ordenesEnProduccion,
-    }
+    return await getNotasFabricaProduccion({ estado: 'SIN_ORDEN' })
   } catch (error) {
-    console.error('Error al cargar datos de producción:', error)
-    return {
-      obrasSinOrden: [],
-      obrasEnProceso: [],
-      ordenesAprobadas: [],
-      ordenesEnProduccion: [],
-    }
+    console.error('Error al cargar notas iniciales de producción:', error)
+    return []
   }
 }
 
 async function ProduccionContent() {
-  const [empleadoData, produccionData] = await Promise.all([
+  const [empleadoData, initialNotasSinOrden] = await Promise.all([
     getUsuario(),
-    getProduccionData(),
+    getInitialNotasData(),
   ])
 
   if (!empleadoData) {
@@ -59,7 +33,10 @@ async function ProduccionContent() {
   return (
     <>
       <Navbar usuario={empleadoData} />
-      <ProduccionClient usuario={empleadoData} {...produccionData} />
+      <ProduccionClient
+        usuario={empleadoData}
+        initialNotasSinOrden={initialNotasSinOrden}
+      />
     </>
   )
 }
