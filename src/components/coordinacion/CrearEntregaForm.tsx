@@ -7,7 +7,9 @@ import { createEntrega } from '@/actions/entregas'
 import { getObrasParaEntrega } from '@/actions/obras'
 import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinarias } from '@/actions/maquinarias'
-import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega } from '@/types'
+import { getOrdenesByObraAndFinalizada } from '@/actions/ordenes'
+import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega, OrdenProduccion } from '@/types'
+import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
 // Componentes
 import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
@@ -82,6 +84,34 @@ export default function CrearEntregaForm({
   const [selectedMaquinaria, setSelectedMaquinaria] = useState<string[]>([])
   const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
   const [isMaquinariaModalOpen, setIsMaquinariaModalOpen] = useState(false)
+
+  // Estado de Ordenes de Producción
+  const [availableOPs, setAvailableOPs] = useState<OrdenProduccion[]>([])
+  const [selectedOPs, setSelectedOPs] = useState<number[]>([])
+  const [isFetchingOPs, setIsFetchingOPs] = useState(false)
+  
+  const [viewerUrl, setViewerUrl] = useState('')
+  const [viewerTitle, setViewerTitle] = useState('')
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
+
+  useEffect(() => {
+    if (formData.obraId) {
+      setIsFetchingOPs(true)
+      getOrdenesByObraAndFinalizada(formData.obraId)
+        .then((ops) => {
+          setAvailableOPs(ops)
+          setSelectedOPs([])
+          setIsFetchingOPs(false)
+        })
+        .catch((err) => {
+          console.error(err)
+          setIsFetchingOPs(false)
+        })
+    } else {
+      setAvailableOPs([])
+      setSelectedOPs([])
+    }
+  }, [formData.obraId])
 
   const totalViaticos = useMemo(() => {
     const totalPersonas = (encargado ? 1 : 0) + acompanantes.length
@@ -186,6 +216,7 @@ export default function CrearEntregaForm({
         maquinarias:
           selectedMaquinaria.length > 0 ? selectedMaquinaria : undefined,
         esFinal,
+        cod_ops: selectedOPs.length > 0 ? selectedOPs : undefined,
       }
 
       startTransition(async () => {
@@ -348,6 +379,72 @@ export default function CrearEntregaForm({
                   </div>
                 )}
 
+                {/* Selección de Órdenes de Producción */}
+                {formData.obraId && (
+                  <div className="border-t border-slate-100 pt-5 mt-5">
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Órdenes de Producción Finalizadas
+                    </label>
+                    {isFetchingOPs ? (
+                      <div className="flex items-center gap-2 p-3 text-sm text-slate-500 bg-slate-50 rounded-lg">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando documentos...
+                      </div>
+                    ) : availableOPs.length === 0 ? (
+                      <div className="p-3 text-sm text-slate-600 bg-amber-50 border border-amber-100/50 rounded-lg shadow-sm">
+                        No hay Órdenes de Producción finalizadas y sin entregar para esta obra. Puede continuar sin asignarlas si lo desea.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {availableOPs.map((op) => {
+                          const isSelected = selectedOPs.includes(op.cod_op)
+                          return (
+                            <div
+                              key={op.cod_op}
+                              className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-all duration-200 ${
+                                isSelected
+                                  ? 'border-indigo-300 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-200 ring-opacity-50'
+                                  : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                              }`}
+                            >
+                              <label className="flex items-center gap-3 flex-grow cursor-pointer mb-3 sm:mb-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) setSelectedOPs((prev) => [...prev, op.cod_op])
+                                    else setSelectedOPs((prev) => prev.filter((id) => id !== op.cod_op))
+                                  }}
+                                  className="h-4.5 w-4.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                />
+                                <div>
+                                  <span className={`block font-semibold ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                                    OP #{op.cod_op}
+                                  </span>
+                                  <span className="text-xs text-slate-500 font-medium">
+                                    Confeccionada el: {new Date(op.fecha_confeccion).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setViewerUrl(op.url)
+                                  setViewerTitle(`Orden de Producción #${op.cod_op}`)
+                                  setIsViewerOpen(true)
+                                }}
+                                className="text-xs font-semibold text-indigo-700 bg-white px-4 py-2 rounded-lg border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 transition-colors shadow-sm w-full sm:w-auto text-center"
+                              >
+                                Ver Documento
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
                     Detalle de la Entrega *
@@ -427,6 +524,13 @@ export default function CrearEntregaForm({
           </form>
         </div>
       </div>
+
+      <DocumentViewer
+        url={viewerUrl}
+        title={viewerTitle}
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+      />
 
       <DateTimeModal
         isOpen={isDateTimeModalOpen}

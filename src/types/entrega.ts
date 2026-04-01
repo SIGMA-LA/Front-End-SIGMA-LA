@@ -23,7 +23,7 @@ export interface Entrega {
   vehiculos?: UsoVehiculoEntrega[]
   dias_viaticos?: number
   esFinal: boolean
-  orden_de_produccion?: OrdenProduccion
+  ordenes_de_produccion?: OrdenProduccion[]
 }
 
 export type RolEntrega = (typeof ROLES_ENTREGA)[number]

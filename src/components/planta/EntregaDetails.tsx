@@ -8,9 +8,12 @@ import {
   Calendar,
   CheckCircle,
   Navigation,
+  Package,
 } from 'lucide-react'
-import type { EntregaEmpleado } from '@/types'
+import { useState } from 'react'
+import type { EntregaEmpleado, OrdenProduccion } from '@/types'
 import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
+import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
 interface EntregaDetailsProps {
   entrega: EntregaEmpleado
@@ -40,6 +43,11 @@ export default function EntregaDetails({
   const isEntregaPendiente = entrega.entrega.estado === 'PENDIENTE'
   const isEncargado = entrega.rol_entrega === 'ENCARGADO'
 
+  const [activeOpIndex, setActiveOpIndex] = useState(0)
+  const [viewerUrl, setViewerUrl] = useState('')
+  const [viewerTitle, setViewerTitle] = useState('')
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
+
   // Función para obtener la dirección completa para navegación
   const getDireccionCompleta = () => {
     const direccion = entrega.obra.direccion
@@ -65,8 +73,9 @@ export default function EntregaDetails({
   const tieneUbicacion = !!direccion
 
   return (
-    <Card className="mx-auto max-w-6xl border-gray-200 bg-white shadow-lg">
-      <CardContent className="space-y-6 p-6 lg:space-y-8 lg:p-12">
+    <>
+      <Card className="mx-auto max-w-6xl border-gray-200 bg-white shadow-lg">
+        <CardContent className="space-y-6 p-6 lg:space-y-8 lg:p-12">
         {/* Header responsivo */}
         <div className="flex items-start justify-between space-x-4">
           <div className="flex-1">
@@ -152,6 +161,61 @@ export default function EntregaDetails({
           </p>
         </div>
 
+        {/* Órdenes de Producción Asociadas */}
+        {(() => {
+          const ops = entrega.entrega.ordenes_de_produccion
+          if (!ops || ops.length === 0) return null
+          const activeOp: OrdenProduccion = ops[activeOpIndex] ?? ops[0]
+          return (
+            <div className="border-t pt-6">
+              <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl flex items-center gap-2">
+                <Package className="h-5 w-5 text-purple-600 lg:h-6 lg:w-6" />
+                {ops.length === 1 ? 'Orden de Producción' : `Órdenes de Producción (${ops.length})`}
+              </h4>
+
+              {/* Tabs si hay más de 1 OP */}
+              {ops.length > 1 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {ops.map((op, idx) => (
+                    <button
+                      key={op.cod_op}
+                      onClick={() => setActiveOpIndex(idx)}
+                      className={`rounded-full px-3 py-1.5 text-sm font-bold transition-all ${
+                        activeOpIndex === idx
+                          ? 'bg-purple-600 text-white shadow-md'
+                          : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      }`}
+                    >
+                      OP #{op.cod_op}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between rounded-xl border border-purple-200 bg-purple-50 p-4 lg:p-5">
+                <div>
+                  <p className="text-sm font-medium text-purple-600/80">Orden Seleccionada</p>
+                  <p className="font-bold text-purple-900 text-xl lg:text-2xl">OP #{activeOp.cod_op}</p>
+                  <p className="text-xs text-purple-600/70 mt-1">
+                    Confeccionada: {new Date(activeOp.fecha_confeccion).toLocaleDateString('es-AR')}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setViewerUrl(activeOp.url)
+                    setViewerTitle(`Orden de Producción #${activeOp.cod_op}`)
+                    setIsViewerOpen(true)
+                  }}
+                  className="bg-purple-600 text-white hover:bg-purple-700 py-3 text-sm lg:text-base cursor-pointer"
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  Ver Documento
+                </Button>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Observaciones */}
         {entrega.entrega.observaciones && (
           <div>
@@ -199,8 +263,16 @@ export default function EntregaDetails({
               <span className="sm:hidden">Finalizar</span>
             </Button>
           )}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      <DocumentViewer
+        url={viewerUrl}
+        title={viewerTitle}
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+      />
+    </>
   )
 }
