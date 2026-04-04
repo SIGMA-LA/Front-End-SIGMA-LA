@@ -2,28 +2,43 @@
 import { render, screen } from '@testing-library/react'
 import Home from '../page'
 
+// Mock next/navigation to avoid "invariant: app router not mounted" error
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}))
+
+// Mock react-dom to avoid useFormStatus requiring a <form> context
+jest.mock('react-dom', () => ({
+  ...jest.requireActual('react-dom'),
+  useFormStatus: () => ({ pending: false }),
+}))
+
+// Mock the login server action (relative path required for jest.mock resolution)
+jest.mock('../../actions/auth', () => ({
+  loginAction: jest.fn().mockResolvedValue({}),
+}))
+
+
 describe('Home Page', () => {
-  it('should render the main content correctly', () => {
-    // 1. Renderizamos el componente que queremos probar
+  it('should render the login form correctly', () => {
     render(<Home />)
 
-    // 2. Buscamos el logo principal por su texto alternativo.
-    // Esta es la mejor manera de encontrar imágenes, ya que simula cómo
-    // las tecnologías de asistencia (como lectores de pantalla) las identifican.
-    const nextLogo = screen.getByAltText('Next.js logo')
+    // The login page should show the app name
+    expect(screen.getByText(/SIGMA/i)).toBeInTheDocument()
 
-    // 3. Buscamos el texto de bienvenida. Usamos una expresión regular /.../i
-    // para que la búsqueda no sea sensible a mayúsculas/minúsculas y sea más flexible.
-    const welcomeText = screen.getByText(/Get started by editing/i)
+    // It should have a username/cuil field
+    expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument()
 
-    // 4. Buscamos el enlace "Deploy now". La forma más accesible y recomendada es
-    // buscar por su "role" (rol) de 'link' y su nombre visible.
-    const deployLink = screen.getByRole('link', { name: /Deploy now/i })
+    // It should have a password field
+    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument()
 
-    // 5. Hacemos las aserciones. Verificamos que cada elemento que buscamos
-    // esté efectivamente presente en el DOM.
-    expect(nextLogo).toBeInTheDocument()
-    expect(welcomeText).toBeInTheDocument()
-    expect(deployLink).toBeInTheDocument()
+    // It should have a submit button
+    expect(screen.getByRole('button', { name: /ingresar/i })).toBeInTheDocument()
   })
 })

@@ -96,6 +96,7 @@ export default function VisitadorClient({
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadData()
   }, [categoryFilter, statusFilter, debouncedSearch, debouncedDate, usuario.cuil])

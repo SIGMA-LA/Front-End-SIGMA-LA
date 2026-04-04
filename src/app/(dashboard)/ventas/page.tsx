@@ -5,7 +5,6 @@ import {
   Users,
   Building2,
   TrendingUp,
-  Clock,
   CheckCircle2,
   AlertCircle,
   DollarSign,
@@ -13,7 +12,6 @@ import {
   Truck,
 } from 'lucide-react'
 import Link from 'next/link'
-import { get } from 'http'
 
 async function getVentasStats() {
   try {

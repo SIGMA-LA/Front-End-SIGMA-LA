@@ -12,7 +12,6 @@ import {
 import { useRouter } from 'next/navigation'
 import type { Cliente } from '@/types'
 import { type ActionResponse } from '@/actions/clientes'
-import Link from 'next/link'
 
 interface CrearClienteProps {
   action: (

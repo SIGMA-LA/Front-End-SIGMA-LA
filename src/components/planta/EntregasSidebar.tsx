@@ -1,7 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import type { EntregaEmpleado } from '@/types'
 import { Calendar, Search, Filter, X } from 'lucide-react'
 import EntregaCard from './EntregaCard'

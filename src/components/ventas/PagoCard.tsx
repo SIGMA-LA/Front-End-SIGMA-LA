@@ -29,7 +29,7 @@ export default function PagoCard({
       await deletePago(pago.cod_pago)
       setShowConfirm(false)
       onRefresh?.()
-    } catch (err) {
+    } catch {
       notify.error('Error al eliminar el pago')
     } finally {
       setLoading(false)

@@ -1,18 +1,16 @@
 'use client'
 
-import { useState, useEffect, useMemo, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Calendar, MapPin, User as UserIcon, Clock, FileText, X, Check, 
-  AlertCircle, Phone, Mail, Building2, MapPinned, 
-  Car, Settings, Loader2, CheckCircle2, ClipboardList 
+import {
+  Calendar, MapPin, AlertCircle,
+  Building2, Car, Loader2, CheckCircle2, ClipboardList,
 } from 'lucide-react'
 import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
 import { notify } from '@/lib/toast'
 import type { Localidad, Visita, Obra, Empleado, Provincia, Vehiculo } from '@/types'
 import DateTimeSelectionVisita from './visita/DateTimeSelectionVisita'
 import PersonalSelection from './entrega/PersonalSelection'
-import RecursosSelection from './entrega/RecursosSelection'
 import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
 import DateTimeModalVisita from './visita/DateTimeModalVisita'
 import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'

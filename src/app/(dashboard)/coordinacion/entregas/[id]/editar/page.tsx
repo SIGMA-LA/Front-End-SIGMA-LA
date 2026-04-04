@@ -14,7 +14,7 @@ export default async function EditarEntregaPage({
   const { id } = await params
   const entregaId = parseInt(id)
 
-  const [entrega, obras, vehiculos, maquinarias, empleados] = await Promise.all([
+  const [entrega, , vehiculos, maquinarias, empleados] = await Promise.all([
     getEntrega(entregaId),
     getObrasParaEntrega(),
     getVehiculos(),

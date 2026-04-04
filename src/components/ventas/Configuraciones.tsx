@@ -36,10 +36,11 @@ export default function Configuraciones({
     negocio: {
       presupuesto: '10',
       viaticos: '50.00',
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       checkboxEjemplo: true,
     },
   })
-  const [error, setError] = useState<string | null>(null)
+  const [, setError] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(false)
 

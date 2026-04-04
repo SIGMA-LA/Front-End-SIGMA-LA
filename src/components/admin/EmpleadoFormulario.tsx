@@ -151,7 +151,7 @@ export default function EmpleadoFormulario({
       } as CreateEmpleadoData | UpdateEmpleadoData
 
       if (!dataToSubmit.contrasenia || dataToSubmit.contrasenia.trim() === '') {
-        const { contrasenia, ...dataWithoutPass } = dataToSubmit
+        const { contrasenia: _contrasenia, ...dataWithoutPass } = dataToSubmit
         await onSubmit(dataWithoutPass)
       } else {
         await onSubmit(dataToSubmit)

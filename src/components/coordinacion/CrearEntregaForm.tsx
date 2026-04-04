@@ -142,6 +142,7 @@ export default function CrearEntregaForm({
       const esEntregaFinal = !!entregaToEdit.esFinal
       setEsFinal(esEntregaFinal)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entregaToEdit])
 
   // Estado de Ordenes de Producción
@@ -204,13 +205,6 @@ export default function CrearEntregaForm({
     return emp ? `${emp.nombre} ${emp.apellido}` : cuil
   }
 
-  const handleObraSelect = (obra: Obra) => {
-    setFormData((prev) => ({
-      ...prev,
-      obraId: obra.cod_obra,
-      direccion: obra.direccion,
-    }))
-  }
 
   const handleConfirmPersonal = (
     newEncargado: string | null,

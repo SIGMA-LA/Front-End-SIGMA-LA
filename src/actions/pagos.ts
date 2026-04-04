@@ -5,7 +5,6 @@ import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type {
   Pago,
-  PagoFormData,
   PagosFilter,
   ObraConPresupuesto,
 } from '@/types'

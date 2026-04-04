@@ -7,9 +7,7 @@ import {
   Mail,
   Building2,
   FileText,
-  AlertTriangle,
   Loader2,
-  X,
 } from 'lucide-react'
 import { solicitarStockObra } from '@/actions/obras'
 import type { Obra } from '@/types'

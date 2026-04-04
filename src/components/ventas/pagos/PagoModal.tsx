@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/Button'
 import type {
   ObraConPresupuesto,
-  Pago,
   PagoModalProps,
   PagoModalStep,
 } from '@/types'
