@@ -21,6 +21,7 @@ import { SeguridadSection } from './configuraciones/SeguridadSection'
 import { getCurrentUser } from '@/actions/auth'
 import { getPerfilConfig, updatePerfilConfig } from '@/actions/configuraciones'
 import { notify } from '@/lib/toast'
+import { NotificacionesData } from '@/types'
 
 export default function Configuraciones({
   onBack,
@@ -28,17 +29,17 @@ export default function Configuraciones({
 }: ConfiguracionesProps) {
   const [configuraciones, setConfiguraciones] = useState({
     notificaciones: {
-      email: true,
-      whatsapp: false,
-      push: true,
-      visitas: true,
-      entregas: true,
-      vencimientos: true,
-    } as Record<string, boolean>,
+      configuracion: {
+        canales: [] as { id: string; label: string }[],
+        eventos: [] as { id: string; label: string }[]
+      },
+      valores: {} as Record<string, boolean>
+    },
     perfil: {
       nombre: 'Usuario',
       apellido: 'Aberturas',
       cuil: '20-45678912-3',
+      mail: '',
     },
     negocio: {
       presupuesto: '10',
@@ -74,7 +75,9 @@ export default function Configuraciones({
               nombre: perfilDB.nombre || prev.perfil.nombre,
               apellido: perfilDB.apellido || prev.perfil.apellido,
               cuil: perfilDB.cuil || prev.perfil.cuil,
+              mail: perfilDB.mail || prev.perfil.mail,
             },
+            notificaciones: (perfilDB.notificaciones as NotificacionesData) || prev.notificaciones,
           }))
         }
       } catch (error) {
@@ -96,6 +99,19 @@ export default function Configuraciones({
     value: boolean | string
   ) => {
     setConfiguraciones((prev) => {
+      if (section === 'notificaciones') {
+        return {
+          ...prev,
+          notificaciones: {
+            ...prev.notificaciones,
+            valores: {
+              ...prev.notificaciones.valores,
+              [field]: value as boolean
+            }
+          }
+        }
+      }
+
       const sectionValue = prev[section as keyof typeof prev]
       if (typeof sectionValue !== 'object' || sectionValue === null) {
         return prev
@@ -115,8 +131,15 @@ export default function Configuraciones({
     setErrorStatus(null)
     setSuccessStatus(null)
     try {
-      // Usar el nuevo action para guardar el perfil en el backend
-      await updatePerfilConfig(configuraciones.perfil)
+      // Usar el nuevo action para guardar el perfil y las notificaciones en el backend
+      await Promise.all([
+        updatePerfilConfig(configuraciones.perfil),
+        // Aquí podrías tener un updateNotificacionesConfig o incluirlo en el perfil
+        updatePerfilConfig({
+          ...configuraciones.perfil,
+          notificaciones: configuraciones.notificaciones.valores
+        })
+      ])
       setSuccessStatus('Configuraciones guardadas exitosamente.')
       notify.success('Configuraciones guardadas exitosamente.')
       setTimeout(() => setSuccessStatus(null), 4000)
@@ -129,56 +152,6 @@ export default function Configuraciones({
   }
 
   const isUIBlocked = isLoading || isFetching
-
-  const getNotificationOptions = () => {
-    const canales = [
-      { id: 'email', label: 'Recibir notificaciones por email' },
-      { id: 'whatsapp', label: 'Recibir notificaciones por WhatsApp' },
-    ];
-
-    let eventos: { id: string; label: string; description?: string }[] = [];
-
-    switch (userRole?.toUpperCase()) {
-      case 'ADMIN':
-        eventos = [
-          { id: 'visitas', label: 'Notificaciones de Visitas' },
-          { id: 'entregas', label: 'Notificaciones de Entregas' },
-          { id: 'vencimientos', label: 'Vencimientos de presupuestos' },
-        ];
-        break;
-      case 'VENDEDOR':
-        eventos = [
-          {id: 'vencimientos', label: 'Vencimientos de presupuestos'},
-          {id: 'visitas', label: 'Notificaciones de Visitas'},
-          {id: 'entregas', label: 'Notificaciones de Entregas'},
-        ]
-        break;
-      case 'VENTAS':
-        eventos = [
-          { id: 'vencimientos', label: 'Vencimientos de presupuestos' },
-        ];
-        break;
-      case 'PRODUCCION':
-        eventos = [
-          { id: 'visitas', label: 'Notificaciones de Visitas' },
-          { id: 'entregas', label: 'Notificaciones de Entregas' },
-        ];
-        break;
-      case 'COORDINADOR':
-      case 'COORDINACION':
-      case 'LOGISTICA':
-        eventos = [
-          { id: 'visitas', label: 'Notificaciones de Visitas' },
-          { id: 'entregas', label: 'Notificaciones de Entregas' },
-        ];
-        break;
-      default:
-        eventos = [];
-        break;
-    }
-    
-    return { canales, eventos };
-  }
 
   return (
     <div className={`min-h-screen bg-gray-50 ${className}`}>
@@ -236,9 +209,9 @@ export default function Configuraciones({
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
             <NotificacionesSection
-              canales={getNotificationOptions().canales}
-              eventos={getNotificationOptions().eventos}
-              values={configuraciones.notificaciones}
+              canales={configuraciones.notificaciones.configuracion.canales}
+              eventos={configuraciones.notificaciones.configuracion.eventos}
+              values={configuraciones.notificaciones.valores}
               onChange={(field, value) =>
                 handleConfigChange('notificaciones', field, value)
               }

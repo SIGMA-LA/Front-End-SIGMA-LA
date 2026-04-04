@@ -11,8 +11,25 @@ export interface ParametroViatico {
   viatico_dia_persona: number
 }
 
+export interface NotificacionItem {
+  id: string
+  label: string
+}
+
+export interface NotificacionConfig {
+  canales: NotificacionItem[]
+  eventos: NotificacionItem[]
+}
+
+export interface NotificacionesData {
+  configuracion: NotificacionConfig
+  valores: Record<string, boolean>
+}
+
 export interface PerfilFormData {
   nombre: string
   apellido: string
   cuil: string
+  mail?: string
+  notificaciones?: NotificacionesData | Record<string, boolean>
 }

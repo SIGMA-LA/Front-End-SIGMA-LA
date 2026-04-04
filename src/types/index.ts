@@ -68,6 +68,9 @@ export type {
   SearchParams,
   ParametroViatico,
   PerfilFormData,
+  NotificacionesData,
+  NotificacionConfig,
+  NotificacionItem,
 } from './common'
 
 export type {
