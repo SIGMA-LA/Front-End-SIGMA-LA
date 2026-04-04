@@ -41,7 +41,7 @@ export function middleware(request: NextRequest) {
         if (!pathname.startsWith(userDashboardPath)) {
           return NextResponse.redirect(new URL(userDashboardPath, request.url))
         }
-      } catch (error) {
+      } catch {
         const response = NextResponse.redirect(new URL('/login', request.url))
         response.cookies.delete('accessToken')
         response.cookies.delete('usuario')

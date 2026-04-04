@@ -30,11 +30,6 @@ export default function ObraSelect({
   const [internalLoading, setInternalLoading] = useState(false)
   const [internalError, setInternalError] = useState<string | null>(null)
 
-  // Usar props externos si están disponibles, sino usar estados internos
-  const obras = showResults ? searchResults : internalObras
-  const loading = showResults ? externalLoading : internalLoading
-  const error = showResults ? externalError : internalError
-
   const loadObras = useCallback(async () => {
     try {
       setInternalLoading(true)
@@ -66,11 +61,6 @@ export default function ObraSelect({
     if (onSearchChange) {
       onSearchChange(value)
     }
-  }
-
-  const handleSelect = (obra: ObraConPresupuesto) => {
-    onObraSelect(obra)
-    setSearchTerm('')
   }
 
   const handleClear = () => {

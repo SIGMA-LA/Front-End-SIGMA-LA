@@ -5,8 +5,6 @@ import {
   nonEmpty,
   pipe,
   type InferOutput,
-  number,
-  minValue,
 } from 'valibot'
 
 export const loginSchema = object({

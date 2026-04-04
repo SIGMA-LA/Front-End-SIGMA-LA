@@ -37,6 +37,7 @@ export const generarURLEmbed = (direccion: string, localidad?: string) => {
  */
 export const validarDireccion = (
   direccion?: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   localidad?: string
 ): boolean => {
   return !!(direccion && direccion.trim().length > 0)

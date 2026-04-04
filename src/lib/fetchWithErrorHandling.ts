@@ -20,7 +20,7 @@ export async function fetchWithErrorHandling(
       try {
         const errorData = await res.json()
         errorMsg = errorData.message || errorData.error || errorMsg
-      } catch (_) {
+      } catch {
         // Ignore parsing errors for non-JSON responses
       }
       throw new Error(errorMsg)

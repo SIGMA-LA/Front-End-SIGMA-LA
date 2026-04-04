@@ -1,5 +1,5 @@
 import type { Visita } from '@/types'
-import { MapPin, Clock, User } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 
 interface VisitaCardVisitadorProps {
   visita: Visita

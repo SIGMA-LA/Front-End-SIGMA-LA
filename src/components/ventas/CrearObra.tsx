@@ -332,7 +332,8 @@ export default function CrearObra({
 
     try {
       setIsSubmitting(true)
-      const { fecha_cancelacion, ...dataToSend } = formData
+      const dataToSend = { ...formData }
+      delete dataToSend.fecha_cancelacion
 
       if (esModoEdicion && obraExistente) {
         await updateObra(obraExistente.cod_obra, dataToSend)
