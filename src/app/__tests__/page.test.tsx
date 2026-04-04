@@ -19,8 +19,8 @@ jest.mock('react-dom', () => ({
   useFormStatus: () => ({ pending: false }),
 }))
 
-// Mock the login server action
-jest.mock('@/actions/auth', () => ({
+// Mock the login server action (relative path required for jest.mock resolution)
+jest.mock('../../actions/auth', () => ({
   loginAction: jest.fn().mockResolvedValue({}),
 }))
 
