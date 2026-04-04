@@ -82,8 +82,8 @@ export interface OrdenesProduccionEstadoFechasFilters {
   fechaHasta?: string
 }
 
-export interface OrdenesProduccionBusquedaAvanzadaFilters
-  extends OrdenesProduccionEstadoFechasFilters {}
+export type OrdenesProduccionBusquedaAvanzadaFilters =
+  OrdenesProduccionEstadoFechasFilters
 
 async function fetchOrdenesConFiltros(
   filters: OrdenesProduccionBusquedaAvanzadaFilters,

@@ -15,7 +15,7 @@ export default function EmpleadosListByRole({
   title,
   icon,
   empleados,
-  colorClass = 'blue',
+  colorClass: _colorClass = 'blue',
 }: EmpleadosListByRoleProps) {
   if (empleados.length === 0) {
     return null

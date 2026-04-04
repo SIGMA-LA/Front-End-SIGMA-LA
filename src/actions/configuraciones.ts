@@ -58,7 +58,7 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
     if (res.status !== 204) {
       try {
         result = await res.json()
-      } catch (e) {
+      } catch {
         /* ignorar caso donde el cuerpo está vacío y falla el .json() */
       }
     }
@@ -100,7 +100,7 @@ export async function changePasswordConfig(currentPass: string, newPass: string)
       try {
         const errorData = JSON.parse(error.message)
         throw new Error(errorData.message || 'Error al cambiar la contraseña')
-      } catch (e) {
+      } catch {
         throw new Error(error.message)
       }
     }

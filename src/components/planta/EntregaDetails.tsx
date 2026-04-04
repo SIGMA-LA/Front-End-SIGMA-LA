@@ -20,12 +20,6 @@ interface EntregaDetailsProps {
   onFinalizarEntrega: () => void
 }
 
-const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 const formatDateTime = (dateString: string) =>
   new Date(dateString).toLocaleString('es-AR', {

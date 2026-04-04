@@ -11,7 +11,7 @@ export default function CrearPedidoPage() {
   const searchParams = useSearchParams()
   const obraId = searchParams.get('obra')
   const [preloadedObra, setPreloadedObra] = useState<Obra | null>(null)
-  const [loading, setLoading] = useState(!!obraId)
+  const [_loading, setLoading] = useState(!!obraId)
 
   useEffect(() => {
     if (obraId) {

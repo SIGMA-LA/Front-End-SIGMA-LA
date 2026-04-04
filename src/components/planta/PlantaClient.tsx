@@ -72,6 +72,7 @@ export default function PlantaClient({
   }
 
   // Refetch when debounced params or status filter change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
   }, [estadoFiltro, debouncedSearch, debouncedDate])

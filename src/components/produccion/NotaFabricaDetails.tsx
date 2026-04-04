@@ -1,5 +1,4 @@
 import {
-  Calendar,
   Mail,
   MapPin,
   Phone,
