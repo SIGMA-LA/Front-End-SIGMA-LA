@@ -21,6 +21,7 @@ import { SeguridadSection } from './configuraciones/SeguridadSection'
 import { getCurrentUser } from '@/actions/auth'
 import { getPerfilConfig, updatePerfilConfig } from '@/actions/configuraciones'
 import { notify } from '@/lib/toast'
+import { NotificacionesData } from '@/types'
 
 export default function Configuraciones({
   onBack,
@@ -38,6 +39,7 @@ export default function Configuraciones({
       nombre: 'Usuario',
       apellido: 'Aberturas',
       cuil: '20-45678912-3',
+      mail: '',
     },
     negocio: {
       presupuesto: '10',
@@ -73,8 +75,9 @@ export default function Configuraciones({
               nombre: perfilDB.nombre || prev.perfil.nombre,
               apellido: perfilDB.apellido || prev.perfil.apellido,
               cuil: perfilDB.cuil || prev.perfil.cuil,
+              mail: perfilDB.mail || prev.perfil.mail,
             },
-            notificaciones: (perfilDB as any).notificaciones || prev.notificaciones,
+            notificaciones: (perfilDB.notificaciones as NotificacionesData) || prev.notificaciones,
           }))
         }
       } catch (error) {
@@ -135,7 +138,7 @@ export default function Configuraciones({
         updatePerfilConfig({
           ...configuraciones.perfil,
           notificaciones: configuraciones.notificaciones.valores
-        } as any)
+        })
       ])
       setSuccessStatus('Configuraciones guardadas exitosamente.')
       notify.success('Configuraciones guardadas exitosamente.')
