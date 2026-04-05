@@ -26,7 +26,11 @@ export default function PagoCard({
   const handleDelete = async () => {
     setLoading(true)
     try {
-      await deletePago(pago.cod_pago)
+      const res = await deletePago(pago.cod_pago)
+      if (!res.success) {
+        notify.error(res.error || 'Error al eliminar el pago')
+        return
+      }
       setShowConfirm(false)
       onRefresh?.()
     } catch {

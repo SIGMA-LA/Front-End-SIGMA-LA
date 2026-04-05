@@ -8,6 +8,7 @@ import type {
   PagosFilter,
   ObraConPresupuesto,
 } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/pagos') ? API_URL : `${API_URL}/pagos`
@@ -36,7 +37,7 @@ export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
     const queryString = params.toString()
     const url = `${BASE_URL}${queryString ? `?${queryString}` : ''}`
 
-    const response = await fetchWithErrorHandling(url, {
+    const response = await fetchWithErrorHandling<Pago[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -44,7 +45,6 @@ export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
       },
       next: { revalidate: 30, tags: ['pagos'] },
     })
-
     return await response.json()
   } catch (error) {
     console.error('[getPagos]', error)
@@ -60,7 +60,7 @@ export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
 export async function getPagosObra(cod_obra: number): Promise<Pago[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<Pago[]>(
       `${BASE_URL}/obra/${cod_obra}`,
       {
         method: 'GET',
@@ -71,7 +71,6 @@ export async function getPagosObra(cod_obra: number): Promise<Pago[]> {
         next: { revalidate: 30, tags: ['pagos', `pagos-obra-${cod_obra}`] },
       }
     )
-
     return await response.json()
   } catch (error) {
     console.error('[getPagosObra]', error)
@@ -96,7 +95,7 @@ export async function getObrasConPresupuestoAceptado(
     const queryString = params.toString()
     const url = `${API_URL}/obras-con-presupuesto${queryString ? `?${queryString}` : ''}`
 
-    const response = await fetchWithErrorHandling(url, {
+    const response = await fetchWithErrorHandling<ObraConPresupuesto[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -109,7 +108,7 @@ export async function getObrasConPresupuestoAceptado(
 
     // Filter only obras with pending balance
     const obrasFiltradas = data.filter((obra: ObraConPresupuesto) => {
-      return obra.saldoPendiente > 0
+      return (obra.saldoPendiente || 0) > 0
     })
 
     return obrasFiltradas
@@ -126,7 +125,7 @@ export async function getObrasConPresupuestoAceptado(
 export async function hayObrasPendientes(): Promise<boolean> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<ObraConPresupuesto[]>(
       `${API_URL}/obras/con-presupuesto-aceptado?search=`,
       {
         method: 'GET',
@@ -138,9 +137,9 @@ export async function hayObrasPendientes(): Promise<boolean> {
       }
     )
 
-    const obras: ObraConPresupuesto[] = await response.json()
+    const obras = await response.json()
     // Return true if there are obras with pending balance > 0
-    return obras.some((obra) => (obra.saldoPendiente || 0) > 0)
+    return obras.some((obra: ObraConPresupuesto) => (obra.saldoPendiente || 0) > 0)
   } catch (error) {
     console.error('[hayObrasPendientes]', error)
     throw error
@@ -156,7 +155,7 @@ export async function hayObrasPendientes(): Promise<boolean> {
 export async function createPagoForObra(
   pagoData: { monto: number },
   cod_obra: number
-): Promise<Pago> {
+): Promise<ActionResponse<Pago>> {
   try {
     const token = await getAccessToken()
     const response = await fetchWithErrorHandling(
@@ -174,10 +173,11 @@ export async function createPagoForObra(
     const data = await response.json()
     revalidatePath('/ventas/pagos')
     revalidatePath('/ventas/obras')
-    return data
+    return { success: true, data }
   } catch (error) {
-    console.error('[createPagoForObra]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error creating Pago'
+    console.error('[createPagoForObra]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -186,7 +186,7 @@ export async function createPagoForObra(
  * @param {number} cod_pago - Pago code/ID
  * @returns {Promise<void>}
  */
-export async function deletePago(cod_pago: number): Promise<void> {
+export async function deletePago(cod_pago: number): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
     await fetchWithErrorHandling(`${BASE_URL}/${cod_pago}`, {
@@ -199,8 +199,10 @@ export async function deletePago(cod_pago: number): Promise<void> {
 
     revalidatePath('/ventas/pagos')
     revalidatePath('/ventas/obras')
+    return { success: true }
   } catch (error) {
-    console.error('[deletePago]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error deleting Pago'
+    console.error('[deletePago]', message)
+    return { success: false, error: message }
   }
 }

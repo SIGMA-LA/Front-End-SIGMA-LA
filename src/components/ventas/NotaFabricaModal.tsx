@@ -69,12 +69,18 @@ export default function NotaFabricaModal({
       const formData = new FormData()
       formData.append('file', selectedFile)
 
-      const obraActualizada = await uploadNotaFabrica(codObra, formData)
+      const res = await uploadNotaFabrica(codObra, formData)
+
+      if (!res.success) {
+        setError(res.error || 'Error al subir la nota de fábrica.')
+        notify.error(res.error || 'Error al subir la nota de fábrica.')
+        return
+      }
 
       setSelectedFile(null)
       setModoCambio(false)
       // Devolver el public_id, no la URL
-      onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
+      onUploadSuccess?.(res.data!.nota_fabrica_pid || '')
       notify.success('Nota de fabrica actualizada correctamente.')
       router.refresh() // Recargar la página para actualizar el botón
       onClose()
@@ -95,8 +101,13 @@ export default function NotaFabricaModal({
       setIsDeleting(true)
       setLoading(true)
       setError(null)
-      const obraActualizada = await deleteNotaFabrica(codObra)
-      onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
+      const res = await deleteNotaFabrica(codObra)
+      if (!res.success) {
+        setError(res.error || 'Error al eliminar la nota de fábrica.')
+        notify.error(res.error || 'Error al eliminar la nota de fábrica.')
+        return
+      }
+      onUploadSuccess?.(res.data!.nota_fabrica_pid || '')
       setModoCambio(false)
       notify.success('Nota de fabrica eliminada correctamente.')
       router.refresh() // Recargar la página
@@ -118,8 +129,13 @@ export default function NotaFabricaModal({
     try {
       setLoading(true)
       setError(null)
-      const obraActualizada = await deleteNotaFabrica(codObra)
-      onUploadSuccess?.(obraActualizada.nota_fabrica_pid || '')
+      const res = await deleteNotaFabrica(codObra)
+      if (!res.success) {
+        setError(res.error || 'Error al eliminar la nota de fábrica.')
+        notify.error(res.error || 'Error al eliminar la nota de fábrica.')
+        return
+      }
+      onUploadSuccess?.(res.data!.nota_fabrica_pid || '')
       setModoCambio(true)
       setSelectedFile(null)
       notify.info('Nota eliminada. Ya puedes subir una nueva.')

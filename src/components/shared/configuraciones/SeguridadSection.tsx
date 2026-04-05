@@ -10,7 +10,7 @@ export function SeguridadSection() {
     // Aquí invocamos al server action
     const res = await changePasswordConfig(current, newPass)
     if (res && res.success === false) {
-      throw new Error((res.message as string) || 'Error al cambiar la contraseña')
+      throw new Error(res.error || 'Error al cambiar la contraseña')
     }
   }
 

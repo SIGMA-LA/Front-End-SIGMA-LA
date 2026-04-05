@@ -58,9 +58,9 @@ export default function ObraCard({
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        const success = await deleteObra(obra.cod_obra)
-        if (!success) {
-          notify.error('No se pudo eliminar la obra. Intente nuevamente.')
+        const res = await deleteObra(obra.cod_obra)
+        if (!res.success) {
+          notify.error(res.error || 'No se pudo eliminar la obra. Intente nuevamente.')
           return
         } else {
           notify.success('Obra eliminada correctamente.')
@@ -77,9 +77,9 @@ export default function ObraCard({
   const handleCancel = () => {
     startTransition(async () => {
       try {
-        const success = await cancelObra(obra.cod_obra)
-        if (!success) {
-          notify.error('No se pudo cancelar la obra. Intente nuevamente.')
+        const res = await cancelObra(obra.cod_obra)
+        if (!res.success) {
+          notify.error(res.error || 'No se pudo cancelar la obra. Intente nuevamente.')
           return
         }
         notify.success('Obra cancelada correctamente.')

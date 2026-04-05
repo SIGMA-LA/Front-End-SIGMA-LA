@@ -335,10 +335,16 @@ export default function CrearObra({
       const dataToSend = { ...formData }
       delete dataToSend.fecha_cancelacion
 
+      let res
       if (esModoEdicion && obraExistente) {
-        await updateObra(obraExistente.cod_obra, dataToSend)
+        res = await updateObra(obraExistente.cod_obra, dataToSend)
       } else {
-        await createObra(dataToSend, presupuestos)
+        res = await createObra(dataToSend, presupuestos)
+      }
+
+      if (!res.success) {
+        notify.error(res.error || 'Error al guardar la obra.')
+        return
       }
 
       notify.success(

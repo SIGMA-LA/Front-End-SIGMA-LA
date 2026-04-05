@@ -143,11 +143,17 @@ export default function RegistrarPedido({
     setLoading(true)
     setError(null)
     try {
-      const obraActualizada = await solicitarStockObra(preloadedObra.cod_obra)
+      const res = await solicitarStockObra(preloadedObra.cod_obra)
+
+      if (!res.success) {
+        setError(res.error || 'Ocurrió un error al solicitar el stock.')
+        notify.error(res.error || 'Ocurrió un error al solicitar el stock.')
+        return
+      }
 
       setShowModal(false)
       notify.success('Pedido de stock registrado correctamente.')
-      onSubmit(obraActualizada)
+      onSubmit(res.data!)
     } catch (err) {
       const message =
         err instanceof Error

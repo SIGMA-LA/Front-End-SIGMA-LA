@@ -16,7 +16,11 @@ export default function CrearVehiculoPage() {
     setError(null)
 
     try {
-      await createVehiculo(data)
+      const res = await createVehiculo(data)
+      if (!res.success) {
+        setError(res.error || 'Error al crear el vehículo')
+        return
+      }
       router.push('/coordinacion/vehiculos')
       router.refresh()
     } catch (err: unknown) {

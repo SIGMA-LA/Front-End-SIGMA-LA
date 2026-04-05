@@ -12,6 +12,7 @@ import type {
   EstadoObra,
   EstadoNotaFabricaProduccion,
 } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/obras') ? API_URL : `${API_URL}/obras`
@@ -24,7 +25,7 @@ const BASE_URL = API_URL.endsWith('/obras') ? API_URL : `${API_URL}/obras`
 export const getObra = cache(async (cod_obra: number): Promise<Obra | null> => {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${BASE_URL}/${cod_obra}`, {
+    const res = await fetchWithErrorHandling<Obra>(`${BASE_URL}/${cod_obra}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -54,7 +55,7 @@ export async function getObras(filter?: string): Promise<Obra[]> {
     if (filter && filter.trim().length > 0) {
       url = `${BASE_URL}/buscar?q=${encodeURIComponent(filter.trim())}`
     }
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Obra[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -62,8 +63,7 @@ export async function getObras(filter?: string): Promise<Obra[]> {
       },
       next: { revalidate: 0, tags: ['obras'] },
     })
-    const data = await res.json()
-    return Array.isArray(data) ? data : data.data || []
+    return await res.json()
   } catch (error) {
     console.error('[getObras]', error)
     return []
@@ -90,7 +90,7 @@ export async function getObrasParaEntrega(
 
     const url = `${BASE_URL}/para-entrega?${params.toString()}`
     
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Obra[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -98,8 +98,7 @@ export async function getObrasParaEntrega(
       },
       next: { revalidate: 0, tags: ['obras'] },
     })
-    const data = await res.json()
-    return Array.isArray(data) ? data : data.data || []
+    return await res.json()
   } catch (error) {
     console.error('[getObrasParaEntrega]', error)
     return []
@@ -115,7 +114,7 @@ export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
   try {
     const token = await getAccessToken()
     const url = `${BASE_URL}/cliente/${encodeURIComponent(cuil)}`
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Obra[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -123,8 +122,7 @@ export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
       },
       next: { revalidate: 0, tags: [`obras-cliente-${cuil}`] },
     })
-    const data = await res.json()
-    return Array.isArray(data) ? data : data.data || []
+    return await res.json()
   } catch (error) {
     console.error('[getObrasByCliente]', error)
     return []
@@ -151,7 +149,7 @@ export async function filterObras({
     if (estado) params.append('estado', estado)
     if (cod_localidad) params.append('localidad', String(cod_localidad))
     const url = `${BASE_URL}/filtrar?${params.toString()}`
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Obra[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -176,7 +174,7 @@ export async function filterObras({
 export async function uploadNotaFabrica(
   codObra: number,
   file: FormData
-): Promise<Obra> {
+): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
@@ -185,15 +183,16 @@ export async function uploadNotaFabrica(
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: file,
-        timeout: 60000, // 60 segundos para archivos grandes
+        timeout: 60000,
       }
     )
     const data = await res.json()
     revalidatePath('/ventas/obras')
-    return data
+    return { success: true, data }
   } catch (error) {
-    console.error('[uploadNotaFabrica]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error uploading Nota Fabrica'
+    console.error('[uploadNotaFabrica]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -202,7 +201,7 @@ export async function uploadNotaFabrica(
  * @param {number} codObra - Obra code/ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
+export async function deleteNotaFabrica(codObra: number): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
@@ -217,10 +216,11 @@ export async function deleteNotaFabrica(codObra: number): Promise<Obra> {
     )
     const data = await res.json()
     revalidatePath('/ventas/obras')
-    return data
+    return { success: true, data }
   } catch (error) {
-    console.error('[deleteNotaFabrica]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error deleting Nota Fabrica'
+    console.error('[deleteNotaFabrica]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -247,7 +247,7 @@ export async function getNotasFabricaProduccion({
     const url = `${BASE_URL}/notas-fabrica?${params.toString()}`
 
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Obra[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -279,7 +279,7 @@ export async function getNotasFabricaProduccion({
 export async function createObra(
   obraData: CreateObraInput,
   presupuesto: PresupuestoInput[] | null = null
-): Promise<Obra> {
+): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const payload: Record<string, unknown> = { ...obraData }
@@ -300,10 +300,11 @@ export async function createObra(
     })
     const data = await res.json()
     revalidatePath('/ventas/obras')
-    return data
+    return { success: true, data }
   } catch (error: unknown) {
-    console.error('[crearObra]', error)
-    throw error instanceof Error ? error : new Error('Error al crear la obra')
+    const message = error instanceof Error ? error.message : 'Error al crear la obra'
+    console.error('[crearObra]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -316,7 +317,7 @@ export async function createObra(
 export async function updateObra(
   codObra: number,
   obraData: UpdateObraInput
-): Promise<Obra> {
+): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(`${BASE_URL}/${codObra}`, {
@@ -330,10 +331,11 @@ export async function updateObra(
     const data = await res.json()
     revalidatePath('/ventas/obras')
     revalidatePath(`/ventas/obras/${codObra}`)
-    return data
+    return { success: true, data }
   } catch (error) {
-    console.error('[actualizarObra]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error updating Obra'
+    console.error('[actualizarObra]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -344,7 +346,7 @@ export async function updateObra(
  */
 export async function deleteObra(
   id: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
     await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -357,11 +359,9 @@ export async function deleteObra(
     revalidatePath('/ventas/obras')
     return { success: true }
   } catch (error) {
-    console.error('[deleteObra]', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[deleteObra]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -372,7 +372,7 @@ export async function deleteObra(
  */
 export async function cancelObra(
   id: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
     await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -386,11 +386,9 @@ export async function cancelObra(
     revalidatePath('/ventas/obras')
     return { success: true }
   } catch (error) {
-    console.error('[cancelObra]', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[cancelObra]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -425,21 +423,28 @@ export async function getObrasParaPedidoStock(): Promise<Obra[]> {
  * @param {number} id - Obra ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function solicitarStockObra(id: number): Promise<Obra> {
-  const token = await getAccessToken()
-  const res = await fetchWithErrorHandling(
-    `${BASE_URL}/${id}/solicitar-stock`,
-    {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  )
-  revalidatePath('/coordinacion/pedidos')
-  revalidatePath('/ventas/obras')
-  return await res.json()
+export async function solicitarStockObra(id: number): Promise<ActionResponse<Obra>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/${id}/solicitar-stock`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    const data = await res.json()
+    revalidatePath('/coordinacion/pedidos')
+    revalidatePath('/ventas/obras')
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al solicitar stock'
+    console.error('[solicitarStockObra]', message)
+    return { success: false, error: message }
+  }
 }
 
 /**
@@ -447,16 +452,23 @@ export async function solicitarStockObra(id: number): Promise<Obra> {
  * @param {number} id - Obra ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function recibirStockObra(id: number): Promise<Obra> {
-  const token = await getAccessToken()
-  const res = await fetchWithErrorHandling(`${BASE_URL}/${id}/recibir-stock`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  })
-  revalidatePath('/coordinacion/pedidos')
-  revalidatePath('/produccion')
-  return await res.json()
+export async function recibirStockObra(id: number): Promise<ActionResponse<Obra>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${id}/recibir-stock`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    const data = await res.json()
+    revalidatePath('/coordinacion/pedidos')
+    revalidatePath('/produccion')
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al recibir stock'
+    console.error('[recibirStockObra]', message)
+    return { success: false, error: message }
+  }
 }

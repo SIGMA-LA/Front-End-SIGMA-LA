@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { Maquinaria, MaquinariaConDisponibilidad } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/maquinarias`
@@ -16,7 +17,7 @@ const BASE_URL = `${API_URL}/maquinarias`
 export async function getMaquinarias(search?: string): Promise<Maquinaria[]> {
   const token = await getAccessToken()
   const url = search ? `${BASE_URL}?search=${encodeURIComponent(search)}` : BASE_URL
-  const res = await fetchWithErrorHandling(url, {
+  const res = await fetchWithErrorHandling<Maquinaria[]>(url, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30, tags: ['maquinarias'] },
   })
@@ -29,7 +30,7 @@ export async function getMaquinarias(search?: string): Promise<Maquinaria[]> {
  */
 export async function getMaquinariasDisponibles(): Promise<Maquinaria[]> {
   const token = await getAccessToken()
-  const res = await fetchWithErrorHandling(`${BASE_URL}/disponibles`, {
+  const res = await fetchWithErrorHandling<Maquinaria[]>(`${BASE_URL}/disponibles`, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30, tags: ['maquinarias', 'maquinarias-disponibles'] },
   })
@@ -51,7 +52,7 @@ export async function getDisponibilidadMaquinarias(
     fecha_hora_inicio: fechaInicioISO,
     fecha_hora_fin: fechaFinISO,
   })
-  const res = await fetchWithErrorHandling(
+  const res = await fetchWithErrorHandling<MaquinariaConDisponibilidad[]>(
     `${BASE_URL}/disponibilidad?${params}`,
     {
       headers: { Authorization: `Bearer ${token}` },
@@ -68,7 +69,7 @@ export async function getDisponibilidadMaquinarias(
  */
 export async function getMaquinaria(id: number): Promise<Maquinaria> {
   const token = await getAccessToken()
-  const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+  const res = await fetchWithErrorHandling<Maquinaria>(`${BASE_URL}/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30, tags: [`maquinaria-${id}`] },
   })
@@ -79,20 +80,28 @@ export async function getMaquinaria(id: number): Promise<Maquinaria> {
  * Creates a new maquinaria and redirects to the list
  * @param {Partial<Maquinaria>} data - Maquinaria data
  */
-export async function createMaquinaria(data: Partial<Maquinaria>) {
-  const token = await getAccessToken()
+export async function createMaquinaria(
+  data: Partial<Maquinaria>
+): Promise<ActionResponse<Maquinaria>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(BASE_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
 
-  await fetchWithErrorHandling(BASE_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  revalidatePath('/coordinacion/maquinarias')
-  redirect('/coordinacion/maquinarias')
+    const result = await res.json()
+    revalidatePath('/coordinacion/maquinarias')
+    return { success: true, data: result }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error creating Maquinaria'
+    console.error('[createMaquinaria]', message)
+    return { success: false, error: message }
+  }
 }
 
 /**
@@ -100,20 +109,29 @@ export async function createMaquinaria(data: Partial<Maquinaria>) {
  * @param {number} id - Maquinaria ID
  * @param {Partial<Maquinaria>} data - Fields to update
  */
-export async function updateMaquinaria(id: number, data: Partial<Maquinaria>) {
-  const token = await getAccessToken()
+export async function updateMaquinaria(
+  id: number,
+  data: Partial<Maquinaria>
+): Promise<ActionResponse<Maquinaria>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
 
-  await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  revalidatePath('/coordinacion/maquinarias')
-  redirect('/coordinacion/maquinarias')
+    const result = await res.json()
+    revalidatePath('/coordinacion/maquinarias')
+    return { success: true, data: result }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error updating Maquinaria'
+    console.error('[updateMaquinaria]', message)
+    return { success: false, error: message }
+  }
 }
 
 /**
@@ -121,14 +139,19 @@ export async function updateMaquinaria(id: number, data: Partial<Maquinaria>) {
  * @param {number} id - Maquinaria ID
  * @returns {Promise<{success: boolean}>} Operation result
  */
-export async function deleteMaquinaria(id: number) {
-  const token = await getAccessToken()
+export async function deleteMaquinaria(id: number): Promise<ActionResponse> {
+  try {
+    const token = await getAccessToken()
+    await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
 
-  await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  })
-
-  revalidatePath('/coordinacion/maquinarias')
-  return { success: true }
+    revalidatePath('/coordinacion/maquinarias')
+    return { success: true }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error deleting Maquinaria'
+    console.error('[deleteMaquinaria]', message)
+    return { success: false, error: message }
+  }
 }

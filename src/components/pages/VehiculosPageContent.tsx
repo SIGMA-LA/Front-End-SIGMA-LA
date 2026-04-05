@@ -71,7 +71,11 @@ export default function VehiculosPageContent({
       const nuevoEstado =
         estadoActual === 'DISPONIBLE' ? 'FUERA DE SERVICIO' : 'DISPONIBLE'
 
-      await updateVehiculo(patente, { estado: nuevoEstado as VehiculoEstado })
+      const res = await updateVehiculo(patente, { estado: nuevoEstado as VehiculoEstado })
+      if (!res.success) {
+        notify.error(res.error || 'Error al cambiar el estado del vehiculo.')
+        return
+      }
 
       setVehiculos((prev) =>
         prev.map((v) =>
@@ -98,7 +102,11 @@ export default function VehiculosPageContent({
 
   const handleDelete = async (patente: string) => {
     try {
-      await deleteVehiculo(patente)
+      const res = await deleteVehiculo(patente)
+      if (!res.success) {
+        notify.error(res.error || 'No se pudo eliminar el vehiculo.')
+        return
+      }
       setVehiculos((prev) => prev.filter((v) => v.patente !== patente))
       notify.success('Vehiculo eliminado correctamente.')
       router.refresh()

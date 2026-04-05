@@ -4,12 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { Cliente } from '@/types'
-
-export interface ActionResponse {
-  success: boolean
-  error?: string
-  data?: Cliente
-}
+import type { ActionResponse } from '@/types/actions'
+export type { ActionResponse }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/clientes') ? API_URL : `${API_URL}/clientes`
@@ -52,7 +48,7 @@ export async function getClientes(filter?: string): Promise<Cliente[]> {
       ? `${BASE_URL}/buscar?q=${encodeURIComponent(filter.trim())}`
       : BASE_URL
 
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Cliente[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -60,7 +56,7 @@ export async function getClientes(filter?: string): Promise<Cliente[]> {
       },
     })
 
-    return (await res.json()) as Cliente[]
+    return await res.json()
   } catch (error) {
     console.error('[getClientes]', error)
     return []
@@ -76,7 +72,7 @@ export async function getCliente(cuil: string): Promise<Cliente | null> {
   if (!cuil) return null
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(
+    const res = await fetchWithErrorHandling<Cliente>(
       `${BASE_URL}/${encodeURIComponent(cuil)}`,
       {
         method: 'GET',
@@ -87,7 +83,7 @@ export async function getCliente(cuil: string): Promise<Cliente | null> {
       }
     )
 
-    return (await res.json()) as Cliente
+    return await res.json()
   } catch (error) {
     console.error('[getCliente]', error)
     return null
@@ -97,16 +93,16 @@ export async function getCliente(cuil: string): Promise<Cliente | null> {
 /**
  * Creates a new Cliente
  * @param {FormData} formData - Cliente data
- * @returns {Promise<ActionResponse>} Operation result
+ * @returns {Promise<ActionResponse<Cliente>>} Operation result
  */
 export async function createCliente(
   formData: FormData
-): Promise<ActionResponse> {
+): Promise<ActionResponse<Cliente>> {
   try {
     const token = await getAccessToken()
     const payload = Object.fromEntries(formData.entries())
 
-    const res = await fetchWithErrorHandling(BASE_URL, {
+    const res = await fetchWithErrorHandling<Cliente>(BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -123,12 +119,9 @@ export async function createCliente(
 
     return { success: true, data }
   } catch (error) {
-    console.error('[createCliente]', error)
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'Error al crear el cliente',
-    }
+    const message = error instanceof Error ? error.message : 'Error al crear el cliente'
+    console.error('[createCliente]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -136,18 +129,18 @@ export async function createCliente(
  * Updates an existing Cliente
  * @param {string} cuil - Cliente CUIL identifier
  * @param {FormData} formData - Updated cliente data
- * @returns {Promise<ActionResponse>} Operation result
+ * @returns {Promise<ActionResponse<Cliente>>} Operation result
  */
 export async function updateCliente(
   cuil: string,
   formData: FormData
-): Promise<ActionResponse> {
+): Promise<ActionResponse<Cliente>> {
   if (!cuil) return { success: false, error: 'CUIL inválido' }
   try {
     const token = await getAccessToken()
     const payload = Object.fromEntries(formData.entries())
 
-    const res = await fetchWithErrorHandling(
+    const res = await fetchWithErrorHandling<Cliente>(
       `${BASE_URL}/${encodeURIComponent(cuil)}`,
       {
         method: 'PUT',
@@ -167,25 +160,20 @@ export async function updateCliente(
 
     return { success: true, data }
   } catch (error) {
-    console.error('[updateCliente]', error)
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Error al actualizar el cliente',
-    }
+    const message = error instanceof Error ? error.message : 'Error al actualizar el cliente'
+    console.error('[updateCliente]', message)
+    return { success: false, error: message }
   }
 }
 
 /**
  * Deletes a cliente by CUIL
  * @param {string} cuil - Cliente CUIL identifier
- * @returns {Promise<{success: boolean, error?: string}>} Operation result
+ * @returns {Promise<ActionResponse>} Operation result
  */
 export async function deleteCliente(
   cuil: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResponse> {
   if (!cuil) return { success: false, error: 'CUIL inválido' }
   try {
     const token = await getAccessToken()
@@ -203,10 +191,8 @@ export async function deleteCliente(
 
     return { success: true }
   } catch (error) {
-    console.error('[deleteCliente]', error)
-    return {
-      success: false,
-      error: mapDeleteClienteError(error),
-    }
+    const message = mapDeleteClienteError(error)
+    console.error('[deleteCliente]', message)
+    return { success: false, error: message }
   }
 }

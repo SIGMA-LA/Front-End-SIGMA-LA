@@ -74,7 +74,7 @@ export default function OrdenesProduccionContent({
       const result = await approveOrdenProduccion(ordenToApprove.cod_op)
 
       if (result.success) {
-        notify.success(result.message || 'Orden aprobada exitosamente')
+        notify.success('Orden aprobada exitosamente')
         setIsConfirmModalOpen(false)
         setOrdenToApprove(null)
         router.refresh()

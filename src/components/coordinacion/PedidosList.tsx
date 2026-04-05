@@ -51,7 +51,11 @@ export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
   const handleRecibirStock = async (obraId: number) => {
     setUpdatingId(obraId)
     try {
-      await recibirStockObra(obraId)
+      const res = await recibirStockObra(obraId)
+      if (!res.success) {
+        notify.error(res.error || 'Error al confirmar la recepción del stock.')
+        return
+      }
       // Refrescar los datos para que la obra cambie de lista
       await fetchData()
       notify.success('Recepcion de stock confirmada correctamente.')

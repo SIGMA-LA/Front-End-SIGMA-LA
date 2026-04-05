@@ -44,7 +44,11 @@ export default function EditarVehiculoPage() {
     setError(null)
 
     try {
-      await updateVehiculo(patente, data)
+      const res = await updateVehiculo(patente, data)
+      if (!res.success) {
+        setError(res.error || 'Error al actualizar el vehículo')
+        return
+      }
       router.push('/coordinacion/vehiculos')
       router.refresh()
     } catch (err: unknown) {

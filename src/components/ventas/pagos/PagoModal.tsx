@@ -179,21 +179,23 @@ export default function PagoModal({
       setLoading(true)
       setError(null)
 
-      const nuevoPago = await createPagoForObra(
+      const res = await createPagoForObra(
         { monto: montoNumerico },
         selectedObra.cod_obra
       )
 
+      if (!res.success) {
+        setError(res.error || 'Error al crear el pago')
+        notify.error(res.error || 'Error al crear el pago')
+        return
+      }
+
       notify.success('Pago registrado correctamente.')
-      onPagoCreado(nuevoPago)
+      onPagoCreado(res.data!)
       handleClose()
     } catch (err: unknown) {
-      const errorMessage =
+      const message =
         err instanceof Error ? err.message : 'Error al crear el pago'
-      const backendError = (
-        err as unknown as { response?: { data?: { message?: string } } }
-      )?.response?.data?.message
-      const message = backendError || errorMessage
       setError(message)
       notify.error(message)
     } finally {

@@ -36,7 +36,8 @@ export const getProvincias = cache(async (): Promise<Provincia[]> => {
     })
 
     if (!res.ok) return []
-    return res.json()
+    const wrapper = await res.json()
+    return wrapper.data || wrapper
   } catch (error) {
     console.error('Error obteniendo provincias:', error)
     return []

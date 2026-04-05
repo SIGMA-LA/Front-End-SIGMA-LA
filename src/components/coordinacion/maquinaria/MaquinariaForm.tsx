@@ -37,17 +37,25 @@ export default function MaquinariaForm({
 
     startTransition(async () => {
       try {
+        let res
         if (isEditing) {
-          await updateMaquinaria(maquinariaToEdit.cod_maquina, {
+          res = await updateMaquinaria(maquinariaToEdit.cod_maquina, {
             descripcion: formData.descripcion.trim(),
             estado: formData.estado,
           })
         } else {
-          await createMaquinaria({
+          res = await createMaquinaria({
             descripcion: formData.descripcion.trim(),
             estado: formData.estado,
           })
         }
+
+        if (!res.success) {
+          setError(res.error || 'Error al procesar la maquinaria')
+          notify.error(res.error || 'Error al procesar la maquinaria')
+          return
+        }
+
         notify.success(
           isEditing
             ? 'Maquinaria actualizada correctamente.'

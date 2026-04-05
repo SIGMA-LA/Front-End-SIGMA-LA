@@ -301,7 +301,6 @@ export default function CrearEntregaForm({
       startTransition(async () => {
         try {
           if (entregaToEdit) {
-            // Filtrar solo los campos permitidos para actualización (UpdateEntregaData)
             const updatePayload = {
               fecha_hora_entrega: entregaData.fecha_hora_entrega,
               detalle: entregaData.detalle,
@@ -313,21 +312,33 @@ export default function CrearEntregaForm({
               maquinarias: entregaData.maquinarias,
               cod_ops: selectedOPs,
             }
-            await updateEntrega(entregaToEdit.cod_entrega, updatePayload)
-            notify.success('Entrega actualizada correctamente.')
+            const res = await updateEntrega(entregaToEdit.cod_entrega, updatePayload)
+            if (res.success) {
+              notify.success('Entrega actualizada correctamente.')
+              router.push('/coordinacion/entregas')
+              router.refresh()
+            } else {
+              setError(res.error || 'Error al actualizar la entrega')
+              notify.error('No se pudo actualizar la entrega. Revise los conflictos.')
+            }
           } else {
-            await createEntrega(entregaData)
-            notify.success('Entrega creada correctamente.')
+            const res = await createEntrega(entregaData)
+            if (res.success) {
+              notify.success('Entrega programada correctamente.')
+              router.push('/coordinacion/entregas')
+              router.refresh()
+            } else {
+              setError(res.error || 'Error al crear la entrega')
+              notify.error('No se pudo crear la entrega. Revise los conflictos.')
+            }
           }
-          router.push('/coordinacion/entregas')
-          router.refresh()
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : 'Error desconocido'
           if (message.includes('NEXT_REDIRECT') || (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
              throw err
           }
           setError(message)
-          notify.error(`Error al procesar la entrega.`)
+          notify.error(`Error de red o del servidor al procesar la entrega.`)
         }
       })
     } catch (err: unknown) {
