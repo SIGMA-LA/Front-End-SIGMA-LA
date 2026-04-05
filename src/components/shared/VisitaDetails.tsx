@@ -55,8 +55,7 @@ export default function VisitaDetail({
         setVisita(data)
       } catch (err: unknown) {
         setError(
-          (err as { message?: string }).message ||
-            'Error al obtener los detalles de la visita.'
+          err instanceof Error ? err.message : 'Error al obtener los detalles de la visita.'
         )
       } finally {
         setLoading(false)

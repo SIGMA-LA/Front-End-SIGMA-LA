@@ -224,17 +224,22 @@ export default function CrearVisita({
 
       const action = visitaEditar ? updateVisitaFromForm : createVisitaFromForm
       try {
-        await action(formDataObj)
-        notify.success(visitaEditar ? 'Visita actualizada correctamente.' : 'Visita creada correctamente.')
-        router.push('/coordinacion/visitas')
-        router.refresh()
+        const res = await action(formDataObj)
+        if (res.success) {
+          notify.success(visitaEditar ? 'Visita actualizada correctamente.' : 'Visita programada correctamente.')
+          router.push('/coordinacion/visitas')
+          router.refresh()
+        } else {
+          setError(res.error || 'Error al procesar la visita')
+          notify.error('No se pudo completar la operación. Revise los conflictos de agenda.')
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Error desconocido'
         if (message.includes('NEXT_REDIRECT') || (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
           throw err
         }
         setError(message)
-        notify.error('Error al procesar la visita.')
+        notify.error('Error de red o del servidor al procesar la visita.')
       }
     })
   }

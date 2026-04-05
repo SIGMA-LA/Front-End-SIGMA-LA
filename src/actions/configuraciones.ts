@@ -4,13 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { PerfilFormData } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/empleados/configuraciones')
   ? API_URL
   : `${API_URL}/empleados/configuraciones`
-
-
 
 /**
  * Obtiene la configuración de perfil del usuario
@@ -27,9 +26,7 @@ export async function getPerfilConfig(): Promise<PerfilFormData> {
       },
       next: { revalidate: 30, tags: ['configuraciones-perfil'] },
     })
-    const response = await res.json()
-    // Tu backend devuelve { success: true, data: { nombre, apellido, cuil } }
-    return response
+    return (await res.json()) as PerfilFormData
   } catch (error) {
     console.error('[getPerfilConfig]', error)
     throw error
@@ -39,9 +36,9 @@ export async function getPerfilConfig(): Promise<PerfilFormData> {
 /**
  * Actualiza la configuración de perfil del usuario
  * @param {PerfilFormData} data - Nuevos datos del perfil
- * @returns {Promise<PerfilFormData>}
+ * @returns {Promise<ActionResponse<PerfilFormData>>}
  */
-export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFormData> {
+export async function updatePerfilConfig(data: PerfilFormData): Promise<ActionResponse<PerfilFormData>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(`${BASE_URL}/perfil`, {
@@ -53,36 +50,28 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
       body: JSON.stringify(data),
     })
     
-    // Dependiendo de si tu backend retorna un JSON de respuesta o solo un 200/204
-    let result: Record<string, unknown> = {}
+    let result: PerfilFormData | undefined
     if (res.status !== 204) {
-      try {
-        result = await res.json()
-      } catch {
-        /* ignorar caso donde el cuerpo está vacío y falla el .json() */
-      }
+      result = (await res.json()) as PerfilFormData
     }
     
-    // Revalidad la ruta donde están las configuraciones
     revalidatePath('/configuraciones')
     
-    // Extraer la data del wrapper { success, data } si existe
-    const returnedData = result
-
-    return (Object.keys(returnedData).length > 0 ? returnedData : data) as PerfilFormData
+    return { success: true, data: result || data }
   } catch (error) {
-    console.error('[updatePerfilConfig]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error al actualizar el perfil'
+    console.error('[updatePerfilConfig]', message)
+    return { success: false, error: message }
   }
 }
 
 /**
  * Cambia la contraseña del usuario
  */
-export async function changePasswordConfig(currentPass: string, newPass: string): Promise<Record<string, unknown>> {
+export async function changePasswordConfig(currentPass: string, newPass: string): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${BASE_URL}/password`, {
+    await fetchWithErrorHandling(`${BASE_URL}/password`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -91,19 +80,10 @@ export async function changePasswordConfig(currentPass: string, newPass: string)
       body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
     })
     
-    if (res.status === 204) return { success: true }
-    return await res.json()
+    return { success: true }
   } catch (error: unknown) {
-    console.error('[changePasswordConfig]', error)
-    // Extraer el mensaje del error que arroja fetchWithErrorHandling
-    if (error instanceof Error && error.message) {
-      try {
-        const errorData = JSON.parse(error.message)
-        throw new Error(errorData.message || 'Error al cambiar la contraseña')
-      } catch {
-        throw new Error(error.message)
-      }
-    }
-    throw error
+    const message = error instanceof Error ? error.message : 'Error al cambiar la contraseña'
+    console.error('[changePasswordConfig]', message)
+    return { success: false, error: message }
   }
 }

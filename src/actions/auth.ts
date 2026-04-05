@@ -27,15 +27,17 @@ export async function getAccessToken(): Promise<string> {
   }
 
   try {
-    const response = await fetchWithErrorHandling(`${API_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    })
+    const response = await fetchWithErrorHandling<{ token?: string; accessToken?: string }>(
+      `${API_URL}/auth/refresh`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      }
+    )
 
-    const wrapper = await response.json()
-    const data = wrapper.data || wrapper
-    return data.token || data.accessToken
+    const data = await response.json()
+    return data.token || data.accessToken || ''
   } catch (error) {
     console.error('[getAccessToken] Token refresh failed:', error)
     throw new Error('Session expired. Please log in again.')
@@ -58,24 +60,20 @@ export async function loginAction(
   }
 
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetchWithErrorHandling<{
+      usuario?: Empleado
+      user?: Empleado
+      accessToken?: string
+      token?: string
+      refreshToken?: string
+    }>(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cuil, contrasenia }),
     })
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return {
-          error:
-            'Se supero el limite de intentos de inicio de sesion. Intente nuevamente mas tarde.',
-        }
-      }
-      return { error: 'CUIL o contraseña incorrectos' }
-    }
+    const data = await response.json()
 
-    const wrapper = await response.json()
-    const data = wrapper.data || wrapper
     const usuario = data.usuario || data.user
     const accessToken = data.accessToken || data.token
     const refreshToken = data.refreshToken
@@ -116,8 +114,9 @@ export async function loginAction(
     const dashboardPath = `/${usuario.rol_actual.toLowerCase()}`
     return { redirectTo: dashboardPath }
   } catch (error) {
-    console.error('[loginAction] Error:', error)
-    return { error: 'Error al iniciar sesión. Intente nuevamente.' }
+    const message = error instanceof Error ? error.message : 'Error al iniciar sesión'
+    console.error('[loginAction] Error:', message)
+    return { error: message }
   }
 }
 

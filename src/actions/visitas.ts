@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { Visita, VisitaFormData, MotivoVisita } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/visitas') ? API_URL : `${API_URL}/visitas`
@@ -16,7 +17,7 @@ const BASE_URL = API_URL.endsWith('/visitas') ? API_URL : `${API_URL}/visitas`
 export async function getVisita(id: number): Promise<Visita | null> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
+    const response = await fetchWithErrorHandling<Visita>(`${BASE_URL}/${id}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -52,7 +53,7 @@ export async function getVisitas(
         ? `${BASE_URL}/buscar?${queryParams.toString()}`
         : `${BASE_URL}?${queryParams.toString()}`
 
-    const response = await fetchWithErrorHandling(url, {
+    const response = await fetchWithErrorHandling<Visita[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -61,14 +62,14 @@ export async function getVisitas(
       next: { revalidate: 30, tags: ['visitas'] },
     })
 
-    let visitas: Visita[] = await response.json()
+    let visitas = await response.json()
 
     // Client-side filtering as a fallback/refinement if needed,
     // though ideally the backend handles most of it now.
     if (filtro?.trim()) {
       const filtroLower = filtro.trim().toLowerCase()
 
-      visitas = visitas.filter((visita) => {
+      visitas = visitas.filter((visita: Visita) => {
         const nombreCliente = visita.nombre_cliente?.toLowerCase() || ''
         const apellidoCliente = visita.apellido_cliente?.toLowerCase() || ''
         const direccion = visita.direccion_visita?.toLowerCase() || ''
@@ -83,7 +84,7 @@ export async function getVisitas(
 
         const empleadosNombres =
           visita.empleado_visita
-            ?.map((ev) =>
+            ?.map((ev: { empleado?: { nombre: string; apellido: string } }) =>
               `${ev.empleado?.nombre} ${ev.empleado?.apellido}`.toLowerCase()
             )
             .join(' ') || ''
@@ -130,7 +131,7 @@ export async function getVisitasByEmpleado(
     if (search) queryParams.append('search', search)
     if (date) queryParams.append('date', date)
 
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<Visita[]>(
       `${BASE_URL}/empleado/${cuil}?${queryParams.toString()}`,
       {
         method: 'GET',
@@ -152,17 +153,12 @@ export async function getVisitasByEmpleado(
   }
 }
 
-/**
- * Creates a new visita
- * @param {VisitaFormData} visitaData - Visita data
- * @returns {Promise<Visita>} Created visita
- */
 export async function createVisita(
   visitaData: VisitaFormData
-): Promise<Visita> {
+): Promise<ActionResponse<Visita>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(BASE_URL, {
+    const response = await fetchWithErrorHandling<Visita>(BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -170,26 +166,21 @@ export async function createVisita(
       },
       body: JSON.stringify(visitaData),
     })
-    const result = await response.json()
+    const data = await response.json()
     revalidatePath('/coordinacion/visitas')
     revalidatePath('/visitador')
-    return result
+    return { success: true, data }
   } catch (error) {
-    console.error('[createVisita]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error creating Visita'
+    console.error('[createVisita]', message)
+    return { success: false, error: message }
   }
 }
 
-/**
- * Updates a visita by ID
- * @param {number} id - Visita ID
- * @param {Partial<VisitaFormData>} visitaData - Partial visita data to update
- * @returns {Promise<Visita>} Updated visita
- */
 export async function updateVisita(
   id: number,
   visitaData: Partial<VisitaFormData>
-): Promise<Visita> {
+): Promise<ActionResponse<Visita>> {
   try {
     const token = await getAccessToken()
     const response = await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -200,30 +191,25 @@ export async function updateVisita(
       },
       body: JSON.stringify(visitaData),
     })
-    const result = await response.json()
+    const data = await response.json()
     revalidatePath('/coordinacion/visitas')
     revalidatePath('/visitador')
     revalidatePath(`/coordinacion/visitas/${id}/editar`)
-    return result
+    return { success: true, data }
   } catch (error) {
-    console.error('[updateVisita]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error updating Visita'
+    console.error('[updateVisita]', message)
+    return { success: false, error: message }
   }
 }
 
-/**
- * Finalizes a visita (changes estado to FINALIZADA)
- * @param {number} codVisita - Visita ID
- * @param {string} observaciones - Optional observations
- * @returns {Promise<{success: boolean, data: unknown, error: string | null}>} Operation result
- */
 export async function finalizarVisita(
   codVisita: number,
   observaciones?: string
-) {
+): Promise<ActionResponse<Visita>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<Visita>(
       `${BASE_URL}/${codVisita}/finalizar`,
       {
         method: 'PATCH',
@@ -238,23 +224,21 @@ export async function finalizarVisita(
     const data = await response.json()
     revalidatePath('/visitador')
     revalidatePath('/coordinacion/visitas')
-    return { success: true, data, error: null }
+    return { success: true, data }
   } catch (error) {
-    console.error('[finalizarVisita]', error)
-    return { success: false, data: null, error: 'Error al finalizar la visita' }
+    const message = error instanceof Error ? error.message : 'Error al finalizar la visita'
+    console.error('[finalizarVisita]', message)
+    return { success: false, error: message }
   }
 }
 
-/**
- * Cancels a visita (changes estado to CANCELADA)
- * @param {number} codVisita - Visita ID
- * @param {string} motivo - Cancellation reason
- * @returns {Promise<{success: boolean, data: unknown, error: string | null}>} Operation result
- */
-export async function cancelarVisita(codVisita: number, motivo: string) {
+export async function cancelarVisita(
+  codVisita: number,
+  motivo: string
+): Promise<ActionResponse<Visita>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<Visita>(
       `${BASE_URL}/${codVisita}/cancelar`,
       {
         method: 'PATCH',
@@ -269,10 +253,11 @@ export async function cancelarVisita(codVisita: number, motivo: string) {
     const data = await response.json()
     revalidatePath('/visitador')
     revalidatePath('/coordinacion/visitas')
-    return { success: true, data, error: null }
+    return { success: true, data }
   } catch (error) {
-    console.error('[cancelarVisita]', error)
-    return { success: false, data: null, error: 'Error al cancelar la visita' }
+    const message = error instanceof Error ? error.message : 'Error al cancelar la visita'
+    console.error('[cancelarVisita]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -280,7 +265,7 @@ export async function cancelarVisita(codVisita: number, motivo: string) {
  * Creates a visita from form data and redirects
  * @param {FormData} formData - Form data from client
  */
-export async function createVisitaFromForm(formData: FormData) {
+export async function createVisitaFromForm(formData: FormData): Promise<ActionResponse<Visita>> {
   try {
     const visitaData: VisitaFormData & { fechaSalida?: string; fechaHasta?: string } = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00Z`,
@@ -305,11 +290,11 @@ export async function createVisitaFromForm(formData: FormData) {
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
     }
 
-    await createVisita(visitaData)
-    revalidatePath('/coordinacion/visitas')
+    return await createVisita(visitaData)
   } catch (error) {
-    console.error('[createVisitaFromForm]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error al procesar el formulario'
+    console.error('[createVisitaFromForm]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -317,7 +302,7 @@ export async function createVisitaFromForm(formData: FormData) {
  * Updates a visita from form data and redirects
  * @param {FormData} formData - Form data from client
  */
-export async function updateVisitaFromForm(formData: FormData) {
+export async function updateVisitaFromForm(formData: FormData): Promise<ActionResponse<Visita>> {
   try {
     const codVisita = Number(formData.get('cod_visita'))
 
@@ -343,10 +328,10 @@ export async function updateVisitaFromForm(formData: FormData) {
       apellido_cliente: (formData.get('apellido') as string) || null,
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
     }
-    await updateVisita(codVisita, visitaData)
-    revalidatePath('/coordinacion/visitas')
+    return await updateVisita(codVisita, visitaData)
   } catch (error) {
-    console.error('[updateVisitaFromForm]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error al procesar el formulario'
+    console.error('[updateVisitaFromForm]', message)
+    return { success: false, error: message }
   }
 }

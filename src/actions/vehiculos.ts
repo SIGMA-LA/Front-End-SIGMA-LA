@@ -8,6 +8,7 @@ import type {
   VehiculoFormData,
   VehiculoConDisponibilidad,
 } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/vehiculos')
@@ -22,7 +23,7 @@ export async function getVehiculos(search?: string): Promise<Vehiculo[]> {
   try {
     const token = await getAccessToken()
     const url = search ? `${BASE_URL}?search=${encodeURIComponent(search)}` : BASE_URL
-    const res = await fetchWithErrorHandling(url, {
+    const res = await fetchWithErrorHandling<Vehiculo[]>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -45,7 +46,7 @@ export async function getVehiculos(search?: string): Promise<Vehiculo[]> {
 export async function getVehiculo(patente: string): Promise<Vehiculo> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${BASE_URL}/${patente}`, {
+    const res = await fetchWithErrorHandling<Vehiculo>(`${BASE_URL}/${patente}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -69,7 +70,7 @@ export async function getVehiculo(patente: string): Promise<Vehiculo> {
 export async function getVehiculosDisponibles(): Promise<Vehiculo[]> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${BASE_URL}/disponibles`, {
+    const res = await fetchWithErrorHandling<Vehiculo[]>(`${BASE_URL}/disponibles`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -100,7 +101,7 @@ export async function getDisponibilidadVehiculos(
       fecha_hora_inicio: fechaInicioISO,
       fecha_hora_fin: fechaFinISO,
     })
-    const res = await fetchWithErrorHandling(
+    const res = await fetchWithErrorHandling<VehiculoConDisponibilidad[]>(
       `${BASE_URL}/disponibilidad?${params}`,
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -121,7 +122,7 @@ export async function getDisponibilidadVehiculos(
  */
 export async function createVehiculo(
   data: VehiculoFormData
-): Promise<Vehiculo> {
+): Promise<ActionResponse<Vehiculo>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(BASE_URL, {
@@ -132,12 +133,13 @@ export async function createVehiculo(
       },
       body: JSON.stringify(data),
     })
-    const result = await res.json()
+    const data_res = await res.json()
     revalidatePath('/coordinacion/vehiculos')
-    return result
+    return { success: true, data: data_res }
   } catch (error) {
-    console.error('[createVehiculo]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error creating Vehiculo'
+    console.error('[createVehiculo]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -150,7 +152,7 @@ export async function createVehiculo(
 export async function updateVehiculo(
   patente: string,
   data: Partial<VehiculoFormData>
-): Promise<Vehiculo> {
+): Promise<ActionResponse<Vehiculo>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(`${BASE_URL}/${patente}`, {
@@ -161,12 +163,13 @@ export async function updateVehiculo(
       },
       body: JSON.stringify(data),
     })
-    const result = await res.json()
+    const data_res = await res.json()
     revalidatePath('/coordinacion/vehiculos')
-    return result
+    return { success: true, data: data_res }
   } catch (error) {
-    console.error('[updateVehiculo]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error updating Vehiculo'
+    console.error('[updateVehiculo]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -175,7 +178,7 @@ export async function updateVehiculo(
  * @param {string} patente - Vehiculo patent/ID
  * @returns {Promise<void>}
  */
-export async function deleteVehiculo(patente: string): Promise<void> {
+export async function deleteVehiculo(patente: string): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
     await fetchWithErrorHandling(`${BASE_URL}/${patente}`, {
@@ -186,8 +189,10 @@ export async function deleteVehiculo(patente: string): Promise<void> {
       },
     })
     revalidatePath('/coordinacion/vehiculos')
+    return { success: true }
   } catch (error) {
-    console.error('[deleteVehiculo]', error)
-    throw error
+    const message = error instanceof Error ? error.message : 'Error deleting Vehiculo'
+    console.error('[deleteVehiculo]', message)
+    return { success: false, error: message }
   }
 }

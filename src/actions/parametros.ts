@@ -20,7 +20,7 @@ export async function getActualViatico(): Promise<ParametroViatico> {
       headers: { Authorization: `Bearer ${token}` },
       next: { revalidate: 3600, tags: ['parametros', 'viatico'] }, // 1 hour cache
     })
-    return await res.json()
+    return (await res.json()) as ParametroViatico
   } catch (error: unknown) {
     if (error instanceof Error && error.message !== 'Not found') {
       console.error('[getActualViatico]', error)

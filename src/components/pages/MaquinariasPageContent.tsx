@@ -44,7 +44,11 @@ export default function MaquinariasPageContent({
 
     startTransition(async () => {
       try {
-        await deleteMaquinaria(selectedMaquinaria.cod_maquina)
+        const res = await deleteMaquinaria(selectedMaquinaria.cod_maquina)
+        if (!res.success) {
+          notify.error(res.error || 'Error al eliminar la maquinaria')
+          return
+        }
         setShowDeleteModal(false)
         setSelectedMaquinaria(null)
         router.refresh()

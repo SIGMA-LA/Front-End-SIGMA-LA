@@ -1,7 +1,7 @@
-export async function fetchWithErrorHandling(
+export async function fetchWithErrorHandling<T = unknown>(
   url: string,
   options: RequestInit & { timeout?: number } = {}
-) {
+): Promise<Response & { json(): Promise<T> }> {
   const { timeout = 10000, ...fetchOptions } = options
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
@@ -14,42 +14,73 @@ export async function fetchWithErrorHandling(
     clearTimeout(timeoutId)
 
     if (!res.ok) {
-      if (res.status === 401) throw new Error('Unauthorized')
-      if (res.status === 404) throw new Error('Not found')
-      let errorMsg = `HTTP ${res.status}`
+      let errorMsg = `Error HTTP ${res.status}`
       try {
-        const errorData = await res.json()
-        errorMsg = errorData.message || errorData.error || errorMsg
+        const errorData = (await res.json()) as { 
+          message?: string; 
+          error?: string; 
+          errorCode?: string; 
+          status?: string;
+          details?: string;
+        }
+        
+        // El backend ahora centraliza las traducciones al español mediante ERROR_MAP.
+        // Priorizamos el 'message' que ya viene localizado.
+        if (errorData.message) {
+          errorMsg = errorData.message
+        } else if (errorData.error) {
+          errorMsg = errorData.error
+        }
+        
+        // Si hay una lista de detalles (como conflictos de agenda), los agregamos.
+        if (Array.isArray(errorData.details)) {
+          // Si los detalles son un array de strings o objetos con mensaje, los unimos.
+          const detailsStr = errorData.details
+            .map((d: unknown) => {
+              if (typeof d === 'string') return d
+              if (d && typeof d === 'object' && 'message' in d) return String(d.message)
+              return JSON.stringify(d)
+            })
+            .join('\n')
+          if (detailsStr) {
+            errorMsg += `:\n${detailsStr}`
+          }
+        }
       } catch {
-        // Ignore parsing errors for non-JSON responses
+        if (res.status === 401) errorMsg = 'Sesión expirada o no autorizada'
+        if (res.status === 404) errorMsg = 'Recurso no encontrado'
       }
       throw new Error(errorMsg)
     }
 
     // Intercept .json() to support standardized backend responses { status: 'success', data: ... }
     const originalJson = res.json.bind(res)
-    res.json = async () => {
-      const json = await originalJson()
+    res.json = async <R = unknown>() => {
+      const json = (await originalJson()) as { 
+        status: string; 
+        data: R; 
+        message?: string 
+      }
       if (json && json.status === 'success' && json.data !== undefined) {
         return json.data
       }
-      return json
+      return json as unknown as R
     }
 
     return res
   } catch (err: unknown) {
     if (err instanceof Error) {
-      if (err.name === 'AbortError') throw new Error('Request timeout')
-      // Check for ECONNREFUSED, assuming err.cause might be an object with a code property
-      if (typeof err.cause === 'object' && err.cause !== null && 'code' in err.cause && err.cause.code === 'ECONNREFUSED') {
+      if (err.name === 'AbortError') throw new Error('Tiempo de espera agotado')
+      
+      // Handle network errors (ECONNREFUSED)
+      const cause = err.cause as { code?: string } | undefined
+      if (cause?.code === 'ECONNREFUSED') {
         throw new Error(
-          'No se puede conectar al servidor backend. Verifica que esté corriendo en ' +
-            (url.startsWith('http') ? new URL(url).origin : 'la URL configurada')
+          'No se puede conectar al servidor backend. Verifica que esté corriendo.'
         )
       }
-      throw err // Re-throw the error if it's an Error instance but not specifically handled
+      throw err
     }
-    // If err is not an instance of Error, throw a generic error
-    throw new Error('Ha ocurrido un error inesperado al realizar la petición')
+    throw new Error('Ha ocurrido un error inesperado')
   }
 }

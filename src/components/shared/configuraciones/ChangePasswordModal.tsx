@@ -68,8 +68,7 @@ export function ChangePasswordModal({
       handleClose()
     } catch (err: unknown) {
       setError(
-        (err as { message?: string }).message ||
-          'Error al actualizar la contraseña.'
+        err instanceof Error ? err.message : 'Error al actualizar la contraseña.'
       )
       setLoading(false)
     }

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { EstadoOrdenProduccion, OrdenProduccion } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/ordenes-produccion')
@@ -15,10 +16,12 @@ const BASE_URL = API_URL.endsWith('/ordenes-produccion')
  * @param {number} cod_op - Orden de produccion code/ID
  * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result with orden data
  */
-export async function getOrdenProduccion(cod_op: number) {
+export async function getOrdenProduccion(
+  cod_op: number
+): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${BASE_URL}/${cod_op}`, {
+    const response = await fetchWithErrorHandling<OrdenProduccion>(`${BASE_URL}/${cod_op}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -27,18 +30,12 @@ export async function getOrdenProduccion(cod_op: number) {
       next: { revalidate: 30, tags: [`orden-${cod_op}`] },
     })
 
-    const orden = await response.json()
-
-    return {
-      success: true,
-      data: orden,
-    }
+    const data = await response.json()
+    return { success: true, data }
   } catch (error) {
-    console.error('[getOrdenProduccion]', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    }
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[getOrdenProduccion]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -51,7 +48,7 @@ export async function getOrdenesProduccion(
   filtersOrEstado?:
     | EstadoOrdenProduccion
     | OrdenesProduccionBusquedaAvanzadaFilters
-) {
+): Promise<ActionResponse<OrdenProduccion[]>> {
   try {
     const filters =
       typeof filtersOrEstado === 'string' ||
@@ -59,15 +56,14 @@ export async function getOrdenesProduccion(
         ? { estado: filtersOrEstado }
         : filtersOrEstado
 
-    return {
-      success: true,
-      data: await getOrdenesProduccionBusquedaAvanzada(filters),
-    }
+    const data = await getOrdenesProduccionBusquedaAvanzada(filters)
+    return { success: true, data }
   } catch (error) {
-    console.error('[getOrdenesProduccion]', error)
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[getOrdenesProduccion]', message)
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
+      error: message,
       data: [],
     }
   }
@@ -97,7 +93,7 @@ async function fetchOrdenesConFiltros(
 
   const url = `${BASE_URL}${params.toString() ? `?${params.toString()}` : ''}`
   const token = await getAccessToken()
-  const response = await fetchWithErrorHandling(url, {
+  const response = await fetchWithErrorHandling<OrdenProduccion[]>(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -182,7 +178,7 @@ export async function getOrdenesByObra(
 ): Promise<OrdenProduccion[]> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<OrdenProduccion[]>(
       `${BASE_URL}/obra/${cod_obra}`,
       {
         method: 'GET',
@@ -225,35 +221,28 @@ export async function getOrdenesByObraAndFinalizada(
  * @param {FormData} formData - Form data with cod_obra and PDF file
  * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result
  */
-export async function createOrdenProduccion(formData: FormData) {
+export async function createOrdenProduccion(
+  formData: FormData
+): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const cod_obra = formData.get('cod_obra') as string
     const file = formData.get('file') as File
 
     if (!file || file.size === 0) {
-      return {
-        success: false,
-        error: 'Debe seleccionar un archivo',
-      }
+      return { success: false, error: 'Debe seleccionar un archivo' }
     }
 
     if (file.type !== 'application/pdf') {
-      return {
-        success: false,
-        error: 'Solo se permiten archivos PDF',
-      }
+      return { success: false, error: 'Solo se permiten archivos PDF' }
     }
 
-    // Crear FormData para enviar al backend
     const backendFormData = new FormData()
     backendFormData.append('cod_obra', cod_obra)
     backendFormData.append('file', file)
 
     const token = await getAccessToken()
 
-    // Send directly to backend (has Multer + Cloudinary configured)
-    // DO NOT include Content-Type when sending FormData
-    const response = await fetch(BASE_URL, {
+    const response = await fetchWithErrorHandling(BASE_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -261,26 +250,16 @@ export async function createOrdenProduccion(formData: FormData) {
       body: backendFormData,
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || 'Error al crear orden de producción')
-    }
-
     const wrapper = await response.json()
-    const ordenCreada = wrapper.data || wrapper
+    const data = wrapper.data || wrapper
     revalidatePath('/produccion')
     revalidatePath('/obras')
 
-    return {
-      success: true,
-      data: ordenCreada,
-    }
+    return { success: true, data }
   } catch (error) {
-    console.error('[createOrdenProduccion]', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    }
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[createOrdenProduccion]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -289,7 +268,9 @@ export async function createOrdenProduccion(formData: FormData) {
  * @param {number} cod_op - Orden de produccion code/ID
  * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string, message?: string}>} Operation result
  */
-export async function approveOrdenProduccion(cod_op: number) {
+export async function approveOrdenProduccion(
+  cod_op: number
+): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const token = await getAccessToken()
     const response = await fetchWithErrorHandling(`${BASE_URL}/${cod_op}`, {
@@ -304,21 +285,15 @@ export async function approveOrdenProduccion(cod_op: number) {
       }),
     })
 
-    const ordenActualizada = await response.json()
+    const data = await response.json()
     revalidatePath('/dashboard')
     revalidatePath('/coordinacion')
 
-    return {
-      success: true,
-      data: ordenActualizada,
-      message: 'Orden de producción aprobada exitosamente',
-    }
+    return { success: true, data }
   } catch (error) {
-    console.error('[approveOrdenProduccion]', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error desconocido',
-    }
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[approveOrdenProduccion]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -327,10 +302,12 @@ export async function approveOrdenProduccion(cod_op: number) {
  * @param {number} cod_op - Orden de produccion code/ID
  * @returns {Promise<{success: boolean, message?: string, error?: string}>} Operation result
  */
-export async function startProduccion(cod_op: number) {
+export async function startProduccion(
+  cod_op: number
+): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<OrdenProduccion>(
       `${BASE_URL}/${cod_op}/iniciar`,
       {
         method: 'POST',
@@ -341,21 +318,15 @@ export async function startProduccion(cod_op: number) {
       }
     )
 
-    await response.json()
+    const data = await response.json()
     revalidatePath('/produccion')
     revalidatePath('/coordinacion/ordenes-produccion')
 
-    return {
-      success: true,
-      message: 'Producción iniciada exitosamente',
-    }
+    return { success: true, data }
   } catch (error) {
-    console.error('[startProduccion]', error)
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'Error al iniciar producción',
-    }
+    const message = error instanceof Error ? error.message : 'Error al iniciar producción'
+    console.error('[startProduccion]', message)
+    return { success: false, error: message }
   }
 }
 
@@ -364,10 +335,12 @@ export async function startProduccion(cod_op: number) {
  * @param {number} cod_op - Orden de produccion code/ID
  * @returns {Promise<{success: boolean, message?: string, error?: string}>} Operation result
  */
-export async function finishProduccion(cod_op: number) {
+export async function finishProduccion(
+  cod_op: number
+): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(
+    const response = await fetchWithErrorHandling<OrdenProduccion>(
       `${BASE_URL}/${cod_op}/finalizar`,
       {
         method: 'POST',
@@ -378,23 +351,15 @@ export async function finishProduccion(cod_op: number) {
       }
     )
 
-    await response.json()
+    const data = await response.json()
     revalidatePath('/produccion')
     revalidatePath('/coordinacion/ordenes-produccion')
 
-    return {
-      success: true,
-      message: 'Producción finalizada exitosamente',
-    }
+    return { success: true, data }
   } catch (error) {
-    console.error('[finishProduccion]', error)
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Error al finalizar producción',
-    }
+    const message = error instanceof Error ? error.message : 'Error al finalizar producción'
+    console.error('[finishProduccion]', message)
+    return { success: false, error: message }
   }
 }
 
