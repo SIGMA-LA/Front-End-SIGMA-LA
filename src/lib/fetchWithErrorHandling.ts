@@ -25,6 +25,17 @@ export async function fetchWithErrorHandling(
       }
       throw new Error(errorMsg)
     }
+
+    // Intercept .json() to support standardized backend responses { status: 'success', data: ... }
+    const originalJson = res.json.bind(res)
+    res.json = async () => {
+      const json = await originalJson()
+      if (json && json.status === 'success' && json.data !== undefined) {
+        return json.data
+      }
+      return json
+    }
+
     return res
   } catch (err: unknown) {
     if (err instanceof Error) {

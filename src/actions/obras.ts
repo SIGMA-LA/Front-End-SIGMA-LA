@@ -63,7 +63,7 @@ export async function getObras(filter?: string): Promise<Obra[]> {
       next: { revalidate: 0, tags: ['obras'] },
     })
     const data = await res.json()
-    return Array.isArray(data) ? data : data.data || []
+    return data
   } catch (error) {
     console.error('[getObras]', error)
     return []
@@ -99,7 +99,7 @@ export async function getObrasParaEntrega(
       next: { revalidate: 0, tags: ['obras'] },
     })
     const data = await res.json()
-    return Array.isArray(data) ? data : data.data || []
+    return data
   } catch (error) {
     console.error('[getObrasParaEntrega]', error)
     return []
@@ -124,7 +124,7 @@ export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
       next: { revalidate: 0, tags: [`obras-cliente-${cuil}`] },
     })
     const data = await res.json()
-    return Array.isArray(data) ? data : data.data || []
+    return data
   } catch (error) {
     console.error('[getObrasByCliente]', error)
     return []

@@ -29,7 +29,7 @@ export async function getPerfilConfig(): Promise<PerfilFormData> {
     })
     const response = await res.json()
     // Tu backend devuelve { success: true, data: { nombre, apellido, cuil } }
-    return response.data || response
+    return response
   } catch (error) {
     console.error('[getPerfilConfig]', error)
     throw error
@@ -67,7 +67,7 @@ export async function updatePerfilConfig(data: PerfilFormData): Promise<PerfilFo
     revalidatePath('/configuraciones')
     
     // Extraer la data del wrapper { success, data } si existe
-    const returnedData = result.data ? result.data : result
+    const returnedData = result
 
     return (Object.keys(returnedData).length > 0 ? returnedData : data) as PerfilFormData
   } catch (error) {

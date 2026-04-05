@@ -33,7 +33,8 @@ export async function getAccessToken(): Promise<string> {
       body: JSON.stringify({ refreshToken }),
     })
 
-    const data = await response.json()
+    const wrapper = await response.json()
+    const data = wrapper.data || wrapper
     return data.token || data.accessToken
   } catch (error) {
     console.error('[getAccessToken] Token refresh failed:', error)
@@ -73,7 +74,8 @@ export async function loginAction(
       return { error: 'CUIL o contraseña incorrectos' }
     }
 
-    const data = await response.json()
+    const wrapper = await response.json()
+    const data = wrapper.data || wrapper
     const usuario = data.usuario || data.user
     const accessToken = data.accessToken || data.token
     const refreshToken = data.refreshToken

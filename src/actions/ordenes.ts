@@ -266,7 +266,8 @@ export async function createOrdenProduccion(formData: FormData) {
       throw new Error(errorData.message || 'Error al crear orden de producción')
     }
 
-    const ordenCreada = await response.json()
+    const wrapper = await response.json()
+    const ordenCreada = wrapper.data || wrapper
     revalidatePath('/produccion')
     revalidatePath('/obras')
 

@@ -92,7 +92,7 @@ export default function ObraPagosCard({
           </div>
           <div className="flex items-center gap-4">
             <span className="rounded-full bg-green-200 px-3 py-1 text-xs font-semibold text-green-800 shadow-sm">
-              Total pagado: $ {totalPagado.toLocaleString()}
+              Total pagado: $ {totalPagado.toLocaleString('es-AR')}
             </span>
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 text-gray-500" />
@@ -147,7 +147,7 @@ export default function ObraPagosCard({
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-medium text-gray-900">
-                      $ {pago.monto.toLocaleString()}
+                      $ {pago.monto.toLocaleString('es-AR')}
                     </span>
                     {(esVentas || esAdmin) && (
                       <button

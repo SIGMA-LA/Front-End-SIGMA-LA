@@ -46,7 +46,7 @@ export async function getVisitadores(): Promise<Empleado[]> {
       next: { revalidate: 30, tags: ['empleados', 'visitadores'] },
     })
     const result = await res.json()
-    return Array.isArray(result) ? result : (result.data || [])
+    return result
   } catch (error) {
     console.error('[getVisitadores]', error)
     return []
@@ -72,7 +72,7 @@ export async function getEmpleadosDisponiblesEntrega(): Promise<Empleado[]> {
       }
     )
     const result = await res.json()
-    return Array.isArray(result) ? result : (result.data || [])
+    return result
   } catch (error) {
     console.error('[getEmpleadosDisponiblesEntrega]', error)
     return []
@@ -145,8 +145,8 @@ export async function getEmpleados(): Promise<Empleado[]> {
       },
       next: { revalidate: 30, tags: ['empleados'] },
     })
-    const data: ApiResponse<Empleado[]> = await res.json()
-    return data.data || []
+    const data: Empleado[] = await res.json()
+    return data || []
   } catch (error) {
     console.error('[getEmpleados]', error)
     return []
