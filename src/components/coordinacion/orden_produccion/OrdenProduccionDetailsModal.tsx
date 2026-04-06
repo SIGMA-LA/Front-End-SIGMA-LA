@@ -80,6 +80,14 @@ export default function OrdenProduccionDetailsModal({
   if (!isOpen || !orden) return null
 
   const estadoInfo = getEstadoInfo(orden.estado)
+  const cliente = orden.obra?.cliente
+  const esClienteEmpresa = cliente?.tipo_cliente === 'EMPRESA'
+  const nombreCliente = esClienteEmpresa
+    ? cliente?.razon_social?.trim()
+    : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim()
+  const nombreClienteLabel = esClienteEmpresa
+    ? 'Razón Social'
+    : 'Nombre y Apellido'
 
   const handleOpenPDF = () => {
     setIsPDFModalOpen(true)
@@ -207,9 +215,16 @@ export default function OrdenProduccionDetailsModal({
               </label>
               <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <div>
-                  <p className="text-xs text-gray-500">Razón Social</p>
+                  <p className="text-xs text-gray-500">{nombreClienteLabel}</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {orden.obra?.cliente?.razon_social || 'N/A'}
+                    {nombreCliente || 'N/A'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">Tipo de Cliente</p>
+                  <p className="text-sm text-gray-900">
+                    {esClienteEmpresa ? 'Empresa' : 'Particular'}
                   </p>
                 </div>
 

@@ -37,6 +37,13 @@ export default function OrdenProduccionDetails({
 }: OrdenProduccionDetailsProps) {
   const [pdfLoading, setPdfLoading] = useState(true)
 
+  const cliente = orden.obra?.cliente
+  const nombreCliente =
+    cliente?.tipo_cliente === 'EMPRESA'
+      ? cliente.razon_social?.trim()
+      : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim()
+  const nombreClienteMostrado = nombreCliente || 'N/A'
+
   const canIniciar = orden.estado === 'APROBADA'
   const canFinalizar = orden.estado === 'EN PRODUCCION'
 
@@ -56,7 +63,7 @@ export default function OrdenProduccionDetails({
               Orden de Producción #{orden.cod_op}
             </h2>
             <p className="mb-3 text-lg text-gray-600 lg:text-xl">
-              {orden.obra.cliente.razon_social}
+              {nombreClienteMostrado}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span

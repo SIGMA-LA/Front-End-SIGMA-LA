@@ -36,6 +36,11 @@ export default function OrdenProduccionCard({
   onAprobar,
 }: OrdenProduccionCardProps) {
   const [isApproving, setIsApproving] = useState(false)
+  const cliente = orden.obra?.cliente
+  const nombreCliente =
+    cliente?.tipo_cliente === 'EMPRESA'
+      ? cliente.razon_social?.trim()
+      : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim()
 
   const handleAprobar = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -82,7 +87,7 @@ export default function OrdenProduccionCard({
           {/* Cliente */}
           <p className="text-sm text-gray-600 lg:text-base">
             <span className="font-medium">Cliente:</span>{' '}
-            {orden.obra?.cliente?.razon_social || 'N/A'}
+            {nombreCliente || 'N/A'}
           </p>
 
           {/* Obra */}
