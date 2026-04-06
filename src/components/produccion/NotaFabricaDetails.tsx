@@ -170,6 +170,7 @@ export default function NotaFabricaDetails({
                     </div>
                   </div>
                 ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={notaFabricaUrl}
                     alt="Nota de Fábrica"

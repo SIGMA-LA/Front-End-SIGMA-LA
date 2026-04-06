@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Empleado, EntregaEmpleado } from '@/types'
 import EntregasSidebar from '@/components/planta/EntregasSidebar'
 import EntregaDetails from '@/components/planta/EntregaDetails'
@@ -30,7 +30,9 @@ export default function PlantaClient({
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
   const [entregas, setEntregas] = useState<EntregaEmpleado[]>(entregasInitial)
-  const [estadoFiltro, setEstadoFiltro] = useState<'PENDIENTE' | 'ENTREGADO' | 'CANCELADO'>('PENDIENTE')
+  const [estadoFiltro, setEstadoFiltro] = useState<
+    'PENDIENTE' | 'ENTREGADO' | 'CANCELADO'
+  >('PENDIENTE')
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDate, setFilterDate] = useState('')
@@ -51,31 +53,38 @@ export default function PlantaClient({
     return () => clearTimeout(timer)
   }, [searchTerm, filterDate])
 
-  const loadEntregas = async (
-    estado: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO',
-    search: string,
-    date: string
-  ) => {
-    if (!usuario?.cuil) return
+  const loadEntregas = useCallback(
+    async (
+      estado: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO',
+      search: string,
+      date: string
+    ) => {
+      if (!usuario?.cuil) return
 
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await getEntregasByEmpleado(usuario.cuil, estado, search, date)
-      setEntregas(data)
-    } catch (err) {
-      console.error('Error al cargar entregas:', err)
-      setError('Error al cargar las entregas')
-    } finally {
-      setLoading(false)
-    }
-  }
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getEntregasByEmpleado(
+          usuario.cuil,
+          estado,
+          search,
+          date
+        )
+        setEntregas(data)
+      } catch (err) {
+        console.error('Error al cargar entregas:', err)
+        setError('Error al cargar las entregas')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [usuario?.cuil]
+  )
 
   // Refetch when debounced params or status filter change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
-  }, [estadoFiltro, debouncedSearch, debouncedDate])
+  }, [estadoFiltro, debouncedSearch, debouncedDate, loadEntregas])
 
   const handleRetry = async () => {
     await loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
@@ -179,7 +188,9 @@ export default function PlantaClient({
                 <div className="text-base font-semibold text-blue-600">
                   {entregas.length}
                 </div>
-                <div className="text-xs text-gray-600 font-bold">ENTREGAS LISTADAS</div>
+                <div className="text-xs font-bold text-gray-600">
+                  ENTREGAS LISTADAS
+                </div>
               </div>
             </div>
           </div>
@@ -188,7 +199,7 @@ export default function PlantaClient({
               <div className="text-lg font-semibold text-blue-600 lg:text-xl">
                 {entregas.length}
               </div>
-              <div className="text-sm text-gray-600 lg:text-base font-bold">
+              <div className="text-sm font-bold text-gray-600 lg:text-base">
                 ENTREGAS LISTADAS
               </div>
             </div>
@@ -198,7 +209,7 @@ export default function PlantaClient({
 
       <div className="flex flex-1 overflow-hidden">
         <div
-          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-full sm:w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
+          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-full transform transition-transform duration-300 ease-in-out sm:w-96 lg:relative lg:w-[28rem] lg:translate-x-0`}
         >
           <EntregasSidebar
             entregas={entregas}
@@ -234,9 +245,7 @@ export default function PlantaClient({
               onFinalizarEntrega={() => setShowConfirmModal(true)}
             />
           ) : (
-          <EmptyState
-              message="Selecciona una entrega del panel lateral para ver los detalles"
-            />
+            <EmptyState message="Selecciona una entrega del panel lateral para ver los detalles" />
           )}
         </main>
       </div>

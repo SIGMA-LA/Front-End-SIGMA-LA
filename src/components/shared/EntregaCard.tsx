@@ -93,7 +93,7 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
       } else {
         notify.error(result.error || 'Error al cancelar la entrega.')
       }
-    } catch (error) {
+    } catch {
       notify.error('Error de red al intentar cancelar.')
     } finally {
       setIsPendingAction(false)

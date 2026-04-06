@@ -163,7 +163,6 @@ export default function CrearEntregaForm({
       const esEntregaFinal = !!entregaToEdit.esFinal
       setEsFinal(esEntregaFinal)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entregaToEdit])
 
   // Estado de Ordenes de Producción
@@ -212,7 +211,7 @@ export default function CrearEntregaForm({
       setAvailableOPs([])
       setSelectedOPs([])
     }
-  }, [formData.obraId])
+  }, [formData.obraId, entregaToEdit])
 
   const totalViaticos = useMemo(() => {
     const totalPersonas = (encargado ? 1 : 0) + acompanantes.length

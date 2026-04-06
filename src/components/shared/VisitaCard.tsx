@@ -8,7 +8,6 @@ import {
   Eye,
   Pencil,
   XCircle,
-  MapPin,
   Briefcase,
 } from 'lucide-react'
 import { Visita } from '@/types'
@@ -103,7 +102,8 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
   const getVisitadorPrincipal = () => {
     const principal = visita.empleado_visita?.[0]
     return principal
-      ? `${principal.empleado?.nombre || ''} ${principal.empleado?.apellido || ''}`.trim() || principal.cuil
+      ? `${principal.empleado?.nombre || ''} ${principal.empleado?.apellido || ''}`.trim() ||
+          principal.cuil
       : 'No asignado'
   }
 
@@ -113,7 +113,9 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
         {/* Header - Matching Entregas */}
         <div className="border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
           <h3 className="text-lg font-semibold text-gray-800">
-            {visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'}
+            {visita.obra?.direccion ||
+              visita.direccion_visita ||
+              'Sin dirección'}
           </h3>
         </div>
 
@@ -153,7 +155,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
               </div>
               <div>
                 <p className="text-xs text-gray-500">Visitador</p>
-                <p className="font-medium text-gray-900 truncate max-w-[120px]">
+                <p className="max-w-[120px] truncate font-medium text-gray-900">
                   {getVisitadorPrincipal()}
                 </p>
               </div>
@@ -177,34 +179,36 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-gray-100 pt-4">
             <button
               onClick={() => setShowDetail(true)}
-              className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition-all hover:bg-blue-100 shadow-sm"
+              className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-all hover:bg-blue-100"
             >
               <Eye className="h-4 w-4" />
               Ver Detalles
             </button>
 
-            {esCoordinacion && (visita.estado === 'PENDIENTE' || visita.estado === 'PROGRAMADA') && (
-              <div className="flex gap-2">
-                <Link
-                  href={`/coordinacion/visitas/${visita.cod_visita}/editar`}
-                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-700 shadow-md hover:shadow-lg active:scale-95"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </Link>
-                <button
-                  onClick={() => setShowCancelModal(true)}
-                  disabled={isPending}
-                  className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 shadow-sm active:scale-95"
-                >
-                  <XCircle className="h-4 w-4" />
-                  {isPending ? 'Cancelando...' : 'Cancelar'}
-                </button>
-              </div>
-            )}
+            {esCoordinacion &&
+              (visita.estado === 'PENDIENTE' ||
+                visita.estado === 'PROGRAMADA') && (
+                <div className="flex gap-2">
+                  <Link
+                    href={`/coordinacion/visitas/${visita.cod_visita}/editar`}
+                    className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:bg-indigo-700 hover:shadow-lg active:scale-95"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Link>
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    disabled={isPending}
+                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition-all hover:border-red-300 hover:bg-red-50 active:scale-95"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    {isPending ? 'Cancelando...' : 'Cancelar'}
+                  </button>
+                </div>
+              )}
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { Maquinaria, MaquinariaConDisponibilidad } from '@/types'
@@ -16,7 +15,9 @@ const BASE_URL = `${API_URL}/maquinarias`
  */
 export async function getMaquinarias(search?: string): Promise<Maquinaria[]> {
   const token = await getAccessToken()
-  const url = search ? `${BASE_URL}?search=${encodeURIComponent(search)}` : BASE_URL
+  const url = search
+    ? `${BASE_URL}?search=${encodeURIComponent(search)}`
+    : BASE_URL
   const res = await fetchWithErrorHandling<Maquinaria[]>(url, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 30, tags: ['maquinarias'] },
@@ -30,10 +31,16 @@ export async function getMaquinarias(search?: string): Promise<Maquinaria[]> {
  */
 export async function getMaquinariasDisponibles(): Promise<Maquinaria[]> {
   const token = await getAccessToken()
-  const res = await fetchWithErrorHandling<Maquinaria[]>(`${BASE_URL}/disponibles`, {
-    headers: { Authorization: `Bearer ${token}` },
-    next: { revalidate: 30, tags: ['maquinarias', 'maquinarias-disponibles'] },
-  })
+  const res = await fetchWithErrorHandling<Maquinaria[]>(
+    `${BASE_URL}/disponibles`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      next: {
+        revalidate: 30,
+        tags: ['maquinarias', 'maquinarias-disponibles'],
+      },
+    }
+  )
   return res.json()
 }
 
@@ -98,7 +105,8 @@ export async function createMaquinaria(
     revalidatePath('/coordinacion/maquinarias')
     return { success: true, data: result }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error creating Maquinaria'
+    const message =
+      error instanceof Error ? error.message : 'Error creating Maquinaria'
     console.error('[createMaquinaria]', message)
     return { success: false, error: message }
   }
@@ -128,7 +136,8 @@ export async function updateMaquinaria(
     revalidatePath('/coordinacion/maquinarias')
     return { success: true, data: result }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error updating Maquinaria'
+    const message =
+      error instanceof Error ? error.message : 'Error updating Maquinaria'
     console.error('[updateMaquinaria]', message)
     return { success: false, error: message }
   }
@@ -150,7 +159,8 @@ export async function deleteMaquinaria(id: number): Promise<ActionResponse> {
     revalidatePath('/coordinacion/maquinarias')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error deleting Maquinaria'
+    const message =
+      error instanceof Error ? error.message : 'Error deleting Maquinaria'
     console.error('[deleteMaquinaria]', message)
     return { success: false, error: message }
   }

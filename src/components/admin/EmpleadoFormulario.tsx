@@ -147,9 +147,9 @@ export default function EmpleadoFormulario({
         ...formData,
         cuil: cuilLimpio,
       } as CreateEmpleadoData | UpdateEmpleadoData
+      const { contrasenia, ...dataWithoutPass } = dataToSubmit
 
-      if (!dataToSubmit.contrasenia || dataToSubmit.contrasenia.trim() === '') {
-        const { contrasenia: _contrasenia, ...dataWithoutPass } = dataToSubmit
+      if (!contrasenia || contrasenia.trim() === '') {
         await onSubmit(dataWithoutPass)
       } else {
         await onSubmit(dataToSubmit)

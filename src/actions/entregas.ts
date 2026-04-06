@@ -279,7 +279,7 @@ export async function cancelarEntrega(
 ): Promise<ActionResponse<Entrega>> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Entrega>(
+    await fetchWithErrorHandling<Entrega>(
       `${BASE_URL}/${codEntrega}/cancelar`,
       {
         method: 'PATCH',

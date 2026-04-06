@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   X,
   Truck,
-  CalendarClock,
   Shield,
   Users,
   Wrench,
@@ -81,7 +80,7 @@ export default function EntregaDetailsModal({
       setEstaEntrega(null)
       setViaticoPorDia(0)
     }
-  }, [isOpen, entrega?.cod_entrega])
+  }, [isOpen, entrega])
 
   // Reset active OP tab on entrega change
   useEffect(() => {

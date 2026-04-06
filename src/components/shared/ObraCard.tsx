@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useTransition, useEffect } from 'react'
+import { useState, useMemo, useTransition, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ObraCardProps } from '@/types'
 import EstadoObraBadge from './EstadoObraBadge'
@@ -28,10 +28,13 @@ export default function ObraCard({
   provincias,
 }: ObraCardProps) {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'
-  const getNotaUrl = (publicId?: string | null) =>
-    publicId
-      ? `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}.pdf`
-      : ''
+  const getNotaUrl = useCallback(
+    (publicId?: string | null) =>
+      publicId
+        ? `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}.pdf`
+        : '',
+    [cloudName]
+  )
 
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -44,7 +47,7 @@ export default function ObraCard({
 
   useEffect(() => {
     setNotaFabricaUrl(getNotaUrl(obra.nota_fabrica_pid))
-  }, [obra.nota_fabrica_pid])
+  }, [obra.nota_fabrica_pid, getNotaUrl])
 
   const provincia = useMemo(() => {
     if (obra.localidad && provincias.length > 0) {
@@ -60,7 +63,9 @@ export default function ObraCard({
       try {
         const res = await deleteObra(obra.cod_obra)
         if (!res.success) {
-          notify.error(res.error || 'No se pudo eliminar la obra. Intente nuevamente.')
+          notify.error(
+            res.error || 'No se pudo eliminar la obra. Intente nuevamente.'
+          )
           return
         } else {
           notify.success('Obra eliminada correctamente.')
@@ -79,7 +84,9 @@ export default function ObraCard({
       try {
         const res = await cancelObra(obra.cod_obra)
         if (!res.success) {
-          notify.error(res.error || 'No se pudo cancelar la obra. Intente nuevamente.')
+          notify.error(
+            res.error || 'No se pudo cancelar la obra. Intente nuevamente.'
+          )
           return
         }
         notify.success('Obra cancelada correctamente.')
