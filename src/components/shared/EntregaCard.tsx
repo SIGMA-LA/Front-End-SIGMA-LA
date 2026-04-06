@@ -274,11 +274,13 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
         </div>
       )}
 
-      <EntregaDetailsModal
-        isOpen={showModal}
-        entrega={entrega}
-        onClose={() => setShowModal(false)}
-      />
+      {showModal && (
+        <EntregaDetailsModal
+          isOpen={showModal}
+          entrega={entrega}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
   )
 }

@@ -79,6 +79,7 @@ export default function EntregaDetailsModal({
       fetchData()
     } else if (!isOpen) {
       setEstaEntrega(null)
+      setViaticoPorDia(0)
     }
   }, [isOpen, entrega?.cod_entrega])
 

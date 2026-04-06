@@ -7,8 +7,6 @@ import type { ParametroViatico } from '@/types'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/parametros`
 
-
-
 /**
  * Retrieves the current viatico parameter value
  * @returns {Promise<ParametroViatico>} Current viatico per person per day
