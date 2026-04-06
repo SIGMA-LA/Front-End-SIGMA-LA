@@ -19,15 +19,6 @@ export default function EditarVehiculoPage() {
     const fetchVehiculo = async () => {
       try {
         const data = await getVehiculo(patente)
-        console.log('Datos del vehículo recibidos:', data)
-        console.log(
-          'Marca:',
-          data.marca,
-          'Modelo:',
-          data.modelo,
-          'Año:',
-          data.anio
-        )
         setVehiculo(data)
       } catch (error: unknown) {
         setError(error instanceof Error ? error.message : 'Error desconocido')

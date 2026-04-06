@@ -18,7 +18,6 @@ export interface Entrega {
   estado: EstadoEntrega
   observaciones?: string
   detalle: string
-  empleados_asignados?: EntregaEmpleado[]
   entrega_empleado?: EntregaEmpleado[]
   maquinarias?: UsoMaquinaria[]
   uso_maquinaria?: UsoMaquinaria[]

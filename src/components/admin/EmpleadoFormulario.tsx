@@ -74,7 +74,6 @@ export default function EmpleadoFormulario({
 
   // Cargar datos del empleado cuando cambie
   useEffect(() => {
-    console.log('Empleado recibido:', empleado)
     if (empleado) {
       // Manejar si empleado viene como objeto con data o directo
       const empleadoData = empleado
@@ -87,7 +86,6 @@ export default function EmpleadoFormulario({
         area_trabajo: (empleadoData.area_trabajo as AreaTrabajo) || 'VENTAS',
         contrasenia: '',
       }
-      console.log('Form data a setear:', newFormData)
       setFormData(newFormData)
     }
   }, [empleado])

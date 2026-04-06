@@ -30,7 +30,6 @@ interface EntregaApiPayload {
   cod_obra: number
   obra?: Obra
   entrega_empleado?: EntregaEmpleadoApi[]
-  empleados_asignados?: EntregaEmpleadoApi[]
   uso_vehiculo_entrega?: UsoVehiculoEntrega[]
   vehiculos?: UsoVehiculoEntrega[]
   uso_maquinaria?: UsoMaquinaria[]
@@ -45,7 +44,7 @@ interface CreateEntregaData {
   dias_viaticos?: number
   fecha_salida_estimada?: string
   fecha_regreso_estimado?: string
-  empleados_asignados: Array<{
+  entrega_empleado: Array<{
     cuil: string
     rol_entrega: RolEntrega
   }>
@@ -87,7 +86,9 @@ export async function getEntregasByEmpleado(
     if (search) url.searchParams.append('search', search)
     if (date) url.searchParams.append('date', date)
 
-    const res = await fetchWithErrorHandling<EntregaApiPayload[]>(url.toString(), {
+    const res = await fetchWithErrorHandling<EntregaApiPayload[]>(
+      url.toString(),
+      {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -101,11 +102,10 @@ export async function getEntregasByEmpleado(
     )
     const entregas = await res.json()
     return entregas.map((e: EntregaApiPayload) => {
-      const ee = (e.entrega_empleado || e.empleados_asignados || []).find(
+      const ee = (e.entrega_empleado || []).find(
         (emp: EntregaEmpleadoApi) => emp.cuil === cuilEmpleado
       )
-      const empleadosAsignados = (e.entrega_empleado ||
-        e.empleados_asignados ||
+      const entregaEmpleado = (e.entrega_empleado ||
         []) as unknown as EntregaEmpleado[]
 
       return {
@@ -116,7 +116,7 @@ export async function getEntregasByEmpleado(
         empleado: ee?.empleado as EntregaEmpleado['empleado'],
         entrega: {
           ...(e as unknown as Entrega),
-          empleados_asignados: empleadosAsignados,
+          entrega_empleado: entregaEmpleado,
           vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
           maquinarias: e.uso_maquinaria || e.maquinarias || [],
         },
@@ -135,10 +135,13 @@ export async function getEntregasByEmpleado(
  * @param {string} estado - Optional state filter
  * @returns {Promise<Entrega[]>} List of deliveries
  */
-export async function getEntregas(filter?: string, estado?: string): Promise<Entrega[]> {
+export async function getEntregas(
+  filter?: string,
+  estado?: string
+): Promise<Entrega[]> {
   try {
     const token = await getAccessToken()
-    
+
     let url = BASE_URL
     const params = new URLSearchParams()
     if (filter) params.append('q', filter)
@@ -175,7 +178,7 @@ export async function getEntregas(filter?: string, estado?: string): Promise<Ent
         const codigoEntrega = String(entrega.cod_entrega || '')
 
         const empleadosNombres =
-          entrega.empleados_asignados
+          entrega.entrega_empleado
             ?.map((ea: { empleado?: { nombre: string; apellido: string } }) =>
               `${ea.empleado?.nombre} ${ea.empleado?.apellido}`.toLowerCase()
             )
@@ -221,7 +224,7 @@ export async function getEntrega(id: number): Promise<Entrega | null> {
     const data = await res.json()
     if (data) {
       Object.assign(data, {
-        empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+        entrega_empleado: data.entrega_empleado || [],
         vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
         maquinarias: data.uso_maquinaria || data.maquinarias || [],
       })
@@ -260,7 +263,8 @@ export async function finalizarEntrega(
 
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error finalizing Entrega'
+    const message =
+      error instanceof Error ? error.message : 'Error finalizing Entrega'
     console.error('[finalizarEntrega]', message)
     return {
       success: false,
@@ -275,14 +279,17 @@ export async function cancelarEntrega(
 ): Promise<ActionResponse<Entrega>> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Entrega>(`${BASE_URL}/${codEntrega}/cancelar`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ motivo }),
-    })
+    const res = await fetchWithErrorHandling<Entrega>(
+      `${BASE_URL}/${codEntrega}/cancelar`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ motivo }),
+      }
+    )
 
     revalidateTag(`entrega-${codEntrega}`)
     revalidatePath('/visitador')
@@ -290,7 +297,8 @@ export async function cancelarEntrega(
     revalidatePath('/coordinacion/entregas')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error canceling Entrega'
+    const message =
+      error instanceof Error ? error.message : 'Error canceling Entrega'
     console.error('[cancelarEntrega]', message)
     return {
       success: false,
@@ -306,7 +314,7 @@ export async function createEntrega(
     const token = await getAccessToken()
     const payload = {
       ...entregaData,
-      empleados: entregaData.empleados_asignados,
+      empleados: entregaData.entrega_empleado,
       estado: 'PENDIENTE',
       maquinarias: entregaData.maquinarias?.map((m) => Number(m)),
     }
@@ -320,21 +328,21 @@ export async function createEntrega(
       body: JSON.stringify(payload),
     })
 
-      const data = await res.json()
-      if (data) {
-        Object.assign(data, {
-          empleados_asignados:
-            data.entrega_empleado || data.empleados_asignados || [],
-          vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
-          maquinarias: data.uso_maquinaria || data.maquinarias || [],
-        })
-      }
-      
-      revalidatePath('/coordinacion/entregas')
-      revalidatePath('/planta/entregas')
-      return { success: true, data: data as unknown as Entrega }
+    const data = await res.json()
+    if (data) {
+      Object.assign(data, {
+        entrega_empleado: data.entrega_empleado || [],
+        vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
+        maquinarias: data.uso_maquinaria || data.maquinarias || [],
+      })
+    }
+
+    revalidatePath('/coordinacion/entregas')
+    revalidatePath('/planta/entregas')
+    return { success: true, data: data as unknown as Entrega }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error creating Entrega'
+    const message =
+      error instanceof Error ? error.message : 'Error creating Entrega'
     console.error('[createEntrega]', message)
     return {
       success: false,
@@ -373,7 +381,7 @@ export async function updateEntrega(
     const data = await res.json()
     if (data) {
       Object.assign(data, {
-        empleados_asignados: data.entrega_empleado || data.empleados_asignados || [],
+        entrega_empleado: data.entrega_empleado || [],
         vehiculos: data.uso_vehiculo_entrega || data.vehiculos || [],
         maquinarias: data.uso_maquinaria || data.maquinarias || [],
       })
@@ -385,7 +393,8 @@ export async function updateEntrega(
 
     return { success: true, data: data as unknown as Entrega }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error updating Entrega'
+    const message =
+      error instanceof Error ? error.message : 'Error updating Entrega'
     console.error('[updateEntrega]', message)
     return {
       success: false,
@@ -414,7 +423,8 @@ export async function deleteEntrega(id: number): Promise<ActionResponse> {
     revalidatePath('/coordinacion/entregas')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error deleting Entrega'
+    const message =
+      error instanceof Error ? error.message : 'Error deleting Entrega'
     console.error('[deleteEntrega]', message)
     return {
       success: false,
@@ -429,8 +439,8 @@ export async function deleteEntrega(id: number): Promise<ActionResponse> {
  */
 export async function createEntregaFromForm(formData: FormData) {
   try {
-    const empleadosAsignados = JSON.parse(
-      (formData.get('empleados_asignados') as string) || '[]'
+    const entregaEmpleado = JSON.parse(
+      (formData.get('entrega_empleado') as string) || '[]'
     )
     const vehiculosData = formData.get('vehiculos')
     const vehiculos = vehiculosData
@@ -455,7 +465,7 @@ export async function createEntregaFromForm(formData: FormData) {
       fecha_regreso_estimado: formData.get('fecha_regreso_estimado')
         ? `${formData.get('fecha_regreso_estimado')}Z`
         : undefined,
-      empleados_asignados: empleadosAsignados,
+      entrega_empleado: entregaEmpleado,
       vehiculos,
       maquinarias,
     }

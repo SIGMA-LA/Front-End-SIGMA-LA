@@ -33,11 +33,6 @@ export default function NotaFabricaModal({
 
   if (!isOpen) return null
 
-  // Debug: verificar URL de la nota
-  if (notaUrl && process.env.NODE_ENV === 'development') {
-    console.log('[NotaFabricaModal] URL de nota:', notaUrl)
-  }
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
