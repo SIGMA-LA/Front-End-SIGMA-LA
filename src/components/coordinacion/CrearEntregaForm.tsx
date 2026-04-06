@@ -8,7 +8,15 @@ import { getObrasParaEntrega } from '@/actions/obras'
 import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinarias } from '@/actions/maquinarias'
 import { getOrdenesByObraAndFinalizada } from '@/actions/ordenes'
-import type { Obra, Empleado, Vehiculo, Maquinaria, RolEntrega, OrdenProduccion, Entrega } from '@/types'
+import type {
+  Obra,
+  Empleado,
+  Vehiculo,
+  Maquinaria,
+  RolEntrega,
+  OrdenProduccion,
+  Entrega,
+} from '@/types'
 import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
 // Componentes
@@ -103,12 +111,13 @@ export default function CrearEntregaForm({
       })
 
       // Try to get dates from usage records if available
-      const vUsage = entregaToEdit.vehiculos?.[0] || entregaToEdit.uso_vehiculo_entrega?.[0]
+      const vUsage =
+        entregaToEdit.vehiculos?.[0] || entregaToEdit.uso_vehiculo_entrega?.[0]
       if (vUsage) {
         const dSalida = new Date(vUsage.fecha_hora_ini_uso)
         setFechaSalida(dSalida.toISOString().split('T')[0])
         setHoraSalida(dSalida.toTimeString().split(' ')[0].substring(0, 5))
-        
+
         const dRegreso = new Date(vUsage.fecha_hora_fin_est || date)
         setFechaRegreso(dRegreso.toISOString().split('T')[0])
         setHoraRegreso(dRegreso.toTimeString().split(' ')[0].substring(0, 5))
@@ -122,34 +131,45 @@ export default function CrearEntregaForm({
       setEsFinal(entregaToEdit.esFinal || false)
       setDiasViaticos(entregaToEdit.dias_viaticos || 0)
 
-      const empList = entregaToEdit.empleados_asignados || entregaToEdit.entrega_empleado || []
-      const enc = empList.find(e => e.rol_entrega === 'ENCARGADO')
+      const empList = entregaToEdit.entrega_empleado || []
+      const enc = empList.find((e) => e.rol_entrega === 'ENCARGADO')
       if (enc) setEncargado(enc.cuil)
 
-      const acs = empList.filter(e => e.rol_entrega === 'ACOMPANANTE').map(e => e.cuil)
+      const acs = empList
+        .filter((e) => e.rol_entrega === 'ACOMPANANTE')
+        .map((e) => e.cuil)
       setAcompanantes(acs)
 
-      const vehs = (entregaToEdit.vehiculos || entregaToEdit.uso_vehiculo_entrega || []).map(v => v.patente)
+      const vehs = (
+        entregaToEdit.vehiculos ||
+        entregaToEdit.uso_vehiculo_entrega ||
+        []
+      ).map((v) => v.patente)
       setSelectedVehiculos(vehs)
 
-      const maqs = (entregaToEdit.maquinarias || entregaToEdit.uso_maquinaria || []).map(m => m.cod_maquina)
+      const maqs = (
+        entregaToEdit.maquinarias ||
+        entregaToEdit.uso_maquinaria ||
+        []
+      ).map((m) => m.cod_maquina)
       setSelectedMaquinaria(maqs.map(String))
-      
-      const ops = (entregaToEdit.ordenes_de_produccion || []).map(op => op.cod_op)
+
+      const ops = (entregaToEdit.ordenes_de_produccion || []).map(
+        (op) => op.cod_op
+      )
       setSelectedOPs(ops)
 
       // Sync esFinal state
       const esEntregaFinal = !!entregaToEdit.esFinal
       setEsFinal(esEntregaFinal)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entregaToEdit])
 
   // Estado de Ordenes de Producción
   const [availableOPs, setAvailableOPs] = useState<OrdenProduccion[]>([])
   const [selectedOPs, setSelectedOPs] = useState<number[]>([])
   const [isFetchingOPs, setIsFetchingOPs] = useState(false)
-  
+
   const [viewerUrl, setViewerUrl] = useState('')
   const [viewerTitle, setViewerTitle] = useState('')
   const [isViewerOpen, setIsViewerOpen] = useState(false)
@@ -162,19 +182,21 @@ export default function CrearEntregaForm({
           // Unimos las OPs disponibles con las que ya están vinculadas a la entrega (si estamos editando)
           const editOPs = entregaToEdit?.ordenes_de_produccion || []
           const combined = [...ops]
-          
+
           editOPs.forEach((op) => {
             if (!combined.find((c) => c.cod_op === op.cod_op)) {
               combined.push(op)
             }
           })
-          
+
           setAvailableOPs(combined)
-          
+
           // Refuerzo de selección inicial para edición
           if (entregaToEdit) {
-            const currentOPs = (entregaToEdit.ordenes_de_produccion || []).map(o => o.cod_op)
-            setSelectedOPs(prev => {
+            const currentOPs = (entregaToEdit.ordenes_de_produccion || []).map(
+              (o) => o.cod_op
+            )
+            setSelectedOPs((prev) => {
               // Mantenemos las actuales y añadimos las de la entrega si no están
               const unique = new Set([...prev, ...currentOPs])
               return Array.from(unique)
@@ -189,7 +211,7 @@ export default function CrearEntregaForm({
       setAvailableOPs([])
       setSelectedOPs([])
     }
-  }, [formData.obraId])
+  }, [formData.obraId, entregaToEdit])
 
   const totalViaticos = useMemo(() => {
     const totalPersonas = (encargado ? 1 : 0) + acompanantes.length
@@ -204,7 +226,6 @@ export default function CrearEntregaForm({
     const emp = empleados.find((e) => e.cuil === cuil)
     return emp ? `${emp.nombre} ${emp.apellido}` : cuil
   }
-
 
   const handleConfirmPersonal = (
     newEncargado: string | null,
@@ -248,14 +269,16 @@ export default function CrearEntregaForm({
     ).getTime()
 
     if (fechaSalidaMs > fechaEntregaMs) {
-      const msg = 'La salida de la planta no puede ser posterior a la llegada al cliente.'
+      const msg =
+        'La salida de la planta no puede ser posterior a la llegada al cliente.'
       setError(msg)
       notify.error('Error en el formulario. Revise los detalles.')
       return
     }
 
     if (fechaRegresoMs <= fechaSalidaMs) {
-      const msg = 'El regreso estimado debe ser estrictamente posterior a la salida.'
+      const msg =
+        'El regreso estimado debe ser estrictamente posterior a la salida.'
       setError(msg)
       notify.error('Error en el formulario. Revise los detalles.')
       return
@@ -275,7 +298,7 @@ export default function CrearEntregaForm({
     }
 
     try {
-      const empleados_asignados = [
+      const entrega_empleado = [
         { cuil: encargado, rol_entrega: 'ENCARGADO' as RolEntrega },
         ...acompanantes.map((cuil) => ({
           cuil,
@@ -290,7 +313,7 @@ export default function CrearEntregaForm({
         dias_viaticos: diasViaticos,
         fecha_salida_estimada: `${fechaSalida}T${horaSalida}:00Z`,
         fecha_regreso_estimado: `${fechaRegreso}T${horaRegreso}:00Z`,
-        empleados_asignados,
+        entrega_empleado,
         vehiculos: selectedVehiculos.length > 0 ? selectedVehiculos : undefined,
         maquinarias:
           selectedMaquinaria.length > 0 ? selectedMaquinaria : undefined,
@@ -307,19 +330,24 @@ export default function CrearEntregaForm({
               dias_viaticos: entregaData.dias_viaticos,
               fecha_salida_estimada: entregaData.fecha_salida_estimada,
               fecha_regreso_estimado: entregaData.fecha_regreso_estimado,
-              empleados: entregaData.empleados_asignados,
+              empleados: entregaData.entrega_empleado,
               vehiculos: entregaData.vehiculos,
               maquinarias: entregaData.maquinarias,
               cod_ops: selectedOPs,
             }
-            const res = await updateEntrega(entregaToEdit.cod_entrega, updatePayload)
+            const res = await updateEntrega(
+              entregaToEdit.cod_entrega,
+              updatePayload
+            )
             if (res.success) {
               notify.success('Entrega actualizada correctamente.')
               router.push('/coordinacion/entregas')
               router.refresh()
             } else {
               setError(res.error || 'Error al actualizar la entrega')
-              notify.error('No se pudo actualizar la entrega. Revise los conflictos.')
+              notify.error(
+                'No se pudo actualizar la entrega. Revise los conflictos.'
+              )
             }
           } else {
             const res = await createEntrega(entregaData)
@@ -329,13 +357,19 @@ export default function CrearEntregaForm({
               router.refresh()
             } else {
               setError(res.error || 'Error al crear la entrega')
-              notify.error('No se pudo crear la entrega. Revise los conflictos.')
+              notify.error(
+                'No se pudo crear la entrega. Revise los conflictos.'
+              )
             }
           }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Error desconocido'
-          if (message.includes('NEXT_REDIRECT') || (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
-             throw err
+          const message =
+            err instanceof Error ? err.message : 'Error desconocido'
+          if (
+            message.includes('NEXT_REDIRECT') ||
+            (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')
+          ) {
+            throw err
           }
           setError(message)
           notify.error(`Error de red o del servidor al procesar la entrega.`)
@@ -352,28 +386,34 @@ export default function CrearEntregaForm({
     <>
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50/30 p-4 border border-blue-100/50 shadow-sm">
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-blue-100/50 bg-gradient-to-r from-blue-50 to-indigo-50/30 p-4 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-inner">
                 <Truck className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-transparent">
-                  {entregaToEdit ? 'Editar Entrega Operativa' : 'Programar Nueva Entrega'}
+                <h1 className="bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-2xl font-bold text-transparent">
+                  {entregaToEdit
+                    ? 'Editar Entrega Operativa'
+                    : 'Programar Nueva Entrega'}
                 </h1>
                 <p className="text-sm font-medium text-slate-500">
-                  {entregaToEdit ? `Modificando entrega #${entregaToEdit.cod_entrega}` : 'Coordinación de logística y personal de planta'}
+                  {entregaToEdit
+                    ? `Modificando entrega #${entregaToEdit.cod_entrega}`
+                    : 'Coordinación de logística y personal de planta'}
                 </p>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="mb-6 flex items-start gap-4 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="animate-in fade-in slide-in-from-top-2 mb-6 flex items-start gap-4 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
               <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-red-800">Se detectaron problemas:</h4>
-                <div className="mt-1 text-sm text-red-700 whitespace-pre-wrap leading-relaxed">
+                <h4 className="text-sm font-bold text-red-800">
+                  Se detectaron problemas:
+                </h4>
+                <div className="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-red-700">
                   {error.split('\n').map((line, idx, arr) => (
                     <p
                       key={idx}
@@ -388,9 +428,9 @@ export default function CrearEntregaForm({
                   ))}
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setError(null)}
-                className="text-red-400 hover:text-red-600 transition-colors"
+                className="text-red-400 transition-colors hover:text-red-600"
                 type="button"
               >
                 <AlertCircle className="h-4 w-4" />
@@ -399,34 +439,41 @@ export default function CrearEntregaForm({
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md mb-6">
-              <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl px-5 py-4">
+            <div className="mb-6 rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
+              <div className="flex items-center gap-3 rounded-t-2xl border-b border-slate-100 bg-slate-50/50 px-5 py-4">
                 <div className="rounded-lg bg-emerald-100/80 p-2 shadow-inner">
                   <MapPin className="h-5 w-5 text-emerald-600" />
                 </div>
-                <h3 className="font-semibold text-slate-800">Ubicación y Detalle</h3>
+                <h3 className="font-semibold text-slate-800">
+                  Ubicación y Detalle
+                </h3>
               </div>
-              
-              <div className="p-5 space-y-5">
+
+              <div className="space-y-5 p-5">
                 {/* Bloque de Tipo de Entrega */}
                 {!isFromObra && (
                   <div>
-                    <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
                       Tipo de Entrega *
                     </label>
-                    <div className="flex bg-slate-100 p-1 rounded-xl mb-4 w-full md:w-max">
+                    <div className="mb-4 flex w-full rounded-xl bg-slate-100 p-1 md:w-max">
                       <button
                         type="button"
                         disabled={!!entregaToEdit}
                         onClick={() => {
                           setEsFinal(false)
-                          if(formData.obraId) setFormData((prev) => ({ ...prev, obraId: null, direccion: '' }))
+                          if (formData.obraId)
+                            setFormData((prev) => ({
+                              ...prev,
+                              obraId: null,
+                              direccion: '',
+                            }))
                         }}
-                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all ${
+                        className={`flex-1 rounded-lg px-6 py-2 text-sm font-semibold transition-all md:flex-none ${
                           !esFinal
-                            ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100'
+                            ? 'border border-indigo-100 bg-white text-indigo-700 shadow-sm'
                             : 'text-slate-500 hover:text-slate-700'
-                        } ${!!entregaToEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        } ${!!entregaToEdit ? 'cursor-not-allowed opacity-70' : ''}`}
                       >
                         Entrega Parcial
                       </button>
@@ -435,13 +482,18 @@ export default function CrearEntregaForm({
                         disabled={!!entregaToEdit}
                         onClick={() => {
                           setEsFinal(true)
-                          if(formData.obraId) setFormData((prev) => ({ ...prev, obraId: null, direccion: '' }))
+                          if (formData.obraId)
+                            setFormData((prev) => ({
+                              ...prev,
+                              obraId: null,
+                              direccion: '',
+                            }))
                         }}
-                        className={`flex-1 md:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition-all ${
+                        className={`flex-1 rounded-lg px-6 py-2 text-sm font-semibold transition-all md:flex-none ${
                           esFinal
                             ? 'bg-indigo-600 text-white shadow-md'
                             : 'text-slate-500 hover:text-slate-700'
-                        } ${!!entregaToEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        } ${!!entregaToEdit ? 'cursor-not-allowed opacity-70' : ''}`}
                       >
                         Entrega Final
                       </button>
@@ -451,7 +503,7 @@ export default function CrearEntregaForm({
 
                 {/* Bloque de Obra Seleccionada - Siempre visible si hay contexto */}
                 <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Obra programada *
                   </label>
                   {formData.direccion ? (
@@ -461,13 +513,15 @@ export default function CrearEntregaForm({
                           <Building2 className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div className="text-left leading-tight">
-                          <span className="font-bold text-indigo-900 block">
+                          <span className="block font-bold text-indigo-900">
                             {formData.direccion}
                           </span>
-                          <span className="text-xs text-indigo-600 font-medium">Obra Seleccionada</span>
+                          <span className="text-xs font-medium text-indigo-600">
+                            Obra Seleccionada
+                          </span>
                         </div>
                       </div>
-                      {(!entregaToEdit && !isFromObra) && (
+                      {!entregaToEdit && !isFromObra && (
                         <button
                           type="button"
                           onClick={() =>
@@ -477,7 +531,7 @@ export default function CrearEntregaForm({
                               direccion: '',
                             }))
                           }
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors"
+                          className="text-xs font-bold text-indigo-600 underline transition-colors hover:text-indigo-800"
                         >
                           Cambiar
                         </button>
@@ -495,24 +549,31 @@ export default function CrearEntregaForm({
                           localidad: obra.localidad?.nombre_localidad || '',
                         }))
                       }}
-                      placeholder={esFinal ? "Buscar obra PAGADA TOTALMENTE..." : "Buscar obra por dirección o cliente..."}
+                      placeholder={
+                        esFinal
+                          ? 'Buscar obra PAGADA TOTALMENTE...'
+                          : 'Buscar obra por dirección o cliente...'
+                      }
                     />
                   )}
                 </div>
 
                 {/* Selección de Órdenes de Producción */}
                 {formData.obraId && (
-                  <div className="border-t border-slate-100 pt-5 mt-5">
-                    <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <div className="mt-5 border-t border-slate-100 pt-5">
+                    <label className="mb-3 block text-xs font-bold tracking-wider text-slate-500 uppercase">
                       Órdenes de Producción Finalizadas
                     </label>
                     {isFetchingOPs ? (
-                      <div className="flex items-center gap-2 p-3 text-sm text-slate-500 bg-slate-50 rounded-lg">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando documentos...
+                      <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando
+                        documentos...
                       </div>
                     ) : availableOPs.length === 0 ? (
-                      <div className="p-3 text-sm text-slate-600 bg-amber-50 border border-amber-100/50 rounded-lg shadow-sm">
-                        No hay Órdenes de Producción finalizadas y sin entregar para esta obra. Puede continuar sin asignarlas si lo desea.
+                      <div className="rounded-lg border border-amber-100/50 bg-amber-50 p-3 text-sm text-slate-600 shadow-sm">
+                        No hay Órdenes de Producción finalizadas y sin entregar
+                        para esta obra. Puede continuar sin asignarlas si lo
+                        desea.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -521,28 +582,40 @@ export default function CrearEntregaForm({
                           return (
                             <div
                               key={op.cod_op}
-                              className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-all duration-200 ${
+                              className={`flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-200 sm:flex-row sm:items-center ${
                                 isSelected
-                                  ? 'border-indigo-300 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-200 ring-opacity-50'
-                                  : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300'
+                                  ? 'ring-opacity-50 border-indigo-300 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-200'
+                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                               }`}
                             >
-                              <label className="flex items-center gap-3 flex-grow cursor-pointer mb-3 sm:mb-0">
+                              <label className="mb-3 flex flex-grow cursor-pointer items-center gap-3 sm:mb-0">
                                 <input
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={(e) => {
-                                    if (e.target.checked) setSelectedOPs((prev) => [...prev, op.cod_op])
-                                    else setSelectedOPs((prev) => prev.filter((id) => id !== op.cod_op))
+                                    if (e.target.checked)
+                                      setSelectedOPs((prev) => [
+                                        ...prev,
+                                        op.cod_op,
+                                      ])
+                                    else
+                                      setSelectedOPs((prev) =>
+                                        prev.filter((id) => id !== op.cod_op)
+                                      )
                                   }}
-                                  className="h-4.5 w-4.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                  className="h-4.5 w-4.5 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                                 <div>
-                                  <span className={`block font-semibold ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                                  <span
+                                    className={`block font-semibold ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}
+                                  >
                                     OP #{op.cod_op}
                                   </span>
-                                  <span className="text-xs text-slate-500 font-medium">
-                                    Confeccionada el: {new Date(op.fecha_confeccion).toLocaleDateString()}
+                                  <span className="text-xs font-medium text-slate-500">
+                                    Confeccionada el:{' '}
+                                    {new Date(
+                                      op.fecha_confeccion
+                                    ).toLocaleDateString()}
                                   </span>
                                 </div>
                               </label>
@@ -551,10 +624,12 @@ export default function CrearEntregaForm({
                                 onClick={(e) => {
                                   e.preventDefault()
                                   setViewerUrl(op.url)
-                                  setViewerTitle(`Orden de Producción #${op.cod_op}`)
+                                  setViewerTitle(
+                                    `Orden de Producción #${op.cod_op}`
+                                  )
                                   setIsViewerOpen(true)
                                 }}
-                                className="text-xs font-semibold text-indigo-700 bg-white px-4 py-2 rounded-lg border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 transition-colors shadow-sm w-full sm:w-auto text-center"
+                                className="w-full rounded-lg border border-indigo-200 bg-white px-4 py-2 text-center text-xs font-semibold text-indigo-700 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50 sm:w-auto"
                               >
                                 Ver Documento
                               </button>
@@ -567,16 +642,18 @@ export default function CrearEntregaForm({
                 )}
 
                 <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Detalle de la Entrega *
                   </label>
                   <textarea
                     name="detalle"
                     value={formData.detalle}
-                    onChange={(e) => setFormData((p) => ({ ...p, detalle: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, detalle: e.target.value }))
+                    }
                     required
                     rows={3}
-                    className="w-full resize-none rounded-xl border border-slate-300 p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 shadow-sm text-slate-700 bg-white"
+                    className="w-full resize-none rounded-xl border border-slate-300 bg-white p-3 text-slate-700 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                     placeholder="Describa el material o equipos a entregar..."
                   />
                 </div>
@@ -620,7 +697,7 @@ export default function CrearEntregaForm({
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="rounded-lg px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                className="rounded-lg px-6 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                 disabled={isPending}
               >
                 Cancelar
@@ -628,7 +705,7 @@ export default function CrearEntregaForm({
               <button
                 type="submit"
                 disabled={isPending || !encargado}
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-md hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition-all hover:shadow-lg"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:from-indigo-700 hover:to-blue-700 hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
               >
                 {isPending ? (
                   <>
@@ -696,10 +773,10 @@ export default function CrearEntregaForm({
         onConfirm={setSelectedVehiculos}
         onSearchAsync={async (term) => {
           const results = await getVehiculos(term)
-          return results.map(v => ({
+          return results.map((v) => ({
             id: v.patente,
             label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
-            disabled: v.estado !== 'DISPONIBLE'
+            disabled: v.estado !== 'DISPONIBLE',
           }))
         }}
       />
@@ -717,10 +794,10 @@ export default function CrearEntregaForm({
         onConfirm={setSelectedMaquinaria}
         onSearchAsync={async (term) => {
           const results = await getMaquinarias(term)
-          return results.map(m => ({
+          return results.map((m) => ({
             id: m.cod_maquina.toString(),
             label: `${m.descripcion} (${m.estado})`,
-            disabled: m.estado !== 'DISPONIBLE'
+            disabled: m.estado !== 'DISPONIBLE',
           }))
         }}
       />

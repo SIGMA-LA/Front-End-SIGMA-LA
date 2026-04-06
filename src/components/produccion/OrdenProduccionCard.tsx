@@ -15,6 +15,12 @@ export default function OrdenProduccionCard({
   onClick,
   estado,
 }: OrdenProduccionCardProps) {
+  const cliente = orden.obra?.cliente
+  const nombreCliente =
+    cliente?.tipo_cliente === 'EMPRESA'
+      ? cliente.razon_social?.trim()
+      : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim()
+
   const getBadgeInfo = () => {
     switch (estado) {
       case 'APROBADA':
@@ -82,9 +88,7 @@ export default function OrdenProduccionCard({
           {/* Cliente */}
           <p className="text-sm leading-relaxed text-gray-600 lg:text-base">
             Cliente:{' '}
-            <span className="font-medium">
-              {orden.obra.cliente.razon_social}
-            </span>
+            <span className="font-medium">{nombreCliente || 'N/A'}</span>
           </p>
 
           {/* Dirección */}

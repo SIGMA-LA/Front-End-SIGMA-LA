@@ -12,7 +12,7 @@ interface SeccionSeleccionObraProps {
   buscarObras: (filtro: string) => Promise<Obra[]>
 }
 
-export default function SeccionSeleccionObra({
+export default function SeccionSeleccionarObra({
   isVisitaInicial,
   onVisitaInicialToggle,
   obraSeleccionada,

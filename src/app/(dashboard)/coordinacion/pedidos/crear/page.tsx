@@ -11,7 +11,6 @@ export default function CrearPedidoPage() {
   const searchParams = useSearchParams()
   const obraId = searchParams.get('obra')
   const [preloadedObra, setPreloadedObra] = useState<Obra | null>(null)
-  const [_loading, setLoading] = useState(!!obraId)
 
   useEffect(() => {
     if (obraId) {
@@ -21,13 +20,9 @@ export default function CrearPedidoPage() {
           setPreloadedObra(data)
         } catch (error) {
           console.error('Error al cargar obra:', error)
-        } finally {
-          setLoading(false)
         }
       }
       fetchObra()
-    } else {
-      setLoading(false)
     }
   }, [obraId])
 

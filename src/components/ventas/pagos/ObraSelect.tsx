@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -11,50 +11,16 @@ import type {
   ObraSelectProps,
   ObraSearchResultsProps,
 } from '@/types'
-import { getObrasConPresupuestoAceptado } from '@/actions/pagos'
 
 export default function ObraSelect({
   selectedObra,
   onObraSelect,
   placeholder = 'Buscar obra...',
   required = false,
-  showResults = false,
-  searchResults = [],
-  loading: externalLoading = false,
-  error: externalError = null,
   onSearchChange,
   initialSearchTerm = '',
 }: ObraSelectProps) {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm)
-  const [internalObras, setInternalObras] = useState<ObraConPresupuesto[]>([])
-  const [internalLoading, setInternalLoading] = useState(false)
-  const [internalError, setInternalError] = useState<string | null>(null)
-
-  const loadObras = useCallback(async () => {
-    try {
-      setInternalLoading(true)
-      setInternalError(null)
-      const data = await getObrasConPresupuestoAceptado(searchTerm.trim())
-      setInternalObras(data)
-    } catch (err: unknown) {
-      setInternalError(
-        err instanceof Error ? err.message : 'Error al buscar obras'
-      )
-      setInternalObras([])
-    } finally {
-      setInternalLoading(false)
-    }
-  }, [searchTerm])
-
-  useEffect(() => {
-    if (!showResults && searchTerm.trim()) {
-      loadObras()
-    } else if (!showResults && !searchTerm.trim()) {
-      setInternalObras([])
-      setInternalLoading(false)
-      setInternalError(null)
-    }
-  }, [searchTerm, showResults, loadObras])
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)

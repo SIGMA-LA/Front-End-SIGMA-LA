@@ -18,7 +18,6 @@ import { PerfilSection } from './configuraciones/PerfilSection'
 import { NegocioSection } from './configuraciones/NegocioSection'
 import { SeguridadSection } from './configuraciones/SeguridadSection'
 
-import { getCurrentUser } from '@/actions/auth'
 import { getPerfilConfig, updatePerfilConfig } from '@/actions/configuraciones'
 import { notify } from '@/lib/toast'
 import { NotificacionesData } from '@/types'
@@ -31,9 +30,9 @@ export default function Configuraciones({
     notificaciones: {
       configuracion: {
         canales: [] as { id: string; label: string }[],
-        eventos: [] as { id: string; label: string }[]
+        eventos: [] as { id: string; label: string }[],
       },
-      valores: {} as Record<string, boolean>
+      valores: {} as Record<string, boolean>,
     },
     perfil: {
       nombre: 'Usuario',
@@ -52,21 +51,13 @@ export default function Configuraciones({
   const [isFetching, setIsFetching] = useState(true)
   const [errorStatus, setErrorStatus] = useState<string | null>(null)
   const [successStatus, setSuccessStatus] = useState<string | null>(null)
-  const [userRole, setUserRole] = useState<string>('')
 
   // Cargar datos iniciales del backend (apartado perfil)
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setErrorStatus(null)
-        const [perfilDB, usuario] = await Promise.all([
-          getPerfilConfig(),
-          getCurrentUser()
-        ])
-        
-        if (usuario?.rol_actual) {
-          setUserRole(usuario.rol_actual)
-        }
+        const perfilDB = await getPerfilConfig()
 
         if (perfilDB) {
           setConfiguraciones((prev) => ({
@@ -77,7 +68,9 @@ export default function Configuraciones({
               cuil: perfilDB.cuil || prev.perfil.cuil,
               mail: perfilDB.mail || prev.perfil.mail,
             },
-            notificaciones: (perfilDB.notificaciones as NotificacionesData) || prev.notificaciones,
+            notificaciones:
+              (perfilDB.notificaciones as NotificacionesData) ||
+              prev.notificaciones,
           }))
         }
       } catch (error) {
@@ -106,9 +99,9 @@ export default function Configuraciones({
             ...prev.notificaciones,
             valores: {
               ...prev.notificaciones.valores,
-              [field]: value as boolean
-            }
-          }
+              [field]: value as boolean,
+            },
+          },
         }
       }
 
@@ -137,13 +130,13 @@ export default function Configuraciones({
         // Aquí podrías tener un updateNotificacionesConfig o incluirlo en el perfil
         updatePerfilConfig({
           ...configuraciones.perfil,
-          notificaciones: configuraciones.notificaciones.valores
-        })
+          notificaciones: configuraciones.notificaciones.valores,
+        }),
       ])
       setSuccessStatus('Configuraciones guardadas exitosamente.')
       notify.success('Configuraciones guardadas exitosamente.')
       setTimeout(() => setSuccessStatus(null), 4000)
-    } catch (error) {
+    } catch {
       setErrorStatus('Error al guardar las configuraciones en el servidor.')
       notify.error('Error al guardar las configuraciones en el servidor.')
     } finally {

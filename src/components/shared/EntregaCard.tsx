@@ -1,7 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Calendar, Clock, User, PackageOpen, Eye, Edit, Trash2, Loader2, AlertCircle } from 'lucide-react'
+import {
+  Calendar,
+  Clock,
+  User,
+  PackageOpen,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
 import type { Entrega } from '@/types'
 import EntregaDetailsModal from './EntregaDetailsModal'
 import { useRouter } from 'next/navigation'
@@ -56,7 +66,7 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
   }
 
   const getEncargado = () => {
-    const encargado = entrega.empleados_asignados?.find(
+    const encargado = entrega.entrega_empleado?.find(
       (e) => e.rol_entrega === 'ENCARGADO'
     )
     return encargado
@@ -72,7 +82,10 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
 
     setIsPendingAction(true)
     try {
-      const result = await cancelarEntrega(entrega.cod_entrega, motivoCancelacion)
+      const result = await cancelarEntrega(
+        entrega.cod_entrega,
+        motivoCancelacion
+      )
       if (result.success) {
         notify.success('Entrega cancelada exitosamente.')
         setIsCancelling(false)
@@ -80,7 +93,7 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
       } else {
         notify.error(result.error || 'Error al cancelar la entrega.')
       }
-    } catch (error) {
+    } catch {
       notify.error('Error de red al intentar cancelar.')
     } finally {
       setIsPendingAction(false)
@@ -164,10 +177,10 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-gray-100 pt-4">
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition-all hover:bg-blue-100 shadow-sm"
+              className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-all hover:bg-blue-100"
             >
               <Eye className="h-4 w-4" />
               Detalle Completo
@@ -176,15 +189,19 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
             {entrega.estado === 'PENDIENTE' && (
               <div className="flex gap-2">
                 <button
-                  onClick={() => router.push(`/coordinacion/entregas/${entrega.cod_entrega}/editar`)}
-                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-700 shadow-md hover:shadow-lg active:scale-95"
+                  onClick={() =>
+                    router.push(
+                      `/coordinacion/entregas/${entrega.cod_entrega}/editar`
+                    )
+                  }
+                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:bg-indigo-700 hover:shadow-lg active:scale-95"
                 >
                   <Edit className="h-4 w-4" />
                   Editar
                 </button>
                 <button
                   onClick={() => setIsCancelling(true)}
-                  className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:border-red-300 shadow-sm active:scale-95"
+                  className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition-all hover:border-red-300 hover:bg-red-50 active:scale-95"
                 >
                   <Trash2 className="h-4 w-4" />
                   Cancelar
@@ -197,29 +214,35 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
 
       {/* Modal de Cancelación */}
       {isCancelling && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 animate-in zoom-in-95 duration-200">
+        <div className="animate-in fade-in fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm duration-200">
+          <div className="animate-in zoom-in-95 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 duration-200">
             <div className="flex items-center gap-3 border-b border-slate-100 bg-red-50/50 px-6 py-4">
               <div className="rounded-full bg-red-100 p-2 shadow-inner">
                 <AlertCircle className="h-5 w-5 text-red-600" />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">Cancelar Entrega</h3>
+              <h3 className="text-lg font-bold text-slate-800">
+                Cancelar Entrega
+              </h3>
             </div>
-            
+
             <div className="p-6">
-              <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                ¿Está seguro de que desea cancelar la entrega para <span className="font-bold text-slate-800">{entrega.obra?.direccion}</span>? Esta acción liberará los recursos asignados.
+              <p className="mb-4 text-sm leading-relaxed text-slate-600">
+                ¿Está seguro de que desea cancelar la entrega para{' '}
+                <span className="font-bold text-slate-800">
+                  {entrega.obra?.direccion}
+                </span>
+                ? Esta acción liberará los recursos asignados.
               </p>
-              
+
               <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                <label className="block text-[11px] font-bold tracking-wider text-slate-500 uppercase">
                   Motivo de la cancelación *
                 </label>
                 <textarea
                   value={motivoCancelacion}
                   onChange={(e) => setMotivoCancelacion(e.target.value)}
                   placeholder="Ej: Cambio de fecha solicitado por el cliente, falta de material..."
-                  className="w-full min-h-[100px] rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all resize-none"
+                  className="min-h-[100px] w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition-all focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -228,7 +251,7 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
                 <button
                   type="button"
                   onClick={() => setIsCancelling(false)}
-                  className="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-100"
                   disabled={isPendingAction}
                 >
                   No, volver
@@ -237,7 +260,7 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
                   type="button"
                   onClick={handleCancelar}
                   disabled={isPendingAction || !motivoCancelacion.trim()}
-                  className="flex-1 inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 transition-all"
+                  className="inline-flex flex-1 items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50"
                 >
                   {isPendingAction ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -251,11 +274,13 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
         </div>
       )}
 
-      <EntregaDetailsModal
-        isOpen={showModal}
-        entrega={entrega}
-        onClose={() => setShowModal(false)}
-      />
+      {showModal && (
+        <EntregaDetailsModal
+          isOpen={showModal}
+          entrega={entrega}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
   )
 }
