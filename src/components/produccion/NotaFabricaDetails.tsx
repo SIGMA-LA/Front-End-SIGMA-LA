@@ -5,6 +5,7 @@ import {
   User as UserIcon,
   FileText,
   CheckCircle,
+  AlertTriangle,
 } from 'lucide-react'
 import type { Obra } from '@/types'
 import { Button } from '@/components/ui/Button'
@@ -12,10 +13,16 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { useState } from 'react'
 import { formatDateOnly } from '@/lib/utils'
 import OrdenesProduccionList from './OrdenesProduccionList'
+import { finalizarProduccionObra } from '@/actions/obras'
+import ProduccionActionModal, {
+  type ProduccionActionSummary,
+} from './ProduccionActionModal'
+import { notify } from '@/lib/toast'
 
 interface NotaFabricaDetailsProps {
   obra: Obra
   onCrearOrden: () => void
+  onProduccionFinalizada?: () => void
 }
 
 const getEstadoBadge = (estado: Obra['estado']) => {
@@ -35,20 +42,68 @@ const getEstadoBadge = (estado: Obra['estado']) => {
 export default function NotaFabricaDetails({
   obra,
   onCrearOrden,
+  onProduccionFinalizada,
 }: NotaFabricaDetailsProps) {
   const clienteNombre =
     obra.cliente.razon_social?.trim() ||
     `${obra.cliente.nombre ?? ''} ${obra.cliente.apellido ?? ''}`.trim() ||
     'Sin nombre'
 
+  const direccionObra = obra.localidad
+    ? `${obra.direccion}, ${obra.localidad.nombre_localidad}`
+    : obra.direccion
+
+  const obraSummary: ProduccionActionSummary = {
+    entidadLabel: 'Obra',
+    entidadValor: `#${obra.cod_obra}`,
+    cliente: clienteNombre,
+    direccion: direccionObra,
+    telefono: obra.cliente.telefono,
+    mail: obra.cliente.mail,
+    estadoActual: obra.estado,
+  }
+
   const [pdfLoading, setPdfLoading] = useState(true)
   const [pdfError, setPdfError] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [isFinalizando, setIsFinalizando] = useState(false)
+
+  const isEnProduccion = obra.estado === 'EN PRODUCCION'
 
   // URL de la nota de fábrica (PDF)
   const notaFabricaUrl = obra.nota_fabrica || null
 
   // Verificar si es un PDF
   const isPdf = notaFabricaUrl?.toLowerCase().endsWith('.pdf')
+
+  const handleAbrirConfirmacion = () => {
+    setIsConfirmModalOpen(true)
+  }
+
+  const handleCerrarConfirmacion = () => {
+    if (!isFinalizando) {
+      setIsConfirmModalOpen(false)
+    }
+  }
+
+  const handleConfirmarFinalizar = async () => {
+    setIsFinalizando(true)
+    try {
+      const result = await finalizarProduccionObra(obra.cod_obra)
+      if (result.success) {
+        notify.success('Producción finalizada correctamente.')
+        setIsConfirmModalOpen(false)
+        onProduccionFinalizada?.()
+      } else {
+        notify.error(result.error || 'Error al finalizar la producción')
+      }
+    } catch (error) {
+      console.error('Error al finalizar producción de obra:', error)
+      notify.error('Error al finalizar la producción. Intente nuevamente.')
+    } finally {
+      setIsFinalizando(false)
+    }
+  }
 
   const handleOpenPdf = () => {
     if (notaFabricaUrl) {
@@ -220,6 +275,32 @@ export default function NotaFabricaDetails({
             <span>Crear Orden de Producción</span>
           </Button>
         </div>
+        {isEnProduccion && (
+          <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
+            <Button
+              onClick={handleAbrirConfirmacion}
+              className="flex-1 cursor-pointer bg-amber-500 py-4 text-base text-white hover:bg-amber-600 lg:py-5 lg:text-lg"
+            >
+              <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+              <span>Finalizar Producción</span>
+            </Button>
+          </div>
+        )}
+
+        <ProduccionActionModal
+          isOpen={isConfirmModalOpen}
+          title="Finalizar Producción"
+          message="¿Estás seguro de que querés dar por finalizada la producción de la obra?"
+          description="Esta acción va a cambiar el estado a PRODUCCION FINALIZADA."
+          confirmLabel="Sí, finalizar"
+          loadingLabel="Finalizando..."
+          tone="amber"
+          icon={<AlertTriangle className="h-6 w-6" />}
+          summary={obraSummary}
+          onConfirm={handleConfirmarFinalizar}
+          onCancel={handleCerrarConfirmacion}
+          loading={isFinalizando}
+        />
       </CardContent>
     </Card>
   )

@@ -165,7 +165,7 @@ export default function OrdenProduccionDetails({
             {canFinalizar && onFinalizarProduccion && (
               <Button
                 onClick={onFinalizarProduccion}
-                className="flex-1 cursor-pointer bg-blue-600 py-4 text-base text-white hover:bg-blue-700 lg:py-5 lg:text-lg"
+                className="flex-1 cursor-pointer bg-amber-500 py-4 text-base text-white hover:bg-amber-600 lg:py-5 lg:text-lg"
               >
                 <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
                 <span>Finalizar Producción</span>

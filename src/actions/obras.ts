@@ -89,7 +89,7 @@ export async function getObrasParaEntrega(
     params.append('esFinal', String(esFinal))
 
     const url = `${BASE_URL}/para-entrega?${params.toString()}`
-    
+
     const res = await fetchWithErrorHandling<Obra[]>(url, {
       method: 'GET',
       headers: {
@@ -190,7 +190,8 @@ export async function uploadNotaFabrica(
     revalidatePath('/ventas/obras')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error uploading Nota Fabrica'
+    const message =
+      error instanceof Error ? error.message : 'Error uploading Nota Fabrica'
     console.error('[uploadNotaFabrica]', message)
     return { success: false, error: message }
   }
@@ -201,7 +202,9 @@ export async function uploadNotaFabrica(
  * @param {number} codObra - Obra code/ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function deleteNotaFabrica(codObra: number): Promise<ActionResponse<Obra>> {
+export async function deleteNotaFabrica(
+  codObra: number
+): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
@@ -218,7 +221,8 @@ export async function deleteNotaFabrica(codObra: number): Promise<ActionResponse
     revalidatePath('/ventas/obras')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error deleting Nota Fabrica'
+    const message =
+      error instanceof Error ? error.message : 'Error deleting Nota Fabrica'
     console.error('[deleteNotaFabrica]', message)
     return { success: false, error: message }
   }
@@ -302,7 +306,8 @@ export async function createObra(
     revalidatePath('/ventas/obras')
     return { success: true, data }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Error al crear la obra'
+    const message =
+      error instanceof Error ? error.message : 'Error al crear la obra'
     console.error('[crearObra]', message)
     return { success: false, error: message }
   }
@@ -333,7 +338,8 @@ export async function updateObra(
     revalidatePath(`/ventas/obras/${codObra}`)
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error updating Obra'
+    const message =
+      error instanceof Error ? error.message : 'Error updating Obra'
     console.error('[actualizarObra]', message)
     return { success: false, error: message }
   }
@@ -344,9 +350,7 @@ export async function updateObra(
  * @param {number} id - Obra ID
  * @returns {Promise<{success: boolean, error?: string}>} Operation result
  */
-export async function deleteObra(
-  id: number
-): Promise<ActionResponse> {
+export async function deleteObra(id: number): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
     await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -370,9 +374,7 @@ export async function deleteObra(
  * @param {number} id - Obra ID
  * @returns {Promise<{success: boolean, error?: string}>} Operation result
  */
-export async function cancelObra(
-  id: number
-): Promise<ActionResponse> {
+export async function cancelObra(id: number): Promise<ActionResponse> {
   try {
     const token = await getAccessToken()
     await fetchWithErrorHandling(`${BASE_URL}/${id}`, {
@@ -423,7 +425,9 @@ export async function getObrasParaPedidoStock(): Promise<Obra[]> {
  * @param {number} id - Obra ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function solicitarStockObra(id: number): Promise<ActionResponse<Obra>> {
+export async function solicitarStockObra(
+  id: number
+): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
@@ -441,7 +445,8 @@ export async function solicitarStockObra(id: number): Promise<ActionResponse<Obr
     revalidatePath('/ventas/obras')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al solicitar stock'
+    const message =
+      error instanceof Error ? error.message : 'Error al solicitar stock'
     console.error('[solicitarStockObra]', message)
     return { success: false, error: message }
   }
@@ -452,10 +457,44 @@ export async function solicitarStockObra(id: number): Promise<ActionResponse<Obr
  * @param {number} id - Obra ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function recibirStockObra(id: number): Promise<ActionResponse<Obra>> {
+export async function recibirStockObra(
+  id: number
+): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${BASE_URL}/${id}/recibir-stock`, {
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/${id}/recibir-stock`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    const data = await res.json()
+    revalidatePath('/coordinacion/pedidos')
+    revalidatePath('/produccion')
+    return { success: true, data }
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Error al recibir stock'
+    console.error('[recibirStockObra]', message)
+    return { success: false, error: message }
+  }
+}
+
+/**
+ * Changes obra status to 'PRODUCCION FINALIZADA'
+ * @param {number} id - Obra ID
+ * @returns {Promise<Obra>} Updated obra
+ */
+export async function finalizarProduccionObra(
+  id: number
+): Promise<ActionResponse<Obra>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/${id}/finalizar`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -463,12 +502,12 @@ export async function recibirStockObra(id: number): Promise<ActionResponse<Obra>
       },
     })
     const data = await res.json()
-    revalidatePath('/coordinacion/pedidos')
     revalidatePath('/produccion')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al recibir stock'
-    console.error('[recibirStockObra]', message)
+    const message =
+      error instanceof Error ? error.message : 'Error al finalizar la obra'
+    console.error('[finalizarProduccionObra]', message)
     return { success: false, error: message }
   }
 }
