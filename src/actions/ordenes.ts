@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { EstadoOrdenProduccion, OrdenProduccion } from '@/types'
@@ -252,6 +252,8 @@ export async function createOrdenProduccion(
 
     const wrapper = await response.json()
     const data = wrapper.data || wrapper
+    revalidateTag('ordenes-produccion')
+    revalidateTag('notas-fabrica')
     revalidatePath('/produccion')
     revalidatePath('/obras')
 
@@ -286,8 +288,8 @@ export async function approveOrdenProduccion(
     })
 
     const data = await response.json()
-    revalidatePath('/dashboard')
-    revalidatePath('/coordinacion')
+    revalidateTag('ordenes-produccion')
+    revalidatePath('/coordinacion/ordenes-produccion')
 
     return { success: true, data }
   } catch (error) {
@@ -319,6 +321,8 @@ export async function startProduccion(
     )
 
     const data = await response.json()
+    revalidateTag('ordenes-produccion')
+    revalidateTag('notas-fabrica')
     revalidatePath('/produccion')
     revalidatePath('/coordinacion/ordenes-produccion')
 
@@ -352,6 +356,8 @@ export async function finishProduccion(
     )
 
     const data = await response.json()
+    revalidateTag('ordenes-produccion')
+    revalidateTag('notas-fabrica')
     revalidatePath('/produccion')
     revalidatePath('/coordinacion/ordenes-produccion')
 
