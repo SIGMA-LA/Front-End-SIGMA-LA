@@ -31,6 +31,7 @@ export default async function VentasObrasPage({
       canCreate={usuario?.rol_actual === 'VENTAS'}
       createUrl="/ventas/obras/crear"
       usuarioRol={usuario?.rol_actual}
+      page={sp?.page ? Number(sp.page) : undefined}
     />
   )
 }

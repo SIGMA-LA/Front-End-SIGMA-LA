@@ -15,6 +15,7 @@ export default async function CoordinacionObrasPage({
       canCreate={false}
       title="Coordinación de Obras"
       subtitle="Visualiza y filtra todas las obras registradas"
+      page={sp?.page ? Number(sp.page) : undefined}
     />
   )
 }

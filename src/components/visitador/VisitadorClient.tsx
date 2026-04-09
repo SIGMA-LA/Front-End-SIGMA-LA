@@ -3,13 +3,14 @@
 import React, { useState, useTransition, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { User as UserIcon, Package, Menu, X } from 'lucide-react'
-import type { Visita, EntregaEmpleado, Empleado } from '@/types'
+import type { Visita, EntregaEmpleado, Empleado, PaginatedResponse } from '@/types'
 import SidebarVisitas from '@/components/visitador/SidebarVisitas'
 import SidebarEntregasVisitador from '@/components/visitador/SidebarEntregasVisitador'
 import VisitaDetailsVisitador from '@/components/visitador/VisitaDetailsVisitador'
 import EntregaDetails from '@/components/planta/EntregaDetails'
 import ConfirmModal from '@/components/visitador/ConfirmModal'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
+import { useRef } from 'react'
 import {
   finalizarVisita,
   cancelarVisita,
@@ -22,13 +23,15 @@ import {
 } from '@/actions/entregas'
 import { notify } from '@/lib/toast'
 
+const PAGE_SIZE = 10
+
 interface VisitadorClientProps {
   usuario: Empleado
   initialData: {
-    visitasPendientes: Visita[]
-    visitasRealizadas: Visita[]
-    entregasPendientes: EntregaEmpleado[]
-    entregasRealizadas: EntregaEmpleado[]
+    visitasPendientes: PaginatedResponse<Visita>
+    visitasRealizadas: PaginatedResponse<Visita>
+    entregasPendientes: PaginatedResponse<EntregaEmpleado>
+    entregasRealizadas: PaginatedResponse<EntregaEmpleado>
     error: string | null
   }
 }
@@ -63,14 +66,20 @@ export default function VisitadorClient({
     return () => clearTimeout(timer)
   }, [searchTerm, filterDate])
 
-  // Data state (starts with initialData)
+  // Data state
   const [visitas, setVisitas] = useState<Visita[]>(
-    initialData.visitasPendientes
+    initialData.visitasPendientes.data
   )
   const [entregas, setEntregas] = useState<EntregaEmpleado[]>(
-    initialData.entregasPendientes
+    initialData.entregasPendientes.data
   )
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
   const [loadingList, setLoadingList] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  const observer = useRef<IntersectionObserver | null>(null)
 
   // Selection state
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
@@ -85,8 +94,10 @@ export default function VisitadorClient({
   const [observacionesEntrega, setObservacionesEntrega] = useState('')
 
   // Backend Filtering Logic
-  const loadData = useCallback(async () => {
-    setLoadingList(true)
+  const loadData = useCallback(async (page: number = 1, append: boolean = false) => {
+    if (page === 1) setLoadingList(true)
+    else setLoadingMore(true)
+
     try {
       if (categoryFilter === 'VISITAS') {
         let estados: string[] = []
@@ -94,32 +105,50 @@ export default function VisitadorClient({
         else if (statusFilter === 'REALIZADA') estados = ['COMPLETADA']
         else if (statusFilter === 'CANCELADA') estados = ['CANCELADA']
 
-        const data = await getVisitasByEmpleado(
+        const response = await getVisitasByEmpleado(
           usuario.cuil,
           estados,
           debouncedSearch,
-          debouncedDate
+          debouncedDate,
+          page,
+          PAGE_SIZE
         )
-        setVisitas(data)
+
+        if (append) {
+          setVisitas(prev => [...prev, ...response.data])
+        } else {
+          setVisitas(response.data)
+        }
+        setHasMore(response.page < response.totalPages)
       } else {
         let status: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO' = 'PENDIENTE'
         if (statusFilter === 'PENDIENTE') status = 'PENDIENTE'
         else if (statusFilter === 'REALIZADA') status = 'ENTREGADO'
         else if (statusFilter === 'CANCELADA') status = 'CANCELADO'
 
-        const data = await getEntregasByEmpleado(
+        const response = await getEntregasByEmpleado(
           usuario.cuil,
           status,
           debouncedSearch,
-          debouncedDate
+          debouncedDate,
+          page,
+          PAGE_SIZE
         )
-        setEntregas(data)
+
+        if (append) {
+          setEntregas(prev => [...prev, ...response.data])
+        } else {
+          setEntregas(response.data)
+        }
+        setHasMore(response.page < response.totalPages)
       }
+      setCurrentPage(page)
     } catch (err) {
       console.error('Error fetching data:', err)
       notify.error('Error al actualizar el listado')
     } finally {
       setLoadingList(false)
+      setLoadingMore(false)
     }
   }, [
     categoryFilter,
@@ -128,6 +157,26 @@ export default function VisitadorClient({
     debouncedSearch,
     debouncedDate,
   ])
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !loadingMore && !loadingList) {
+      loadData(currentPage + 1, true)
+    }
+  }, [hasMore, loadingMore, loadingList, currentPage, loadData])
+
+  // Infinite Scroll Observer
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loadingList || loadingMore) return
+    if (observer.current) observer.current.disconnect()
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMore()
+      }
+    })
+
+    if (node) observer.current.observe(node)
+  }, [loadingList, loadingMore, hasMore, loadMore])
 
   useEffect(() => {
     loadData()
@@ -313,9 +362,8 @@ export default function VisitadorClient({
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside
-          className={`${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } fixed inset-y-0 left-0 z-40 flex w-full transform flex-col border-r border-gray-100 bg-white transition-transform duration-300 ease-in-out lg:static lg:w-80 lg:translate-x-0 xl:w-96`}
+          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            } fixed inset-y-0 left-0 z-40 flex w-full transform flex-col border-r border-gray-100 bg-white transition-transform duration-300 ease-in-out lg:static lg:w-80 lg:translate-x-0 xl:w-96`}
         >
           {categoryFilter === 'VISITAS' ? (
             <SidebarVisitas
@@ -330,10 +378,12 @@ export default function VisitadorClient({
               onFilterDateChange={setFilterDate}
               selectedVisita={selectedVisita}
               onSelectVisita={handleSelectVisita}
-              loadingVisitas={loadingList}
-              errorVisitas={initialData.error}
               onRetry={() => router.refresh()}
               onClose={() => setSidebarOpen(false)}
+              lastElementRef={lastElementRef}
+              loadingMore={loadingMore}
+              loadingVisitas={loadingList}
+              errorVisitas={initialData.error}
             />
           ) : (
             <SidebarEntregasVisitador
@@ -348,10 +398,12 @@ export default function VisitadorClient({
               onFilterDateChange={setFilterDate}
               selectedEntrega={selectedEntrega}
               onSelectEntrega={handleSelectEntrega}
-              loadingEntregas={loadingList}
-              errorEntregas={initialData.error}
               onRetry={() => router.refresh()}
               onClose={() => setSidebarOpen(false)}
+              lastElementRef={lastElementRef}
+              loadingMore={loadingMore}
+              loadingEntregas={loadingList}
+              errorEntregas={initialData.error}
             />
           )}
         </aside>

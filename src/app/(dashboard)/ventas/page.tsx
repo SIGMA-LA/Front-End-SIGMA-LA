@@ -15,10 +15,12 @@ import Link from 'next/link'
 
 async function getVentasStats() {
   try {
-    const [clientes, obras] = await Promise.all([
-      getClientes(),
-      filterObras({}),
+    const [clientesResponse, obrasResponse] = await Promise.all([
+      getClientes('', 1, 100),
+      filterObras({ pageSize: 100 }),
     ])
+
+    const obras = obrasResponse.data
 
     const obrasPagadasParcialmente = obras.filter(
       (o) => o.estado === 'PAGADA PARCIALMENTE'
@@ -40,8 +42,8 @@ async function getVentasStats() {
     const obrasCanceladas = obras.filter((o) => o.estado === 'CANCELADA')
 
     return {
-      totalClientes: clientes.length,
-      totalObras: obras.length,
+      totalClientes: clientesResponse.total,
+      totalObras: obrasResponse.total || obras.length,
       obrasPagadasParcialmente: obrasPagadasParcialmente.length,
       obrasEnProduccion: obrasEnProduccion.length,
       obrasEnEsperaPago: obrasEnEsperaPago.length,

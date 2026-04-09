@@ -12,6 +12,7 @@ export default async function ClientesPage({
   return (
     <ClientesPageContent
       searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''}
+      page={Number(typeof sp.page === 'string' ? sp.page : sp.page?.[0]) || 1}
       toast={(typeof sp.toast === 'string' ? sp.toast : sp.toast?.[0]) ?? ''}
       canCreate
       createUrl="/admin/clientes/crear"

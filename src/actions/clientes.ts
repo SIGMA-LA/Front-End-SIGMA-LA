@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Cliente } from '@/types'
+import type { Cliente, PaginatedResponse } from '@/types'
 import type { ActionResponse } from '@/types/actions'
 export type { ActionResponse }
 
@@ -41,25 +41,43 @@ function mapDeleteClienteError(error: unknown): string {
  * @param {string} filter - Optional search query
  * @returns {Promise<Cliente[]>} List of Clientes
  */
-export async function getClientes(filter?: string): Promise<Cliente[]> {
+export async function getClientes(
+  filter?: string,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<PaginatedResponse<Cliente>> {
+  const emptyResponse: PaginatedResponse<Cliente> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
+
   try {
     const token = await getAccessToken()
-    const url = filter?.trim()
-      ? `${BASE_URL}/buscar?q=${encodeURIComponent(filter.trim())}`
-      : BASE_URL
+    const params = new URLSearchParams()
+    
+    if (filter?.trim()) params.append('q', filter.trim())
+    params.append('page', String(page))
+    params.append('pageSize', String(pageSize))
 
-    const res = await fetchWithErrorHandling<Cliente[]>(url, {
+    const url = `${BASE_URL}?${params.toString()}`
+
+    const res = await fetchWithErrorHandling<PaginatedResponse<Cliente>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      next: { revalidate: 30, tags: ['clientes'] }
     })
 
-    return await res.json()
+    const data = await res.json()
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Cliente>
+    }
+
+    return emptyResponse
   } catch (error) {
     console.error('[getClientes]', error)
-    return []
+    return emptyResponse
   }
 }
 

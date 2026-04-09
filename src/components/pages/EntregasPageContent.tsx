@@ -4,6 +4,7 @@ import { getEntregas } from '@/actions/entregas'
 import EntregaCard from '@/components/shared/EntregaCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import EstadoEntregaFilter from '@/components/shared/EstadoEntregaFilter'
+import PaginationControls from '@/components/shared/PaginationControls'
 import Link from 'next/link'
 
 function EntregasListSkeleton() {
@@ -39,8 +40,9 @@ function EntregasListSkeleton() {
   )
 }
 
-async function EntregasList({ searchQuery, estado }: { searchQuery?: string; estado?: string }) {
-  const entregas = await getEntregas(searchQuery, estado)
+async function EntregasList({ searchQuery, estado, page = 1 }: { searchQuery?: string; estado?: string; page?: number }) {
+  const entregasResponse = await getEntregas(searchQuery, estado, page, 10)
+  const entregas = entregasResponse?.data || []
 
   if (entregas.length === 0) {
     return (
@@ -67,8 +69,16 @@ async function EntregasList({ searchQuery, estado }: { searchQuery?: string; est
           <EntregaCard key={entrega.cod_entrega} entrega={entrega} />
         ))}
       </div>
-      <div className="mt-6 text-center text-sm text-gray-600">
-        Mostrando {entregas.length} entrega{entregas.length !== 1 ? 's' : ''}
+      <div className="mt-6 flex flex-col items-center gap-4">
+        <PaginationControls
+          totalPages={entregasResponse.totalPages}
+          page={entregasResponse.page}
+          total={entregasResponse.total}
+          pageSize={entregasResponse.pageSize}
+        />
+        <div className="text-sm text-gray-600">
+          Mostrando {entregas.length} de {entregasResponse.total} entrega{entregasResponse.total !== 1 ? 's' : ''}
+        </div>
       </div>
     </>
   )
@@ -77,6 +87,7 @@ async function EntregasList({ searchQuery, estado }: { searchQuery?: string; est
 interface EntregasPageContentProps {
   searchQuery?: string
   estado?: string
+  page?: number
   canCreate?: boolean
   createUrl?: string
   title?: string
@@ -86,6 +97,7 @@ interface EntregasPageContentProps {
 export default async function EntregasPageContent({
   searchQuery = '',
   estado = '',
+  page = 1,
   canCreate = false,
   createUrl = '/coordinacion/entregas/crear',
   title = 'Entregas',
@@ -127,8 +139,8 @@ export default async function EntregasPageContent({
           <EstadoEntregaFilter />
         </div>
 
-        <Suspense key={`${searchQuery}-${estado}`} fallback={<EntregasListSkeleton />}>
-          <EntregasList searchQuery={searchQuery} estado={estado} />
+        <Suspense key={`${searchQuery}-${estado}-${page}`} fallback={<EntregasListSkeleton />}>
+          <EntregasList searchQuery={searchQuery} estado={estado} page={page} />
         </Suspense>
       </div>
     </div>

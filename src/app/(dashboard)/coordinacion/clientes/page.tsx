@@ -9,5 +9,11 @@ export default async function CoordinacionClientesPage({
 }) {
   const sp = await searchParams
 
-  return <ClientesPageContent searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''} canCreate={false} />
+  return (
+    <ClientesPageContent 
+      searchQuery={(typeof sp.q === 'string' ? sp.q : sp.q?.[0]) ?? ''} 
+      page={Number(typeof sp.page === 'string' ? sp.page : sp.page?.[0]) || 1}
+      canCreate={false} 
+    />
+  )
 }

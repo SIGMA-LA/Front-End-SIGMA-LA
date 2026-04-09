@@ -6,6 +6,8 @@ import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuario } from '@/lib/cache'
 import Navbar from '@/components/layout/Navbar'
 import type { SearchParams } from '@/types'
+import { PaginatedResponse } from '@/types'
+import { EntregaEmpleado, Visita } from '@/types'
 
 function VisitadorSkeleton() {
   return (
@@ -70,7 +72,12 @@ function VisitadorSkeleton() {
   )
 }
 
+const PAGE_SIZE = 10
+
 async function getVisitadorData(cuil: string, search: string, date: string) {
+  const emptyVisita: PaginatedResponse<Visita> = { data: [], total: 0, totalPages: 0, page: 1, pageSize: PAGE_SIZE }
+  const emptyEntrega: PaginatedResponse<EntregaEmpleado> = { data: [], total: 0, totalPages: 0, page: 1, pageSize: PAGE_SIZE }
+
   try {
     const [
       visitasPendientes,
@@ -78,10 +85,10 @@ async function getVisitadorData(cuil: string, search: string, date: string) {
       entregasPendientes,
       entregasRealizadas,
     ] = await Promise.all([
-      getVisitasByEmpleado(cuil, ['PROGRAMADA', 'EN CURSO'], search, date),
-      getVisitasByEmpleado(cuil, ['COMPLETADA'], search, date),
-      getEntregasByEmpleado(cuil, 'PENDIENTE', search, date),
-      getEntregasByEmpleado(cuil, 'ENTREGADO', search, date),
+      getVisitasByEmpleado(cuil, ['PROGRAMADA', 'EN CURSO'], search, date, 1, PAGE_SIZE),
+      getVisitasByEmpleado(cuil, ['COMPLETADA'], search, date, 1, PAGE_SIZE),
+      getEntregasByEmpleado(cuil, 'PENDIENTE', search, date, 1, PAGE_SIZE),
+      getEntregasByEmpleado(cuil, 'ENTREGADO', search, date, 1, PAGE_SIZE),
     ])
 
     return {
@@ -94,10 +101,10 @@ async function getVisitadorData(cuil: string, search: string, date: string) {
   } catch (error) {
     console.error('Error al cargar datos del visitador:', error)
     return {
-      visitasPendientes: [],
-      visitasRealizadas: [],
-      entregasPendientes: [],
-      entregasRealizadas: [],
+      visitasPendientes: emptyVisita,
+      visitasRealizadas: emptyVisita,
+      entregasPendientes: emptyEntrega,
+      entregasRealizadas: emptyEntrega,
       error: 'Error al cargar los datos',
     }
   }

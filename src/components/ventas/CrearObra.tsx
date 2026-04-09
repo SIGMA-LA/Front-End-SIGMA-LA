@@ -168,8 +168,8 @@ export default function CrearObra({
     }
     setIsSearching(true)
     try {
-      const results = await getClientes(query)
-      setClientesEncontrados(results.slice(0, 5))
+      const response = await getClientes(query, 1, 100)
+      setClientesEncontrados(response.data || [])
     } catch (error) {
       console.error('Error buscando clientes:', error)
       setClientesEncontrados([])
@@ -185,9 +185,9 @@ export default function CrearObra({
     }
     setIsSearchingArquitecto(true)
     try {
-      const results = await getClientes(query)
-      const soloPersonas = results.filter((c) => c.tipo_cliente !== 'EMPRESA')
-      setArquitectosEncontrados(soloPersonas.slice(0, 5))
+      const response = await getClientes(query, 1, 100)
+      const soloPersonas = (response.data || []).filter((c) => c.tipo_cliente !== 'EMPRESA')
+      setArquitectosEncontrados(soloPersonas)
     } catch (error) {
       console.error('Error buscando arquitectos:', error)
       setArquitectosEncontrados([])

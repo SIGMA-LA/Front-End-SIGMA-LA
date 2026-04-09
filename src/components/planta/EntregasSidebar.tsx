@@ -18,6 +18,8 @@ interface EntregasSidebarProps {
   errorEntregas: string | null
   onRetry: () => void
   onClose?: () => void
+  lastElementRef?: (node: HTMLDivElement | null) => void
+  loadingMore?: boolean
 }
 
 export default function EntregasSidebar({
@@ -30,10 +32,12 @@ export default function EntregasSidebar({
   onFilterDateChange,
   selectedEntrega,
   onSelectEntrega,
-  loadingEntregas,
-  errorEntregas,
   onRetry,
   onClose,
+  lastElementRef,
+  loadingMore,
+  loadingEntregas,
+  errorEntregas
 }: EntregasSidebarProps) {
   const currentList = entregas
 
@@ -104,7 +108,7 @@ export default function EntregasSidebar({
               className="w-full pl-9 pr-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 bg-white outline-none transition-all cursor-pointer"
             />
           </div>
-          
+
           {/* Clear Date Button */}
           {filterDate && (
             <button
@@ -122,31 +126,28 @@ export default function EntregasSidebar({
         <div className="flex p-1 bg-gray-100/80 rounded-xl">
           <button
             onClick={() => onEstadoFiltroChange?.('PENDIENTE')}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
-              estadoFiltro === 'PENDIENTE'
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${estadoFiltro === 'PENDIENTE'
                 ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             PENDIENTES
           </button>
           <button
             onClick={() => onEstadoFiltroChange?.('ENTREGADO')}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
-              estadoFiltro === 'ENTREGADO'
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${estadoFiltro === 'ENTREGADO'
                 ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             REALIZADAS
           </button>
           <button
             onClick={() => onEstadoFiltroChange?.('CANCELADO')}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${
-              estadoFiltro === 'CANCELADO'
+            className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-bold transition-all ${estadoFiltro === 'CANCELADO'
                 ? 'bg-white text-red-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
           >
             CANCELADAS
           </button>
@@ -163,21 +164,36 @@ export default function EntregasSidebar({
             </p>
           </div>
         ) : (
-          currentList.map((entregaEmpleado) => (
-            <EntregaCard
-              key={entregaEmpleado.cod_entrega}
-              entregaEmpleado={entregaEmpleado}
-              isSelected={selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega}
-              onClick={() => onSelectEntrega(entregaEmpleado)}
-              variant={
-                estadoFiltro === 'PENDIENTE' 
-                  ? 'pendiente' 
-                  : estadoFiltro === 'CANCELADO' 
-                    ? 'cancelada' 
-                    : 'realizada'
-              }
-            />
-          ))
+          <>
+            {currentList.map((entregaEmpleado) => (
+              <EntregaCard
+                key={entregaEmpleado.cod_entrega}
+                entregaEmpleado={entregaEmpleado}
+                isSelected={selectedEntrega?.cod_entrega === entregaEmpleado.cod_entrega}
+                onClick={() => onSelectEntrega(entregaEmpleado)}
+                variant={
+                  estadoFiltro === 'PENDIENTE'
+                    ? 'pendiente'
+                    : estadoFiltro === 'CANCELADO'
+                      ? 'cancelada'
+                      : 'realizada'
+                }
+              />
+            ))}
+
+            {/* Infinite Scroll Sentinel */}
+            <div
+              ref={lastElementRef}
+              className="h-10 flex items-center justify-center py-8"
+            >
+              {loadingMore && (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                  <span className="text-xs text-gray-400 font-medium">Cargando más...</span>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

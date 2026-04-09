@@ -32,6 +32,7 @@ export default async function AdminObrasPage({
       usuarioRol={usuario?.rol_actual}
       title="Obras"
       subtitle="Gestión administrativa de obras"
+      page={sp?.page ? Number(sp.page) : undefined}
     />
   )
 }

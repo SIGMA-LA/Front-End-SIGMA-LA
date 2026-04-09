@@ -66,6 +66,9 @@ export default function ObrasFiltros({
         }
       })
 
+      // Reset page when filters change
+      params.delete('page')
+
       startTransition(() => {
         router.push(`?${params.toString()}`)
       })

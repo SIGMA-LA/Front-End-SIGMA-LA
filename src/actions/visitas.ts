@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Visita, VisitaFormData, MotivoVisita } from '@/types'
+import type { Visita, VisitaFormData, MotivoVisita, PaginatedResponse } from '@/types'
 import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
@@ -40,20 +40,27 @@ export async function getVisita(id: number): Promise<Visita | null> {
  */
 export async function getVisitas(
   filtro?: string,
-  status?: string
-): Promise<Visita[]> {
+  status?: string,
+  page: number = 1,
+  pageSize: number = 25
+): Promise<PaginatedResponse<Visita>> {
+  const emptyResponse: PaginatedResponse<Visita> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
   try {
     const token = await getAccessToken()
     const queryParams = new URLSearchParams()
     if (status && status !== 'ALL') queryParams.append('estado', status)
     if (filtro?.trim()) queryParams.append('q', filtro.trim())
+    queryParams.append('page', String(page))
+    queryParams.append('pageSize', String(pageSize))
 
     const url =
-      filtro?.trim() && !status
+      filtro?.trim()
         ? `${BASE_URL}/buscar?${queryParams.toString()}`
         : `${BASE_URL}?${queryParams.toString()}`
 
-    const response = await fetchWithErrorHandling<Visita[]>(url, {
+    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -62,76 +69,55 @@ export async function getVisitas(
       next: { revalidate: 30, tags: ['visitas'] },
     })
 
-    let visitas = await response.json()
+    const data = await response.json()
 
-    // Client-side filtering as a fallback/refinement if needed,
-    // though ideally the backend handles most of it now.
-    if (filtro?.trim()) {
-      const filtroLower = filtro.trim().toLowerCase()
-
-      visitas = visitas.filter((visita: Visita) => {
-        const nombreCliente = visita.nombre_cliente?.toLowerCase() || ''
-        const apellidoCliente = visita.apellido_cliente?.toLowerCase() || ''
-        const direccion = visita.direccion_visita?.toLowerCase() || ''
-        const obraDireccion = visita.obra?.direccion?.toLowerCase() || ''
-        const clienteObra = visita.obra?.cliente
-        const clienteObraNombre = clienteObra?.nombre?.toLowerCase() || ''
-        const clienteObraApellido = clienteObra?.apellido?.toLowerCase() || ''
-        const clienteObraRazon = clienteObra?.razon_social?.toLowerCase() || ''
-        const motivo = visita.motivo_visita?.toLowerCase() || ''
-        const observaciones = visita.observaciones?.toLowerCase() || ''
-        const codigoVisita = String(visita.cod_visita || '')
-
-        const empleadosNombres =
-          visita.empleado_visita
-            ?.map((ev: { empleado?: { nombre: string; apellido: string } }) =>
-              `${ev.empleado?.nombre} ${ev.empleado?.apellido}`.toLowerCase()
-            )
-            .join(' ') || ''
-
-        return (
-          nombreCliente.includes(filtroLower) ||
-          apellidoCliente.includes(filtroLower) ||
-          direccion.includes(filtroLower) ||
-          obraDireccion.includes(filtroLower) ||
-          clienteObraNombre.includes(filtroLower) ||
-          clienteObraApellido.includes(filtroLower) ||
-          clienteObraRazon.includes(filtroLower) ||
-          motivo.includes(filtroLower) ||
-          observaciones.includes(filtroLower) ||
-          codigoVisita.includes(filtroLower) ||
-          empleadosNombres.includes(filtroLower)
-        )
-      })
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Visita>
     }
 
-    return visitas
+    return emptyResponse
   } catch (error) {
     console.error('[getVisitas]', error)
-    return []
+    return emptyResponse
   }
 }
 
 /**
- * Retrieves visitas for a specific empleado filtered by estado
+ * Retrieves visitas for a specific empleado filtered by estado with pagination
  * @param {string} cuil - Empleado CUIL
- * @param {string[]} estados - List of estados to filter (PENDIENTE, FINALIZADA, CANCELADA)
- * @returns {Promise<Visita[]>} List of visitas for empleado
+ * @param {string[]} estados - List of estados to filter
+ * @param {string} search - Optional search query
+ * @param {string} date - Optional date filter
+ * @param {number} page - Page number
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<PaginatedResponse<Visita>>} Paginated list of visitas for empleado
  */
 export async function getVisitasByEmpleado(
   cuil: string,
   estados?: string[],
   search?: string,
-  date?: string
-): Promise<Visita[]> {
+  date?: string,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<PaginatedResponse<Visita>> {
+  const emptyResponse: PaginatedResponse<Visita> = {
+    data: [],
+    total: 0,
+    totalPages: 0,
+    page,
+    pageSize,
+  }
+
   try {
     const token = await getAccessToken()
     const queryParams = new URLSearchParams()
     estados?.forEach((estado) => queryParams.append('estado', estado))
     if (search) queryParams.append('search', search)
     if (date) queryParams.append('date', date)
+    queryParams.append('page', String(page))
+    queryParams.append('pageSize', String(pageSize))
 
-    const response = await fetchWithErrorHandling<Visita[]>(
+    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(
       `${BASE_URL}/empleado/${cuil}?${queryParams.toString()}`,
       {
         method: 'GET',
@@ -146,10 +132,15 @@ export async function getVisitasByEmpleado(
       }
     )
 
-    return await response.json()
+    const data = await response.json()
+    if (data && typeof data === 'object' && 'data' in data) {
+      return data as PaginatedResponse<Visita>
+    }
+
+    return emptyResponse
   } catch (error) {
     console.error('[getVisitasByEmpleado]', error)
-    return []
+    return emptyResponse
   }
 }
 

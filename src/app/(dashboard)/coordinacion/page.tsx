@@ -55,11 +55,15 @@ async function getCoordinacionStats() {
     const manana = new Date(hoy)
     manana.setDate(manana.getDate() + 1)
 
-    const [visitas, entregas, obras] = await Promise.all([
-      getVisitas(),
-      getEntregas(),
-      filterObras({}),
+    const [visitasResponse, entregasResponse, obrasResponse] = await Promise.all([
+      getVisitas('', 'ALL', 1, 100),
+      getEntregas('', 'ALL', 1, 100),
+      filterObras({ page: 1, pageSize: 100 }),
     ])
+
+    const visitas = visitasResponse.data || []
+    const entregas = entregasResponse.data || []
+    const obras = obrasResponse.data || []
 
     const visitasHoy = visitas.filter((v) => {
       const fechaVisita = new Date(v.fecha_hora_visita)

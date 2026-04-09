@@ -4,18 +4,22 @@ import { getVisitas } from '@/actions/visitas'
 import VisitaCard from '@/components/shared/VisitaCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import EstadoVisitaFilter from '@/components/shared/EstadoVisitaFilter'
+import PaginationControls from '@/components/shared/PaginationControls'
 import Link from 'next/link'
 
 async function VisitasList({
   searchQuery,
   status,
+  page = 1,
   rolActual,
 }: {
   searchQuery?: string
   status?: string
+  page?: number
   rolActual?: string
 }) {
-  const visitas = await getVisitas(searchQuery, status)
+  const visitasResponse = await getVisitas(searchQuery, status, page, 10)
+  const visitas = visitasResponse?.data || []
 
   if (visitas.length === 0) {
     return (
@@ -46,8 +50,13 @@ async function VisitasList({
           />
         ))}
       </div>
-      <div className="mt-6 text-center text-sm text-gray-600">
-        Mostrando {visitas.length} visita{visitas.length !== 1 ? 's' : ''}
+      <div className="mt-6 flex flex-col items-center gap-4">
+        <PaginationControls
+          totalPages={visitasResponse.totalPages}
+          page={visitasResponse.page}
+          total={visitasResponse.total}
+          pageSize={visitasResponse.pageSize}
+        />
       </div>
     </>
   )
@@ -90,6 +99,7 @@ function VisitasListSkeleton() {
 interface VisitasPageContentProps {
   searchQuery?: string
   status?: string
+  page?: number
   canCreate?: boolean
   createUrl?: string
   rolActual?: string
@@ -100,6 +110,7 @@ interface VisitasPageContentProps {
 export default async function VisitasPageContent({
   searchQuery = '',
   status = 'ALL',
+  page = 1,
   canCreate = false,
   createUrl = '/coordinacion/visitas/crear',
   rolActual,
@@ -148,12 +159,13 @@ export default async function VisitasPageContent({
         </div>
 
         <Suspense
-          key={`${searchQuery}-${status}`}
+          key={`${searchQuery}-${status}-${page}`}
           fallback={<VisitasListSkeleton />}
         >
           <VisitasList
             searchQuery={searchQuery}
             status={status}
+            page={page}
             rolActual={rolActual}
           />
         </Suspense>

@@ -5,14 +5,16 @@ import { getEntregasByEmpleado } from '@/actions/entregas'
 import { getUsuario } from '@/lib/cache'
 import Navbar from '@/components/layout/Navbar'
 
+const PAGE_SIZE = 10
+
 async function getEntregasData(cuil: string) {
   try {
-    const entregas = await getEntregasByEmpleado(cuil, 'PENDIENTE')
-    return { entregas, error: null }
+    const response = await getEntregasByEmpleado(cuil, 'PENDIENTE', undefined, undefined, 1, PAGE_SIZE)
+    return { response, error: null }
   } catch (error) {
     console.error('Error al cargar entregas:', error)
     return {
-      entregas: [],
+      response: { data: [], total: 0, totalPages: 0, page: 1, pageSize: PAGE_SIZE },
       error: 'Error al cargar las entregas',
     }
   }
@@ -87,14 +89,14 @@ export default async function PlantaPage() {
     redirect('/login')
   }
 
-  const { entregas, error } = await getEntregasData(usuario.cuil)
+  const { response, error } = await getEntregasData(usuario.cuil)
 
   return (
     <Suspense fallback={<PlantaSkeleton />}>
       <Navbar usuario={usuario} />
       <PlantaClient
         usuario={usuario}
-        entregasInitial={entregas}
+        responseInitial={response}
         errorInitial={error}
       />
     </Suspense>

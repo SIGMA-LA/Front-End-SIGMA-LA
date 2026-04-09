@@ -13,26 +13,35 @@ import {
   cancelarEntrega,
 } from '@/actions/entregas'
 import { notify } from '@/lib/toast'
+import { useRef } from 'react'
+import type { PaginatedResponse } from '@/types'
+
+const PAGE_SIZE = 10
 
 interface PlantaClientProps {
   usuario: Empleado
-  entregasInitial: EntregaEmpleado[]
+  responseInitial: PaginatedResponse<EntregaEmpleado>
   errorInitial: string | null
 }
 
 export default function PlantaClient({
   usuario,
-  entregasInitial,
+  responseInitial,
   errorInitial,
 }: PlantaClientProps) {
   const [selectedEntrega, setSelectedEntrega] =
     useState<EntregaEmpleado | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
-  const [entregas, setEntregas] = useState<EntregaEmpleado[]>(entregasInitial)
+  const [entregas, setEntregas] = useState<EntregaEmpleado[]>(responseInitial.data)
   const [estadoFiltro, setEstadoFiltro] = useState<
     'PENDIENTE' | 'ENTREGADO' | 'CANCELADO'
   >('PENDIENTE')
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(responseInitial.page < responseInitial.totalPages)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const observer = useRef<IntersectionObserver | null>(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDate, setFilterDate] = useState('')
@@ -57,29 +66,63 @@ export default function PlantaClient({
     async (
       estado: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO',
       search: string,
-      date: string
+      date: string,
+      page: number = 1,
+      append: boolean = false
     ) => {
       if (!usuario?.cuil) return
 
       try {
-        setLoading(true)
+        if (page === 1) setLoading(true)
+        else setLoadingMore(true)
+
         setError(null)
-        const data = await getEntregasByEmpleado(
+        const response = await getEntregasByEmpleado(
           usuario.cuil,
           estado,
           search,
-          date
+          date,
+          page,
+          PAGE_SIZE
         )
-        setEntregas(data)
+
+        if (append) {
+          setEntregas(prev => [...prev, ...response.data])
+        } else {
+          setEntregas(response.data)
+        }
+
+        setHasMore(response.page < response.totalPages)
+        setCurrentPage(page)
       } catch (err) {
         console.error('Error al cargar entregas:', err)
         setError('Error al cargar las entregas')
       } finally {
         setLoading(false)
+        setLoadingMore(false)
       }
     },
     [usuario?.cuil]
   )
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !loadingMore && !loading) {
+      loadEntregas(estadoFiltro, debouncedSearch, debouncedDate, currentPage + 1, true)
+    }
+  }, [hasMore, loadingMore, loading, currentPage, estadoFiltro, debouncedSearch, debouncedDate, loadEntregas])
+
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading || loadingMore) return
+    if (observer.current) observer.current.disconnect()
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMore()
+      }
+    })
+
+    if (node) observer.current.observe(node)
+  }, [loading, loadingMore, hasMore, loadMore])
 
   // Refetch when debounced params or status filter change
   useEffect(() => {
@@ -228,6 +271,8 @@ export default function PlantaClient({
             errorEntregas={error}
             onRetry={handleRetry}
             onClose={() => setSidebarOpen(false)}
+            lastElementRef={lastElementRef}
+            loadingMore={loadingMore}
           />
         </div>
 
