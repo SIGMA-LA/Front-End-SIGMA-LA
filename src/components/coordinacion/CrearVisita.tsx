@@ -21,7 +21,7 @@ interface CrearVisitaProps {
   empleados: Empleado[]
   provincias: Provincia[]
   vehiculos: Vehiculo[]
-  buscarObras: (query: string) => Promise<Obra[]>
+  buscarObras: (query: string) => Promise<Obra[] | { data: Obra[] }>
   buscarLocalidades: (provinciaCod: number) => Promise<Localidad[]>
   visitaEditar?: Visita | null
 }
