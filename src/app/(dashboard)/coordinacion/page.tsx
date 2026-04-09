@@ -3,7 +3,6 @@ import { getCoordinacionDashboardStats } from '@/actions/dashboards'
 import {
   Calendar,
   Truck,
-  Building2,
   CheckCircle2,
   AlertCircle,
   Package,
@@ -31,78 +30,6 @@ function StatsSkeleton() {
       </div>
     </>
   )
-}
-
-async function getCoordinacionStats() {
-  try {
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const manana = new Date(hoy)
-    manana.setDate(manana.getDate() + 1)
-
-    const [visitasResponse, entregasResponse, obrasResponse] = await Promise.all([
-      getVisitas('', 'ALL', 1, 100),
-      getEntregas('', 'ALL', 1, 100),
-      filterObras({ page: 1, pageSize: 100 }),
-    ])
-
-    const visitas = visitasResponse.data || []
-    const entregas = entregasResponse.data || []
-    const obras = obrasResponse.data || []
-
-    const visitasHoy = visitas.filter((v) => {
-      const fechaVisita = new Date(v.fecha_hora_visita)
-      return fechaVisita >= hoy && fechaVisita < manana
-    })
-
-    const visitasPendientes = visitas.filter((v) => {
-      const fechaVisita = new Date(v.fecha_hora_visita)
-      return fechaVisita >= hoy && v.estado === 'PROGRAMADA'
-    })
-
-    const visitasCompletadas = visitas.filter((v) => v.estado === 'COMPLETADA')
-
-    const entregasHoy = entregas.filter((e) => {
-      const fechaEntrega = new Date(e.fecha_hora_entrega)
-      return fechaEntrega >= hoy && fechaEntrega < manana
-    })
-
-    const entregasPendientes = entregas.filter((e) => e.estado === 'PENDIENTE')
-    const entregasRealizadas = entregas.filter((e) => e.estado === 'ENTREGADO')
-
-    const obrasProduccionFinalizada = obras.filter(
-      (o) => o.estado === 'PRODUCCION FINALIZADA'
-    )
-    const obrasPagadasTotalmente = obras.filter(
-      (o) => o.estado === 'PAGADA TOTALMENTE'
-    )
-
-    return {
-      totalVisitas: visitas.length,
-      visitasHoy: visitasHoy.length,
-      visitasPendientes: visitasPendientes.length,
-      visitasCompletadas: visitasCompletadas.length,
-      totalEntregas: entregas.length,
-      entregasHoy: entregasHoy.length,
-      entregasPendientes: entregasPendientes.length,
-      entregasRealizadas: entregasRealizadas.length,
-      obrasListasParaEntrega:
-        obrasProduccionFinalizada.length + obrasPagadasTotalmente.length,
-    }
-  } catch (error) {
-    console.error('Error cargando estadísticas:', error)
-    return {
-      totalVisitas: 0,
-      visitasHoy: 0,
-      visitasPendientes: 0,
-      visitasCompletadas: 0,
-      totalEntregas: 0,
-      entregasHoy: 0,
-      entregasPendientes: 0,
-      entregasRealizadas: 0,
-      obrasListasParaEntrega: 0,
-    }
-  }
 }
 
 // Componente separado para las estadísticas (carga async)

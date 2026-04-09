@@ -40,7 +40,7 @@ export default function OrdenesProduccionList({
     } finally {
       setLoading(false)
     }
-  }, [cod_obra])
+  }, [cod_obra, onOrdenesLoaded])
 
   useEffect(() => {
     void loadOrdenes()

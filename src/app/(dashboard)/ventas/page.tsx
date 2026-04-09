@@ -11,62 +11,6 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
-async function getVentasStats() {
-  try {
-    const [clientesResponse, obrasResponse] = await Promise.all([
-      getClientes('', 1, 100),
-      filterObras({ pageSize: 100 }),
-    ])
-
-    const obras = obrasResponse.data
-
-    const obrasPagadasParcialmente = obras.filter(
-      (o) => o.estado === 'PAGADA PARCIALMENTE'
-    )
-    const obrasEnProduccion = obras.filter((o) => o.estado === 'EN PRODUCCION')
-    const obrasEnEsperaPago = obras.filter(
-      (o) => o.estado === 'EN ESPERA DE PAGO'
-    )
-    const obrasEnEsperaStock = obras.filter(
-      (o) => o.estado === 'EN ESPERA DE STOCK'
-    )
-    const obrasProduccionFinalizada = obras.filter(
-      (o) => o.estado === 'PRODUCCION FINALIZADA'
-    )
-    const obrasPagadasTotalmente = obras.filter(
-      (o) => o.estado === 'PAGADA TOTALMENTE'
-    )
-    const obrasEntregadas = obras.filter((o) => o.estado === 'ENTREGADA')
-    const obrasCanceladas = obras.filter((o) => o.estado === 'CANCELADA')
-
-    return {
-      totalClientes: clientesResponse.total,
-      totalObras: obrasResponse.total || obras.length,
-      obrasPagadasParcialmente: obrasPagadasParcialmente.length,
-      obrasEnProduccion: obrasEnProduccion.length,
-      obrasEnEsperaPago: obrasEnEsperaPago.length,
-      obrasEnEsperaStock: obrasEnEsperaStock.length,
-      obrasProduccionFinalizada: obrasProduccionFinalizada.length,
-      obrasPagadasTotalmente: obrasPagadasTotalmente.length,
-      obrasEntregadas: obrasEntregadas.length,
-      obrasCanceladas: obrasCanceladas.length,
-    }
-  } catch (error) {
-    console.error('Error cargando estadísticas:', error)
-    return {
-      totalClientes: 0,
-      totalObras: 0,
-      obrasPagadasParcialmente: 0,
-      obrasEnProduccion: 0,
-      obrasEnEsperaPago: 0,
-      obrasEnEsperaStock: 0,
-      obrasProduccionFinalizada: 0,
-      obrasPagadasTotalmente: 0,
-      obrasEntregadas: 0,
-      obrasCanceladas: 0,
-    }
-  }
-
     const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
