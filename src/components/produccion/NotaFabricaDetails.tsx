@@ -7,10 +7,10 @@ import {
   CheckCircle,
   AlertTriangle,
 } from 'lucide-react'
-import type { Obra } from '@/types'
+import type { Obra, OrdenProduccion } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { formatDateOnly } from '@/lib/utils'
 import OrdenesProduccionList from './OrdenesProduccionList'
 import { finalizarProduccionObra } from '@/actions/obras'
@@ -67,8 +67,14 @@ export default function NotaFabricaDetails({
   const [pdfError, setPdfError] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isFinalizando, setIsFinalizando] = useState(false)
+  const [tieneOpFinalizada, setTieneOpFinalizada] = useState(false)
 
   const isEnProduccion = obra.estado === 'EN PRODUCCION'
+  const puedeFinalizarProduccion = isEnProduccion && tieneOpFinalizada
+
+  const handleOrdenesLoaded = useCallback((ordenes: OrdenProduccion[]) => {
+    setTieneOpFinalizada(ordenes.some((op) => op.estado === 'FINALIZADA'))
+  }, [])
 
   // URL de la nota de fábrica (PDF)
   const notaFabricaUrl = obra.nota_fabrica || null
@@ -262,20 +268,25 @@ export default function NotaFabricaDetails({
           <h4 className="mb-4 text-lg font-semibold text-gray-700 lg:text-2xl">
             Órdenes de Producción Asociadas
           </h4>
-          <OrdenesProduccionList cod_obra={obra.cod_obra} />
+          <OrdenesProduccionList
+            cod_obra={obra.cod_obra}
+            onOrdenesLoaded={handleOrdenesLoaded}
+          />
         </div>
 
-        {/* Botón para crear orden de producción */}
-        <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
-          <Button
-            onClick={onCrearOrden}
-            className="flex-1 cursor-pointer bg-green-600 py-4 text-base text-white hover:bg-green-700 lg:py-5 lg:text-lg"
-          >
-            <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-            <span>Crear Orden de Producción</span>
-          </Button>
-        </div>
-        {isEnProduccion && (
+        {/* Botón para crear orden de producción (solo si la producción no está finalizada) */}
+        {obra.estado !== 'PRODUCCION FINALIZADA' && (
+          <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
+            <Button
+              onClick={onCrearOrden}
+              className="flex-1 cursor-pointer bg-green-600 py-4 text-base text-white hover:bg-green-700 lg:py-5 lg:text-lg"
+            >
+              <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+              <span>Crear Orden de Producción</span>
+            </Button>
+          </div>
+        )}
+        {puedeFinalizarProduccion && (
           <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
             <Button
               onClick={handleAbrirConfirmacion}

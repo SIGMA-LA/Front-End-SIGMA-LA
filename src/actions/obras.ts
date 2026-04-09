@@ -1,8 +1,9 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { cache } from 'react'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
+import { logger } from '@/lib/logger'
 import { getAccessToken } from './auth'
 import type {
   Obra,
@@ -492,9 +493,19 @@ export async function recibirStockObra(
 export async function finalizarProduccionObra(
   id: number
 ): Promise<ActionResponse<Obra>> {
+  const endpoint = `${BASE_URL}/${id}/finalizar-produccion`
+
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling(`${BASE_URL}/${id}/finalizar`, {
+    logger.info('[finalizarProduccionObra] PATCH request', {
+      id,
+      endpoint,
+      baseUrl: BASE_URL,
+      apiUrl: API_URL,
+      hasToken: Boolean(token),
+    })
+
+    const res = await fetchWithErrorHandling(endpoint, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -502,11 +513,32 @@ export async function finalizarProduccionObra(
       },
     })
     const data = await res.json()
+
+    logger.info('[finalizarProduccionObra] PATCH success', {
+      id,
+      endpoint,
+    })
+
+    revalidateTag('notas-fabrica')
+    revalidateTag('ordenes-produccion')
+    revalidateTag('obras')
     revalidatePath('/produccion')
+    revalidatePath('/obras')
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error al finalizar la obra'
+      error instanceof Error
+        ? error.message
+        : 'Error al finalizar la producción'
+
+    logger.error('[finalizarProduccionObra] PATCH failed', {
+      id,
+      endpoint,
+      baseUrl: BASE_URL,
+      apiUrl: API_URL,
+      error: message,
+    })
+
     console.error('[finalizarProduccionObra]', message)
     return { success: false, error: message }
   }

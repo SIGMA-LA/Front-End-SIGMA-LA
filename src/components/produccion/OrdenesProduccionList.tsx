@@ -6,6 +6,7 @@ import { formatDateOnly } from '@/lib/utils'
 
 interface OrdenesProduccionListProps {
   cod_obra: number
+  onOrdenesLoaded?: (ordenes: OrdenProduccion[]) => void
 }
 
 const getEstadoBadge = (estado: string) => {
@@ -20,6 +21,7 @@ const getEstadoBadge = (estado: string) => {
 
 export default function OrdenesProduccionList({
   cod_obra,
+  onOrdenesLoaded,
 }: OrdenesProduccionListProps) {
   const [ordenes, setOrdenes] = useState<OrdenProduccion[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,6 +33,7 @@ export default function OrdenesProduccionList({
       setError(null)
       const data = await getOrdenesByObra(cod_obra)
       setOrdenes(data)
+      onOrdenesLoaded?.(data)
     } catch (error) {
       console.error('Error al cargar órdenes:', error)
       setError('Error al cargar las órdenes de producción')
