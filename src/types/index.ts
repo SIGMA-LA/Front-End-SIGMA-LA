@@ -83,3 +83,5 @@ export type {
   PagoModalProps,
   PagoModalStep,
 } from './componentProps'
+
+export type { PaginatedResponse } from './pagination'

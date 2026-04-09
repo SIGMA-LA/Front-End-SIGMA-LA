@@ -12,7 +12,7 @@ export default function ObraSearchSelect({
   placeholder = 'Buscar obra por nombre, cliente o dirección...',
 }: {
   onSelectObra: (obra: Obra) => void
-  buscarObras: (filtro: string) => Promise<Obra[]>
+  buscarObras: (filtro: string) => Promise<Obra[] | { data: Obra[] }>
   placeholder?: string
 }) {
   const [filtro, setFiltro] = useState('')
@@ -26,7 +26,8 @@ export default function ObraSearchSelect({
       setLoading(true)
       try {
         const resultados = await buscarObras(debouncedFiltro.trim())
-        setObras(resultados)
+        const obrasArray = Array.isArray(resultados) ? resultados : resultados?.data || []
+        setObras(obrasArray)
         if (debouncedFiltro.trim()) {
           setShowResults(true)
         }

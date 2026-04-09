@@ -26,15 +26,15 @@ export default function PedidosList({ onSchedulePedido }: PedidosListProps) {
     setLoading(true)
     setError(null)
     try {
-      const [paraPedirData, enEsperaData] = await Promise.all([
+      const [paraPedirData, enEsperaResponse] = await Promise.all([
         getObrasParaPedidoStock(),
-        filterObras({ estado: 'EN ESPERA DE STOCK' }),
+        filterObras({ estado: 'EN ESPERA DE STOCK', pageSize: 100 }),
       ])
 
       setObrasParaPedir(paraPedirData)
       // Filtramos también por tipo de cliente en el frontend por si la acción no lo hace
       setObrasEnEspera(
-        enEsperaData.filter((o) => o.cliente.tipo_cliente === 'EMPRESA')
+        enEsperaResponse.data.filter((o) => o.cliente.tipo_cliente === 'EMPRESA')
       )
     } catch (err) {
       setError('No se pudieron cargar las obras para pedidos de stock.')

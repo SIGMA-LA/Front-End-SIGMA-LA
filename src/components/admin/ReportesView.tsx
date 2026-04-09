@@ -24,8 +24,14 @@ import {
   DollarSign,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import type { Obra, Pago, Visita, Entrega } from '@/types'
+import type { Obra, Pago, Visita, Entrega, PaginatedResponse } from '@/types'
 
+interface ReportesViewProps {
+  obras: Obra[] | PaginatedResponse<Obra>
+  pagos: Pago[]
+  visitas: Visita[]
+  entregas: Entrega[]
+}
 
 const ESTADO_OBRA_COLORS: Record<string, string> = {
   'EN ESPERA DE PAGO': '#3b82f6',
@@ -278,21 +284,19 @@ function EmptyChart({ message }: { message: string }) {
 }
 
 
-interface ReportesViewProps {
-  obras: Obra[]
-  pagos: Pago[]
-  visitas: Visita[]
-  entregas: Entrega[]
-}
-
 export default function ReportesView({
   obras,
   pagos,
   visitas,
   entregas,
 }: ReportesViewProps) {
+  // Asegurar que obras sea un array (por si viene el objeto paginado)
+  const obrasArray = useMemo(() => {
+    return Array.isArray(obras) ? obras : (obras as PaginatedResponse<Obra>)?.data || []
+  }, [obras])
+
   const ventasMensuales = useMemo(() => processVentasMensuales(pagos), [pagos])
-  const obrasPorEstado = useMemo(() => processObrasPorEstado(obras), [obras])
+  const obrasPorEstado = useMemo(() => processObrasPorEstado(obrasArray), [obrasArray])
   const visitasDelMes = useMemo(() => processVisitasDelMes(visitas), [visitas])
   const entregasDelMes = useMemo(() => processEntregasDelMes(entregas), [entregas])
   const ingresosAcumulados = useMemo(() => processIngresosAcumulados(pagos), [pagos])
@@ -301,10 +305,11 @@ export default function ReportesView({
   const currentMonthLabel = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`
 
   // Summary stats
-  const obrasActivas = obras.filter(
-    (o) =>
-      o.estado !== 'ENTREGADA' && o.estado !== 'CANCELADA'
-  ).length
+  const obrasActivas = useMemo(() => {
+    return obrasArray.filter(
+      (o) => o.estado !== 'ENTREGADA' && o.estado !== 'CANCELADA'
+    ).length
+  }, [obrasArray])
 
   const totalVisitasMes = visitasDelMes.reduce((sum, v) => sum + v.cantidad, 0)
   const totalEntregasMes = entregasDelMes.reduce((sum, e) => sum + e.cantidad, 0)
@@ -394,7 +399,7 @@ export default function ReportesView({
                 Obras por Estado
               </CardTitle>
               <p className="text-sm text-gray-500">
-                Distribución actual de obras ({obras.length} total)
+                Distribución actual de obras ({obrasArray.length} total)
               </p>
             </CardHeader>
             <CardContent>

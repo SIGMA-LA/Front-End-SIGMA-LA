@@ -3,7 +3,6 @@ import { getCoordinacionDashboardStats } from '@/actions/dashboards'
 import {
   Calendar,
   Truck,
-  Building2,
   CheckCircle2,
   AlertCircle,
   Package,
@@ -33,6 +32,7 @@ function StatsSkeleton() {
   )
 }
 
+// Componente separado para las estadísticas (carga async)
 async function DashboardStats() {
   const stats = await getCoordinacionDashboardStats()
   const {

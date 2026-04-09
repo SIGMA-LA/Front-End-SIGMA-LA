@@ -5,8 +5,9 @@ import { getUsuario } from '@/lib/cache'
 import ClienteCard from '@/components/shared/ClienteCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import ClientesToastFromQuery from '@/components/pages/ClientesToastFromQuery'
+import PaginationControls from '@/components/shared/PaginationControls'
 import Link from 'next/link'
-import type { Cliente } from '@/types'
+import type { Cliente, PaginatedResponse } from '@/types'
 
 function ClientesListSkeleton() {
   return (
@@ -31,12 +32,14 @@ function ClientesListSkeleton() {
   )
 }
 
-async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
+async function ClientesGrid({ searchQuery, page = 1 }: { searchQuery?: string; page?: number }) {
+  let clientesResponse: PaginatedResponse<Cliente> | null = null
   let clientes: Cliente[] = []
   const usuario = await getUsuario()
 
   try {
-    clientes = await getClientes(searchQuery)
+    clientesResponse = await getClientes(searchQuery, page, 10)
+    clientes = clientesResponse?.data || []
   } catch (err) {
     console.error('Error cargando clientes:', err)
   }
@@ -66,15 +69,26 @@ async function ClientesGrid({ searchQuery }: { searchQuery?: string }) {
           <ClienteCard key={cliente.cuil} cliente={cliente} usuario={usuario} />
         ))}
       </div>
-      <div className="mt-6 text-center text-sm text-gray-600">
-        Mostrando {clientes.length} cliente{clientes.length !== 1 ? 's' : ''}
-      </div>
+      {clientesResponse && (
+        <div className="mt-6 flex flex-col items-center gap-4">
+          <PaginationControls
+            totalPages={clientesResponse.totalPages}
+            page={clientesResponse.page}
+            total={clientesResponse.total}
+            pageSize={clientesResponse.pageSize}
+          />
+          <div className="text-sm text-gray-600">
+            Mostrando {clientes.length} de {clientesResponse.total} cliente{clientesResponse.total !== 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 interface ClientesPageContentProps {
   searchQuery?: string
+  page?: number
   toast?: string
   canCreate?: boolean
   createUrl?: string
@@ -84,6 +98,7 @@ interface ClientesPageContentProps {
 
 export default async function ClientesPageContent({
   searchQuery = '',
+  page = 1,
   toast,
   canCreate = false,
   createUrl = '/ventas/clientes/crear',
@@ -124,8 +139,8 @@ export default async function ClientesPageContent({
           />
         </div>
 
-        <Suspense key={searchQuery} fallback={<ClientesListSkeleton />}>
-          <ClientesGrid searchQuery={searchQuery} />
+        <Suspense key={`${searchQuery}-${page}`} fallback={<ClientesListSkeleton />}>
+          <ClientesGrid searchQuery={searchQuery} page={page} />
         </Suspense>
       </div>
     </div>

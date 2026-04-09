@@ -12,6 +12,7 @@ import type {
   PresupuestoInput,
   EstadoObra,
   EstadoNotaFabricaProduccion,
+  PaginatedResponse,
 } from '@/types'
 import type { ActionResponse } from '@/types/actions'
 
@@ -45,18 +46,35 @@ export const getObra = cache(async (cod_obra: number): Promise<Obra | null> => {
 })
 
 /**
- * Searches obras by text filter
+ * Searches obras by text filter (paginated)
  * @param {string} filter - Optional search query
- * @returns {Promise<Obra[]>} List of matching obras
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<PaginatedResponse<Obra>>} Paginated list of matching obras
  */
-export async function getObras(filter?: string): Promise<Obra[]> {
+export async function getObras(
+  filter?: string,
+  page: number = 1,
+  pageSize: number = 25,
+): Promise<PaginatedResponse<Obra>> {
+  const emptyResponse: PaginatedResponse<Obra> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
   try {
     const token = await getAccessToken()
-    let url = BASE_URL
+    const params = new URLSearchParams()
+    params.append('page', String(page))
+    params.append('pageSize', String(pageSize))
+
+    let url: string
     if (filter && filter.trim().length > 0) {
-      url = `${BASE_URL}/buscar?q=${encodeURIComponent(filter.trim())}`
+      params.append('q', filter.trim())
+      url = `${BASE_URL}/buscar?${params.toString()}`
+    } else {
+      url = `${BASE_URL}?${params.toString()}`
     }
-    const res = await fetchWithErrorHandling<Obra[]>(url, {
+
+    const res = await fetchWithErrorHandling<PaginatedResponse<Obra>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -64,10 +82,15 @@ export async function getObras(filter?: string): Promise<Obra[]> {
       },
       next: { revalidate: 0, tags: ['obras'] },
     })
-    return await res.json()
+    const data = await res.json()
+    // Validate it's actually a paginated response
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Obra>
+    }
+    return emptyResponse
   } catch (error) {
     console.error('[getObras]', error)
-    return []
+    return emptyResponse
   }
 }
 
@@ -131,26 +154,37 @@ export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
 }
 
 /**
- * Filters obras by estado or localidad
+ * Filters obras by estado or localidad (paginated)
  * @param {Object} params - Filter parameters
  * @param {string} params.estado - Obra estado filter
  * @param {number} params.cod_localidad - Localidad code filter
- * @returns {Promise<Obra[]>} Filtered list of obras
+ * @param {number} params.page - Page number (1-indexed)
+ * @param {number} params.pageSize - Items per page
+ * @returns {Promise<PaginatedResponse<Obra>>} Paginated filtered list of obras
  */
 export async function filterObras({
   estado,
   cod_localidad,
+  page = 1,
+  pageSize = 25,
 }: {
   estado?: EstadoObra | string
   cod_localidad?: number
-}): Promise<Obra[]> {
+  page?: number
+  pageSize?: number
+}): Promise<PaginatedResponse<Obra>> {
+  const emptyResponse: PaginatedResponse<Obra> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
   try {
     const token = await getAccessToken()
     const params = new URLSearchParams()
     if (estado) params.append('estado', estado)
     if (cod_localidad) params.append('localidad', String(cod_localidad))
+    params.append('page', String(page))
+    params.append('pageSize', String(pageSize))
     const url = `${BASE_URL}/filtrar?${params.toString()}`
-    const res = await fetchWithErrorHandling<Obra[]>(url, {
+    const res = await fetchWithErrorHandling<PaginatedResponse<Obra>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -159,10 +193,13 @@ export async function filterObras({
       next: { revalidate: 30, tags: ['obras'] },
     })
     const data = await res.json()
-    return Array.isArray(data) ? data : []
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Obra>
+    }
+    return emptyResponse
   } catch (error) {
     console.error('[filterObras]', error)
-    return []
+    return emptyResponse
   }
 }
 

@@ -9,6 +9,7 @@ import type {
   EntregaEmpleado,
   EstadoEntrega,
   RolEntrega,
+  PaginatedResponse,
 } from '@/types'
 import type { Empleado } from '@/types/auth'
 import type { Obra } from '@/types/obra'
@@ -69,24 +70,40 @@ interface UpdateEntregaData {
 }
 
 /**
- * Retrieves deliveries for an employee filtered by status
+ * Retrieves deliveries for an employee filtered by status with pagination
  * @param {string} cuilEmpleado - Employee's CUIL identifier
  * @param {EstadoEntrega} estado - Entrega status filter
- * @returns {Promise<EntregaEmpleado[]>} List of employee's deliveries
+ * @param {string} search - Optional search query
+ * @param {string} date - Optional date filter
+ * @param {number} page - Page number
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<PaginatedResponse<EntregaEmpleado>>} Paginated list of employee's deliveries
  */
 export async function getEntregasByEmpleado(
   cuilEmpleado: string,
   estado: EstadoEntrega,
   search?: string,
-  date?: string
-): Promise<EntregaEmpleado[]> {
+  date?: string,
+  page: number = 1,
+  pageSize: number = 10
+): Promise<PaginatedResponse<EntregaEmpleado>> {
+  const emptyResponse: PaginatedResponse<EntregaEmpleado> = {
+    data: [],
+    total: 0,
+    totalPages: 0,
+    page,
+    pageSize,
+  }
+
   try {
     const token = await getAccessToken()
     const url = new URL(`${BASE_URL}/${cuilEmpleado}/${estado}`)
     if (search) url.searchParams.append('search', search)
     if (date) url.searchParams.append('date', date)
+    url.searchParams.append('page', String(page))
+    url.searchParams.append('pageSize', String(pageSize))
 
-    const res = await fetchWithErrorHandling<EntregaApiPayload[]>(
+    const res = await fetchWithErrorHandling<PaginatedResponse<EntregaApiPayload>>(
       url.toString(),
       {
         method: 'GET',
@@ -100,32 +117,43 @@ export async function getEntregasByEmpleado(
         },
       }
     )
-    const entregas = await res.json()
-    return entregas.map((e: EntregaApiPayload) => {
-      const ee = (e.entrega_empleado || []).find(
-        (emp: EntregaEmpleadoApi) => emp.cuil === cuilEmpleado
-      )
-      const entregaEmpleado = (e.entrega_empleado ||
-        []) as unknown as EntregaEmpleado[]
+    const apiResponse = await res.json()
+
+    console.log(apiResponse)
+    if (apiResponse && typeof apiResponse === 'object' && 'data' in apiResponse) {
+      const mappedData = apiResponse.data.map((e: EntregaApiPayload) => {
+        const ee = (e.entrega_empleado || []).find(
+          (emp: EntregaEmpleadoApi) => emp.cuil === cuilEmpleado
+        )
+        const entregaEmpleado = (e.entrega_empleado ||
+          []) as unknown as EntregaEmpleado[]
+
+        return {
+          cuil: cuilEmpleado,
+          cod_obra: e.cod_obra,
+          cod_entrega: e.cod_entrega,
+          rol_entrega: ee?.rol_entrega || 'ACOMPANANTE',
+          empleado: ee?.empleado as EntregaEmpleado['empleado'],
+          entrega: {
+            ...(e as unknown as Entrega),
+            entrega_empleado: entregaEmpleado,
+            vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
+            maquinarias: e.uso_maquinaria || e.maquinarias || [],
+          },
+          obra: (e.obra || {}) as EntregaEmpleado['obra'],
+        }
+      }) as unknown as EntregaEmpleado[]
 
       return {
-        cuil: cuilEmpleado,
-        cod_obra: e.cod_obra,
-        cod_entrega: e.cod_entrega,
-        rol_entrega: ee?.rol_entrega || 'ACOMPANANTE',
-        empleado: ee?.empleado as EntregaEmpleado['empleado'],
-        entrega: {
-          ...(e as unknown as Entrega),
-          entrega_empleado: entregaEmpleado,
-          vehiculos: e.uso_vehiculo_entrega || e.vehiculos || [],
-          maquinarias: e.uso_maquinaria || e.maquinarias || [],
-        },
-        obra: (e.obra || {}) as EntregaEmpleado['obra'],
+        ...apiResponse,
+        data: mappedData,
       }
-    }) as unknown as EntregaEmpleado[]
+    }
+
+    return emptyResponse
   } catch (error) {
     console.error('[getEntregasByEmpleado]', error)
-    return []
+    return emptyResponse
   }
 }
 
@@ -137,21 +165,25 @@ export async function getEntregasByEmpleado(
  */
 export async function getEntregas(
   filter?: string,
-  estado?: string
-): Promise<Entrega[]> {
+  estado?: string,
+  page: number = 1,
+  pageSize: number = 25
+): Promise<PaginatedResponse<Entrega>> {
+  const emptyResponse: PaginatedResponse<Entrega> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
   try {
     const token = await getAccessToken()
 
-    let url = BASE_URL
     const params = new URLSearchParams()
-    if (filter) params.append('q', filter)
-    if (estado) params.append('estado', estado)
+    if (filter?.trim()) params.append('q', filter.trim())
+    if (estado && estado !== 'ALL') params.append('estado', estado)
+    params.append('page', String(page))
+    params.append('pageSize', String(pageSize))
 
-    if (params.toString()) {
-      url = `${BASE_URL}?${params.toString()}`
-    }
+    const url = `${BASE_URL}?${params.toString()}`
 
-    const res = await fetchWithErrorHandling<Entrega[]>(url, {
+    const res = await fetchWithErrorHandling<PaginatedResponse<Entrega>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -160,47 +192,16 @@ export async function getEntregas(
       next: { revalidate: 30, tags: ['entregas'] },
     })
 
-    let entregas = await res.json()
+    const data = await res.json()
 
-    // Client-side filtering if needed
-    if (filter?.trim()) {
-      const filterLower = filter.trim().toLowerCase()
-
-      entregas = entregas.filter((entrega: Entrega) => {
-        const obraDireccion = entrega.obra?.direccion?.toLowerCase() || ''
-        const clienteNombre = entrega.obra?.cliente?.nombre?.toLowerCase() || ''
-        const clienteApellido =
-          entrega.obra?.cliente?.apellido?.toLowerCase() || ''
-        const clienteRazon =
-          entrega.obra?.cliente?.razon_social?.toLowerCase() || ''
-        const detalle = entrega.detalle?.toLowerCase() || ''
-        const observaciones = entrega.observaciones?.toLowerCase() || ''
-        const codigoEntrega = String(entrega.cod_entrega || '')
-
-        const empleadosNombres =
-          entrega.entrega_empleado
-            ?.map((ea: { empleado?: { nombre: string; apellido: string } }) =>
-              `${ea.empleado?.nombre} ${ea.empleado?.apellido}`.toLowerCase()
-            )
-            .join(' ') || ''
-
-        return (
-          obraDireccion.includes(filterLower) ||
-          clienteNombre.includes(filterLower) ||
-          clienteApellido.includes(filterLower) ||
-          clienteRazon.includes(filterLower) ||
-          detalle.includes(filterLower) ||
-          observaciones.includes(filterLower) ||
-          codigoEntrega.includes(filterLower) ||
-          empleadosNombres.includes(filterLower)
-        )
-      })
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Entrega>
     }
 
-    return entregas
+    return emptyResponse
   } catch (error) {
     console.error('[getEntregas]', error)
-    return []
+    return emptyResponse
   }
 }
 

@@ -6,6 +6,7 @@ import { getProvincias } from '@/lib/cache'
 import ObraCard from '@/components/shared/ObraCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import ObrasFiltros from '@/components/shared/ObrasFiltros'
+import PaginationControls from '@/components/shared/PaginationControls'
 import Link from 'next/link'
 import type { EstadoObra, RolEmpleado } from '@/types'
 
@@ -41,30 +42,34 @@ async function ObrasGrid({
   estado,
   cod_localidad,
   usuarioRol,
+  page,
+  pageSize,
 }: {
   searchQuery?: string
   estado?: EstadoObra
   cod_localidad?: number
   usuarioRol?: RolEmpleado | undefined
+  page: number
+  pageSize: number
 }) {
   // Cargar provincias y obras en paralelo
-  const [provincias, obrasData] = await Promise.all([
+  const [provincias, obrasResult] = await Promise.all([
     getProvincias(),
     (async () => {
       try {
         if (searchQuery) {
-          return await getObras(searchQuery)
+          return await getObras(searchQuery, page, pageSize)
         } else {
-          return await filterObras({ estado, cod_localidad })
+          return await filterObras({ estado, cod_localidad, page, pageSize })
         }
       } catch (err) {
         console.error('Error cargando obras:', err)
-        return []
+        return { data: [], total: 0, totalPages: 0, page, pageSize }
       }
     })(),
   ])
 
-  if (obrasData.length === 0) {
+  if (obrasResult.data.length === 0) {
     return (
       <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
         <Building2 className="mx-auto h-12 w-12 text-gray-400" />
@@ -79,16 +84,25 @@ async function ObrasGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:gap-6">
-      {obrasData.map((obra) => (
-        <ObraCard
-          key={obra.cod_obra}
-          obra={obra}
-          provincias={provincias}
-          usuarioRol={usuarioRol}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid gap-4 sm:gap-6">
+        {obrasResult.data.map((obra) => (
+          <ObraCard
+            key={obra.cod_obra}
+            obra={obra}
+            provincias={provincias}
+            usuarioRol={usuarioRol}
+          />
+        ))}
+      </div>
+
+      <PaginationControls
+        page={obrasResult.page}
+        totalPages={obrasResult.totalPages}
+        total={obrasResult.total}
+        pageSize={obrasResult.pageSize}
+      />
+    </>
   )
 }
 
@@ -101,6 +115,8 @@ interface ObrasPageContentProps {
   usuarioRol?: RolEmpleado | undefined
   title?: string
   subtitle?: string
+  page?: number
+  pageSize?: number
 }
 
 export default async function ObrasPageContent({
@@ -112,6 +128,8 @@ export default async function ObrasPageContent({
   usuarioRol,
   title = 'Obras',
   subtitle = 'Visualiza, filtra y gestiona todas las obras.',
+  page = 1,
+  pageSize = 10,
 }: ObrasPageContentProps) {
   // Cargar provincias para los filtros (esto es rápido, viene de cache)
   const provincias = await getProvincias()
@@ -120,6 +138,7 @@ export default async function ObrasPageContent({
     searchQuery,
     estado,
     cod_localidad,
+    page,
   }
 
   return (
@@ -154,7 +173,7 @@ export default async function ObrasPageContent({
           <SearchWrapper
             placeholder="Buscar obra por dirección, cliente..."
             initialValue={searchQuery}
-            clearOtherParams={['estado', 'cod_localidad']}
+            clearOtherParams={['estado', 'cod_localidad', 'page']}
           />
         </div>
 
@@ -178,6 +197,8 @@ export default async function ObrasPageContent({
             estado={estado}
             cod_localidad={cod_localidad}
             usuarioRol={usuarioRol}
+            page={page}
+            pageSize={pageSize}
           />
         </Suspense>
       </div>

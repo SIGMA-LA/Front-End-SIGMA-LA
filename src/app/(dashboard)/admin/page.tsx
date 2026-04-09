@@ -2,6 +2,7 @@ import DashboardView from '@/components/admin/DashboardView'
 import { getAdminDashboardStats } from '@/actions/dashboards'
 
 export default async function Page() {
+
   const stats = await getAdminDashboardStats()
 
   return (
