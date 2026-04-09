@@ -8,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 export async function getAdminDashboardStats() {
   try {
     const token = await getAccessToken()
-    
+
     const [pagosRes, obrasRes] = await Promise.all([
       fetchWithErrorHandling(`${API_URL}/pagos/stats/facturacion`, {
         method: 'GET',
@@ -35,9 +35,9 @@ export async function getAdminDashboardStats() {
     }
   } catch (error) {
     if (error instanceof Error) {
-        console.error('[getAdminDashboardStats]', error.message)
+      console.error('[getAdminDashboardStats]', error.message)
     } else {
-        console.error('[getAdminDashboardStats]', error)
+      console.error('[getAdminDashboardStats]', error)
     }
     return {
       ingresosMes: 0,
@@ -53,7 +53,7 @@ export async function getAdminDashboardStats() {
 export async function getCoordinacionDashboardStats() {
   try {
     const token = await getAccessToken()
-    
+
     const [visitasRes, entregasRes, obrasRes] = await Promise.all([
       fetchWithErrorHandling(`${API_URL}/visitas/stats/progreso-diario`, {
         method: 'GET',
@@ -92,9 +92,9 @@ export async function getCoordinacionDashboardStats() {
     }
   } catch (error) {
     if (error instanceof Error) {
-        console.error('[getCoordinacionDashboardStats]', error.message)
+      console.error('[getCoordinacionDashboardStats]', error.message)
     } else {
-        console.error('[getCoordinacionDashboardStats]', error)
+      console.error('[getCoordinacionDashboardStats]', error)
     }
     return {
       agendaHoyVisitas: 0,
@@ -111,7 +111,7 @@ export async function getCoordinacionDashboardStats() {
 export async function getVentasDashboardStats() {
   try {
     const token = await getAccessToken()
-    
+
     const obrasRes = await fetchWithErrorHandling(`${API_URL}/obras/stats/ventas`, {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
@@ -127,9 +127,9 @@ export async function getVentasDashboardStats() {
     }
   } catch (error) {
     if (error instanceof Error) {
-        console.error('[getVentasDashboardStats]', error.message)
+      console.error('[getVentasDashboardStats]', error.message)
     } else {
-        console.error('[getVentasDashboardStats]', error)
+      console.error('[getVentasDashboardStats]', error)
     }
     return {
       totalPorCobrar: 0,
