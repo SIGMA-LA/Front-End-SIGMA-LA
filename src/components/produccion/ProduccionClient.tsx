@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Package, Menu, X } from 'lucide-react'
+import { FileText, Package, Menu, X, Play, CheckCircle } from 'lucide-react'
 import type {
   Obra,
   OrdenProduccion,
@@ -22,8 +22,9 @@ import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
 import NotaFabricaDetails from './NotaFabricaDetails'
 import OrdenProduccionDetails from './OrdenProduccionDetails'
 import CrearOrdenModal from './CrearOrdenModal'
-import IniciarProduccionModal from './IniciarProduccionModal'
-import FinalizarProduccionModal from './FinalizarProduccionModal'
+import ProduccionActionModal, {
+  type ProduccionActionSummary,
+} from './ProduccionActionModal'
 import { notify } from '@/lib/toast'
 
 type MainTab = 'notas' | 'ordenes'
@@ -322,6 +323,15 @@ export default function ProduccionClient({
     })
   }
 
+  const handleObraProduccionFinalizada = () => {
+    setSelectedObra(null)
+    setNotasCache({})
+    setOrdenesCache({})
+    startTransition(() => {
+      router.refresh()
+    })
+  }
+
   const handleIniciarProduccion = () => {
     setIsIniciarModalOpen(true)
   }
@@ -395,6 +405,25 @@ export default function ProduccionClient({
       setIsProduccionLoading(false)
     }
   }
+
+  const selectedOrdenSummary: ProduccionActionSummary | null = selectedOrden
+    ? {
+        entidadLabel: 'Orden de Producción',
+        entidadValor: `#${selectedOrden.cod_op}`,
+        cliente:
+          selectedOrden.obra?.cliente?.tipo_cliente === 'EMPRESA'
+            ? selectedOrden.obra.cliente.razon_social?.trim() || 'N/A'
+            : `${selectedOrden.obra?.cliente?.nombre ?? ''} ${selectedOrden.obra?.cliente?.apellido ?? ''}`.trim() ||
+              'N/A',
+        direccion:
+          selectedOrden.obra?.direccion && selectedOrden.obra?.localidad
+            ? `${selectedOrden.obra.direccion}, ${selectedOrden.obra.localidad.nombre_localidad}`
+            : selectedOrden.obra?.direccion || 'Sin dirección',
+        telefono: selectedOrden.obra?.cliente?.telefono,
+        mail: selectedOrden.obra?.cliente?.mail,
+        estadoActual: selectedOrden.estado,
+      }
+    : null
 
   return (
     <div className="flex h-screen flex-col">
@@ -532,6 +561,7 @@ export default function ProduccionClient({
               <NotaFabricaDetails
                 obra={selectedObra}
                 onCrearOrden={handleCrearOrden}
+                onProduccionFinalizada={handleObraProduccionFinalizada}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-center">
@@ -622,23 +652,42 @@ export default function ProduccionClient({
         onSuccess={handleOrdenCreated}
       />
 
-      {/* Modal para iniciar producción */}
-      <IniciarProduccionModal
-        isOpen={isIniciarModalOpen}
-        orden={selectedOrden}
-        onConfirm={handleConfirmIniciar}
-        onCancel={() => setIsIniciarModalOpen(false)}
-        loading={isProduccionLoading}
-      />
+      {/* Modales de acciones de producción */}
+      {selectedOrdenSummary && (
+        <ProduccionActionModal
+          isOpen={isIniciarModalOpen}
+          title="Iniciar Producción"
+          message="¿Está seguro que desea iniciar la producción de esta orden?"
+          description="Esta acción cambiará el estado de la orden a EN PRODUCCIÓN y actualizará el estado de la obra asociada."
+          confirmLabel="Iniciar Producción"
+          loadingLabel="Iniciando..."
+          tone="green"
+          icon={<Play className="h-6 w-6" />}
+          summary={selectedOrdenSummary}
+          onConfirm={handleConfirmIniciar}
+          onCancel={() => setIsIniciarModalOpen(false)}
+          loading={isProduccionLoading}
+        />
+      )}
 
-      {/* Modal para finalizar producción */}
-      <FinalizarProduccionModal
-        isOpen={isFinalizarModalOpen}
-        orden={selectedOrden}
-        onConfirm={handleConfirmFinalizar}
-        onCancel={() => setIsFinalizarModalOpen(false)}
-        loading={isProduccionLoading}
-      />
+      {selectedOrdenSummary && (
+        <ProduccionActionModal
+          isOpen={isFinalizarModalOpen}
+          title="Finalizar Producción"
+          message="¿Está seguro que desea finalizar la producción de esta orden?"
+          description="Esta acción marcará la orden como FINALIZADA."
+          confirmLabel="Finalizar Producción"
+          loadingLabel="Finalizando..."
+          tone="amber"
+          icon={<CheckCircle className="h-6 w-6" />}
+          summary={selectedOrdenSummary}
+          warningTitle="Advertencia"
+          warningText="Asegúrese de que todos los productos fueron completados antes de finalizar la producción."
+          onConfirm={handleConfirmFinalizar}
+          onCancel={() => setIsFinalizarModalOpen(false)}
+          loading={isProduccionLoading}
+        />
+      )}
     </div>
   )
 }
