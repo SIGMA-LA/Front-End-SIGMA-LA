@@ -1,13 +1,10 @@
 import { getUsuario } from '@/lib/cache'
-import { getVisitas } from '@/actions/visitas'
-import { getEntregas } from '@/actions/entregas'
-import { filterObras } from '@/actions/obras'
+import { getCoordinacionDashboardStats } from '@/actions/dashboards'
 import {
   Calendar,
   Truck,
   Building2,
   CheckCircle2,
-  Clock,
   AlertCircle,
   Package,
 } from 'lucide-react'
@@ -20,23 +17,11 @@ function StatsSkeleton() {
     <>
       <div className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Resumen de Hoy
+          Progreso de Hoy
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
-                  <div className="mt-2 h-8 w-16 animate-pulse rounded bg-gray-200" />
-                </div>
-                <div className="h-12 w-12 animate-pulse rounded-lg bg-gray-200" />
-              </div>
-            </div>
-          ))}
+        <div className="animate-pulse rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="h-4 w-1/4 rounded bg-gray-200 mb-4" />
+          <div className="h-4 w-full rounded bg-gray-200" />
         </div>
       </div>
 
@@ -48,274 +33,154 @@ function StatsSkeleton() {
   )
 }
 
-async function getCoordinacionStats() {
-  try {
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const manana = new Date(hoy)
-    manana.setDate(manana.getDate() + 1)
-
-    const [visitas, entregas, obras] = await Promise.all([
-      getVisitas(),
-      getEntregas(),
-      filterObras({}),
-    ])
-
-    const visitasHoy = visitas.filter((v) => {
-      const fechaVisita = new Date(v.fecha_hora_visita)
-      return fechaVisita >= hoy && fechaVisita < manana
-    })
-
-    const visitasPendientes = visitas.filter((v) => {
-      const fechaVisita = new Date(v.fecha_hora_visita)
-      return fechaVisita >= hoy && v.estado === 'PROGRAMADA'
-    })
-
-    const visitasCompletadas = visitas.filter((v) => v.estado === 'COMPLETADA')
-
-    const entregasHoy = entregas.filter((e) => {
-      const fechaEntrega = new Date(e.fecha_hora_entrega)
-      return fechaEntrega >= hoy && fechaEntrega < manana
-    })
-
-    const entregasPendientes = entregas.filter((e) => e.estado === 'PENDIENTE')
-    const entregasRealizadas = entregas.filter((e) => e.estado === 'ENTREGADO')
-
-    const obrasProduccionFinalizada = obras.filter(
-      (o) => o.estado === 'PRODUCCION FINALIZADA'
-    )
-    const obrasPagadasTotalmente = obras.filter(
-      (o) => o.estado === 'PAGADA TOTALMENTE'
-    )
-
-    return {
-      totalVisitas: visitas.length,
-      visitasHoy: visitasHoy.length,
-      visitasPendientes: visitasPendientes.length,
-      visitasCompletadas: visitasCompletadas.length,
-      totalEntregas: entregas.length,
-      entregasHoy: entregasHoy.length,
-      entregasPendientes: entregasPendientes.length,
-      entregasRealizadas: entregasRealizadas.length,
-      obrasListasParaEntrega:
-        obrasProduccionFinalizada.length + obrasPagadasTotalmente.length,
-    }
-  } catch (error) {
-    console.error('Error cargando estadísticas:', error)
-    return {
-      totalVisitas: 0,
-      visitasHoy: 0,
-      visitasPendientes: 0,
-      visitasCompletadas: 0,
-      totalEntregas: 0,
-      entregasHoy: 0,
-      entregasPendientes: 0,
-      entregasRealizadas: 0,
-      obrasListasParaEntrega: 0,
-    }
-  }
-}
-
-// Componente separado para las estadísticas (carga async)
 async function DashboardStats() {
-  const stats = await getCoordinacionStats()
+  const stats = await getCoordinacionDashboardStats()
+  const {
+    agendaTotalHoy,
+    completadosTotalHoy,
+    listasParaEntregar,
+    agendaHoyVisitas,
+    agendaHoyEntregas,
+    completadosHoyVisitas,
+    completadosHoyEntregas,
+  } = stats
 
-  const statsCards = [
-    {
-      title: 'Visitas Hoy',
-      value: stats.visitasHoy,
-      icon: Calendar,
-      color: 'blue',
-      href: '/coordinacion/visitas',
-    },
-    {
-      title: 'Entregas Hoy',
-      value: stats.entregasHoy,
-      icon: Truck,
-      color: 'green',
-      href: '/coordinacion/entregas',
-    },
-    {
-      title: 'Visitas Pendientes',
-      value: stats.visitasPendientes,
-      icon: Clock,
-      color: 'yellow',
-      href: '/coordinacion/visitas',
-    },
-    {
-      title: 'Entregas Pendientes',
-      value: stats.entregasPendientes,
-      icon: Package,
-      color: 'orange',
-      href: '/coordinacion/entregas',
-    },
-  ]
+  const progressPercentage = agendaTotalHoy > 0 
+    ? Math.round((completadosTotalHoy / agendaTotalHoy) * 100) 
+    : 100
 
-  const colorClasses = {
-    blue: {
-      bg: 'bg-blue-100',
-      icon: 'text-blue-600',
-      hover: 'hover:bg-blue-50',
-    },
-    green: {
-      bg: 'bg-green-100',
-      icon: 'text-green-600',
-      hover: 'hover:bg-green-50',
-    },
-    yellow: {
-      bg: 'bg-yellow-100',
-      icon: 'text-yellow-600',
-      hover: 'hover:bg-yellow-50',
-    },
-    orange: {
-      bg: 'bg-orange-100',
-      icon: 'text-orange-600',
-      hover: 'hover:bg-orange-50',
-    },
-  }
+  const hasActivity = agendaTotalHoy > 0
 
   return (
     <>
+      {/* Progreso del Día */}
       <div className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Resumen de Hoy
+          Progreso de Hoy
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {statsCards.map((stat) => {
-            const colors = colorClasses[stat.color as keyof typeof colorClasses]
-            const Icon = stat.icon
-
-            return (
-              <Link
-                key={stat.title}
-                href={stat.href}
-                className={`group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md ${colors.hover}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
-                    </p>
-                    <p className="mt-2 text-3xl font-bold text-gray-900">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`rounded-lg ${colors.bg} p-3`}>
-                    <Icon className={`h-6 w-6 ${colors.icon}`} />
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          {!hasActivity ? (
+             <div className="text-center py-4">
+               <span className="text-lg font-bold text-gray-500">No hay actividad agendada para hoy</span>
+               <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden mt-4">
+                 <div className="bg-gray-300 h-4 rounded-full w-full"></div>
+               </div>
+             </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                   Avance Diario ({completadosTotalHoy} / {agendaTotalHoy} completados)
+                </span>
+                <span className="text-lg font-bold text-blue-600">{progressPercentage}%</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden mt-2">
+                 <div 
+                   className="bg-blue-600 h-4 rounded-full transition-all duration-500" 
+                   style={{ width: `${progressPercentage}%` }}
+                 ></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <Link
+                  href="/coordinacion/visitas?estado=PROGRAMADA"
+                  className="flex flex-col rounded-lg bg-blue-50 p-4 transition-colors hover:bg-blue-100 hover:shadow-sm"
+                >
+                  <span className="text-sm font-medium text-blue-800">Visitas de Hoy</span>
+                  {agendaHoyVisitas === 0 ? (
+                    <span className="mt-2 text-sm font-medium text-blue-500">
+                      No hay visitas para hoy
+                    </span>
+                  ) : (
+                    <span className="mt-1 text-2xl font-bold text-blue-600">
+                      {completadosHoyVisitas} <span className="text-sm text-blue-400 font-normal">/ {agendaHoyVisitas}</span>
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  href="/coordinacion/entregas?estado=PENDIENTE"
+                  className="flex flex-col rounded-lg bg-green-50 p-4 transition-colors hover:bg-green-100 hover:shadow-sm"
+                >
+                  <span className="text-sm font-medium text-green-800">Entregas de Hoy</span>
+                  {agendaHoyEntregas === 0 ? (
+                    <span className="mt-2 text-sm font-medium text-green-500">
+                      No hay entregas para hoy
+                    </span>
+                  ) : (
+                    <span className="mt-1 text-2xl font-bold text-green-600">
+                      {completadosHoyEntregas} <span className="text-sm text-green-400 font-normal">/ {agendaHoyEntregas}</span>
+                    </span>
+                  )}
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Acciones Rápidas */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
             <CheckCircle2 className="h-5 w-5 text-blue-600" />
             Acciones Rápidas
           </h3>
           <div className="space-y-3">
-            <Link
-              href="/coordinacion/visitas/crear"
-              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-            >
-              <Calendar className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="font-medium text-gray-900">Nueva Visita</p>
-                <p className="text-sm text-gray-500">
-                  Agendar visita a obra o cliente
-                </p>
-              </div>
-            </Link>
-            <Link
-              href="/coordinacion/entregas/crear"
-              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-            >
-              <Truck className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="font-medium text-gray-900">Nueva Entrega</p>
-                <p className="text-sm text-gray-500">
-                  Programar entrega de productos
-                </p>
-              </div>
-            </Link>
-            <Link
-              href="/coordinacion/obras"
-              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-            >
-              <Building2 className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="font-medium text-gray-900">Ver Obras</p>
-                <p className="text-sm text-gray-500">
-                  Consultar estado y ubicación de obras
-                </p>
-              </div>
-            </Link>
+             <Link
+               href="/coordinacion/entregas/crear"
+               className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-green-300 hover:bg-green-50 group"
+             >
+               <div className="rounded-lg bg-green-100 p-2 group-hover:bg-white">
+                 <Truck className="h-5 w-5 text-green-600" />
+               </div>
+               <div>
+                 <p className="font-medium text-gray-900">Programar Entrega</p>
+                 <p className="text-sm text-gray-500">
+                   Asignar chofer y vehículo a productos listos
+                 </p>
+               </div>
+             </Link>
+             <Link
+               href="/coordinacion/visitas/crear"
+               className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-blue-300 hover:bg-blue-50 group"
+             >
+               <div className="rounded-lg bg-blue-100 p-2 group-hover:bg-white">
+                 <Calendar className="h-5 w-5 text-blue-600" />
+               </div>
+               <div>
+                 <p className="font-medium text-gray-900">Programar Visita</p>
+                 <p className="text-sm text-gray-500">
+                   Agendar visita a obra o cliente
+                 </p>
+               </div>
+             </Link>
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-            <AlertCircle className="h-5 w-5 text-orange-600" />
-            Resumen General
+        {/* Alertas Logísticas */}
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-sm relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 opacity-10">
+            <AlertCircle className="h-32 w-32 text-red-600" />
+          </div>
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-red-900">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            Alertas Logísticas
           </h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-900">
-                  Total Visitas
-                </span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                {stats.totalVisitas}
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-gray-900">
-                  Visitas Completadas
-                </span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                {stats.visitasCompletadas}
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center gap-3">
-                <Truck className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-gray-900">
-                  Total Entregas
-                </span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                {stats.totalEntregas}
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-gray-900">
-                  Entregas Realizadas
-                </span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                {stats.entregasRealizadas}
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center gap-3">
-                <Package className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-900">
-                  Listas para Entrega
-                </span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                {stats.obrasListasParaEntrega}
-              </span>
+          
+          <div className="space-y-4 relative z-10">
+            <div className="rounded-lg bg-white border border-red-100 p-4 shadow-sm flex items-start gap-4">
+               <div className="mt-1 rounded-full bg-red-100 p-2">
+                 <Package className="h-5 w-5 text-red-600" />
+               </div>
+               <div>
+                 <p className="text-lg font-bold text-red-600">{listasParaEntregar}</p>
+                 <p className="font-medium text-gray-900">Obras Terminadas en Fábrica</p>
+                 <p className="text-sm text-gray-500 mt-1">
+                   Estas obras terminaron de producirse. Asegúrese de que tengan visita/entrega de cierre planificada prontamente.
+                 </p>
+                 <Link href="/coordinacion/obras?estado=PRODUCCION FINALIZADA" className="text-sm font-medium text-red-600 hover:underline mt-2 inline-block">
+                   Ver obras terminadas &rarr;
+                 </Link>
+               </div>
             </div>
           </div>
         </div>
@@ -333,18 +198,18 @@ export default async function CoordinacionPage() {
         <div className="mb-8 rounded-xl border-2 border-blue-400 bg-blue-100 p-6 sm:p-8">
           <div className="border-b border-blue-300 pb-4">
             <h1 className="text-2xl font-semibold text-gray-800">
-              Bienvenido,{' '}
-              <span className="text-blue-600">
-                {usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Usuario'}
-              </span>
+              Panel de Coordinación Logística
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Panel de control del área de Coordinación
+              Usuario activo:{' '}
+              <span className="text-blue-600 font-medium">
+                {usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Desconocido'}
+              </span>
             </p>
           </div>
           <div className="mt-4">
             <p className="leading-relaxed text-gray-700">
-              Gestiona visitas, entregas y coordinación logística de obras.
+              Gestiona envíos, choferes y libera cuellos de botella de la fábrica mediante programación anticipada.
             </p>
           </div>
         </div>

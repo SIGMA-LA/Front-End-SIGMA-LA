@@ -1,214 +1,125 @@
 import { getUsuario } from '@/lib/cache'
-import { getClientes } from '@/actions/clientes'
-import { filterObras } from '@/actions/obras'
+import { getVentasDashboardStats } from '@/actions/dashboards'
 import {
   Users,
   Building2,
   TrendingUp,
-  CheckCircle2,
   AlertCircle,
-  DollarSign,
-  Package,
-  Truck,
+  Wallet,
+  PackageX,
+  Target
 } from 'lucide-react'
 import Link from 'next/link'
 
-async function getVentasStats() {
-  try {
-    const [clientes, obras] = await Promise.all([
-      getClientes(),
-      filterObras({}),
-    ])
-
-    const obrasPagadasParcialmente = obras.filter(
-      (o) => o.estado === 'PAGADA PARCIALMENTE'
-    )
-    const obrasEnProduccion = obras.filter((o) => o.estado === 'EN PRODUCCION')
-    const obrasEnEsperaPago = obras.filter(
-      (o) => o.estado === 'EN ESPERA DE PAGO'
-    )
-    const obrasEnEsperaStock = obras.filter(
-      (o) => o.estado === 'EN ESPERA DE STOCK'
-    )
-    const obrasProduccionFinalizada = obras.filter(
-      (o) => o.estado === 'PRODUCCION FINALIZADA'
-    )
-    const obrasPagadasTotalmente = obras.filter(
-      (o) => o.estado === 'PAGADA TOTALMENTE'
-    )
-    const obrasEntregadas = obras.filter((o) => o.estado === 'ENTREGADA')
-    const obrasCanceladas = obras.filter((o) => o.estado === 'CANCELADA')
-
-    return {
-      totalClientes: clientes.length,
-      totalObras: obras.length,
-      obrasPagadasParcialmente: obrasPagadasParcialmente.length,
-      obrasEnProduccion: obrasEnProduccion.length,
-      obrasEnEsperaPago: obrasEnEsperaPago.length,
-      obrasEnEsperaStock: obrasEnEsperaStock.length,
-      obrasProduccionFinalizada: obrasProduccionFinalizada.length,
-      obrasPagadasTotalmente: obrasPagadasTotalmente.length,
-      obrasEntregadas: obrasEntregadas.length,
-      obrasCanceladas: obrasCanceladas.length,
-    }
-  } catch (error) {
-    console.error('Error cargando estadísticas:', error)
-    return {
-      totalClientes: 0,
-      totalObras: 0,
-      obrasPagadasParcialmente: 0,
-      obrasEnProduccion: 0,
-      obrasEnEsperaPago: 0,
-      obrasEnEsperaStock: 0,
-      obrasProduccionFinalizada: 0,
-      obrasPagadasTotalmente: 0,
-      obrasEntregadas: 0,
-      obrasCanceladas: 0,
-    }
-  }
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(amount)
 }
 
 export default async function VentasPage() {
-  const [empleadoResponse, stats] = await Promise.all([
+  const [usuario, stats] = await Promise.all([
     getUsuario(),
-    getVentasStats(),
+    getVentasDashboardStats(),
   ])
-
-  const usuario = empleadoResponse
-
-  const statsCards = [
-    {
-      title: 'Total Clientes',
-      value: stats.totalClientes,
-      icon: Users,
-      color: 'blue',
-      href: '/ventas/clientes',
-    },
-    {
-      title: 'Total Obras',
-      value: stats.totalObras,
-      icon: Building2,
-      color: 'purple',
-      href: '/ventas/obras',
-    },
-    {
-      title: 'En Producción',
-      value: stats.obrasEnProduccion,
-      icon: TrendingUp,
-      color: 'green',
-      href: '/ventas/obras?estado=EN PRODUCCION',
-    },
-    {
-      title: 'Esperando Pago',
-      value: stats.obrasEnEsperaPago,
-      icon: DollarSign,
-      color: 'yellow',
-      href: '/ventas/obras?estado=EN ESPERA DE PAGO',
-    },
-  ]
-
-  const colorClasses = {
-    blue: {
-      bg: 'bg-blue-100',
-      icon: 'text-blue-600',
-      hover: 'hover:bg-blue-50',
-    },
-    purple: {
-      bg: 'bg-purple-100',
-      icon: 'text-purple-600',
-      hover: 'hover:bg-purple-50',
-    },
-    green: {
-      bg: 'bg-green-100',
-      icon: 'text-green-600',
-      hover: 'hover:bg-green-50',
-    },
-    yellow: {
-      bg: 'bg-yellow-100',
-      icon: 'text-yellow-600',
-      hover: 'hover:bg-yellow-50',
-    },
-    orange: {
-      bg: 'bg-orange-100',
-      icon: 'text-orange-600',
-      hover: 'hover:bg-orange-50',
-    },
-    red: {
-      bg: 'bg-red-100',
-      icon: 'text-red-600',
-      hover: 'hover:bg-red-50',
-    },
-  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 rounded-xl border-2 border-blue-400 bg-blue-100 p-6 sm:p-8">
-          <div className="border-b border-blue-300 pb-4">
+        <div className="mb-8 rounded-xl border-2 border-indigo-400 bg-indigo-100 p-6 sm:p-8">
+          <div className="border-b border-indigo-300 pb-4">
             <h1 className="text-2xl font-semibold text-gray-800">
-              Bienvenido,{' '}
-              <span className="text-blue-600">
-                {usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Usuario'}
-              </span>
+              Panel de Ventas y Cobranzas
             </h1>
             <p className="mt-2 text-sm text-gray-600">
-              Panel de control del área de Ventas
+              Usuario activo:{' '}
+              <span className="text-indigo-600 font-medium">
+                {usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Desconocido'}
+              </span>
             </p>
           </div>
           <div className="mt-4">
             <p className="leading-relaxed text-gray-700">
-              Gestiona clientes, obras y cotizaciones desde esta sección.
+              Foco principal: Cerrar tratos activos y gestionar cobranzas pendientes. 
             </p>
           </div>
         </div>
 
         <div className="mb-8">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Resumen General
+            Indicadores Clave
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {statsCards.map((stat) => {
-              const colors =
-                colorClasses[stat.color as keyof typeof colorClasses]
-              const Icon = stat.icon
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div
+              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm block"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Total por Cobrar</p>
+                  <p className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalPorCobrar)}</p>
+                  <p className="mt-2 text-sm text-red-500 font-medium flex items-center">
+                     Prioridad Máxima
+                  </p>
+                </div>
+                <div className="rounded-lg bg-red-100 p-3">
+                  <Wallet className="h-6 w-6 text-red-600" />
+                </div>
+              </div>
+            </div>
 
-              return (
-                <Link
-                  key={stat.title}
-                  href={stat.href}
-                  className={`group rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md ${colors.hover}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">
-                        {stat.title}
-                      </p>
-                      <p className="mt-2 text-3xl font-bold text-gray-900">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div className={`rounded-lg ${colors.bg} p-3`}>
-                      <Icon className={`h-6 w-6 ${colors.icon}`} />
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
+            <div
+              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm block"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Nuevas Obras (Mes)</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.obrasGanadasMes}</p>
+                  <p className="mt-2 text-sm text-green-600 font-medium">
+                     Nuevos cierres
+                  </p>
+                </div>
+                <div className="rounded-lg bg-green-100 p-3">
+                  <Target className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/ventas/obras?estado=EN ESPERA DE STOCK"
+              className="group rounded-xl border border-yellow-200 bg-yellow-50 p-6 shadow-sm transition-all hover:border-yellow-400 hover:shadow-md block"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-800 mb-1">Retenidas por Stock</p>
+                  <p className="text-3xl font-bold text-yellow-900">{stats.obrasFaltaStock}</p>
+                  <p className="mt-2 text-sm text-yellow-700">
+                     Avisar posibles demoras al cliente
+                  </p>
+                </div>
+                <div className="rounded-lg bg-yellow-100 p-3">
+                  <PackageX className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 mt-8">
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              Acciones Rápidas
+              <TrendingUp className="h-5 w-5 text-indigo-600" />
+              Acciones de Ventas
             </h3>
             <div className="space-y-3">
               <Link
                 href="/ventas/clientes/crear"
-                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-blue-300 hover:bg-blue-50 group"
               >
-                <Users className="h-5 w-5 text-blue-600" />
+                <div className="rounded-lg bg-blue-100 p-2 group-hover:bg-white">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
                 <div>
                   <p className="font-medium text-gray-900">Nuevo Cliente</p>
                   <p className="text-sm text-gray-500">
@@ -218,106 +129,44 @@ export default async function VentasPage() {
               </Link>
               <Link
                 href="/ventas/obras/crear"
-                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
+                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-purple-300 hover:bg-purple-50 group"
               >
-                <Building2 className="h-5 w-5 text-purple-600" />
+                <div className="rounded-lg bg-purple-100 p-2 group-hover:bg-white">
+                  <Building2 className="h-5 w-5 text-purple-600" />
+                </div>
                 <div>
                   <p className="font-medium text-gray-900">Nueva Obra</p>
                   <p className="text-sm text-gray-500">
-                    Crear una nueva obra para un cliente
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href="/ventas/obras"
-                className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
-              >
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="font-medium text-gray-900">
-                    Ver Todas las Obras
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Consultar estado y detalles de obras
+                    Crear un nuevo proyecto para un cliente
                   </p>
                 </div>
               </Link>
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-              Estado de Obras
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <DollarSign className="h-5 w-5 text-yellow-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Esperando Pago
-                  </span>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm relative overflow-hidden">
+             <div className="absolute -right-4 -top-4 opacity-5">
+               <Wallet className="h-32 w-32 text-red-600" />
+             </div>
+             
+             <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 relative z-10">
+               <AlertCircle className="h-5 w-5 text-red-600" />
+               Cobranzas y Prioridades
+             </h3>
+             <div className="relative z-10">
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                  El foco principal debe estar en reducir el <strong>Total por Cobrar</strong> persiguiendo deudores y asegurando los pagos correspondientes antes de soltar stock (Estado recomendado para seguimiento: <em>EN ESPERA DE PAGO</em>).
+                </p>
+                <div className="bg-red-50 p-4 rounded-lg flex items-start gap-4">
+                  <Wallet className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-red-900">Seguimiento de Recaudación</h4>
+                    <p className="text-sm text-red-700 mt-1">
+                      Recuerda asentar los pagos desde la ficha de la obra lo antes posible para liberar el stock a producción.
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasEnEsperaPago}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <DollarSign className="h-5 w-5 text-orange-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Pagadas Parcialmente
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasPagadasParcialmente}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Esperando Stock
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasEnEsperaStock}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    En Producción
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasEnProduccion}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Producción Finalizada
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasProduccionFinalizada}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center gap-3">
-                  <Truck className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    Entregadas
-                  </span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">
-                  {stats.obrasEntregadas}
-                </span>
-              </div>
-            </div>
+             </div>
           </div>
         </div>
       </div>
