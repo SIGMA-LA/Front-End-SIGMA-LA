@@ -71,6 +71,9 @@ export type {
   NotificacionesData,
   NotificacionConfig,
   NotificacionItem,
+  ValidationIssue,
+  ValidationDetail,
+  BackendErrorData,
 } from './common'
 
 export type {

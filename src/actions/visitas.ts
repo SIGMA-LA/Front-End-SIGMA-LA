@@ -162,7 +162,7 @@ export async function createVisita(
     revalidatePath('/visitador')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error creating Visita'
+    const message = error instanceof Error ? error.message : 'No se pudo crear la visita. Intentá nuevamente.'
     console.error('[createVisita]', message)
     return { success: false, error: message }
   }
@@ -188,7 +188,7 @@ export async function updateVisita(
     revalidatePath(`/coordinacion/visitas/${id}/editar`)
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error updating Visita'
+    const message = error instanceof Error ? error.message : 'No se pudo actualizar la visita. Intentá nuevamente.'
     console.error('[updateVisita]', message)
     return { success: false, error: message }
   }

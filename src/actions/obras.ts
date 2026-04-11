@@ -229,7 +229,7 @@ export async function uploadNotaFabrica(
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error uploading Nota Fabrica'
+      error instanceof Error ? error.message : 'No se pudo subir la nota de fábrica. Intentá nuevamente.'
     console.error('[uploadNotaFabrica]', message)
     return { success: false, error: message }
   }
@@ -260,7 +260,7 @@ export async function deleteNotaFabrica(
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error deleting Nota Fabrica'
+      error instanceof Error ? error.message : 'No se pudo eliminar la nota de fábrica. Intentá nuevamente.'
     console.error('[deleteNotaFabrica]', message)
     return { success: false, error: message }
   }
@@ -377,7 +377,7 @@ export async function updateObra(
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error updating Obra'
+      error instanceof Error ? error.message : 'No se pudo actualizar la obra. Intentá nuevamente.'
     console.error('[actualizarObra]', message)
     return { success: false, error: message }
   }
@@ -401,7 +401,7 @@ export async function deleteObra(id: number): Promise<ActionResponse> {
     revalidatePath('/ventas/obras')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
+    const message = error instanceof Error ? error.message : 'No se pudo eliminar la obra. Intentá nuevamente.'
     console.error('[deleteObra]', message)
     return { success: false, error: message }
   }
@@ -426,7 +426,7 @@ export async function cancelObra(id: number): Promise<ActionResponse> {
     revalidatePath('/ventas/obras')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
+    const message = error instanceof Error ? error.message : 'No se pudo cancelar la obra. Intentá nuevamente.'
     console.error('[cancelObra]', message)
     return { success: false, error: message }
   }

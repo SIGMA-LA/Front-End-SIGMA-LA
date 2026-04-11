@@ -160,7 +160,7 @@ export async function createEmpleado(
 
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error creating Empleado'
+    const message = error instanceof Error ? error.message : 'No se pudo crear el empleado. Intentá nuevamente.'
     console.error('[createEmpleado]', message)
     return { success: false, error: message }
   }
@@ -192,7 +192,7 @@ export async function updateEmpleado(
 
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error updating Empleado'
+    const message = error instanceof Error ? error.message : 'No se pudo actualizar el empleado. Intentá nuevamente.'
     console.error('[updateEmpleado]', message)
     return { success: false, error: message }
   }
@@ -219,7 +219,7 @@ export async function deleteEmpleado(
 
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error deleting Empleado'
+    const message = error instanceof Error ? error.message : 'No se pudo eliminar el empleado. Intentá nuevamente.'
     console.error('[deleteEmpleado]', message)
     return { success: false, error: message }
   }

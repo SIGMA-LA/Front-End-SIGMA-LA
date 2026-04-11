@@ -23,7 +23,7 @@ export async function getAccessToken(): Promise<string> {
   const refreshToken = cookieStore.get('refreshToken')?.value
 
   if (!refreshToken) {
-    throw new Error('No tokens available. Please log in again.')
+    throw new Error('Tu sesión ha expirado. Por favor, iniciá sesión nuevamente.')
   }
 
   try {
@@ -40,7 +40,7 @@ export async function getAccessToken(): Promise<string> {
     return data.token || data.accessToken || ''
   } catch (error) {
     console.error('[getAccessToken] Token refresh failed:', error)
-    throw new Error('Session expired. Please log in again.')
+    throw new Error('Tu sesión ha expirado. Por favor, iniciá sesión nuevamente.')
   }
 }
 
