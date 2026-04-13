@@ -33,3 +33,22 @@ export interface PerfilFormData {
   mail?: string
   notificaciones?: NotificacionesData | Record<string, boolean>
 }
+
+export interface ValidationIssue {
+  path: string
+  message: string
+}
+
+export interface ValidationDetail {
+  location: string
+  issues: ValidationIssue[]
+}
+
+export interface BackendErrorData {
+  message?: string
+  error?: string
+  errorCode?: string
+  status?: string
+  details?: ValidationDetail[] | string[]
+}
+

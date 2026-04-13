@@ -175,7 +175,7 @@ export async function createPagoForObra(
     revalidatePath('/ventas/obras')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error creating Pago'
+    const message = error instanceof Error ? error.message : 'No se pudo registrar el pago. Intentá nuevamente.'
     console.error('[createPagoForObra]', message)
     return { success: false, error: message }
   }
@@ -201,7 +201,7 @@ export async function deletePago(cod_pago: number): Promise<ActionResponse> {
     revalidatePath('/ventas/obras')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error deleting Pago'
+    const message = error instanceof Error ? error.message : 'No se pudo eliminar el pago. Intentá nuevamente.'
     console.error('[deletePago]', message)
     return { success: false, error: message }
   }

@@ -145,7 +145,7 @@ export async function createVehiculo(
     return { success: true, data: data_res }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error creating Vehiculo'
+      error instanceof Error ? error.message : 'No se pudo crear el vehículo. Intentá nuevamente.'
     console.error('[createVehiculo]', message)
     return { success: false, error: message }
   }
@@ -176,7 +176,7 @@ export async function updateVehiculo(
     return { success: true, data: data_res }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error updating Vehiculo'
+      error instanceof Error ? error.message : 'No se pudo actualizar el vehículo. Intentá nuevamente.'
     console.error('[updateVehiculo]', message)
     return { success: false, error: message }
   }
@@ -201,7 +201,7 @@ export async function deleteVehiculo(patente: string): Promise<ActionResponse> {
     return { success: true }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error deleting Vehiculo'
+      error instanceof Error ? error.message : 'No se pudo eliminar el vehículo. Intentá nuevamente.'
     console.error('[deleteVehiculo]', message)
     return { success: false, error: message }
   }

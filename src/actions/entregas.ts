@@ -265,7 +265,7 @@ export async function finalizarEntrega(
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error finalizing Entrega'
+      error instanceof Error ? error.message : 'No se pudo finalizar la entrega. Intentá nuevamente.'
     console.error('[finalizarEntrega]', message)
     return {
       success: false,
@@ -299,7 +299,7 @@ export async function cancelarEntrega(
     return { success: true }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error canceling Entrega'
+      error instanceof Error ? error.message : 'No se pudo cancelar la entrega. Intentá nuevamente.'
     console.error('[cancelarEntrega]', message)
     return {
       success: false,
@@ -343,7 +343,7 @@ export async function createEntrega(
     return { success: true, data: data as unknown as Entrega }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error creating Entrega'
+      error instanceof Error ? error.message : 'No se pudo crear la entrega. Intentá nuevamente.'
     console.error('[createEntrega]', message)
     return {
       success: false,
@@ -395,7 +395,7 @@ export async function updateEntrega(
     return { success: true, data: data as unknown as Entrega }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error updating Entrega'
+      error instanceof Error ? error.message : 'No se pudo actualizar la entrega. Intentá nuevamente.'
     console.error('[updateEntrega]', message)
     return {
       success: false,
@@ -425,7 +425,7 @@ export async function deleteEntrega(id: number): Promise<ActionResponse> {
     return { success: true }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error deleting Entrega'
+      error instanceof Error ? error.message : 'No se pudo eliminar la entrega. Intentá nuevamente.'
     console.error('[deleteEntrega]', message)
     return {
       success: false,

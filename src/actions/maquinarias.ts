@@ -106,7 +106,7 @@ export async function createMaquinaria(
     return { success: true, data: result }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error creating Maquinaria'
+      error instanceof Error ? error.message : 'No se pudo crear la maquinaria. Intentá nuevamente.'
     console.error('[createMaquinaria]', message)
     return { success: false, error: message }
   }
@@ -137,7 +137,7 @@ export async function updateMaquinaria(
     return { success: true, data: result }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error updating Maquinaria'
+      error instanceof Error ? error.message : 'No se pudo actualizar la maquinaria. Intentá nuevamente.'
     console.error('[updateMaquinaria]', message)
     return { success: false, error: message }
   }
@@ -160,7 +160,7 @@ export async function deleteMaquinaria(id: number): Promise<ActionResponse> {
     return { success: true }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error deleting Maquinaria'
+      error instanceof Error ? error.message : 'No se pudo eliminar la maquinaria. Intentá nuevamente.'
     console.error('[deleteMaquinaria]', message)
     return { success: false, error: message }
   }
