@@ -1,34 +1,26 @@
 'use client'
 
-import { useEffect, useState, useTransition, useMemo } from 'react'
+import { Loader2, Truck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Truck, AlertCircle, MapPin, Building2 } from 'lucide-react'
-import { createEntrega, updateEntrega } from '@/actions/entregas'
-import { getObrasParaEntrega } from '@/actions/obras'
+import { useMemo, useCallback } from 'react'
 import { getVehiculos } from '@/actions/vehiculos'
 import { getMaquinarias } from '@/actions/maquinarias'
-import { getOrdenesByObraAndFinalizada } from '@/actions/ordenes'
-import type {
-  Obra,
-  Empleado,
-  Vehiculo,
-  Maquinaria,
-  RolEntrega,
-  OrdenProduccion,
-  Entrega,
-} from '@/types'
+import type { Obra, Empleado, Vehiculo, Maquinaria, Entrega } from '@/types'
 import { DocumentViewer } from '@/components/shared/DocumentViewer'
-
-// Componentes
-import ObraSearchSelect from '@/components/shared/ObraSearchSelect'
+import FormErrorBanner from '@/components/shared/FormErrorBanner'
 import DateTimeSelection from './entrega/DateTimeSelection'
 import PersonalSelection from './entrega/PersonalSelection'
 import ViaticosSection from './entrega/ViaticosSection'
 import RecursosSelection from './entrega/RecursosSelection'
+import SeccionDetalleEntrega from './entrega/SeccionDetalleEntrega'
 import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
 import SelectionModal from '@/components/shared/SelectionModal'
 import DateTimeModal from './entrega/DateTimeModal'
-import { notify } from '@/lib/toast'
+import useEntregaForm from '@/hooks/useEntregaForm'
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface CrearEntregaFormProps {
   preloadedObra: Obra | null
@@ -38,6 +30,14 @@ interface CrearEntregaFormProps {
   maquinarias: Maquinaria[]
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+/**
+ * Form for scheduling or editing a delivery (entrega).
+ * All state management, effects and validation live in useEntregaForm.
+ */
 export default function CrearEntregaForm({
   preloadedObra,
   entregaToEdit,
@@ -46,346 +46,61 @@ export default function CrearEntregaForm({
   maquinarias,
 }: CrearEntregaFormProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
 
-  const isFromObra = !!preloadedObra
-
-  // Estado del formulario
-  const [formData, setFormData] = useState({
-    obraId: preloadedObra?.cod_obra || null,
-    direccion: preloadedObra?.direccion || '',
-    fecha: '',
-    hora: '',
-    detalle: '',
-  })
-
-  const [fechaRegreso, setFechaRegreso] = useState('')
-  const [horaRegreso, setHoraRegreso] = useState('')
-
-  const [fechaSalida, setFechaSalida] = useState('')
-  const [horaSalida, setHoraSalida] = useState('')
-
-  const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false)
-
-  // Estado de personal
-  const [encargado, setEncargado] = useState<string | null>(null)
-  const [acompanantes, setAcompanantes] = useState<string[]>([])
-  const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false)
-
-  const [esFinal, setEsFinal] = useState(false)
-
-  // Estado de viáticos
-  const [diasViaticos, setDiasViaticos] = useState(0)
-  const viaticoPorDia = 50000
-
-  useEffect(() => {
-    if (fechaSalida && fechaRegreso) {
-      const diff = Math.floor(
-        (new Date(fechaRegreso).getTime() - new Date(fechaSalida).getTime()) /
-          (1000 * 60 * 60 * 24)
-      )
-      setDiasViaticos(diff > 0 ? diff : diff === 0 ? 1 : 0)
-    }
-  }, [fechaSalida, fechaRegreso])
-
-  // Estado de recursos
-  const [selectedVehiculos, setSelectedVehiculos] = useState<string[]>([])
-  const [selectedMaquinaria, setSelectedMaquinaria] = useState<string[]>([])
-  const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
-  const [isMaquinariaModalOpen, setIsMaquinariaModalOpen] = useState(false)
-
-  // Sync with edit mode
-  useEffect(() => {
-    if (entregaToEdit) {
-      const date = new Date(entregaToEdit.fecha_hora_entrega)
-      const dateStr = date.toISOString().split('T')[0]
-      const timeStr = date.toTimeString().split(' ')[0].substring(0, 5)
-
-      setFormData({
-        obraId: entregaToEdit.cod_obra,
-        direccion: entregaToEdit.obra?.direccion || '',
-        fecha: dateStr,
-        hora: timeStr,
-        detalle: entregaToEdit.detalle || '',
-      })
-
-      // Try to get dates from usage records if available
-      const vUsage =
-        entregaToEdit.vehiculos?.[0] || entregaToEdit.uso_vehiculo_entrega?.[0]
-      if (vUsage) {
-        const dSalida = new Date(vUsage.fecha_hora_ini_uso)
-        setFechaSalida(dSalida.toISOString().split('T')[0])
-        setHoraSalida(dSalida.toTimeString().split(' ')[0].substring(0, 5))
-
-        const dRegreso = new Date(vUsage.fecha_hora_fin_est || date)
-        setFechaRegreso(dRegreso.toISOString().split('T')[0])
-        setHoraRegreso(dRegreso.toTimeString().split(' ')[0].substring(0, 5))
-      } else {
-        setFechaSalida(dateStr)
-        setHoraSalida(timeStr)
-        setFechaRegreso(dateStr)
-        setHoraRegreso(timeStr)
-      }
-
-      setEsFinal(entregaToEdit.esFinal || false)
-      setDiasViaticos(entregaToEdit.dias_viaticos || 0)
-
-      const empList = entregaToEdit.entrega_empleado || []
-      const enc = empList.find((e) => e.rol_entrega === 'ENCARGADO')
-      if (enc) setEncargado(enc.cuil)
-
-      const acs = empList
-        .filter((e) => e.rol_entrega === 'ACOMPANANTE')
-        .map((e) => e.cuil)
-      setAcompanantes(acs)
-
-      const vehs = (
-        entregaToEdit.vehiculos ||
-        entregaToEdit.uso_vehiculo_entrega ||
-        []
-      ).map((v) => v.patente)
-      setSelectedVehiculos(vehs)
-
-      const maqs = (
-        entregaToEdit.maquinarias ||
-        entregaToEdit.uso_maquinaria ||
-        []
-      ).map((m) => m.cod_maquina)
-      setSelectedMaquinaria(maqs.map(String))
-
-      const ops = (entregaToEdit.ordenes_de_produccion || []).map(
-        (op) => op.cod_op
-      )
-      setSelectedOPs(ops)
-
-      // Sync esFinal state
-      const esEntregaFinal = !!entregaToEdit.esFinal
-      setEsFinal(esEntregaFinal)
-    }
-  }, [entregaToEdit])
-
-  // Estado de Ordenes de Producción
-  const [availableOPs, setAvailableOPs] = useState<OrdenProduccion[]>([])
-  const [selectedOPs, setSelectedOPs] = useState<number[]>([])
-  const [isFetchingOPs, setIsFetchingOPs] = useState(false)
-
-  const [viewerUrl, setViewerUrl] = useState('')
-  const [viewerTitle, setViewerTitle] = useState('')
-  const [isViewerOpen, setIsViewerOpen] = useState(false)
-
-  useEffect(() => {
-    if (formData.obraId) {
-      setIsFetchingOPs(true)
-      getOrdenesByObraAndFinalizada(formData.obraId)
-        .then((ops) => {
-          // Unimos las OPs disponibles con las que ya están vinculadas a la entrega (si estamos editando)
-          const editOPs = entregaToEdit?.ordenes_de_produccion || []
-          const combined = [...ops]
-
-          editOPs.forEach((op) => {
-            if (!combined.find((c) => c.cod_op === op.cod_op)) {
-              combined.push(op)
-            }
-          })
-
-          setAvailableOPs(combined)
-
-          // Refuerzo de selección inicial para edición
-          if (entregaToEdit) {
-            const currentOPs = (entregaToEdit.ordenes_de_produccion || []).map(
-              (o) => o.cod_op
-            )
-            setSelectedOPs((prev) => {
-              // Mantenemos las actuales y añadimos las de la entrega si no están
-              const unique = new Set([...prev, ...currentOPs])
-              return Array.from(unique)
-            })
-          }
-        })
-        .catch((err) => {
-          console.error('[getOrdenesByObraAndFinalizada]', err)
-        })
-        .finally(() => setIsFetchingOPs(false))
-    } else {
-      setAvailableOPs([])
-      setSelectedOPs([])
-    }
-  }, [formData.obraId, entregaToEdit])
-
-  const totalViaticos = useMemo(() => {
-    const totalPersonas = (encargado ? 1 : 0) + acompanantes.length
-    return diasViaticos * totalPersonas * viaticoPorDia
-  }, [diasViaticos, encargado, acompanantes, viaticoPorDia])
-
-  const buscarObrasSegunTipo = async (query: string) => {
-    return await getObrasParaEntrega(query, esFinal)
-  }
-
-  const getEmpleadoNombre = (cuil: string) => {
-    const emp = empleados.find((e) => e.cuil === cuil)
-    return emp ? `${emp.nombre} ${emp.apellido}` : cuil
-  }
-
-  const handleConfirmPersonal = (
-    newEncargado: string | null,
-    newAcompanantes: string[]
-  ) => {
-    setEncargado(newEncargado)
-    setAcompanantes(newAcompanantes)
-    setIsPersonalModalOpen(false)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-
-    if (!formData.obraId) {
-      const msg = 'Debe seleccionar una obra'
-      setError(msg)
-      notify.error('Error en el formulario. Revise los detalles.')
-      return
-    }
-    if (
-      !formData.fecha ||
-      !formData.hora ||
-      !fechaRegreso ||
-      !horaRegreso ||
-      !fechaSalida ||
-      !horaSalida
-    ) {
-      const msg = 'Debe especificar la salida, llegada y el regreso estimados'
-      setError(msg)
-      notify.error('Error en el formulario. Revise los detalles.')
-      return
-    }
-
-    const fechaEntregaMs = new Date(
-      `${formData.fecha}T${formData.hora}:00`
-    ).getTime()
-    const fechaSalidaMs = new Date(`${fechaSalida}T${horaSalida}:00`).getTime()
-    const fechaRegresoMs = new Date(
-      `${fechaRegreso}T${horaRegreso}:00`
-    ).getTime()
-
-    if (fechaSalidaMs > fechaEntregaMs) {
-      const msg =
-        'La salida de la planta no puede ser posterior a la llegada al cliente.'
-      setError(msg)
-      notify.error('Error en el formulario. Revise los detalles.')
-      return
-    }
-
-    if (fechaRegresoMs <= fechaSalidaMs) {
-      const msg =
-        'El regreso estimado debe ser estrictamente posterior a la salida.'
-      setError(msg)
-      notify.error('Error en el formulario. Revise los detalles.')
-      return
-    }
-
-    if (!encargado) {
-      const msg = 'Debe asignar un encargado'
-      setError(msg)
-      notify.error('Error en el formulario. Revise los detalles.')
-      return
-    }
-    if (!formData.detalle.trim()) {
-      const msg = 'Debe agregar un detalle de la entrega'
-      setError(msg)
-      notify.error('Error en el formulario. Revise los detalles.')
-      return
-    }
-
-    try {
-      const entrega_empleado = [
-        { cuil: encargado, rol_entrega: 'ENCARGADO' as RolEntrega },
-        ...acompanantes.map((cuil) => ({
-          cuil,
-          rol_entrega: 'ACOMPANANTE' as RolEntrega,
-        })),
-      ]
-
-      const entregaData = {
-        cod_obra: formData.obraId,
-        fecha_hora_entrega: `${formData.fecha}T${formData.hora}:00Z`,
-        detalle: formData.detalle,
-        dias_viaticos: diasViaticos,
-        fecha_salida_estimada: `${fechaSalida}T${horaSalida}:00Z`,
-        fecha_regreso_estimado: `${fechaRegreso}T${horaRegreso}:00Z`,
-        entrega_empleado,
-        vehiculos: selectedVehiculos.length > 0 ? selectedVehiculos : undefined,
-        maquinarias:
-          selectedMaquinaria.length > 0 ? selectedMaquinaria : undefined,
-        esFinal,
-        cod_ops: selectedOPs.length > 0 ? selectedOPs : undefined,
-      }
-
-      startTransition(async () => {
-        try {
-          if (entregaToEdit) {
-            const updatePayload = {
-              fecha_hora_entrega: entregaData.fecha_hora_entrega,
-              detalle: entregaData.detalle,
-              dias_viaticos: entregaData.dias_viaticos,
-              fecha_salida_estimada: entregaData.fecha_salida_estimada,
-              fecha_regreso_estimado: entregaData.fecha_regreso_estimado,
-              empleados: entregaData.entrega_empleado,
-              vehiculos: entregaData.vehiculos,
-              maquinarias: entregaData.maquinarias,
-              cod_ops: selectedOPs,
-            }
-            const res = await updateEntrega(
-              entregaToEdit.cod_entrega,
-              updatePayload
-            )
-            if (res.success) {
-              notify.success('Entrega actualizada correctamente.')
-              router.push('/coordinacion/entregas')
-              router.refresh()
-            } else {
-              setError(res.error || 'Error al actualizar la entrega')
-              notify.error(
-                'No se pudo actualizar la entrega. Revise los conflictos.'
-              )
-            }
-          } else {
-            const res = await createEntrega(entregaData)
-            if (res.success) {
-              notify.success('Entrega programada correctamente.')
-              router.push('/coordinacion/entregas')
-              router.refresh()
-            } else {
-              setError(res.error || 'Error al crear la entrega')
-              notify.error(
-                'No se pudo crear la entrega. Revise los conflictos.'
-              )
-            }
-          }
-        } catch (err: unknown) {
-          const message =
-            err instanceof Error ? err.message : 'Error desconocido'
-          if (
-            message.includes('NEXT_REDIRECT') ||
-            (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')
-          ) {
-            throw err
-          }
-          setError(message)
-          notify.error(`Error de red o del servidor al procesar la entrega.`)
-        }
-      })
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error desconocido'
-      setError(message)
-      notify.error(`Error al procesar la entrega.`)
-    }
-  }
+  const {
+    formData,
+    setFormData,
+    encargado,
+    acompanantes,
+    esFinal,
+    setEsFinal,
+    diasViaticos,
+    totalViaticos,
+    viaticoPorDia,
+    selectedVehiculos,
+    setSelectedVehiculos,
+    selectedMaquinaria,
+    setSelectedMaquinaria,
+    fechaRegreso,
+    setFechaRegreso,
+    horaRegreso,
+    setHoraRegreso,
+    fechaSalida,
+    setFechaSalida,
+    horaSalida,
+    setHoraSalida,
+    availableOPs,
+    selectedOPs,
+    setSelectedOPs,
+    isFetchingOPs,
+    viewerUrl,
+    viewerTitle,
+    isViewerOpen,
+    openViewer,
+    closeViewer,
+    isDateTimeModalOpen,
+    setIsDateTimeModalOpen,
+    isPersonalModalOpen,
+    setIsPersonalModalOpen,
+    isVehiculoModalOpen,
+    setIsVehiculoModalOpen,
+    isMaquinariaModalOpen,
+    setIsMaquinariaModalOpen,
+    isFromObra,
+    isPending,
+    error,
+    setError,
+    buscarObrasSegunTipo,
+    getEmpleadoNombre,
+    handleConfirmPersonal,
+    handleSubmit,
+  } = useEntregaForm({ preloadedObra, entregaToEdit, empleados, vehiculos, maquinarias })
 
   return (
     <>
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl">
+          {/* Header */}
           <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-blue-100/50 bg-gradient-to-r from-blue-50 to-indigo-50/30 p-4 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-inner">
@@ -393,272 +108,35 @@ export default function CrearEntregaForm({
               </div>
               <div>
                 <h1 className="bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-2xl font-bold text-transparent">
-                  {entregaToEdit
-                    ? 'Editar Entrega Operativa'
-                    : 'Programar Nueva Entrega'}
+                  {entregaToEdit ? 'Editar Entrega Operativa' : 'Programar Nueva Entrega'}
                 </h1>
                 <p className="text-sm font-medium text-slate-500">
-                  {entregaToEdit
-                    ? `Modificando entrega #${entregaToEdit.cod_entrega}`
-                    : 'Coordinación de logística y personal de planta'}
+                  {entregaToEdit ? `Modificando entrega #${entregaToEdit.cod_entrega}` : 'Coordinación de logística'}
                 </p>
               </div>
             </div>
           </div>
 
-          {error && (
-            <div className="animate-in fade-in slide-in-from-top-2 mb-6 flex items-start gap-4 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-red-800">
-                  Se detectaron problemas:
-                </h4>
-                <div className="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-red-700">
-                  {error.split('\n').map((line, idx, arr) => (
-                    <p
-                      key={idx}
-                      className={
-                        arr.length > 1 && idx > 0
-                          ? 'relative mt-2 pl-3.5 before:absolute before:top-2 before:left-0 before:h-1.5 before:w-1.5 before:rounded-full before:bg-red-500'
-                          : 'font-medium'
-                      }
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={() => setError(null)}
-                className="text-red-400 transition-colors hover:text-red-600"
-                type="button"
-              >
-                <AlertCircle className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+          <FormErrorBanner error={error} onDismiss={() => setError(null)} />
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="mb-6 rounded-2xl border border-slate-200/60 bg-white shadow-sm ring-1 ring-slate-100 transition-all hover:shadow-md">
-              <div className="flex items-center gap-3 rounded-t-2xl border-b border-slate-100 bg-slate-50/50 px-5 py-4">
-                <div className="rounded-lg bg-emerald-100/80 p-2 shadow-inner">
-                  <MapPin className="h-5 w-5 text-emerald-600" />
-                </div>
-                <h3 className="font-semibold text-slate-800">
-                  Ubicación y Detalle
-                </h3>
-              </div>
-
-              <div className="space-y-5 p-5">
-                {/* Bloque de Tipo de Entrega */}
-                {!isFromObra && (
-                  <div>
-                    <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
-                      Tipo de Entrega *
-                    </label>
-                    <div className="mb-4 flex w-full rounded-xl bg-slate-100 p-1 md:w-max">
-                      <button
-                        type="button"
-                        disabled={!!entregaToEdit}
-                        onClick={() => {
-                          setEsFinal(false)
-                          if (formData.obraId)
-                            setFormData((prev) => ({
-                              ...prev,
-                              obraId: null,
-                              direccion: '',
-                            }))
-                        }}
-                        className={`flex-1 rounded-lg px-6 py-2 text-sm font-semibold transition-all md:flex-none ${
-                          !esFinal
-                            ? 'border border-indigo-100 bg-white text-indigo-700 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-700'
-                        } ${!!entregaToEdit ? 'cursor-not-allowed opacity-70' : ''}`}
-                      >
-                        Entrega Parcial
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!!entregaToEdit}
-                        onClick={() => {
-                          setEsFinal(true)
-                          if (formData.obraId)
-                            setFormData((prev) => ({
-                              ...prev,
-                              obraId: null,
-                              direccion: '',
-                            }))
-                        }}
-                        className={`flex-1 rounded-lg px-6 py-2 text-sm font-semibold transition-all md:flex-none ${
-                          esFinal
-                            ? 'bg-indigo-600 text-white shadow-md'
-                            : 'text-slate-500 hover:text-slate-700'
-                        } ${!!entregaToEdit ? 'cursor-not-allowed opacity-70' : ''}`}
-                      >
-                        Entrega Final
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Bloque de Obra Seleccionada - Siempre visible si hay contexto */}
-                <div>
-                  <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
-                    Obra programada *
-                  </label>
-                  {formData.direccion ? (
-                    <div className="flex items-center justify-between rounded-xl border-2 border-indigo-200 bg-indigo-50/50 p-4 shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 shadow-inner">
-                          <Building2 className="h-5 w-5 text-indigo-600" />
-                        </div>
-                        <div className="text-left leading-tight">
-                          <span className="block font-bold text-indigo-900">
-                            {formData.direccion}
-                          </span>
-                          <span className="text-xs font-medium text-indigo-600">
-                            Obra Seleccionada
-                          </span>
-                        </div>
-                      </div>
-                      {!entregaToEdit && !isFromObra && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              obraId: null,
-                              direccion: '',
-                            }))
-                          }
-                          className="text-xs font-bold text-indigo-600 underline transition-colors hover:text-indigo-800"
-                        >
-                          Cambiar
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <ObraSearchSelect
-                      key={esFinal ? 'final' : 'parcial'}
-                      buscarObras={buscarObrasSegunTipo}
-                      onSelectObra={(obra) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          obraId: obra.cod_obra,
-                          direccion: obra.direccion,
-                          localidad: obra.localidad?.nombre_localidad || '',
-                        }))
-                      }}
-                      placeholder={
-                        esFinal
-                          ? 'Buscar obra PAGADA TOTALMENTE...'
-                          : 'Buscar obra por dirección o cliente...'
-                      }
-                    />
-                  )}
-                </div>
-
-                {/* Selección de Órdenes de Producción */}
-                {formData.obraId && (
-                  <div className="mt-5 border-t border-slate-100 pt-5">
-                    <label className="mb-3 block text-xs font-bold tracking-wider text-slate-500 uppercase">
-                      Órdenes de Producción Finalizadas
-                    </label>
-                    {isFetchingOPs ? (
-                      <div className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-500">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Cargando
-                        documentos...
-                      </div>
-                    ) : availableOPs.length === 0 ? (
-                      <div className="rounded-lg border border-amber-100/50 bg-amber-50 p-3 text-sm text-slate-600 shadow-sm">
-                        No hay Órdenes de Producción finalizadas y sin entregar
-                        para esta obra. Puede continuar sin asignarlas si lo
-                        desea.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {availableOPs.map((op) => {
-                          const isSelected = selectedOPs.includes(op.cod_op)
-                          return (
-                            <div
-                              key={op.cod_op}
-                              className={`flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-200 sm:flex-row sm:items-center ${
-                                isSelected
-                                  ? 'ring-opacity-50 border-indigo-300 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-200'
-                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                              }`}
-                            >
-                              <label className="mb-3 flex flex-grow cursor-pointer items-center gap-3 sm:mb-0">
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={(e) => {
-                                    if (e.target.checked)
-                                      setSelectedOPs((prev) => [
-                                        ...prev,
-                                        op.cod_op,
-                                      ])
-                                    else
-                                      setSelectedOPs((prev) =>
-                                        prev.filter((id) => id !== op.cod_op)
-                                      )
-                                  }}
-                                  className="h-4.5 w-4.5 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <div>
-                                  <span
-                                    className={`block font-semibold ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}
-                                  >
-                                    OP #{op.cod_op}
-                                  </span>
-                                  <span className="text-xs font-medium text-slate-500">
-                                    Confeccionada el:{' '}
-                                    {new Date(
-                                      op.fecha_confeccion
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              </label>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  setViewerUrl(op.url)
-                                  setViewerTitle(
-                                    `Orden de Producción #${op.cod_op}`
-                                  )
-                                  setIsViewerOpen(true)
-                                }}
-                                className="w-full rounded-lg border border-indigo-200 bg-white px-4 py-2 text-center text-xs font-semibold text-indigo-700 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50 sm:w-auto"
-                              >
-                                Ver Documento
-                              </button>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
-                    Detalle de la Entrega *
-                  </label>
-                  <textarea
-                    name="detalle"
-                    value={formData.detalle}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, detalle: e.target.value }))
-                    }
-                    required
-                    rows={3}
-                    className="w-full resize-none rounded-xl border border-slate-300 bg-white p-3 text-slate-700 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Describa el material o equipos a entregar..."
-                  />
-                </div>
-              </div>
-            </div>
+            <SeccionDetalleEntrega
+              esFinal={esFinal}
+              setEsFinal={setEsFinal}
+              obraId={formData.obraId}
+              direccion={formData.direccion}
+              detalle={formData.detalle}
+              onObraChange={(id, dir) => setFormData(p => ({ ...p, obraId: id, direccion: dir }))}
+              onDetalleChange={(v) => setFormData(p => ({ ...p, detalle: v }))}
+              onBuscarObras={buscarObrasSegunTipo}
+              availableOPs={availableOPs}
+              selectedOPs={selectedOPs}
+              onToggleOP={(id, ch) => setSelectedOPs(p => ch ? [...p, id] : p.filter(x => x !== id))}
+              onVerDocumento={openViewer}
+              isFetchingOPs={isFetchingOPs}
+              isFromObra={isFromObra}
+              isEditMode={!!entregaToEdit}
+            />
 
             <DateTimeSelection
               fecha={formData.fecha}
@@ -697,7 +175,7 @@ export default function CrearEntregaForm({
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="rounded-lg px-6 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                className="rounded-lg px-6 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
                 disabled={isPending}
               >
                 Cancelar
@@ -705,52 +183,26 @@ export default function CrearEntregaForm({
               <button
                 type="submit"
                 disabled={isPending || !encargado}
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:from-indigo-700 hover:to-blue-700 hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-md hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50"
               >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Guardando...
-                  </>
-                ) : isFromObra ? (
-                  'Guardar Entrega'
-                ) : (
-                  'Crear Entrega'
-                )}
+                {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : entregaToEdit ? 'Guardar Cambios' : 'Crear Entrega'}
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      <DocumentViewer
-        url={viewerUrl}
-        title={viewerTitle}
-        isOpen={isViewerOpen}
-        onClose={() => setIsViewerOpen(false)}
-      />
-
+      {/* Modals */}
+      <DocumentViewer url={viewerUrl} title={viewerTitle} isOpen={isViewerOpen} onClose={closeViewer} />
       <DateTimeModal
         isOpen={isDateTimeModalOpen}
         onClose={() => setIsDateTimeModalOpen(false)}
-        initialValues={{
-          fecha: formData.fecha,
-          hora: formData.hora,
-          fechaSalida,
-          horaSalida,
-          fechaRegreso,
-          horaRegreso,
-        }}
+        initialValues={{ fecha: formData.fecha, hora: formData.hora, fechaSalida, horaSalida, fechaRegreso, horaRegreso }}
         onConfirm={(nf, nh, nfs, nhs, nfr, nhr) => {
-          setFormData((prev) => ({ ...prev, fecha: nf, hora: nh }))
-          setFechaSalida(nfs)
-          setHoraSalida(nhs)
-          setFechaRegreso(nfr)
-          setHoraRegreso(nhr)
+          setFormData(p => ({ ...p, fecha: nf, hora: nh })); setFechaSalida(nfs); setHoraSalida(nhs); setFechaRegreso(nfr); setHoraRegreso(nhr)
           setIsDateTimeModalOpen(false)
         }}
       />
-
       <AsignarPersonalModal
         isOpen={isPersonalModalOpen}
         empleados={empleados}
@@ -759,47 +211,23 @@ export default function CrearEntregaForm({
         onClose={() => setIsPersonalModalOpen(false)}
         onConfirm={handleConfirmPersonal}
       />
-
       <SelectionModal
         isOpen={isVehiculoModalOpen}
         title="Seleccionar Vehículos"
-        items={vehiculos.map((v) => ({
-          id: v.patente,
-          label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
-          disabled: v.estado !== 'DISPONIBLE',
-        }))}
+        items={useMemo(() => vehiculos.map(v => ({ id: v.patente, label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`, disabled: v.estado !== 'DISPONIBLE' })), [vehiculos])}
         selectedItems={selectedVehiculos}
         onClose={() => setIsVehiculoModalOpen(false)}
         onConfirm={setSelectedVehiculos}
-        onSearchAsync={async (term) => {
-          const results = await getVehiculos(term)
-          return results.map((v) => ({
-            id: v.patente,
-            label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
-            disabled: v.estado !== 'DISPONIBLE',
-          }))
-        }}
+        onSearchAsync={useCallback(async (t: string) => (await getVehiculos(t)).map(v => ({ id: v.patente, label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`, disabled: v.estado !== 'DISPONIBLE' })), [])}
       />
-
       <SelectionModal
         isOpen={isMaquinariaModalOpen}
         title="Seleccionar Maquinaria"
-        items={maquinarias.map((m) => ({
-          id: m.cod_maquina.toString(),
-          label: `${m.descripcion} (${m.estado})`,
-          disabled: m.estado !== 'DISPONIBLE',
-        }))}
+        items={useMemo(() => maquinarias.map(m => ({ id: m.cod_maquina.toString(), label: `${m.descripcion} (${m.estado})`, disabled: m.estado !== 'DISPONIBLE' })), [maquinarias])}
         selectedItems={selectedMaquinaria}
         onClose={() => setIsMaquinariaModalOpen(false)}
         onConfirm={setSelectedMaquinaria}
-        onSearchAsync={async (term) => {
-          const results = await getMaquinarias(term)
-          return results.map((m) => ({
-            id: m.cod_maquina.toString(),
-            label: `${m.descripcion} (${m.estado})`,
-            disabled: m.estado !== 'DISPONIBLE',
-          }))
-        }}
+        onSearchAsync={useCallback(async (t: string) => (await getMaquinarias(t)).map(m => ({ id: m.cod_maquina.toString(), label: `${m.descripcion} (${m.estado})`, disabled: m.estado !== 'DISPONIBLE' })), [])}
       />
     </>
   )

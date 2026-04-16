@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { AlertTriangle, Car, Save, X } from 'lucide-react'
 import { ESTADOS_VEHICULO, TIPOS_VEHICULO } from '@/constants'
-import {
-  Vehiculo,
-  VehiculoFormData,
-  VehiculoTipo,
-  VehiculoEstado,
-} from '@/types'
+import { Vehiculo, VehiculoFormData } from '@/types'
+import { useVehiculoForm } from '@/hooks/useVehiculoForm'
 
 interface VehiculoFormProps {
   vehiculo?: Vehiculo
@@ -19,6 +14,10 @@ interface VehiculoFormProps {
   isEdit?: boolean
 }
 
+/**
+ * Form for creating and editing vehicles.
+ * Logic is decoupled via useVehiculoForm hook.
+ */
 export default function VehiculoForm({
   vehiculo,
   onSubmit,
@@ -27,117 +26,28 @@ export default function VehiculoForm({
   error,
   isEdit = false,
 }: VehiculoFormProps) {
-  const [tipoVehiculo, setTipoVehiculo] = useState<string>(
-    vehiculo?.tipo_vehiculo || ''
-  )
-  const [estado, setEstado] = useState<VehiculoEstado>(
-    vehiculo?.estado || 'DISPONIBLE'
-  )
-  const [patente, setPatente] = useState(vehiculo?.patente || '')
-  const [anio, setAnio] = useState<string>(vehiculo?.anio?.toString() || '')
-  const [marca, setMarca] = useState(vehiculo?.marca || '')
-  const [modelo, setModelo] = useState(vehiculo?.modelo || '')
-  const [errors, setErrors] = useState<{
-    tipoVehiculo?: string
-    estado?: string
-    patente?: string
-    anio?: string
-    marca?: string
-    modelo?: string
-  }>({})
-
-  const tiposVehiculo = TIPOS_VEHICULO
-  const estadosVehiculo = ESTADOS_VEHICULO
-
-  useEffect(() => {
-    if (vehiculo) {
-      setTipoVehiculo(vehiculo.tipo_vehiculo || '')
-      setEstado(vehiculo.estado || 'DISPONIBLE')
-      setPatente(vehiculo.patente || '')
-      setAnio(vehiculo.anio?.toString() || '')
-      setMarca(vehiculo.marca || '')
-      setModelo(vehiculo.modelo || '')
-    }
-  }, [vehiculo])
-
-  const validatePatente = (patente: string) => {
-    const patternOld = /^[A-Z]{3}[0-9]{3}$/
-    const patternNew = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/
-    return patternOld.test(patente) || patternNew.test(patente)
-  }
-
-  const formatPatente = (value: string) => {
-    return value.toUpperCase().replace(/\s/g, '')
-  }
-
-  const validateForm = () => {
-    const newErrors: typeof errors = {}
-
-    if (!tipoVehiculo) {
-      newErrors.tipoVehiculo = 'El tipo de vehículo es obligatorio'
-    }
-
-    if (!isEdit) {
-      if (!patente.trim()) {
-        newErrors.patente = 'La patente es obligatoria'
-      } else if (!validatePatente(patente)) {
-        newErrors.patente = 'Formato de patente inválido (ej: ABC123, AB123CD)'
-      }
-    }
-
-    if (isEdit && !estado) {
-      newErrors.estado = 'El estado es obligatorio'
-    }
-
-    if (!anio) {
-      newErrors.anio = 'El año es obligatorio'
-    } else if (
-      Number(anio) < 1900 ||
-      Number(anio) > new Date().getFullYear() + 1
-    ) {
-      newErrors.anio = 'Año inválido'
-    }
-
-    if (!marca?.trim()) {
-      newErrors.marca = 'La marca es obligatoria'
-    }
-
-    if (!modelo?.trim()) {
-      newErrors.modelo = 'El modelo es obligatorio'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  const {
+    tipoVehiculo,
+    setTipoVehiculo,
+    estado,
+    setEstado,
+    patente,
+    handlePatenteChange,
+    anio,
+    handleAnioChange,
+    marca,
+    setMarca,
+    modelo,
+    setModelo,
+    errors,
+    validateForm,
+    prepareSubmitData,
+  } = useVehiculoForm(vehiculo, isEdit)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) return
-
-    const data: VehiculoFormData = {
-      tipo_vehiculo: tipoVehiculo as VehiculoTipo,
-      estado: estado,
-      patente: isEdit ? vehiculo!.patente : patente.trim(),
-      anio: Number(anio),
-      marca: marca.trim(),
-      modelo: modelo.trim(),
-    }
-
-    onSubmit(data)
-  }
-
-  const handlePatenteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPatente(e.target.value)
-    if (formatted.length <= 7) {
-      setPatente(formatted)
-    }
-  }
-
-  const handleAnioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '')
-    if (value.length <= 4) {
-      setAnio(value)
+    if (validateForm()) {
+      onSubmit(prepareSubmitData())
     }
   }
 
@@ -217,7 +127,7 @@ export default function VehiculoForm({
                   }`}
                 >
                   <option value="">Seleccionar tipo</option>
-                  {tiposVehiculo.map((tipo) => (
+                  {TIPOS_VEHICULO.map((tipo) => (
                     <option key={tipo} value={tipo}>
                       {tipo}
                     </option>
@@ -237,16 +147,14 @@ export default function VehiculoForm({
                   </label>
                   <select
                     value={estado}
-                    onChange={(e) =>
-                      setEstado(e.target.value as VehiculoEstado)
-                    }
+                    onChange={(e) => setEstado(e.target.value as typeof estado)}
                     className={`w-full rounded-md border px-3 py-2 text-sm ${
                       errors.estado
                         ? 'border-red-300 bg-red-50'
                         : 'border-gray-300'
                     }`}
                   >
-                    {estadosVehiculo.map((est) => (
+                    {ESTADOS_VEHICULO.map((est) => (
                       <option key={est} value={est}>
                         {est}
                       </option>

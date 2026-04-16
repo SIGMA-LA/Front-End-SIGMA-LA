@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useTransition, useEffect, useCallback } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User as UserIcon, Package, Menu, X } from 'lucide-react'
+import { User as UserIcon, Package } from 'lucide-react'
 import type { Visita, EntregaEmpleado, Empleado, PaginatedResponse } from '@/types'
 import SidebarVisitas from '@/components/visitador/SidebarVisitas'
 import SidebarEntregasVisitador from '@/components/visitador/SidebarEntregasVisitador'
@@ -10,20 +10,10 @@ import VisitaDetailsVisitador from '@/components/visitador/VisitaDetailsVisitado
 import EntregaDetails from '@/components/planta/EntregaDetails'
 import ConfirmModal from '@/components/visitador/ConfirmModal'
 import FinalizarEntregaModal from '@/components/planta/FinalizarEntregaModal'
-import { useRef } from 'react'
-import {
-  finalizarVisita,
-  cancelarVisita,
-  getVisitasByEmpleado,
-} from '@/actions/visitas'
-import {
-  finalizarEntrega,
-  cancelarEntrega,
-  getEntregasByEmpleado,
-} from '@/actions/entregas'
-import { notify } from '@/lib/toast'
-
-const PAGE_SIZE = 10
+import DashboardHeader from '@/components/shared/DashboardHeader'
+import useEntregasPaginadas from '@/hooks/useEntregasPaginadas'
+import useVisitasPaginadas from '@/hooks/useVisitasPaginadas'
+import useVisitadorActions from '@/hooks/useVisitadorActions'
 
 interface VisitadorClientProps {
   usuario: Empleado
@@ -36,475 +26,126 @@ interface VisitadorClientProps {
   }
 }
 
-export default function VisitadorClient({
-  usuario,
-  initialData,
-}: VisitadorClientProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-
-  // Navigation state
-  const [statusFilter, setStatusFilter] = useState<
-    'PENDIENTE' | 'REALIZADA' | 'CANCELADA'
-  >('PENDIENTE')
-  const [categoryFilter, setCategoryFilter] = useState<'VISITAS' | 'ENTREGAS'>(
-    'VISITAS'
-  )
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  // Filter state
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterDate, setFilterDate] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [debouncedDate, setDebouncedDate] = useState('')
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm)
-      setDebouncedDate(filterDate)
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [searchTerm, filterDate])
-
-  // Data state
-  const [visitas, setVisitas] = useState<Visita[]>(
-    initialData.visitasPendientes.data
-  )
-  const [entregas, setEntregas] = useState<EntregaEmpleado[]>(
-    initialData.entregasPendientes.data
-  )
-
-  const [currentPage, setCurrentPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [loadingList, setLoadingList] = useState(false)
-  const [loadingMore, setLoadingMore] = useState(false)
-
-  const observer = useRef<IntersectionObserver | null>(null)
-
-  // Selection state
-  const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
-  const [selectedEntrega, setSelectedEntrega] =
-    useState<EntregaEmpleado | null>(null)
-  const [loadingDetails, setLoadingDetails] = useState(false)
-
-  // Modal state
-  const [showVisitaModal, setShowVisitaModal] = useState(false)
-  const [showEntregaModal, setShowEntregaModal] = useState(false)
-  const [observacionesVisita, setObservacionesVisita] = useState('')
-  const [observacionesEntrega, setObservacionesEntrega] = useState('')
-
-  // Backend Filtering Logic
-  const loadData = useCallback(async (page: number = 1, append: boolean = false) => {
-    if (page === 1) setLoadingList(true)
-    else setLoadingMore(true)
-
-    try {
-      if (categoryFilter === 'VISITAS') {
-        let estados: string[] = []
-        if (statusFilter === 'PENDIENTE') estados = ['PROGRAMADA', 'EN CURSO']
-        else if (statusFilter === 'REALIZADA') estados = ['COMPLETADA']
-        else if (statusFilter === 'CANCELADA') estados = ['CANCELADA']
-
-        const response = await getVisitasByEmpleado(
-          usuario.cuil,
-          estados,
-          debouncedSearch,
-          debouncedDate,
-          page,
-          PAGE_SIZE
-        )
-
-        if (append) {
-          setVisitas(prev => [...prev, ...response.data])
-        } else {
-          setVisitas(response.data)
-        }
-        setHasMore(response.page < response.totalPages)
-      } else {
-        let status: 'PENDIENTE' | 'ENTREGADO' | 'CANCELADO' = 'PENDIENTE'
-        if (statusFilter === 'PENDIENTE') status = 'PENDIENTE'
-        else if (statusFilter === 'REALIZADA') status = 'ENTREGADO'
-        else if (statusFilter === 'CANCELADA') status = 'CANCELADO'
-
-        const response = await getEntregasByEmpleado(
-          usuario.cuil,
-          status,
-          debouncedSearch,
-          debouncedDate,
-          page,
-          PAGE_SIZE
-        )
-
-        if (append) {
-          setEntregas(prev => [...prev, ...response.data])
-        } else {
-          setEntregas(response.data)
-        }
-        setHasMore(response.page < response.totalPages)
-      }
-      setCurrentPage(page)
-    } catch (err) {
-      console.error('Error fetching data:', err)
-      notify.error('Error al actualizar el listado')
-    } finally {
-      setLoadingList(false)
-      setLoadingMore(false)
-    }
-  }, [
-    categoryFilter,
-    statusFilter,
-    usuario.cuil,
-    debouncedSearch,
-    debouncedDate,
-  ])
-
-  const loadMore = useCallback(() => {
-    if (hasMore && !loadingMore && !loadingList) {
-      loadData(currentPage + 1, true)
-    }
-  }, [hasMore, loadingMore, loadingList, currentPage, loadData])
-
-  // Infinite Scroll Observer
-  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (loadingList || loadingMore) return
-    if (observer.current) observer.current.disconnect()
-
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        loadMore()
-      }
-    })
-
-    if (node) observer.current.observe(node)
-  }, [loadingList, loadingMore, hasMore, loadMore])
-
-  useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  // Handlers
-  const handleCategoryChange = (category: 'VISITAS' | 'ENTREGAS') => {
-    setCategoryFilter(category)
-    setSelectedVisita(null)
-    setSelectedEntrega(null)
-  }
-
-  const handleStatusChange = (
-    status: 'PENDIENTE' | 'REALIZADA' | 'CANCELADA'
-  ) => {
-    setStatusFilter(status)
-    setSelectedVisita(null)
-    setSelectedEntrega(null)
-  }
-
-  const handleSelectVisita = (visita: Visita) => {
-    if (selectedVisita?.cod_visita === visita.cod_visita) return
-    setLoadingDetails(true)
-    setSelectedVisita(visita)
-    setSidebarOpen(false)
-    setTimeout(() => setLoadingDetails(false), 400)
-  }
-
-  const handleSelectEntrega = (entrega: EntregaEmpleado) => {
-    if (selectedEntrega?.cod_entrega === entrega.cod_entrega) return
-    setLoadingDetails(true)
-    setSelectedEntrega(entrega)
-    setSidebarOpen(false)
-    setTimeout(() => setLoadingDetails(false), 400)
-  }
-
-  const handleConfirmarFinalizacionVisita = async () => {
-    if (!selectedVisita) return
-    startTransition(async () => {
-      const result = await finalizarVisita(
-        selectedVisita.cod_visita,
-        observacionesVisita
-      )
-      if (result.success) {
-        setShowVisitaModal(false)
-        setObservacionesVisita('')
-        setSelectedVisita(null)
-        notify.success('Visita finalizada correctamente.')
-        loadData()
-        router.refresh()
-      } else {
-        notify.error(result.error || 'Error al finalizar la visita')
-      }
-    })
-  }
-
-  const handleConfirmarCancelacionVisita = async () => {
-    if (!selectedVisita || !observacionesVisita.trim()) {
-      notify.warning('Por favor, ingresa un motivo para la cancelación.')
-      return
-    }
-    startTransition(async () => {
-      const result = await cancelarVisita(
-        selectedVisita.cod_visita,
-        observacionesVisita
-      )
-      if (result.success) {
-        setShowVisitaModal(false)
-        setObservacionesVisita('')
-        setSelectedVisita(null)
-        notify.success('Visita cancelada correctamente.')
-        loadData()
-        router.refresh()
-      } else {
-        notify.error(result.error || 'Error al cancelar la visita')
-      }
-    })
-  }
-
-  const handleFinalizarEntrega = async () => {
-    if (!selectedEntrega) return
-    startTransition(async () => {
-      const result = await finalizarEntrega(
-        selectedEntrega.cod_entrega,
-        observacionesEntrega || undefined
-      )
-      if (result.success) {
-        setShowEntregaModal(false)
-        setObservacionesEntrega('')
-        setSelectedEntrega(null)
-        notify.success('Entrega finalizada correctamente.')
-        loadData()
-        router.refresh()
-      } else {
-        notify.error(result.error || 'Error al finalizar la entrega')
-      }
-    })
-  }
-
-  const handleCancelarEntrega = async () => {
-    if (!selectedEntrega) return
-    startTransition(async () => {
-      const result = await cancelarEntrega(
-        selectedEntrega.cod_entrega,
-        observacionesEntrega || 'No se especificó motivo.'
-      )
-      if (result.success) {
-        setShowEntregaModal(false)
-        setObservacionesEntrega('')
-        setSelectedEntrega(null)
-        notify.success('Entrega cancelada correctamente.')
-        loadData()
-        router.refresh()
-      } else {
-        notify.error(result.error || 'Error al cancelar la entrega')
-      }
-    })
-  }
-
-  return (
-    <div className="flex h-screen flex-col">
-      {/* Header aligned with PlantaClient */}
-      <div className="border-b bg-white px-2 py-4 sm:px-5 lg:px-8 lg:py-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex w-full items-center justify-between sm:justify-start">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
-            >
-              {sidebarOpen ? (
-                <X className="h-8 w-8" />
-              ) : (
-                <Menu className="h-8 w-8" />
-              )}
-            </button>
-            <div className="flex flex-1 flex-col items-center sm:ml-3 sm:items-start">
-              <h1 className="text-center text-base font-bold text-gray-900 sm:text-left sm:text-2xl lg:text-3xl">
-                Dashboard del Visitador
-              </h1>
-              <span className="mt-1 text-center text-xs text-gray-600 sm:text-left sm:text-base lg:text-base">
-                {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
-              </span>
-            </div>
-            <div className="flex gap-2 sm:hidden">
-              <div className="rounded-lg bg-blue-50 px-3 py-2 text-center">
-                <div className="text-base font-semibold text-blue-600">
-                  {categoryFilter === 'VISITAS'
-                    ? visitas.length
-                    : entregas.length}
-                </div>
-                <div className="text-[10px] font-bold text-gray-600">
-                  {categoryFilter === 'VISITAS' ? 'VISITAS' : 'ENTREGAS'}{' '}
-                  {statusFilter === 'PENDIENTE'
-                    ? 'PEND.'
-                    : statusFilter === 'REALIZADA'
-                      ? 'REAL.'
-                      : 'CANC.'}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="hidden sm:flex">
-            <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
-              <div className="text-lg font-semibold text-blue-600 lg:text-xl">
-                {categoryFilter === 'VISITAS'
-                  ? visitas.length
-                  : entregas.length}
-              </div>
-              <div className="text-sm font-bold text-gray-600 lg:text-base">
-                {categoryFilter === 'VISITAS' ? 'VISITAS' : 'ENTREGAS'}{' '}
-                {statusFilter === 'PENDIENTE'
-                  ? 'PENDIENTES'
-                  : statusFilter === 'REALIZADA'
-                    ? 'REALIZADAS'
-                    : 'CANCELADAS'}{' '}
-                LISTADAS
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside
-          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } fixed inset-y-0 left-0 z-40 flex w-full transform flex-col border-r border-gray-100 bg-white transition-transform duration-300 ease-in-out lg:static lg:w-80 lg:translate-x-0 xl:w-96`}
-        >
-          {categoryFilter === 'VISITAS' ? (
-            <SidebarVisitas
-              activeCategory={categoryFilter}
-              onCategoryChange={handleCategoryChange}
-              statusFilter={statusFilter}
-              onStatusChange={handleStatusChange}
-              visitas={visitas}
-              searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
-              filterDate={filterDate}
-              onFilterDateChange={setFilterDate}
-              selectedVisita={selectedVisita}
-              onSelectVisita={handleSelectVisita}
-              onRetry={() => router.refresh()}
-              onClose={() => setSidebarOpen(false)}
-              lastElementRef={lastElementRef}
-              loadingMore={loadingMore}
-              loadingVisitas={loadingList}
-              errorVisitas={initialData.error}
-            />
-          ) : (
-            <SidebarEntregasVisitador
-              activeCategory={categoryFilter}
-              onCategoryChange={handleCategoryChange}
-              statusFilter={statusFilter}
-              onStatusChange={handleStatusChange}
-              entregas={entregas}
-              searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
-              filterDate={filterDate}
-              onFilterDateChange={setFilterDate}
-              selectedEntrega={selectedEntrega}
-              onSelectEntrega={handleSelectEntrega}
-              onRetry={() => router.refresh()}
-              onClose={() => setSidebarOpen(false)}
-              lastElementRef={lastElementRef}
-              loadingMore={loadingMore}
-              loadingEntregas={loadingList}
-              errorEntregas={initialData.error}
-            />
-          )}
-        </aside>
-
-        {/* Overlay for mobile sidebar */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-gray-900/20 backdrop-blur-sm lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Main Content */}
-        <main className="relative flex-1 overflow-y-auto p-4 lg:p-8">
-          {loadingDetails && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-              <div className="flex flex-col items-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-                <p className="mt-4 text-sm font-bold text-gray-700">
-                  Cargando detalles de{' '}
-                  {categoryFilter === 'VISITAS' ? 'visita' : 'entrega'}...
-                </p>
-              </div>
-            </div>
-          )}
-
-          {categoryFilter === 'VISITAS' ? (
-            selectedVisita ? (
-              <VisitaDetailsVisitador
-                visita={selectedVisita}
-                onFinalizarVisita={() => setShowVisitaModal(true)}
-              />
-            ) : (
-              <EmptyState
-                icon={<UserIcon className="h-16 w-16 text-gray-200" />}
-                message="Selecciona una visita para ver detalles"
-              />
-            )
-          ) : selectedEntrega ? (
-            <EntregaDetails
-              entrega={selectedEntrega}
-              onFinalizarEntrega={() => setShowEntregaModal(true)}
-            />
-          ) : (
-            <EmptyState
-              icon={<Package className="h-16 w-16 text-gray-200" />}
-              message="Selecciona una entrega para ver detalles"
-            />
-          )}
-        </main>
-      </div>
-
-      {/* Modals */}
-      <ConfirmModal
-        isOpen={showVisitaModal}
-        title="Finalizar Visita"
-        observaciones={observacionesVisita}
-        onObservacionesChange={setObservacionesVisita}
-        onConfirm={handleConfirmarFinalizacionVisita}
-        onCancelVisit={handleConfirmarCancelacionVisita}
-        onCancel={() => {
-          if (!isPending) {
-            setShowVisitaModal(false)
-            setObservacionesVisita('')
-          }
-        }}
-        loading={isPending}
-      />
-
-      <FinalizarEntregaModal
-        isOpen={showEntregaModal}
-        observaciones={observacionesEntrega}
-        onObservacionesChange={setObservacionesEntrega}
-        onConfirm={handleFinalizarEntrega}
-        onCancelDelivery={handleCancelarEntrega}
-        onCancel={() => {
-          if (!isPending) {
-            setShowEntregaModal(false)
-            setObservacionesEntrega('')
-          }
-        }}
-        entregaSeleccionada={selectedEntrega}
-        loading={isPending}
-      />
-    </div>
-  )
-}
-
-function EmptyState({
-  icon,
-  message,
-}: {
-  icon: React.ReactNode
-  message: string
-}) {
+function EmptyState({ icon, message }: { icon: React.ReactNode; message: string }) {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="text-center">
         <div className="mb-4 flex justify-center">{icon}</div>
         <p className="text-xl font-medium text-gray-500">{message}</p>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Main dashboard for Visitadores.
+ * Refactored to separate visual composition from business logic via useVisitadorActions hook.
+ */
+export default function VisitadorClient({ usuario, initialData }: VisitadorClientProps) {
+  const router = useRouter()
+  const [categoryFilter, setCategoryFilter] = useState<'VISITAS' | 'ENTREGAS'>('VISITAS')
+
+  const actions = useVisitadorActions()
+
+  // Paginated visitas
+  const {
+    visitas, statusFilter, setStatusFilter, searchTerm: visitaSearch, setSearchTerm: setVisitaSearch,
+    filterDate: visitaDate, setFilterDate: setVisitaDate, loading: loadingVisitas,
+    loadingMore: loadingMoreVisitas, lastElementRef: visitaLastRef,
+  } = useVisitasPaginadas({ cuil: usuario.cuil, initialData: initialData.visitasPendientes })
+
+  // Paginated entregas
+  const {
+    entregas, setEstadoFiltro: setEntregaEstado, searchTerm: entregaSearch, setSearchTerm: setEntregaSearch,
+    filterDate: entregaDate, setFilterDate: setEntregaDate, loading: loadingEntregas,
+    loadingMore: loadingMoreEntregas, lastElementRef: entregaLastRef,
+  } = useEntregasPaginadas({ cuil: usuario.cuil, initialData: initialData.entregasPendientes })
+
+  const handleCategoryChange = (category: 'VISITAS' | 'ENTREGAS') => {
+    setCategoryFilter(category)
+    actions.setSelectedVisita(null)
+    actions.setSelectedEntrega(null)
+  }
+
+  const badgeCount = categoryFilter === 'VISITAS' ? visitas.length : entregas.length
+  const badgeLabel = `${categoryFilter === 'VISITAS' ? 'VISITAS' : 'ENTREGAS'} ${
+    statusFilter === 'PENDIENTE' ? 'PENDIENTES' : statusFilter === 'REALIZADA' ? 'REALIZADAS' : 'CANCELADAS'
+  } LISTADAS`
+
+  return (
+    <div className="flex h-screen flex-col">
+      <DashboardHeader
+        titulo="Dashboard del Visitador"
+        subtitulo={`${usuario.nombre} ${usuario.apellido} - ${usuario.rol_actual}`}
+        badgeCount={badgeCount}
+        badgeLabel={badgeLabel}
+        sidebarOpen={actions.sidebarOpen}
+        onToggleSidebar={() => actions.setSidebarOpen(!actions.sidebarOpen)}
+      />
+
+      <div className="flex flex-1 overflow-hidden">
+        <aside className={`${actions.sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-40 flex w-full transform flex-col border-r border-gray-100 bg-white transition-transform duration-300 ease-in-out lg:static lg:w-80 lg:translate-x-0 xl:w-96`}>
+          {categoryFilter === 'VISITAS' ? (
+            <SidebarVisitas
+              activeCategory={categoryFilter} onCategoryChange={handleCategoryChange}
+              statusFilter={statusFilter} onStatusChange={setStatusFilter}
+              visitas={visitas} searchTerm={visitaSearch} onSearchTermChange={setVisitaSearch}
+              filterDate={visitaDate} onFilterDateChange={setVisitaDate}
+              selectedVisita={actions.selectedVisita} onSelectVisita={actions.handleSelectVisita}
+              onRetry={() => router.refresh()} onClose={() => actions.setSidebarOpen(false)}
+              lastElementRef={visitaLastRef} loadingMore={loadingMoreVisitas}
+              loadingVisitas={loadingVisitas} errorVisitas={initialData.error}
+            />
+          ) : (
+            <SidebarEntregasVisitador
+              activeCategory={categoryFilter} onCategoryChange={handleCategoryChange}
+              statusFilter={statusFilter} onStatusChange={(s) => setEntregaEstado(s === 'PENDIENTE' ? 'PENDIENTE' : s === 'REALIZADA' ? 'ENTREGADO' : 'CANCELADO')}
+              entregas={entregas} searchTerm={entregaSearch} onSearchTermChange={setEntregaSearch}
+              filterDate={entregaDate} onFilterDateChange={setEntregaDate}
+              selectedEntrega={actions.selectedEntrega} onSelectEntrega={actions.handleSelectEntrega}
+              onRetry={() => router.refresh()} onClose={() => actions.setSidebarOpen(false)}
+              lastElementRef={entregaLastRef} loadingMore={loadingMoreEntregas}
+              loadingEntregas={loadingEntregas} errorEntregas={initialData.error}
+            />
+          )}
+        </aside>
+
+        {actions.sidebarOpen && <div className="fixed inset-0 z-30 bg-gray-900/20 backdrop-blur-sm lg:hidden" onClick={() => actions.setSidebarOpen(false)} />}
+
+        <main className="relative flex-1 overflow-y-auto p-4 lg:p-8">
+          {actions.loadingDetails && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+              <div className="flex flex-col items-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-4 text-sm font-bold text-gray-700">Cargando detalles...</p>
+              </div>
+            </div>
+          )}
+
+          {categoryFilter === 'VISITAS' ? (
+            actions.selectedVisita ? <VisitaDetailsVisitador visita={actions.selectedVisita} onFinalizarVisita={() => actions.setShowVisitaModal(true)} /> :
+            <EmptyState icon={<UserIcon className="h-16 w-16 text-gray-200" />} message="Selecciona una visita para ver detalles" />
+          ) : actions.selectedEntrega ? <EntregaDetails entrega={actions.selectedEntrega} onFinalizarEntrega={() => actions.setShowEntregaModal(true)} /> :
+            <EmptyState icon={<Package className="h-16 w-16 text-gray-200" />} message="Selecciona una entrega para ver detalles" />
+          }
+        </main>
+      </div>
+
+      <ConfirmModal
+        isOpen={actions.showVisitaModal} title="Finalizar Visita"
+        observaciones={actions.observacionesVisita} onObservacionesChange={actions.setObservacionesVisita}
+        onConfirm={actions.handleConfirmarFinalizacionVisita} onCancelVisit={actions.handleConfirmarCancelacionVisita}
+        onCancel={() => { if (!actions.isPending) { actions.setShowVisitaModal(false); actions.setObservacionesVisita(''); } }}
+        loading={actions.isPending}
+      />
+
+      <FinalizarEntregaModal
+        isOpen={actions.showEntregaModal} observaciones={actions.observacionesEntrega}
+        onObservacionesChange={actions.setObservacionesEntrega} onConfirm={actions.handleFinalizarEntrega}
+        onCancelDelivery={actions.handleCancelarEntrega}
+        onCancel={() => { if (!actions.isPending) { actions.setShowEntregaModal(false); actions.setObservacionesEntrega(''); } }}
+        entregaSeleccionada={actions.selectedEntrega} loading={actions.isPending}
+      />
     </div>
   )
 }

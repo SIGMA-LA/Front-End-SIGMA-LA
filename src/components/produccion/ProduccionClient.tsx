@@ -1,519 +1,128 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { FileText, Package, Menu, X, Play, CheckCircle } from 'lucide-react'
-import type {
-  Obra,
-  OrdenProduccion,
-  Empleado,
-  EstadoNotaFabricaProduccion,
-  EstadoOrdenProduccion,
-} from '@/types'
-import { getNotasFabricaProduccion } from '@/actions/obras'
-import {
-  getOrdenesProduccionPorEstadoYFechas,
-  startProduccion,
-  finishProduccion,
-} from '@/actions/ordenes'
+import type { Obra, OrdenProduccion, Empleado } from '@/types'
 import TabNavigation from './TabNavigation'
 import SidebarNotasFabrica from './SidebarNotasFabrica'
 import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
 import NotaFabricaDetails from './NotaFabricaDetails'
 import OrdenProduccionDetails from './OrdenProduccionDetails'
 import CrearOrdenModal from './CrearOrdenModal'
-import ProduccionActionModal, {
-  type ProduccionActionSummary,
-} from './ProduccionActionModal'
-import { notify } from '@/lib/toast'
+import ProduccionActionModal from './ProduccionActionModal'
+import ProduccionEmptyState from './ProduccionEmptyState'
+import useProduccionClient from '@/hooks/useProduccionClient'
 
-type MainTab = 'notas' | 'ordenes'
-type NotasTab = EstadoNotaFabricaProduccion
-type OrdenesTab = EstadoOrdenProduccion
-
-interface ProduccionFilters {
-  fechaDesde: string
-  fechaHasta: string
-}
-
-const EMPTY_FILTERS: ProduccionFilters = {
-  fechaDesde: '',
-  fechaHasta: '',
-}
-
-const buildCacheKey = (status: string, filters: ProduccionFilters) =>
-  `${status}|${filters.fechaDesde}|${filters.fechaHasta}`
-
-const getRequestFilters = (filters: ProduccionFilters) => ({
-  fechaDesde: filters.fechaDesde || undefined,
-  fechaHasta: filters.fechaHasta || undefined,
-})
-
-type NotasCache = Record<string, Obra[]>
-type OrdenesCache = Record<string, OrdenProduccion[]>
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface ProduccionClientProps {
   usuario: Empleado
   initialNotasSinOrden: Obra[]
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+/**
+ * Main production dashboard.
+ * Manages production orders and factory notes through two main tabs.
+ * Refactored to use useProduccionClient hook and ProduccionEmptyState component.
+ */
 export default function ProduccionClient({
   usuario,
   initialNotasSinOrden,
 }: ProduccionClientProps) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
-
-  // Tab activa
-  const [activeTab, setActiveTab] = useState<MainTab>('notas')
-  const [activeNotasTab, setActiveNotasTab] = useState<NotasTab>('SIN_ORDEN')
-  const [activeOrdenesTab, setActiveOrdenesTab] =
-    useState<OrdenesTab>('PENDIENTE')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const [notasFilters, setNotasFilters] =
-    useState<ProduccionFilters>(EMPTY_FILTERS)
-  const [ordenesFilters, setOrdenesFilters] =
-    useState<ProduccionFilters>(EMPTY_FILTERS)
-
-  const [notasCache, setNotasCache] = useState<NotasCache>(() => ({
-    [buildCacheKey('SIN_ORDEN', EMPTY_FILTERS)]: initialNotasSinOrden,
-  }))
-  const [ordenesCache, setOrdenesCache] = useState<OrdenesCache>({})
-
-  const [loadingNotas, setLoadingNotas] = useState(false)
-  const [loadingOrdenes, setLoadingOrdenes] = useState(false)
-  const [errorNotas, setErrorNotas] = useState<string | null>(null)
-  const [errorOrdenes, setErrorOrdenes] = useState<string | null>(null)
-
-  // Estados para Notas de Fábrica
-  const [selectedObra, setSelectedObra] = useState<Obra | null>(null)
-  const [showCrearOrdenModal, setShowCrearOrdenModal] = useState(false)
-
-  // Estados para Órdenes de Producción
-  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(
-    null
-  )
-  const [isIniciarModalOpen, setIsIniciarModalOpen] = useState(false)
-  const [isFinalizarModalOpen, setIsFinalizarModalOpen] = useState(false)
-  const [isProduccionLoading, setIsProduccionLoading] = useState(false)
-
-  const activeNotasKey = useMemo(
-    () => buildCacheKey(activeNotasTab, notasFilters),
-    [activeNotasTab, notasFilters]
-  )
-
-  const activeOrdenesKey = useMemo(
-    () => buildCacheKey(activeOrdenesTab, ordenesFilters),
-    [activeOrdenesTab, ordenesFilters]
-  )
-
-  const currentNotas = useMemo(
-    () => notasCache[activeNotasKey] ?? [],
-    [notasCache, activeNotasKey]
-  )
-
-  const currentOrdenes = useMemo(
-    () => ordenesCache[activeOrdenesKey] ?? [],
-    [ordenesCache, activeOrdenesKey]
-  )
-
-  const notasSinOrdenCount =
-    notasCache[buildCacheKey('SIN_ORDEN', EMPTY_FILTERS)]?.length ?? 0
-  const notasEnProduccionCount =
-    notasCache[buildCacheKey('EN_PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
-  const ordenesPendientesCount =
-    ordenesCache[buildCacheKey('PENDIENTE', EMPTY_FILTERS)]?.length ?? 0
-  const ordenesAprobadasCount =
-    ordenesCache[buildCacheKey('APROBADA', EMPTY_FILTERS)]?.length ?? 0
-  const ordenesEnProduccionCount =
-    ordenesCache[buildCacheKey('EN PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
-
-  useEffect(() => {
-    if (activeTab !== 'notas') {
-      return
-    }
-
-    if (notasCache[activeNotasKey]) {
-      return
-    }
-
-    let cancelled = false
-
-    const fetchNotas = async () => {
-      setLoadingNotas(true)
-      setErrorNotas(null)
-
-      try {
-        const notas = await getNotasFabricaProduccion({
-          estado: activeNotasTab,
-          ...getRequestFilters(notasFilters),
-        })
-
-        if (cancelled) {
-          return
-        }
-
-        setNotasCache((prev) => ({
-          ...prev,
-          [activeNotasKey]: notas,
-        }))
-      } catch {
-        if (!cancelled) {
-          setErrorNotas('No se pudieron cargar las notas de fabrica.')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingNotas(false)
-        }
-      }
-    }
-
-    void fetchNotas()
-
-    return () => {
-      cancelled = true
-    }
-  }, [activeTab, activeNotasKey, activeNotasTab, notasFilters, notasCache])
-
-  useEffect(() => {
-    if (activeTab !== 'ordenes') {
-      return
-    }
-
-    if (ordenesCache[activeOrdenesKey]) {
-      return
-    }
-
-    let cancelled = false
-
-    const fetchOrdenes = async () => {
-      setLoadingOrdenes(true)
-      setErrorOrdenes(null)
-
-      try {
-        const ordenes = await getOrdenesProduccionPorEstadoYFechas({
-          estado: activeOrdenesTab,
-          ...getRequestFilters(ordenesFilters),
-        })
-
-        if (cancelled) {
-          return
-        }
-
-        setOrdenesCache((prev) => ({
-          ...prev,
-          [activeOrdenesKey]: ordenes,
-        }))
-      } catch {
-        if (!cancelled) {
-          setErrorOrdenes('No se pudieron cargar las ordenes de produccion.')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingOrdenes(false)
-        }
-      }
-    }
-
-    void fetchOrdenes()
-
-    return () => {
-      cancelled = true
-    }
-  }, [
+  const {
     activeTab,
-    activeOrdenesKey,
+    activeNotasTab,
     activeOrdenesTab,
+    sidebarOpen,
+    setSidebarOpen,
+    notasFilters,
+    setNotasFilters,
     ordenesFilters,
-    ordenesCache,
-  ])
-
-  useEffect(() => {
-    if (activeTab !== 'notas' || !selectedObra) {
-      return
-    }
-
-    const sigueVisible = currentNotas.some(
-      (obra) => obra.cod_obra === selectedObra.cod_obra
-    )
-
-    if (!sigueVisible) {
-      setSelectedObra(null)
-    }
-  }, [activeTab, currentNotas, selectedObra])
-
-  useEffect(() => {
-    if (activeTab !== 'ordenes' || !selectedOrden) {
-      return
-    }
-
-    const sigueVisible = currentOrdenes.some(
-      (orden) => orden.cod_op === selectedOrden.cod_op
-    )
-
-    if (!sigueVisible) {
-      setSelectedOrden(null)
-    }
-  }, [activeTab, currentOrdenes, selectedOrden])
-
-  const handleTabChange = (tab: MainTab) => {
-    setActiveTab(tab)
-    setSelectedObra(null)
-    setSelectedOrden(null)
-  }
-
-  const handleNotasTabChange = (status: NotasTab) => {
-    setActiveNotasTab(status)
-    setSelectedObra(null)
-  }
-
-  const handleNotasFiltersChange = (filters: ProduccionFilters) => {
-    setNotasFilters(filters)
-  }
-
-  const handleOrdenesTabChange = (status: OrdenesTab) => {
-    setActiveOrdenesTab(status)
-    setSelectedOrden(null)
-  }
-
-  const handleOrdenesFiltersChange = (filters: ProduccionFilters) => {
-    setOrdenesFilters(filters)
-  }
-
-  const handleRetryNotas = () => {
-    setErrorNotas(null)
-    setNotasCache((prev) => {
-      const next: NotasCache = { ...prev }
-      delete next[activeNotasKey]
-      return next
-    })
-  }
-
-  const handleRetryOrdenes = () => {
-    setErrorOrdenes(null)
-    setOrdenesCache((prev) => {
-      const next: OrdenesCache = { ...prev }
-      delete next[activeOrdenesKey]
-      return next
-    })
-  }
-
-  const handleSelectObra = (obra: Obra) => {
-    setSelectedObra(obra)
-    setSidebarOpen(false)
-  }
-
-  const handleSelectOrden = (orden: OrdenProduccion) => {
-    setSelectedOrden(orden)
-    setSidebarOpen(false)
-  }
-
-  const handleCrearOrden = () => {
-    setShowCrearOrdenModal(true)
-  }
-
-  const handleOrdenCreated = () => {
-    setSelectedObra(null)
-    setShowCrearOrdenModal(false)
-    setNotasCache({})
-    setOrdenesCache({})
-    startTransition(() => {
-      router.refresh()
-    })
-  }
-
-  const handleObraProduccionFinalizada = () => {
-    setSelectedObra(null)
-    setNotasCache({})
-    setOrdenesCache({})
-    startTransition(() => {
-      router.refresh()
-    })
-  }
-
-  const handleIniciarProduccion = () => {
-    setIsIniciarModalOpen(true)
-  }
-
-  const handleFinalizarProduccion = () => {
-    setIsFinalizarModalOpen(true)
-  }
-
-  const handleConfirmIniciar = async () => {
-    if (!selectedOrden) return
-
-    setIsProduccionLoading(true)
-    try {
-      const result = await startProduccion(selectedOrden.cod_op)
-
-      if (result.success) {
-        setIsIniciarModalOpen(false)
-        // Actualizar estado optimista
-        const ordenActualizada = {
-          ...selectedOrden,
-          estado: 'EN PRODUCCION' as const,
-          obra: {
-            ...selectedOrden.obra,
-            estado: 'EN PRODUCCION' as const,
-          },
-        }
-        setSelectedOrden(ordenActualizada)
-        setOrdenesCache({})
-        notify.success('Produccion iniciada correctamente.')
-
-        // Recargar datos del servidor
-        startTransition(() => {
-          router.refresh()
-        })
-      } else {
-        notify.error(result.error || 'Error al iniciar la producción')
-      }
-    } catch (error) {
-      console.error('Error al iniciar producción:', error)
-      notify.error('Error al iniciar la producción. Intente nuevamente.')
-    } finally {
-      setIsProduccionLoading(false)
-    }
-  }
-
-  const handleConfirmFinalizar = async () => {
-    if (!selectedOrden) return
-
-    setIsProduccionLoading(true)
-    try {
-      const result = await finishProduccion(selectedOrden.cod_op)
-
-      if (result.success) {
-        setIsFinalizarModalOpen(false)
-        setSelectedOrden(null)
-        setNotasCache({})
-        setOrdenesCache({})
-        notify.success('Produccion finalizada correctamente.')
-
-        // Recargar datos del servidor
-        startTransition(() => {
-          router.refresh()
-        })
-      } else {
-        notify.error(result.error || 'Error al finalizar la producción')
-      }
-    } catch (error) {
-      console.error('Error al finalizar producción:', error)
-      notify.error('Error al finalizar la producción. Intente nuevamente.')
-    } finally {
-      setIsProduccionLoading(false)
-    }
-  }
-
-  const selectedOrdenSummary: ProduccionActionSummary | null = selectedOrden
-    ? {
-        entidadLabel: 'Orden de Producción',
-        entidadValor: `#${selectedOrden.cod_op}`,
-        cliente:
-          selectedOrden.obra?.cliente?.tipo_cliente === 'EMPRESA'
-            ? selectedOrden.obra.cliente.razon_social?.trim() || 'N/A'
-            : `${selectedOrden.obra?.cliente?.nombre ?? ''} ${selectedOrden.obra?.cliente?.apellido ?? ''}`.trim() ||
-              'N/A',
-        direccion:
-          selectedOrden.obra?.direccion && selectedOrden.obra?.localidad
-            ? `${selectedOrden.obra.direccion}, ${selectedOrden.obra.localidad.nombre_localidad}`
-            : selectedOrden.obra?.direccion || 'Sin dirección',
-        telefono: selectedOrden.obra?.cliente?.telefono,
-        mail: selectedOrden.obra?.cliente?.mail,
-        estadoActual: selectedOrden.estado,
-      }
-    : null
+    setOrdenesFilters,
+    loadingNotas,
+    loadingOrdenes,
+    errorNotas,
+    errorOrdenes,
+    selectedObra,
+    setSelectedObra,
+    showCrearOrdenModal,
+    setShowCrearOrdenModal,
+    selectedOrden,
+    setSelectedOrden,
+    isIniciarModalOpen,
+    setIsIniciarModalOpen,
+    isFinalizarModalOpen,
+    setIsFinalizarModalOpen,
+    isProduccionLoading,
+    currentNotas,
+    currentOrdenes,
+    notasSinOrdenCount,
+    notasEnProduccionCount,
+    ordenesPendientesCount,
+    ordenesAprobadasCount,
+    ordenesEnProduccionCount,
+    selectedOrdenSummary,
+    handleTabChange,
+    handleNotasTabChange,
+    handleOrdenesTabChange,
+    handleRetryNotas,
+    handleRetryOrdenes,
+    handleConfirmIniciar,
+    handleConfirmFinalizar,
+    refreshAll,
+  } = useProduccionClient(usuario, initialNotasSinOrden)
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Header mejorado para móvil */}
+      {/* Header */}
       <div className="border-b bg-white px-5 py-5 lg:px-8 lg:py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Botón hamburguesa para móvil */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 lg:hidden"
             >
-              {sidebarOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
-                Dashboard de Producción
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">Dashboard de Producción</h1>
               <p className="mt-1 text-sm text-gray-600 lg:text-base">
                 {usuario.nombre} {usuario.apellido} - {usuario.rol_actual}
               </p>
             </div>
           </div>
-          {activeTab === 'notas' ? (
-            <div className="flex space-x-4 text-sm lg:space-x-6 lg:text-base">
-              <div className="rounded-lg bg-orange-50 px-4 py-2 text-center">
-                <div className="text-lg font-semibold text-orange-600 lg:text-xl">
-                  {notasSinOrdenCount}
-                </div>
-                <div className="text-xs text-gray-600 lg:text-sm">
-                  Sin Orden
-                </div>
-              </div>
-              <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-                <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                  {notasEnProduccionCount}
-                </div>
-                <div className="text-xs text-gray-600 lg:text-sm">
-                  En Producción
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex space-x-3 text-sm lg:space-x-4 lg:text-base">
-              <div className="rounded-lg bg-amber-50 px-3 py-2 text-center lg:px-4">
-                <div className="text-lg font-semibold text-amber-600 lg:text-xl">
-                  {ordenesPendientesCount}
-                </div>
-                <div className="text-xs text-gray-600 lg:text-sm">
-                  Pendientes
-                </div>
-              </div>
-              <div className="rounded-lg bg-blue-50 px-3 py-2 text-center lg:px-4">
-                <div className="text-lg font-semibold text-blue-600 lg:text-xl">
-                  {ordenesAprobadasCount}
-                </div>
-                <div className="text-xs text-gray-600 lg:text-sm">
-                  Aprobadas
-                </div>
-              </div>
-              <div className="rounded-lg bg-green-50 px-3 py-2 text-center lg:px-4">
-                <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                  {ordenesEnProduccionCount}
-                </div>
-                <div className="text-xs text-gray-600 lg:text-sm">
-                  En Producción
-                </div>
-              </div>
-            </div>
-          )}
+          
+          <div className="flex space-x-3 text-sm lg:space-x-4 lg:text-base">
+            {activeTab === 'notas' ? (
+              <>
+                <StatBadge count={notasSinOrdenCount} label="Sin Orden" color="orange" />
+                <StatBadge count={notasEnProduccionCount} label="En Producción" color="green" />
+              </>
+            ) : (
+              <>
+                <StatBadge count={ordenesPendientesCount} label="Pendientes" color="amber" />
+                <StatBadge count={ordenesAprobadasCount} label="Aprobadas" color="blue" />
+                <StatBadge count={ordenesEnProduccionCount} label="En Producción" color="green" />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar responsivo */}
+        {/* Sidebar */}
         <div
           className={`${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } fixed inset-y-0 left-0 z-50 w-96 transform transition-transform duration-300 ease-in-out lg:relative lg:w-[28rem] lg:translate-x-0`}
         >
           <aside className="flex h-full w-full flex-shrink-0 flex-col border-r border-gray-200 bg-white">
-            <TabNavigation
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
-
+            <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
             <div className="flex-1 overflow-hidden">
               {activeTab === 'notas' ? (
                 <SidebarNotasFabrica
@@ -521,9 +130,9 @@ export default function ProduccionClient({
                   statusFilter={activeNotasTab}
                   onStatusChange={handleNotasTabChange}
                   filters={notasFilters}
-                  onFiltersChange={handleNotasFiltersChange}
+                  onFiltersChange={setNotasFilters}
                   selectedObra={selectedObra}
-                  onSelectObra={handleSelectObra}
+                  onSelectObra={(o) => { setSelectedObra(o); setSidebarOpen(false) }}
                   loading={loadingNotas}
                   error={errorNotas}
                   onRetry={handleRetryNotas}
@@ -534,9 +143,9 @@ export default function ProduccionClient({
                   statusFilter={activeOrdenesTab}
                   onStatusChange={handleOrdenesTabChange}
                   filters={ordenesFilters}
-                  onFiltersChange={handleOrdenesFiltersChange}
+                  onFiltersChange={setOrdenesFilters}
                   selectedOrden={selectedOrden}
-                  onSelectOrden={handleSelectOrden}
+                  onSelectOrden={(o) => { setSelectedOrden(o); setSidebarOpen(false) }}
                   loading={loadingOrdenes}
                   error={errorOrdenes}
                   onRetry={handleRetryOrdenes}
@@ -546,148 +155,113 @@ export default function ProduccionClient({
           </aside>
         </div>
 
-        {/* Overlay para móvil */}
+        {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
-            className="bg-opacity-50 fixed inset-0 z-40 bg-transparent backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-gray-600 bg-opacity-50 backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* Contenido principal */}
+        {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-100 p-4 lg:p-8">
           {activeTab === 'notas' ? (
             selectedObra ? (
               <NotaFabricaDetails
                 obra={selectedObra}
-                onCrearOrden={handleCrearOrden}
-                onProduccionFinalizada={handleObraProduccionFinalizada}
+                onCrearOrden={() => setShowCrearOrdenModal(true)}
+                onProduccionFinalizada={refreshAll}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-center">
-                <div className="px-4">
-                  <FileText className="mx-auto mb-4 h-12 w-12 text-gray-300 lg:h-16 lg:w-16" />
-                  <p className="mb-4 text-base text-gray-500 lg:text-lg">
-                    Selecciona una nota de fábrica para ver los detalles
-                  </p>
-                  <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
-                    <div className="rounded-lg bg-orange-50 px-4 py-2 text-center">
-                      <div className="text-lg font-semibold text-orange-600 lg:text-xl">
-                        {notasSinOrdenCount}
-                      </div>
-                      <div className="text-xs text-gray-600 lg:text-sm">
-                        Sin Orden
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-                      <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                        {notasEnProduccionCount}
-                      </div>
-                      <div className="text-xs text-gray-600 lg:text-sm">
-                        En Producción
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ProduccionEmptyState
+                icon={FileText}
+                message="Selecciona una nota de fábrica para ver los detalles"
+                stats={[
+                  { count: notasSinOrdenCount, label: 'Sin Orden', colorTheme: 'orange' },
+                  { count: notasEnProduccionCount, label: 'En Producción', colorTheme: 'green' },
+                ]}
+              />
             )
           ) : selectedOrden ? (
             <OrdenProduccionDetails
               orden={selectedOrden}
-              onIniciarProduccion={
-                selectedOrden.estado === 'APROBADA'
-                  ? handleIniciarProduccion
-                  : undefined
-              }
-              onFinalizarProduccion={
-                selectedOrden.estado === 'EN PRODUCCION'
-                  ? handleFinalizarProduccion
-                  : undefined
-              }
+              onIniciarProduccion={selectedOrden.estado === 'APROBADA' ? () => setIsIniciarModalOpen(true) : undefined}
+              onFinalizarProduccion={selectedOrden.estado === 'EN PRODUCCION' ? () => setIsFinalizarModalOpen(true) : undefined}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-center">
-              <div className="px-4">
-                <Package className="mx-auto mb-4 h-12 w-12 text-gray-300 lg:h-16 lg:w-16" />
-                <p className="mb-4 text-base text-gray-500 lg:text-lg">
-                  Selecciona una orden de producción para ver los detalles
-                </p>
-                <div className="flex justify-center gap-4 text-sm lg:gap-6 lg:text-base">
-                  <div className="rounded-lg bg-amber-50 px-4 py-2 text-center">
-                    <div className="text-lg font-semibold text-amber-600 lg:text-xl">
-                      {ordenesPendientesCount}
-                    </div>
-                    <div className="text-xs text-gray-600 lg:text-sm">
-                      Pendientes
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-blue-50 px-4 py-2 text-center">
-                    <div className="text-lg font-semibold text-blue-600 lg:text-xl">
-                      {ordenesAprobadasCount}
-                    </div>
-                    <div className="text-xs text-gray-600 lg:text-sm">
-                      Aprobadas
-                    </div>
-                  </div>
-                  <div className="rounded-lg bg-green-50 px-4 py-2 text-center">
-                    <div className="text-lg font-semibold text-green-600 lg:text-xl">
-                      {ordenesEnProduccionCount}
-                    </div>
-                    <div className="text-xs text-gray-600 lg:text-sm">
-                      En Producción
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ProduccionEmptyState
+              icon={Package}
+              message="Selecciona una orden de producción para ver los detalles"
+              stats={[
+                { count: ordenesPendientesCount, label: 'Pendientes', colorTheme: 'amber' },
+                { count: ordenesAprobadasCount, label: 'Aprobadas', colorTheme: 'blue' },
+                { count: ordenesEnProduccionCount, label: 'En Producción', colorTheme: 'green' },
+              ]}
+            />
           )}
         </main>
       </div>
 
-      {/* Modal para crear orden de producción */}
       <CrearOrdenModal
         isOpen={showCrearOrdenModal}
         onClose={() => setShowCrearOrdenModal(false)}
         obraCodigo={selectedObra?.cod_obra}
-        onSuccess={handleOrdenCreated}
+        onSuccess={refreshAll}
       />
 
-      {/* Modales de acciones de producción */}
       {selectedOrdenSummary && (
-        <ProduccionActionModal
-          isOpen={isIniciarModalOpen}
-          title="Iniciar Producción"
-          message="¿Está seguro que desea iniciar la producción de esta orden?"
-          description="Esta acción cambiará el estado de la orden a EN PRODUCCIÓN y actualizará el estado de la obra asociada."
-          confirmLabel="Iniciar Producción"
-          loadingLabel="Iniciando..."
-          tone="green"
-          icon={<Play className="h-6 w-6" />}
-          summary={selectedOrdenSummary}
-          onConfirm={handleConfirmIniciar}
-          onCancel={() => setIsIniciarModalOpen(false)}
-          loading={isProduccionLoading}
-        />
+        <>
+          <ProduccionActionModal
+            isOpen={isIniciarModalOpen}
+            title="Iniciar Producción"
+            message="¿Está seguro que desea iniciar la producción de esta orden?"
+            description="Esta acción cambiará el estado de la orden a EN PRODUCCIÓN y actualizará el estado de la obra asociada."
+            confirmLabel="Iniciar Producción"
+            loadingLabel="Iniciando..."
+            tone="green"
+            icon={<Play className="h-6 w-6" />}
+            summary={selectedOrdenSummary}
+            onConfirm={handleConfirmIniciar}
+            onCancel={() => setIsIniciarModalOpen(false)}
+            loading={isProduccionLoading}
+          />
+          <ProduccionActionModal
+            isOpen={isFinalizarModalOpen}
+            title="Finalizar Producción"
+            message="¿Está seguro que desea finalizar la producción de esta orden?"
+            description="Esta acción marcará la orden como FINALIZADA."
+            confirmLabel="Finalizar Producción"
+            loadingLabel="Finalizando..."
+            tone="amber"
+            icon={<CheckCircle className="h-6 w-6" />}
+            summary={selectedOrdenSummary}
+            warningTitle="Advertencia"
+            warningText="Asegúrese de que todos los productos fueron completados antes de finalizar la producción."
+            onConfirm={handleConfirmFinalizar}
+            onCancel={() => setIsFinalizarModalOpen(false)}
+            loading={isProduccionLoading}
+          />
+        </>
       )}
+    </div>
+  )
+}
 
-      {selectedOrdenSummary && (
-        <ProduccionActionModal
-          isOpen={isFinalizarModalOpen}
-          title="Finalizar Producción"
-          message="¿Está seguro que desea finalizar la producción de esta orden?"
-          description="Esta acción marcará la orden como FINALIZADA."
-          confirmLabel="Finalizar Producción"
-          loadingLabel="Finalizando..."
-          tone="amber"
-          icon={<CheckCircle className="h-6 w-6" />}
-          summary={selectedOrdenSummary}
-          warningTitle="Advertencia"
-          warningText="Asegúrese de que todos los productos fueron completados antes de finalizar la producción."
-          onConfirm={handleConfirmFinalizar}
-          onCancel={() => setIsFinalizarModalOpen(false)}
-          loading={isProduccionLoading}
-        />
-      )}
+// ---------------------------------------------------------------------------
+// Internal Helper Components
+// ---------------------------------------------------------------------------
+
+function StatBadge({ count, label, color }: { count: number; label: string; color: 'orange' | 'green' | 'amber' | 'blue' }) {
+  const themes = {
+    orange: 'bg-orange-50 text-orange-600',
+    green: 'bg-green-50 text-green-600',
+    amber: 'bg-amber-50 text-amber-600',
+    blue: 'bg-blue-50 text-blue-600',
+  }
+  return (
+    <div className={`rounded-lg px-3 py-2 text-center lg:px-4 ${themes[color]}`}>
+      <div className="text-lg font-semibold lg:text-xl">{count}</div>
+      <div className="text-xs text-gray-600 lg:text-sm">{label}</div>
     </div>
   )
 }
