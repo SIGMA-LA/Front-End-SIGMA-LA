@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Wrench } from 'lucide-react'
+import { Wrench, CheckCircle, XCircle } from 'lucide-react'
 import type { Maquinaria } from '@/types'
 import { deleteMaquinaria } from '@/actions/maquinarias'
 import { notify } from '@/lib/toast'
@@ -24,6 +24,11 @@ export default function MaquinariasPageContent({
     useState<Maquinaria | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  const maquinariasDisponibles = maquinarias.filter(
+    (maquinaria) => maquinaria.estado === 'DISPONIBLE'
+  ).length
+  const maquinariasNoDisponibles = maquinarias.length - maquinariasDisponibles
 
   const handleViewDetails = (maquinaria: Maquinaria) => {
     setSelectedMaquinaria(maquinaria)
@@ -60,33 +65,57 @@ export default function MaquinariasPageContent({
     })
   }
 
-  if (maquinarias.length === 0) {
-    return (
-      <div className="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
-        <Wrench className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-4 text-lg font-medium text-gray-900">
-          No hay maquinarias registradas
-        </h3>
-        <p className="mt-2 text-gray-600">
-          Comienza agregando la primera maquinaria a tu inventario
-        </p>
-      </div>
-    )
-  }
-
   return (
     <>
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {maquinarias.map((maquinaria) => (
-          <MaquinariaCard
-            key={maquinaria.cod_maquina}
-            maquinaria={maquinaria}
-            onViewDetails={handleViewDetails}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        ))}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <span className="text-sm font-medium text-gray-700">
+              Disponibles
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">
+            {maquinariasDisponibles}
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <XCircle className="h-5 w-5 text-red-600" />
+            <span className="text-sm font-medium text-gray-700">
+              No Disponibles
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">
+            {maquinariasNoDisponibles}
+          </p>
+        </div>
       </div>
+
+      {maquinarias.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
+          <Wrench className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            No hay maquinarias registradas
+          </h3>
+          <p className="mt-2 text-gray-600">
+            Comienza agregando la primera maquinaria a tu inventario
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {maquinarias.map((maquinaria) => (
+            <MaquinariaCard
+              key={maquinaria.cod_maquina}
+              maquinaria={maquinaria}
+              onViewDetails={handleViewDetails}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
 
       <VerDetallesMaquinariaModal
         isOpen={showDetailsModal}

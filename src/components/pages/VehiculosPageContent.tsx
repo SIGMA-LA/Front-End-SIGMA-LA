@@ -15,9 +15,9 @@ interface VehiculosPageContentProps {
 
 function VehiculosSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 animate-pulse rounded-lg bg-gray-200" />
             <div className="space-y-2">
@@ -28,7 +28,7 @@ function VehiculosSkeleton() {
           <div className="h-10 w-40 animate-pulse rounded-lg bg-gray-200" />
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[...Array(2)].map((_, i) => (
             <div
               key={i}
@@ -37,7 +37,7 @@ function VehiculosSkeleton() {
           ))}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
@@ -71,7 +71,9 @@ export default function VehiculosPageContent({
       const nuevoEstado =
         estadoActual === 'DISPONIBLE' ? 'FUERA DE SERVICIO' : 'DISPONIBLE'
 
-      const res = await updateVehiculo(patente, { estado: nuevoEstado as VehiculoEstado })
+      const res = await updateVehiculo(patente, {
+        estado: nuevoEstado as VehiculoEstado,
+      })
       if (!res.success) {
         notify.error(res.error || 'Error al cambiar el estado del vehiculo.')
         return
@@ -117,30 +119,32 @@ export default function VehiculosPageContent({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600">
-              <Car className="h-6 w-6 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+              <Car className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Vehículos</h1>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                Vehículos
+              </h1>
               <p className="text-sm text-gray-600">
-                Gestión de flota vehicular
+                Administra y controla el inventario de vehículos
               </p>
             </div>
           </div>
           <button
             onClick={() => router.push('/coordinacion/vehiculos/crear')}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
           >
             <Plus className="h-5 w-5" />
             Nuevo Vehículo
           </button>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-gray-200 bg-white p-4">
             <div className="mb-2 flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -167,26 +171,24 @@ export default function VehiculosPageContent({
         </div>
 
         {vehiculos.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-              <Car className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+          <div className="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
+            <Car className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-4 text-lg font-medium text-gray-900">
               No hay vehículos registrados
             </h3>
-            <p className="mb-6 text-gray-600">
+            <p className="mt-2 mb-6 text-gray-600">
               Comienza agregando el primer vehículo a la flota
             </p>
             <button
               onClick={() => router.push('/coordinacion/vehiculos/crear')}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
             >
               <Plus className="h-5 w-5" />
               Nuevo Vehículo
             </button>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {vehiculos.map((vehiculo) => (
               <VehiculoCard
                 key={vehiculo.patente}

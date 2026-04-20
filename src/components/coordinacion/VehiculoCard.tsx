@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  Car,
   CheckCircle,
   XCircle,
   Loader2,
   Calendar,
   Package,
-  Pencil,
+  Edit,
   Trash2,
 } from 'lucide-react'
 import { Vehiculo, VehiculoEstado } from '@/types'
@@ -23,7 +24,6 @@ interface VehiculoCardProps {
   isTogglingEstado: boolean
 }
 
-
 export default function VehiculoCard({
   vehiculo,
   onToggleEstado,
@@ -33,17 +33,6 @@ export default function VehiculoCard({
   const router = useRouter()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-
-  const getEstadoIcon = (estado: VehiculoEstado) => {
-    switch (estado) {
-      case 'DISPONIBLE':
-        return <CheckCircle className="h-5 w-5 text-green-600" />
-      case 'FUERA DE SERVICIO':
-        return <XCircle className="h-5 w-5 text-red-600" />
-      default:
-        return <CheckCircle className="h-5 w-5 text-gray-600" />
-    }
-  }
 
   const getEstadoBadgeColor = (estado: VehiculoEstado) => {
     switch (estado) {
@@ -70,26 +59,36 @@ export default function VehiculoCard({
 
   return (
     <>
-      <div className="rounded-lg border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md">
-        <div className="mb-4 flex items-start justify-between">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
+        <div className="flex items-center justify-between border-b bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
           <div className="flex items-center gap-2">
-            {getEstadoIcon(vehiculo.estado)}
-            <span className="text-sm font-medium text-gray-700">
-              {vehiculo.tipo_vehiculo}
+            <Car className="h-5 w-5 text-blue-600" />
+            <span className="font-mono text-xs text-gray-600">
+              {vehiculo.patente}
             </span>
           </div>
           <span
-            className={`rounded-full px-2.5 py-1 text-xs font-medium ${getEstadoBadgeColor(vehiculo.estado)}`}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${getEstadoBadgeColor(
+              vehiculo.estado
+            )}`}
           >
-            {vehiculo.estado}
+            {vehiculo.estado === 'DISPONIBLE' ? 'Disponible' : 'No Disponible'}
           </span>
         </div>
 
-        <div className="mb-4">
-          <p className="mb-2 font-mono text-2xl font-bold text-gray-900">
-            {vehiculo.patente}
-          </p>
-          <div className="space-y-1 text-sm text-gray-600">
+        <div className="p-6">
+          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-gray-900">
+            {vehiculo.marca && vehiculo.modelo
+              ? `${vehiculo.marca} ${vehiculo.modelo}`
+              : vehiculo.tipo_vehiculo}
+          </h3>
+
+          <div className="mb-4 space-y-1 text-sm text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <Package className="h-4 w-4" />
+              <span>{vehiculo.tipo_vehiculo}</span>
+            </div>
+
             {vehiculo.marca && vehiculo.modelo && (
               <div className="flex items-center gap-1.5">
                 <Package className="h-4 w-4" />
@@ -105,51 +104,54 @@ export default function VehiculoCard({
               </div>
             )}
           </div>
-        </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={() => onToggleEstado(vehiculo.patente, vehiculo.estado)}
-            disabled={isTogglingEstado}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              vehiculo.estado === 'DISPONIBLE'
-                ? 'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
-                : 'border border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
-            }`}
-          >
-            {isTogglingEstado ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Cambiando...</span>
-              </>
-            ) : vehiculo.estado === 'DISPONIBLE' ? (
-              <>
-                <XCircle className="h-4 w-4" />
-                <span>Marcar como Fuera de Servicio</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-4 w-4" />
-                <span>Activar</span>
-              </>
-            )}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onToggleEstado(vehiculo.patente, vehiculo.estado)}
+              disabled={isTogglingEstado}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                vehiculo.estado === 'DISPONIBLE'
+                  ? 'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                  : 'border border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+              }`}
+            >
+              {isTogglingEstado ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Cambiando...</span>
+                </>
+              ) : vehiculo.estado === 'DISPONIBLE' ? (
+                <>
+                  <XCircle className="h-4 w-4" />
+                  <span>Desactivar</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Activar</span>
+                </>
+              )}
+            </button>
 
-          <button
-            onClick={() =>
-              router.push(`/coordinacion/vehiculos/${vehiculo.patente}/editar`)
-            }
-            className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
+            <button
+              onClick={() =>
+                router.push(
+                  `/coordinacion/vehiculos/${vehiculo.patente}/editar`
+                )
+              }
+              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              <Edit className="h-4 w-4" />
+              Editar
+            </button>
 
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
