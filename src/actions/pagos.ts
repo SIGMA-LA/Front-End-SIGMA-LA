@@ -89,7 +89,7 @@ export async function getObrasConPresupuestoAceptado(
     if (search) params.append('search', search)
 
     const queryString = params.toString()
-    const url = `${BASE_URL}/obras-con-presupuesto${queryString ? `?${queryString}` : ''}`
+    const url = `${API_URL}/obras/con-presupuesto-aceptado${queryString ? `?${queryString}` : ''}`
 
     const response = await fetchWithErrorHandling<ObraConPresupuesto[]>(url, {
       method: 'GET',
