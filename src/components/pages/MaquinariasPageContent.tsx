@@ -52,6 +52,7 @@ export default function MaquinariasPageContent({
         setShowDeleteModal(false)
         setSelectedMaquinaria(null)
         router.refresh()
+        notify.success('Maquinaria eliminada exitosamente')
       } catch (error) {
         console.error('Error al eliminar maquinaria:', error)
         notify.error('Error al eliminar la maquinaria')

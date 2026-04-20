@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import VehiculoForm from '@/components/coordinacion/VehiculoForm'
 import { getVehiculo, updateVehiculo } from '@/actions/vehiculos'
 import { Vehiculo, VehiculoFormData } from '@/types'
+import { notify } from '@/lib/toast'
 
 export default function EditarVehiculoPage() {
   const params = useParams()
@@ -40,6 +41,7 @@ export default function EditarVehiculoPage() {
         setError(res.error || 'Error al actualizar el vehículo')
         return
       }
+      notify.success('El vehículo se ha actualizado con éxito')
       router.push('/coordinacion/vehiculos')
       router.refresh()
     } catch (err: unknown) {
