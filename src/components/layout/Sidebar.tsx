@@ -17,6 +17,8 @@ import {
   Car,
   BarChart2,
   LucideIcon,
+  TruckIcon,
+  Truck,
 } from 'lucide-react'
 import { Empleado } from '@/types'
 
@@ -27,7 +29,7 @@ const menuItemsVentas: MenuItem[] = [
   { path: '/ventas/obras', label: 'Obras', icon: Building2 },
   { path: '/ventas/clientes', label: 'Clientes', icon: Users },
   { path: '/ventas/visitas', label: 'Visitas', icon: Calendar },
-  { path: '/ventas/entregas', label: 'Entregas', icon: PackageOpen },
+  { path: '/ventas/entregas', label: 'Entregas', icon: TruckIcon },
   { path: '/ventas/pagos', label: 'Pagos', icon: DollarSign },
   { path: '/ventas/configuraciones', label: 'Configuraciones', icon: Settings },
 ]
@@ -42,7 +44,7 @@ const menuItemsCoordinacion: MenuItem[] = [
     label: 'Órdenes de Producción',
     icon: Package,
   },
-  { path: '/coordinacion/entregas', label: 'Entregas', icon: PackageOpen },
+  { path: '/coordinacion/entregas', label: 'Entregas', icon: TruckIcon },
   { path: '/coordinacion/pedidos', label: 'Pedidos', icon: ClipboardList },
   { path: '/coordinacion/maquinarias', label: 'Maquinarias', icon: Wrench },
   { path: '/coordinacion/vehiculos', label: 'Vehículos', icon: Car },

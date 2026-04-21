@@ -183,7 +183,7 @@ export default function EntregaCard({ entrega }: EntregaCardProps) {
               className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-all hover:bg-blue-100"
             >
               <Eye className="h-4 w-4" />
-              Detalle Completo
+              Ver Detalles
             </button>
 
             {entrega.estado === 'PENDIENTE' && (

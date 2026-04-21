@@ -3,11 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type {
-  Pago,
-  PagosFilter,
-  ObraConPresupuesto,
-} from '@/types'
+import type { Pago, PagosFilter, ObraConPresupuesto } from '@/types'
 import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
@@ -93,7 +89,7 @@ export async function getObrasConPresupuestoAceptado(
     if (search) params.append('search', search)
 
     const queryString = params.toString()
-    const url = `${API_URL}/obras-con-presupuesto${queryString ? `?${queryString}` : ''}`
+    const url = `${API_URL}/obras/con-presupuesto-aceptado${queryString ? `?${queryString}` : ''}`
 
     const response = await fetchWithErrorHandling<ObraConPresupuesto[]>(url, {
       method: 'GET',
@@ -139,7 +135,9 @@ export async function hayObrasPendientes(): Promise<boolean> {
 
     const obras = await response.json()
     // Return true if there are obras with pending balance > 0
-    return obras.some((obra: ObraConPresupuesto) => (obra.saldoPendiente || 0) > 0)
+    return obras.some(
+      (obra: ObraConPresupuesto) => (obra.saldoPendiente || 0) > 0
+    )
   } catch (error) {
     console.error('[hayObrasPendientes]', error)
     throw error
@@ -175,7 +173,10 @@ export async function createPagoForObra(
     revalidatePath('/ventas/obras')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo registrar el pago. Intentá nuevamente.'
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'No se pudo registrar el pago. Intentá nuevamente.'
     console.error('[createPagoForObra]', message)
     return { success: false, error: message }
   }
@@ -201,7 +202,10 @@ export async function deletePago(cod_pago: number): Promise<ActionResponse> {
     revalidatePath('/ventas/obras')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo eliminar el pago. Intentá nuevamente.'
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'No se pudo eliminar el pago. Intentá nuevamente.'
     console.error('[deletePago]', message)
     return { success: false, error: message }
   }

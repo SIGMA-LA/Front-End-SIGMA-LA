@@ -5,6 +5,7 @@ import { useState } from 'react'
 import VehiculoForm from '@/components/coordinacion/VehiculoForm'
 import { createVehiculo } from '@/actions/vehiculos'
 import { VehiculoFormData } from '@/types'
+import { notify } from '@/lib/toast'
 
 export default function CrearVehiculoPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function CrearVehiculoPage() {
         setError(res.error || 'Error al crear el vehículo')
         return
       }
+      notify.success('El vehículo se ha registrado con éxito')
       router.push('/coordinacion/vehiculos')
       router.refresh()
     } catch (err: unknown) {

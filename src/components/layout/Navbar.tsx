@@ -24,18 +24,40 @@ export default function Navbar({ usuario }: NavbarProps) {
     return null
   }
 
+  const canOpenConfiguraciones = ['VISITADOR', 'PRODUCCION', 'PLANTA'].includes(
+    usuario.rol_actual
+  )
+
   return (
     <>
       <header className="sticky top-0 z-30 bg-slate-900 px-1.5 py-3 text-white shadow-md sm:px-6 sm:py-6">
         <div className="flex w-full max-w-full items-center justify-between">
-          <Link href={`/${usuario.rol_actual.toLowerCase()}`} className="flex min-w-0 items-center space-x-2 sm:space-x-3 transition-opacity hover:opacity-80">
-            <Sigma className="h-7 w-7 flex-shrink-0 text-white sm:h-10 sm:w-10" />
-            <h1 className="truncate text-lg font-bold sm:text-2xl">
-              SIGMA - LA
-            </h1>
-          </Link>
+          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+            {canOpenConfiguraciones && (
+              <Link
+                href={`/${usuario.rol_actual.toLowerCase()}/configuraciones`}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-11 w-11 rounded-xl border border-slate-700 bg-slate-800/80 p-0 text-white shadow-sm transition-all hover:bg-slate-700 sm:h-12 sm:w-12"
+                >
+                  <Settings className="h-6 w-6 sm:h-7 sm:w-7" />
+                </Button>
+              </Link>
+            )}
+            <Link
+              href={`/${usuario.rol_actual.toLowerCase()}`}
+              className="flex min-w-0 items-center space-x-2 transition-opacity hover:opacity-80 sm:space-x-3"
+            >
+              <Sigma className="h-7 w-7 flex-shrink-0 text-white sm:h-10 sm:w-10" />
+              <h1 className="truncate text-lg font-bold sm:text-2xl">
+                SIGMA - LA
+              </h1>
+            </Link>
+          </div>
           <div className="flex min-w-0 items-center space-x-2 sm:space-x-4">
-            <div className="min-w-0 text-right mr-3">
+            <div className="mr-3 min-w-0 text-right">
               <p className="truncate text-xs font-medium sm:text-xl">
                 {usuario.nombre} {usuario.apellido}
               </p>
@@ -43,16 +65,6 @@ export default function Navbar({ usuario }: NavbarProps) {
                 {usuario.rol_actual}
               </p>
             </div>
-            <Link href={`/${usuario.rol_actual.toLowerCase()}/configuraciones`}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-10 px-0 sm:w-auto sm:px-4 text-white hover:bg-slate-800"
-              >
-                <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
-                <span className="hidden sm:inline sm:ml-2">Configuraciones</span>
-              </Button>
-            </Link>
             <Button
               onClick={() => setShowModal(true)}
               variant="destructive"
