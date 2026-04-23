@@ -559,6 +559,7 @@ export async function finalizarProduccionObra(
     revalidateTag('notas-fabrica')
     revalidateTag('ordenes-produccion')
     revalidateTag('obras')
+    revalidateTag(`obra-${id}`)
     revalidatePath('/produccion')
     revalidatePath('/obras')
     return { success: true, data }
