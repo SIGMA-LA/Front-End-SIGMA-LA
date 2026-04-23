@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Home, Loader2, Users, Layers, Plus } from 'lucide-react'
+import { AlertCircle, Home, Loader2, Users, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Obra, Provincia } from '@/types'

@@ -344,8 +344,8 @@ export async function createEntrega(
     }
 
     revalidateTag('entregas')
-    if (data && (data as any).cod_obra) {
-      revalidateTag(`obra-${(data as any).cod_obra}`)
+    if (data && (data as Entrega).cod_obra) {
+      revalidateTag(`obra-${(data as Entrega).cod_obra}`)
     }
     revalidatePath('/coordinacion/entregas')
     revalidatePath('/planta/entregas')
@@ -399,8 +399,8 @@ export async function updateEntrega(
 
     revalidateTag(`entrega-${id}`)
     revalidateTag('entregas')
-    if (data && (data as any).cod_obra) {
-      revalidateTag(`obra-${(data as any).cod_obra}`)
+    if (data && (data as Entrega).cod_obra) {
+      revalidateTag(`obra-${(data as Entrega).cod_obra}`)
     }
     revalidatePath('/coordinacion/entregas')
     revalidatePath(`/coordinacion/entregas/${id}/editar`)

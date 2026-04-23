@@ -184,7 +184,7 @@ export default function useEntregaForm({
 
     const maqs = (entregaToEdit.maquinarias ?? entregaToEdit.uso_maquinaria ?? []).map((m) => String(m.cod_maquina))
     setSelectedMaquinaria(maqs)
-  }, [entregaToEdit?.cod_entrega])
+  }, [entregaToEdit, dateLogic])
 
   const totalViaticos = useMemo(() => {
     const totalPersonas = (encargado ? 1 : 0) + acompanantes.length

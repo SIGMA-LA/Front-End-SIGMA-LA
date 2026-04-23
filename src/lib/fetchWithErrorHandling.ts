@@ -1,4 +1,4 @@
-import type { ValidationIssue, ValidationDetail, BackendErrorData } from '@/types'
+import type { ValidationDetail, BackendErrorData } from '@/types'
 
 const TECHNICAL_MESSAGE_PATTERNS = [
   /Invalid length/i,

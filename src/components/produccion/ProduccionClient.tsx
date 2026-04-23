@@ -1,7 +1,7 @@
 'use client'
 
 import { FileText, Package, Menu, X, Play, CheckCircle } from 'lucide-react'
-import type { Obra, OrdenProduccion, Empleado } from '@/types'
+import type { Obra, Empleado } from '@/types'
 import TabNavigation from './TabNavigation'
 import SidebarNotasFabrica from './SidebarNotasFabrica'
 import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
