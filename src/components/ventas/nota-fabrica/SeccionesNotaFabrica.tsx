@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, RefreshCw, Trash2, Loader2, Upload, X } from 'lucide-react'
+import { FileText, RefreshCw, Trash2, Loader2, Upload } from 'lucide-react'
 import type { RolEmpleado } from '@/types'
 
 interface NotaViewerProps {

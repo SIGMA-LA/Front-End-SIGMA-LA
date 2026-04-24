@@ -358,6 +358,12 @@ export async function finishProduccion(
     const data = await response.json()
     revalidateTag('ordenes-produccion')
     revalidateTag('notas-fabrica')
+    revalidateTag('obras')
+    // Si la OP contiene cod_obra, invalidar también el caché específico de esa obra
+    if (data && data.cod_obra) {
+      revalidateTag(`obra-${data.cod_obra}`)
+      revalidateTag(`ordenes-obra-${data.cod_obra}`)
+    }
     revalidatePath('/produccion')
     revalidatePath('/coordinacion/ordenes-produccion')
 

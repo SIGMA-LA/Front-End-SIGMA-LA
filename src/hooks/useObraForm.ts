@@ -83,7 +83,7 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
       cuil_cliente: clienteSearch.selectedCliente?.cuil || '',
       cuil_arquitecto: arquitectoSearch.selectedCliente?.cuil || null,
     }))
-  }, [clienteSearch.selectedCliente, arquitectoSearch.selectedCliente, setFormData])
+  }, [clienteSearch, arquitectoSearch])
 
   // Fetch localities
   useEffect(() => {

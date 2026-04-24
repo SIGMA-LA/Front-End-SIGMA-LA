@@ -61,7 +61,7 @@ export default function Configuraciones({ onBack, className = '' }: { onBack?: (
     try {
       await new Promise((resolve) => setTimeout(resolve, 800))
       notify.success('Configuraciones guardadas exitosamente!')
-    } catch (err: unknown) {
+    } catch (_err: unknown) {
       notify.error('Error al guardar configuraciones.')
     } finally {
       setIsLoading(false)

@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Calendar, Building2 } from 'lucide-react'
+import { MapPin, Calendar } from 'lucide-react'
 import type { Provincia } from '@/types'
 
 interface UbicacionSeccionProps {

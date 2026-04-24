@@ -9,7 +9,6 @@ import {
   Calendar,
   Settings,
   Home,
-  PackageOpen,
   DollarSign,
   Package,
   ClipboardList,
@@ -18,7 +17,6 @@ import {
   BarChart2,
   LucideIcon,
   TruckIcon,
-  Truck,
 } from 'lucide-react'
 import { Empleado } from '@/types'
 

@@ -258,6 +258,10 @@ export async function finalizarEntrega(
     const data = await res.json()
 
     revalidateTag(`entrega-${codEntrega}`)
+    revalidateTag('entregas')
+    if (data && data.cod_obra) {
+      revalidateTag(`obra-${data.cod_obra}`)
+    }
     revalidatePath('/visitador')
     revalidatePath('/planta')
     revalidatePath('/coordinacion/entregas')
@@ -293,6 +297,7 @@ export async function cancelarEntrega(
     )
 
     revalidateTag(`entrega-${codEntrega}`)
+    revalidateTag('entregas')
     revalidatePath('/visitador')
     revalidatePath('/planta')
     revalidatePath('/coordinacion/entregas')
@@ -338,6 +343,10 @@ export async function createEntrega(
       })
     }
 
+    revalidateTag('entregas')
+    if (data && (data as Entrega).cod_obra) {
+      revalidateTag(`obra-${(data as Entrega).cod_obra}`)
+    }
     revalidatePath('/coordinacion/entregas')
     revalidatePath('/planta/entregas')
     return { success: true, data: data as unknown as Entrega }
@@ -389,6 +398,10 @@ export async function updateEntrega(
     }
 
     revalidateTag(`entrega-${id}`)
+    revalidateTag('entregas')
+    if (data && (data as Entrega).cod_obra) {
+      revalidateTag(`obra-${(data as Entrega).cod_obra}`)
+    }
     revalidatePath('/coordinacion/entregas')
     revalidatePath(`/coordinacion/entregas/${id}/editar`)
 

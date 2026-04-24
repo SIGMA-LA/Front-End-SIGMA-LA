@@ -1,7 +1,6 @@
 'use client'
 
 import { Search, Loader2, User } from 'lucide-react'
-import type { Cliente } from '@/types'
 import type { ClienteSearchState } from '@/hooks/useClienteSearch'
 
 // ---------------------------------------------------------------------------
