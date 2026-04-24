@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Cliente } from '@/types'
 import { getClientes } from '@/actions/clientes'
 import useDebounce from '@/hooks/useDebounce'
@@ -77,25 +77,28 @@ export function useClienteSearch(soloPersonas = false): ClienteSearchState {
     }
   }, [debouncedQuery, fetchClientes, selectedCliente])
 
-  const selectCliente = (cliente: Cliente) => {
+  const selectCliente = useCallback((cliente: Cliente) => {
     setSelectedCliente(cliente)
     setQuery(getClienteDisplayName(cliente))
     setResults([])
-  }
+  }, [])
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     setSelectedCliente(null)
     setQuery('')
     setResults([])
-  }
+  }, [])
 
-  return {
-    query,
-    setQuery,
-    results,
-    isSearching,
-    selectedCliente,
-    selectCliente,
-    clearSelection,
-  }
+  return useMemo(
+    () => ({
+      query,
+      setQuery,
+      results,
+      isSearching,
+      selectedCliente,
+      selectCliente,
+      clearSelection,
+    }),
+    [query, results, isSearching, selectedCliente, selectCliente, clearSelection],
+  )
 }
