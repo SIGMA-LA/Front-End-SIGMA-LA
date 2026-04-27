@@ -9,22 +9,13 @@ export default function CrearClienteAdminPage() {
   ) {
     'use server'
 
-    try {
-      const result = await createCliente(formData)
+    const result = await createCliente(formData)
 
-      if (result.success) {
-        redirect('/admin/clientes?toast=cliente-creado')
-      }
-
-      return result
-    } catch (error: unknown) {
-      console.error('Error al crear cliente (admin):', error)
-      return {
-        success: false,
-        error:
-          error instanceof Error ? error.message : 'Error al crear cliente',
-      }
+    if (result.success) {
+      redirect('/admin/clientes?toast=cliente-creado')
     }
+
+    return result
   }
 
   return (
