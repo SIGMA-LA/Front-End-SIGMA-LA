@@ -94,7 +94,13 @@ export default function CrearEntregaForm({
     getEmpleadoNombre,
     handleConfirmPersonal,
     handleSubmit,
-  } = useEntregaForm({ preloadedObra, entregaToEdit, empleados, vehiculos, maquinarias })
+  } = useEntregaForm({
+    preloadedObra,
+    entregaToEdit,
+    empleados,
+    vehiculos,
+    maquinarias,
+  })
 
   return (
     <>
@@ -108,10 +114,14 @@ export default function CrearEntregaForm({
               </div>
               <div>
                 <h1 className="bg-gradient-to-r from-blue-900 to-indigo-800 bg-clip-text text-2xl font-bold text-transparent">
-                  {entregaToEdit ? 'Editar Entrega Operativa' : 'Programar Nueva Entrega'}
+                  {entregaToEdit
+                    ? 'Editar Entrega Operativa'
+                    : 'Programar Nueva Entrega'}
                 </h1>
                 <p className="text-sm font-medium text-slate-500">
-                  {entregaToEdit ? `Modificando entrega #${entregaToEdit.cod_entrega}` : 'Coordinación de logística'}
+                  {entregaToEdit
+                    ? `Modificando entrega #${entregaToEdit.cod_entrega}`
+                    : 'Coordinación de logística'}
                 </p>
               </div>
             </div>
@@ -126,12 +136,20 @@ export default function CrearEntregaForm({
               obraId={formData.obraId}
               direccion={formData.direccion}
               detalle={formData.detalle}
-              onObraChange={(id, dir) => setFormData(p => ({ ...p, obraId: id, direccion: dir }))}
-              onDetalleChange={(v) => setFormData(p => ({ ...p, detalle: v }))}
+              onObraChange={(id, dir) =>
+                setFormData((p) => ({ ...p, obraId: id, direccion: dir }))
+              }
+              onDetalleChange={(v) =>
+                setFormData((p) => ({ ...p, detalle: v }))
+              }
               onBuscarObras={buscarObrasSegunTipo}
               availableOPs={availableOPs}
               selectedOPs={selectedOPs}
-              onToggleOP={(id, ch) => setSelectedOPs(p => ch ? [...p, id] : p.filter(x => x !== id))}
+              onToggleOP={(id, ch) =>
+                setSelectedOPs((p) =>
+                  ch ? [...p, id] : p.filter((x) => x !== id)
+                )
+              }
               onVerDocumento={openViewer}
               isFetchingOPs={isFetchingOPs}
               isFromObra={isFromObra}
@@ -166,8 +184,10 @@ export default function CrearEntregaForm({
             <RecursosSelection
               selectedVehiculos={selectedVehiculos}
               onSelectVehiculosClick={() => setIsVehiculoModalOpen(true)}
+              onDesvincularVehiculos={() => setSelectedVehiculos([])}
               selectedMaquinaria={selectedMaquinaria}
               onSelectMaquinariaClick={() => setIsMaquinariaModalOpen(true)}
+              onDesvincularMaquinaria={() => setSelectedMaquinaria([])}
               maquinarias={maquinarias}
             />
 
@@ -185,7 +205,13 @@ export default function CrearEntregaForm({
                 disabled={isPending || !encargado}
                 className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-2.5 text-sm font-bold text-white shadow-md hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50"
               >
-                {isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : entregaToEdit ? 'Guardar Cambios' : 'Crear Entrega'}
+                {isPending ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : entregaToEdit ? (
+                  'Guardar Cambios'
+                ) : (
+                  'Crear Entrega'
+                )}
               </button>
             </div>
           </form>
@@ -193,13 +219,29 @@ export default function CrearEntregaForm({
       </div>
 
       {/* Modals */}
-      <DocumentViewer url={viewerUrl} title={viewerTitle} isOpen={isViewerOpen} onClose={closeViewer} />
+      <DocumentViewer
+        url={viewerUrl}
+        title={viewerTitle}
+        isOpen={isViewerOpen}
+        onClose={closeViewer}
+      />
       <DateTimeModal
         isOpen={isDateTimeModalOpen}
         onClose={() => setIsDateTimeModalOpen(false)}
-        initialValues={{ fecha: formData.fecha, hora: formData.hora, fechaSalida, horaSalida, fechaRegreso, horaRegreso }}
+        initialValues={{
+          fecha: formData.fecha,
+          hora: formData.hora,
+          fechaSalida,
+          horaSalida,
+          fechaRegreso,
+          horaRegreso,
+        }}
         onConfirm={(nf, nh, nfs, nhs, nfr, nhr) => {
-          setFormData(p => ({ ...p, fecha: nf, hora: nh })); setFechaSalida(nfs); setHoraSalida(nhs); setFechaRegreso(nfr); setHoraRegreso(nhr)
+          setFormData((p) => ({ ...p, fecha: nf, hora: nh }))
+          setFechaSalida(nfs)
+          setHoraSalida(nhs)
+          setFechaRegreso(nfr)
+          setHoraRegreso(nhr)
           setIsDateTimeModalOpen(false)
         }}
       />
@@ -214,20 +256,52 @@ export default function CrearEntregaForm({
       <SelectionModal
         isOpen={isVehiculoModalOpen}
         title="Seleccionar Vehículos"
-        items={useMemo(() => vehiculos.map(v => ({ id: v.patente, label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`, disabled: v.estado !== 'DISPONIBLE' })), [vehiculos])}
+        items={useMemo(
+          () =>
+            vehiculos.map((v) => ({
+              id: v.patente,
+              label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
+              disabled: v.estado !== 'DISPONIBLE',
+            })),
+          [vehiculos]
+        )}
         selectedItems={selectedVehiculos}
         onClose={() => setIsVehiculoModalOpen(false)}
         onConfirm={setSelectedVehiculos}
-        onSearchAsync={useCallback(async (t: string) => (await getVehiculos(t)).map(v => ({ id: v.patente, label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`, disabled: v.estado !== 'DISPONIBLE' })), [])}
+        onSearchAsync={useCallback(
+          async (t: string) =>
+            (await getVehiculos(t)).map((v) => ({
+              id: v.patente,
+              label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
+              disabled: v.estado !== 'DISPONIBLE',
+            })),
+          []
+        )}
       />
       <SelectionModal
         isOpen={isMaquinariaModalOpen}
         title="Seleccionar Maquinaria"
-        items={useMemo(() => maquinarias.map(m => ({ id: m.cod_maquina.toString(), label: `${m.descripcion} (${m.estado})`, disabled: m.estado !== 'DISPONIBLE' })), [maquinarias])}
+        items={useMemo(
+          () =>
+            maquinarias.map((m) => ({
+              id: m.cod_maquina.toString(),
+              label: `${m.descripcion} (${m.estado})`,
+              disabled: m.estado !== 'DISPONIBLE',
+            })),
+          [maquinarias]
+        )}
         selectedItems={selectedMaquinaria}
         onClose={() => setIsMaquinariaModalOpen(false)}
         onConfirm={setSelectedMaquinaria}
-        onSearchAsync={useCallback(async (t: string) => (await getMaquinarias(t)).map(m => ({ id: m.cod_maquina.toString(), label: `${m.descripcion} (${m.estado})`, disabled: m.estado !== 'DISPONIBLE' })), [])}
+        onSearchAsync={useCallback(
+          async (t: string) =>
+            (await getMaquinarias(t)).map((m) => ({
+              id: m.cod_maquina.toString(),
+              label: `${m.descripcion} (${m.estado})`,
+              disabled: m.estado !== 'DISPONIBLE',
+            })),
+          []
+        )}
       />
     </>
   )
