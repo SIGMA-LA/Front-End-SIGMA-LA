@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Building2, MapPin, Calendar, Loader2 } from 'lucide-react'
+import { X, Building2, MapPin, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getCliente } from '@/actions/clientes'
 import { getObrasByCliente } from '@/actions/obras'
 import type { Cliente, Obra } from '@/types'
@@ -21,7 +21,9 @@ export default function VerDetallesCliente({
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [obras, setObras] = useState<Obra[]>([])
   const [loading, setLoading] = useState(true)
+  const [paginaActual, setPaginaActual] = useState(1)
   const canViewObraDetails = pathname.startsWith('/admin')
+  const OBRAS_POR_PAGINA = 5
 
   const getObraHref = (codObra: number) => {
     if (pathname.startsWith('/admin')) return `/admin/obras/${codObra}`
@@ -81,6 +83,11 @@ export default function VerDetallesCliente({
   }
 
   const esEmpresa = cliente.tipo_cliente === 'EMPRESA'
+
+  const indiceUltimaObra = paginaActual * OBRAS_POR_PAGINA
+  const indicePrimeraObra = indiceUltimaObra - OBRAS_POR_PAGINA
+  const obrasPaginadas = obras.slice(indicePrimeraObra, indiceUltimaObra)
+  const totalPaginas = Math.ceil(obras.length / OBRAS_POR_PAGINA)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -162,7 +169,7 @@ export default function VerDetallesCliente({
               </div>
             ) : (
               <div className="space-y-3">
-                {obras.map((obra) => (
+                {obrasPaginadas.map((obra) => (
                   <div
                     key={obra.cod_obra}
                     className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300"
@@ -192,6 +199,31 @@ export default function VerDetallesCliente({
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+            
+            {/* Controles de paginación */}
+            {totalPaginas > 1 && (
+              <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
+                <button
+                  onClick={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
+                  disabled={paginaActual === 1}
+                  className="flex items-center gap-1 rounded-md px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-transparent"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </button>
+                <span className="text-sm text-gray-600">
+                  Página {paginaActual} de {totalPaginas}
+                </span>
+                <button
+                  onClick={() => setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))}
+                  disabled={paginaActual === totalPaginas}
+                  className="flex items-center gap-1 rounded-md px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-transparent"
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
