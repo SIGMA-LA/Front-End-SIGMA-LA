@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Shield, Users } from 'lucide-react'
+import { X, Shield, Users, Search } from 'lucide-react'
 import type { Empleado } from '@/types'
 import { notify } from '@/lib/toast'
 
@@ -30,11 +30,14 @@ export default function AsignarPersonalModal({
   const [internalAcompanantes, setInternalAcompanantes] = useState<string[]>(
     acompanantesSeleccionados
   )
+  const [searchTerm, setSearchTerm] = useState('')
+  const maxResultados = 5
 
   useEffect(() => {
     if (isOpen) {
       setInternalEncargado(encargadoSeleccionado)
       setInternalAcompanantes(acompanantesSeleccionados)
+      setSearchTerm('')
     }
   }, [isOpen, encargadoSeleccionado, acompanantesSeleccionados])
 
@@ -68,6 +71,40 @@ export default function AsignarPersonalModal({
     (emp) => emp.cuil !== internalEncargado
   )
 
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+  const buildTarget = (emp: Empleado) =>
+    `${emp.nombre} ${emp.apellido} ${emp.cuil}`.toLowerCase()
+
+  const matchesSearch = (emp: Empleado) =>
+    !normalizedSearch || buildTarget(emp).includes(normalizedSearch)
+
+  const sortByMatch = (a: Empleado, b: Empleado) => {
+    const idxA = buildTarget(a).indexOf(normalizedSearch)
+    const idxB = buildTarget(b).indexOf(normalizedSearch)
+    if (idxA !== idxB) return idxA - idxB
+    const apellido = a.apellido.localeCompare(b.apellido)
+    if (apellido !== 0) return apellido
+    const nombre = a.nombre.localeCompare(b.nombre)
+    if (nombre !== 0) return nombre
+    return a.cuil.localeCompare(b.cuil)
+  }
+
+  const sortById = (a: Empleado, b: Empleado) => a.cuil.localeCompare(b.cuil)
+
+  const buildVisible = (list: Empleado[]) => {
+    const matched = normalizedSearch ? list.filter(matchesSearch) : list
+    const ordered = normalizedSearch
+      ? [...matched].sort(sortByMatch)
+      : [...matched].sort(sortById)
+    return {
+      total: matched.length,
+      visible: ordered.slice(0, maxResultados),
+    }
+  }
+
+  const encargadosData = buildVisible(empleados)
+  const acompanantesData = buildVisible(empleadosParaAcompanantes)
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
@@ -83,6 +120,20 @@ export default function AsignarPersonalModal({
           </button>
         </div>
 
+        <div className="p-6 pb-0">
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, apellido o CUIL..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 py-2.5 pr-4 pl-10 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              aria-label="Buscar personal"
+            />
+          </div>
+        </div>
+
         <div className="grid max-h-[60vh] grid-cols-1 gap-8 overflow-y-auto p-6 md:grid-cols-2">
           {/* Encargado */}
           <div className="space-y-4">
@@ -93,28 +144,39 @@ export default function AsignarPersonalModal({
               </h3>
             </div>
             <div className="space-y-2">
-              {empleados.map((emp) => (
-                <label
-                  key={emp.cuil}
-                  className={`flex cursor-pointer items-center rounded-lg border p-3 ${
-                    internalEncargado === emp.cuil
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="encargado"
-                    checked={internalEncargado === emp.cuil}
-                    onChange={() => setInternalEncargado(emp.cuil)}
-                    className="h-4 w-4 text-blue-600"
-                  />
-                  <span className="ml-3 text-sm">
-                    {emp.nombre} {emp.apellido}
-                  </span>
-                </label>
-              ))}
+              {encargadosData.visible.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
+                  No hay resultados para el encargado.
+                </div>
+              ) : (
+                encargadosData.visible.map((emp) => (
+                  <label
+                    key={emp.cuil}
+                    className={`flex cursor-pointer items-center rounded-lg border p-3 ${
+                      internalEncargado === emp.cuil
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="encargado"
+                      checked={internalEncargado === emp.cuil}
+                      onChange={() => setInternalEncargado(emp.cuil)}
+                      className="h-4 w-4 text-blue-600"
+                    />
+                    <span className="ml-3 text-sm">
+                      {emp.nombre} {emp.apellido}
+                    </span>
+                  </label>
+                ))
+              )}
             </div>
+            {encargadosData.total > maxResultados && (
+              <p className="text-xs text-gray-500">
+                Mostrando {maxResultados} de {encargadosData.total}.
+              </p>
+            )}
           </div>
 
           {/* Acompañantes */}
@@ -126,27 +188,38 @@ export default function AsignarPersonalModal({
               </h3>
             </div>
             <div className="space-y-2">
-              {empleadosParaAcompanantes.map((emp) => (
-                <label
-                  key={emp.cuil}
-                  className={`flex cursor-pointer items-center rounded-lg border p-3 ${
-                    internalAcompanantes.includes(emp.cuil)
-                      ? 'border-green-500 bg-green-50'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={internalAcompanantes.includes(emp.cuil)}
-                    onChange={() => handleToggleAcompanante(emp.cuil)}
-                    className="h-4 w-4 rounded text-green-600"
-                  />
-                  <span className="ml-3 text-sm">
-                    {emp.nombre} {emp.apellido}
-                  </span>
-                </label>
-              ))}
+              {acompanantesData.visible.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center text-sm text-gray-400">
+                  No hay resultados para acompañantes.
+                </div>
+              ) : (
+                acompanantesData.visible.map((emp) => (
+                  <label
+                    key={emp.cuil}
+                    className={`flex cursor-pointer items-center rounded-lg border p-3 ${
+                      internalAcompanantes.includes(emp.cuil)
+                        ? 'border-green-500 bg-green-50'
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={internalAcompanantes.includes(emp.cuil)}
+                      onChange={() => handleToggleAcompanante(emp.cuil)}
+                      className="h-4 w-4 rounded text-green-600"
+                    />
+                    <span className="ml-3 text-sm">
+                      {emp.nombre} {emp.apellido}
+                    </span>
+                  </label>
+                ))
+              )}
             </div>
+            {acompanantesData.total > maxResultados && (
+              <p className="text-xs text-gray-500">
+                Mostrando {maxResultados} de {acompanantesData.total}.
+              </p>
+            )}
           </div>
         </div>
 
