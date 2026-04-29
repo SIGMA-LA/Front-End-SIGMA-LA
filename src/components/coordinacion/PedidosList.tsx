@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Calendar, Check, Loader2, Plus, ArrowRight, AlertTriangle } from 'lucide-react'
+import { Package, Calendar, Check, Loader2, Plus, ArrowRight, AlertTriangle, Building2 } from 'lucide-react'
 import type { Obra, PedidoStock, EstadoPedidoStock } from '@/types'
 import EstadoObraBadge from '../shared/EstadoObraBadge'
 import { getObrasParaPedidoStock } from '@/actions/obras'
@@ -143,11 +143,13 @@ export default function PedidosList() {
             {obrasElegibles.length > 0 ? (
               obrasElegibles.map((obra) => (
                 <div key={obra.cod_obra} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Obra #{obra.cod_obra} - {obra.direccion}</h3>
-                    <p className="text-gray-600">Cliente: {obra.cliente.razon_social || `${obra.cliente.nombre} ${obra.cliente.apellido}`}</p>
-                    <div className="mt-2">
-                      <ObraTypeBadge esGrande={obra.esGrande} />
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900">Obra #{obra.cod_obra} - {obra.direccion}</h3>
+                        <ObraTypeBadge esGrande={obra.esGrande} />
+                      </div>
+                      <p className="text-gray-600">Cliente: {obra.cliente.razon_social || `${obra.cliente.nombre} ${obra.cliente.apellido}`}</p>
                     </div>
                   </div>
                   <button
@@ -173,15 +175,11 @@ export default function PedidosList() {
 }
 
 function ObraTypeBadge({ esGrande }: { esGrande?: boolean }) {
-  if (esGrande === undefined || esGrande === null) return null
-  return esGrande ? (
-    <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-800">
-      <AlertTriangle className="h-3 w-3" /> Obra Mayor
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-      Obra Menor
-    </span>
+  if (!esGrande) return null
+  return (
+    <div title="Obra Mayor" className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+      <Building2 className="h-4 w-4" />
+    </div>
   )
 }
 
