@@ -37,12 +37,12 @@ const menuItemsCoordinacion: MenuItem[] = [
   { path: '/coordinacion/obras', label: 'Obras', icon: Building2 },
   { path: '/coordinacion/clientes', label: 'Clientes', icon: Users },
   { path: '/coordinacion/visitas', label: 'Visitas', icon: Calendar },
+  { path: '/coordinacion/entregas', label: 'Entregas', icon: TruckIcon },
   {
     path: '/coordinacion/ordenes-produccion',
     label: 'Órdenes de Producción',
     icon: Package,
   },
-  { path: '/coordinacion/entregas', label: 'Entregas', icon: TruckIcon },
   { path: '/coordinacion/pedidos', label: 'Pedidos', icon: ClipboardList },
   { path: '/coordinacion/maquinarias', label: 'Maquinarias', icon: Wrench },
   { path: '/coordinacion/vehiculos', label: 'Vehículos', icon: Car },
