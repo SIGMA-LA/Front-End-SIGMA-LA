@@ -4,6 +4,7 @@ import { getPagos } from '@/actions/pagos'
 import ObraPagosCard from '@/components/shared/ObraPagosCard'
 import SearchWrapper from '@/components/shared/SearchWrapper'
 import PagosFiltros from '@/components/shared/PagosFiltros'
+import PaginationControls from '@/components/shared/PaginationControls'
 import CrearPagoButton from '@/components/ventas/pagos/CrearPagoButton'
 import { PagosFilter, Obra, PagosPageContentProps } from '@/types'
 
@@ -36,13 +37,17 @@ function PagosListSkeleton() {
 async function PagosGrid({
   filters,
   usuarioRol,
+  page,
+  pageSize,
 }: {
   filters: PagosFilter
   usuarioRol?: string
+  page: number
+  pageSize: number
 }) {
-  const pagosData = await getPagos(filters)
+  const pagosResult = await getPagos(filters, page, pageSize)
 
-  if (pagosData.length === 0) {
+  if (pagosResult.data.length === 0) {
     return (
       <div className="mt-8 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
         <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
@@ -56,17 +61,17 @@ async function PagosGrid({
     )
   }
 
-  // Calculate totals
-  const totalPagos = pagosData.length
-  const totalMonto = pagosData.reduce((sum, pago) => sum + pago.monto, 0)
+  // Calculate totals for current page
+  const totalPagos = pagosResult.data.length
+  const totalMonto = pagosResult.data.reduce((sum, pago) => sum + pago.monto, 0)
 
   // Group by Obra
   const obrasMap = new Map<
     number,
-    { obraInfo: Obra | undefined; pagos: typeof pagosData; totalPagado: number }
+    { obraInfo: Obra | undefined; pagos: typeof pagosResult.data; totalPagado: number }
   >()
 
-  pagosData.forEach((pago) => {
+  pagosResult.data.forEach((pago) => {
     // Handling case where pago does not have an obra associated directly (backend safeguard)
     const cod_obra = pago.cod_obra || (pago.obra ? pago.obra.cod_obra : 0)
     if (!obrasMap.has(cod_obra)) {
@@ -94,7 +99,7 @@ async function PagosGrid({
   })
 
   return (
-    <div>
+    <>
       <div className="mb-4 inline-block rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         Mostrando{' '}
         <span className="font-semibold text-gray-900">{totalPagos}</span> pagos
@@ -118,7 +123,14 @@ async function PagosGrid({
           />
         ))}
       </div>
-    </div>
+
+      <PaginationControls
+        page={pagosResult.page}
+        totalPages={pagosResult.totalPages}
+        total={pagosResult.total}
+        pageSize={pagosResult.pageSize}
+      />
+    </>
   )
 }
 
@@ -133,6 +145,8 @@ export default async function PagosPageContent({
   usuarioRol,
   title = 'Pagos',
   subtitle = 'Visualiza, filtra y registra los pagos de obras.',
+  page = 1,
+  pageSize = 10,
 }: PagosPageContentProps) {
   const effectiveSearchQuery = searchQuery || direccionObra || ''
 
@@ -169,6 +183,7 @@ export default async function PagosPageContent({
             placeholder="Buscar por cliente, razón social o dirección..."
             initialValue={effectiveSearchQuery}
             paramName="q"
+            clearOtherParams={['page']}
           />
         </div>
 
@@ -184,10 +199,15 @@ export default async function PagosPageContent({
 
         {/* Grid con Suspense */}
         <Suspense
-          key={JSON.stringify(filtros)}
+          key={JSON.stringify({ ...filtros, page })}
           fallback={<PagosListSkeleton />}
         >
-          <PagosGrid filters={filtros} usuarioRol={usuarioRol} />
+          <PagosGrid
+            filters={filtros}
+            usuarioRol={usuarioRol}
+            page={page}
+            pageSize={pageSize}
+          />
         </Suspense>
       </div>
     </div>

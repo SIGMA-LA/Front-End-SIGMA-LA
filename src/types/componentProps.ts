@@ -14,6 +14,8 @@ export interface PagosPageContentProps {
   usuarioRol?: string
   title?: string
   subtitle?: string
+  page?: number
+  pageSize?: number
 }
 
 export interface ObraCardProps {

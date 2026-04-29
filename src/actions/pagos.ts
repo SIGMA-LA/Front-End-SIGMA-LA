@@ -3,23 +3,34 @@
 import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Pago, PagosFilter, ObraConPresupuesto } from '@/types'
+import type { Pago, PagosFilter, ObraConPresupuesto, PaginatedResponse } from '@/types'
 import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = API_URL.endsWith('/pagos') ? API_URL : `${API_URL}/pagos`
 
 /**
- * Retrieves pagos with optional filters
+ * Retrieves pagos with optional filters (paginated by obra)
  * @param {PagosFilter} filters - Optional filters (cliente, fechaDesde, fechaHasta, obra, montoMin, montoMax)
- * @returns {Promise<Pago[]>} List of pagos matching filters
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} pageSize - Number of obras per page
+ * @returns {Promise<PaginatedResponse<Pago>>} Paginated list of pagos
  */
-export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
+export async function getPagos(
+  filters?: PagosFilter,
+  page: number = 1,
+  pageSize: number = 10,
+): Promise<PaginatedResponse<Pago>> {
+  const emptyResponse: PaginatedResponse<Pago> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
   try {
     const token = await getAccessToken()
 
     // Build query params
     const params = new URLSearchParams()
+    params.append('page', String(page))
+    params.append('pageSize', String(pageSize))
     if (filters?.search) params.append('search', filters.search)
     if (filters?.cliente) params.append('cliente', filters.cliente)
     if (filters?.fechaDesde) params.append('fechaDesde', filters.fechaDesde)
@@ -30,10 +41,9 @@ export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
     if (filters?.montoMax !== undefined)
       params.append('montoMax', filters.montoMax.toString())
 
-    const queryString = params.toString()
-    const url = `${BASE_URL}${queryString ? `?${queryString}` : ''}`
+    const url = `${BASE_URL}?${params.toString()}`
 
-    const response = await fetchWithErrorHandling<Pago[]>(url, {
+    const response = await fetchWithErrorHandling<PaginatedResponse<Pago>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -41,10 +51,14 @@ export async function getPagos(filters?: PagosFilter): Promise<Pago[]> {
       },
       next: { revalidate: 30, tags: ['pagos'] },
     })
-    return await response.json()
+    const data = await response.json()
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Pago>
+    }
+    return emptyResponse
   } catch (error) {
     console.error('[getPagos]', error)
-    throw error
+    return emptyResponse
   }
 }
 

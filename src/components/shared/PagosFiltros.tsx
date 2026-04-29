@@ -44,6 +44,8 @@ export default function PagosFiltros({
     if (localMontoMax && parseFloat(localMontoMax) > 0) params.set('montoMax', localMontoMax)
     else params.delete('montoMax')
 
+    params.delete('page')
+
     startTransition(() => {
       router.push(`?${params.toString()}`)
     })
@@ -60,6 +62,7 @@ export default function PagosFiltros({
     params.delete('fechaHasta')
     params.delete('montoMin')
     params.delete('montoMax')
+    params.delete('page')
 
     startTransition(() => {
       router.push(`?${params.toString()}`)
