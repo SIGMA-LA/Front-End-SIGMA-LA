@@ -81,7 +81,7 @@ export async function fetchWithErrorHandling<T = unknown>(
 
         if (errorData.errorCode === 'VALIDATION_ERROR' && Array.isArray(errorData.details)) {
           const validationDetails = errorData.details.filter(
-            (d): d is ValidationDetail => typeof d === 'object' && d !== null && 'issues' in d
+            (d: unknown): d is ValidationDetail => typeof d === 'object' && d !== null && 'issues' in d
           )
           errorMsg = mapValidationIssues(validationDetails)
         } else if (errorData.message) {

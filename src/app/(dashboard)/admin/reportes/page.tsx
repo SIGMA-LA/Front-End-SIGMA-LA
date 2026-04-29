@@ -5,9 +5,9 @@ import { getVisitas } from '@/actions/visitas'
 import { getEntregas } from '@/actions/entregas'
 
 export default async function ReportesPage() {
-  const [obrasResponse, pagos, visitasResponse, entregasResponse] = await Promise.all([
+  const [obrasResponse, pagosResponse, visitasResponse, entregasResponse] = await Promise.all([
     getObras('', 1, 100),
-    getPagos(),
+    getPagos(undefined, 1, 100),
     getVisitas('', 'ALL', 1, 100),
     getEntregas('', 'ALL', 1, 100),
   ])
@@ -15,9 +15,9 @@ export default async function ReportesPage() {
   return (
     <ReportesView
       obras={obrasResponse}
-      pagos={pagos}
-      visitas={visitasResponse.data || []}
-      entregas={entregasResponse.data || []}
+      pagos={pagosResponse}
+      visitas={visitasResponse}
+      entregas={entregasResponse}
     />
   )
 }
