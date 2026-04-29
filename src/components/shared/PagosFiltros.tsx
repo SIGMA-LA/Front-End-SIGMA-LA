@@ -75,13 +75,6 @@ export default function PagosFiltros({
     fechaDesde || fechaHasta || montoMin !== undefined || montoMax !== undefined
   )
 
-    params.delete('page')
-
-    startTransition(() => {
-      router.push(`?${params.toString()}`)
-    })
-  }
-
   const updateFilters = useCallback(
     (newFilters: Record<string, string>) => {
       // Validaciones
@@ -124,7 +117,7 @@ export default function PagosFiltros({
         router.push(`?${params.toString()}`)
       })
     },
-    [searchParams, router]
+    [searchParams, router, fechaDesde, fechaHasta, montoMin, montoMax]
   )
 
   const clearFilters = () => {
