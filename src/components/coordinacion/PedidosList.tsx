@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Calendar, Check, Loader2, Plus, ArrowRight, AlertTriangle, Building2 } from 'lucide-react'
+import { Package, Calendar, Check, Loader2, Plus, ArrowRight, AlertTriangle, Building2, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Obra, PedidoStock, EstadoPedidoStock } from '@/types'
 import EstadoObraBadge from '../shared/EstadoObraBadge'
 import { getObrasParaPedidoStock } from '@/actions/obras'
 import { getPedidosStock, createPedidoStock, updatePedidoStockEstado } from '@/actions/pedidoStock'
+import SolicitarStockModal from '../produccion/SolicitarStockModal'
 import { notify } from '@/lib/toast'
 
 export default function PedidosList() {
@@ -14,7 +15,7 @@ export default function PedidosList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [creatingId, setCreatingId] = useState<number | null>(null)
+  const [modalOpenForObraId, setModalOpenForObraId] = useState<number | null>(null)
 
   const fetchData = async () => {
     setLoading(true)
@@ -27,11 +28,11 @@ export default function PedidosList() {
 
       if (pedidosRes.success && pedidosRes.data) {
         setPedidos(pedidosRes.data)
+        const activeObrasIds = new Set(pedidosRes.data.map(p => p.obraId))
+        setObrasElegibles(obrasRes.filter((o: Obra) => !activeObrasIds.has(o.cod_obra)))
       } else {
         throw new Error(pedidosRes.error || 'Error al obtener pedidos')
       }
-
-      setObrasElegibles(obrasRes)
     } catch (err) {
       setError('No se pudieron cargar los datos de stock.')
       console.error(err)
@@ -62,25 +63,12 @@ export default function PedidosList() {
     }
   }
 
-  const handleCrearPedido = async (obraId: number) => {
-    const descripcion = window.prompt('Ingrese el detalle del material necesario:')
-    if (!descripcion) return
+  const handleOpenCrearPedido = (obraId: number) => {
+    setModalOpenForObraId(obraId)
+  }
 
-    setCreatingId(obraId)
-    try {
-      const res = await createPedidoStock({ obraId, descripcion })
-      if (!res.success) {
-        notify.error(res.error || 'Error al crear el pedido de stock.')
-        return
-      }
-      await fetchData()
-      notify.success('Pedido creado correctamente.')
-    } catch (err) {
-      notify.error('Error de conexión.')
-      console.error(err)
-    } finally {
-      setCreatingId(null)
-    }
+  const handlePedidoCreado = () => {
+    fetchData()
   }
 
   if (loading && pedidos.length === 0 && obrasElegibles.length === 0) {
@@ -153,11 +141,10 @@ export default function PedidosList() {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleCrearPedido(obra.cod_obra)}
-                    disabled={creatingId === obra.cod_obra}
+                    onClick={() => handleOpenCrearPedido(obra.cod_obra)}
                     className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 font-medium text-white transition-colors hover:bg-orange-700 disabled:opacity-50"
                   >
-                    {creatingId === obra.cod_obra ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
+                    <Plus className="h-5 w-5" />
                     Generar Pedido
                   </button>
                 </div>
@@ -170,6 +157,13 @@ export default function PedidosList() {
           </div>
         </div>
       </div>
+      <SolicitarStockModal
+        isOpen={modalOpenForObraId !== null}
+        onClose={() => setModalOpenForObraId(null)}
+        obraId={modalOpenForObraId || 0}
+        onSuccess={handlePedidoCreado}
+        isCoordinacion={true}
+      />
     </div>
   )
 }
@@ -184,6 +178,7 @@ function ObraTypeBadge({ esGrande }: { esGrande?: boolean }) {
 }
 
 function PedidoCard({ pedido, isUpdating, onUpdateEstado }: { pedido: PedidoStock, isUpdating: boolean, onUpdateEstado: (id: string, estado: EstadoPedidoStock) => void }) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const obra = pedido.obra
   if (!obra) return null
 
@@ -213,10 +208,21 @@ function PedidoCard({ pedido, isUpdating, onUpdateEstado }: { pedido: PedidoStoc
           <p className="mb-1 text-sm text-gray-600">
             <span className="font-semibold text-gray-700">Cliente:</span> {obra.cliente?.razon_social || `${obra.cliente?.nombre} ${obra.cliente?.apellido}`}
           </p>
-          <div className="mt-3 rounded-lg bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-700">Detalle del Pedido:</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{pedido.descripcion}</p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none"
+            >
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {isExpanded ? 'Ocultar Detalles' : 'Ver Detalles'}
+            </button>
           </div>
+          {isExpanded && (
+            <div className="mt-3 rounded-lg bg-gray-50 p-4">
+              <p className="text-sm font-medium text-gray-700">Detalle del Pedido:</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{pedido.descripcion}</p>
+            </div>
+          )}
         </div>
 
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col lg:flex-row">

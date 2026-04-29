@@ -10,7 +10,7 @@ import {
 import type { Obra, OrdenProduccion } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { formatDateOnly } from '@/lib/utils'
 import OrdenesProduccionList from './OrdenesProduccionList'
 import { finalizarProduccionObra, iniciarProduccionObra } from '@/actions/obras'
@@ -19,6 +19,7 @@ import ProduccionActionModal, {
 } from './ProduccionActionModal'
 import SolicitarStockModal from './SolicitarStockModal'
 import { notify } from '@/lib/toast'
+import { getPedidosStock } from '@/actions/pedidoStock'
 
 interface NotaFabricaDetailsProps {
   obra: Obra
@@ -71,6 +72,18 @@ export default function NotaFabricaDetails({
   const [isIniciando, setIsIniciando] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
   const [tieneOpFinalizada, setTieneOpFinalizada] = useState(false)
+  const [hasActivePedido, setHasActivePedido] = useState(false)
+
+  useEffect(() => {
+    const fetchPedidos = async () => {
+      const res = await getPedidosStock()
+      if (res.success && res.data) {
+        const activePedido = res.data.find((p) => p.obraId === obra.cod_obra && p.estado !== 'RECIBIDO')
+        setHasActivePedido(!!activePedido)
+      }
+    }
+    fetchPedidos()
+  }, [obra.cod_obra])
 
   const isEnProduccion = obra.estado === 'EN PRODUCCION'
   const puedeFinalizarProduccion = isEnProduccion && tieneOpFinalizada
@@ -321,11 +334,12 @@ export default function NotaFabricaDetails({
             </Button>
             <Button
               onClick={() => setIsStockModalOpen(true)}
+              disabled={hasActivePedido}
               variant="outline"
-              className="flex-1 cursor-pointer border-2 border-orange-500 bg-white py-4 text-base text-orange-600 hover:bg-orange-50 lg:py-5 lg:text-lg"
+              className="flex-1 cursor-pointer border-2 border-orange-500 bg-white py-4 text-base text-orange-600 hover:bg-orange-50 lg:py-5 lg:text-lg disabled:opacity-50 disabled:bg-gray-100 disabled:border-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
             >
               <AlertTriangle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-              <span>Falta Material / Pedir Stock</span>
+              <span>{hasActivePedido ? 'Pedido en Curso' : 'Falta Material / Pedir Stock'}</span>
             </Button>
           </div>
         )}

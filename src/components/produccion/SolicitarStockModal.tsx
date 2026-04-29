@@ -10,6 +10,7 @@ interface SolicitarStockModalProps {
   onClose: () => void
   obraId: number
   onSuccess: () => void
+  isCoordinacion?: boolean
 }
 
 export default function SolicitarStockModal({
@@ -17,6 +18,7 @@ export default function SolicitarStockModal({
   onClose,
   obraId,
   onSuccess,
+  isCoordinacion = false,
 }: SolicitarStockModalProps) {
   const [descripcion, setDescripcion] = useState('')
   const [loading, setLoading] = useState(false)
@@ -51,7 +53,7 @@ export default function SolicitarStockModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
         <div className="flex items-center gap-3 border-b border-gray-100 p-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600">
             <AlertTriangle className="h-6 w-6" />
@@ -61,7 +63,7 @@ export default function SolicitarStockModal({
               Solicitar Stock
             </h3>
             <p className="text-sm text-gray-500">
-              Obra #{obraId} pasará a estado "EN ESPERA DE STOCK"
+              Obra #{obraId}
             </p>
           </div>
         </div>
@@ -75,7 +77,7 @@ export default function SolicitarStockModal({
               <textarea
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
-                rows={4}
+                rows={6}
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-orange-300 focus:ring-4 focus:ring-orange-500/10"
                 placeholder="Ej: Faltan 5 perfiles de aluminio para el marco..."
                 disabled={loading}
