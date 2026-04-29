@@ -20,7 +20,10 @@ export default function VerDetallesCliente({
   const pathname = usePathname()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [obras, setObras] = useState<Obra[]>([])
+  const [totalObras, setTotalObras] = useState(0)
+  const [totalPaginas, setTotalPaginas] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingObras, setLoadingObras] = useState(false)
   const [paginaActual, setPaginaActual] = useState(1)
   const canViewObraDetails = pathname.startsWith('/admin')
   const OBRAS_POR_PAGINA = 5
@@ -33,25 +36,36 @@ export default function VerDetallesCliente({
   }
 
   useEffect(() => {
-    async function cargar() {
+    async function cargarCliente() {
       try {
         setLoading(true)
-        // Fetch in parallel for better performance
-        const [clienteData, obrasData] = await Promise.all([
-          getCliente(cuil),
-          getObrasByCliente(cuil),
-        ])
-
+        const clienteData = await getCliente(cuil)
         setCliente(clienteData)
-        setObras(obrasData || [])
       } catch (error) {
-        console.error('Error cargando detalles:', error)
+        console.error('Error cargando cliente:', error)
       } finally {
         setLoading(false)
       }
     }
-    cargar()
+    cargarCliente()
   }, [cuil])
+
+  useEffect(() => {
+    async function cargarObras() {
+      try {
+        setLoadingObras(true)
+        const response = await getObrasByCliente(cuil, paginaActual, OBRAS_POR_PAGINA)
+        setObras(response.data || [])
+        setTotalObras(response.total || 0)
+        setTotalPaginas(response.totalPages || 0)
+      } catch (error) {
+        console.error('Error cargando obras:', error)
+      } finally {
+        setLoadingObras(false)
+      }
+    }
+    cargarObras()
+  }, [cuil, paginaActual])
 
   if (loading) {
     return (
@@ -83,11 +97,6 @@ export default function VerDetallesCliente({
   }
 
   const esEmpresa = cliente.tipo_cliente === 'EMPRESA'
-
-  const indiceUltimaObra = paginaActual * OBRAS_POR_PAGINA
-  const indicePrimeraObra = indiceUltimaObra - OBRAS_POR_PAGINA
-  const obrasPaginadas = obras.slice(indicePrimeraObra, indiceUltimaObra)
-  const totalPaginas = Math.ceil(obras.length / OBRAS_POR_PAGINA)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -161,15 +170,19 @@ export default function VerDetallesCliente({
           <div>
             <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
               <MapPin className="h-5 w-5" />
-              Obras Asociadas ({obras.length})
+              Obras Asociadas ({totalObras})
             </h3>
-            {obras.length === 0 ? (
+            {loadingObras ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : obras.length === 0 ? (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
                 <p className="text-gray-600">No hay obras asociadas</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {obrasPaginadas.map((obra) => (
+                {obras.map((obra) => (
                   <div
                     key={obra.cod_obra}
                     className="rounded-lg border border-gray-200 bg-white p-4 hover:border-blue-300"
