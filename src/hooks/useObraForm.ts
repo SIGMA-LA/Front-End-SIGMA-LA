@@ -74,7 +74,7 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
       setProvinciaSeleccionada(obraExistente.localidad?.cod_provincia || '')
       if (obraExistente.presupuesto) setPresupuestos(obraExistente.presupuesto)
     }
-  }, [obraExistente, esModoEdicion])
+  }, [obraExistente, esModoEdicion, clienteSearch, arquitectoSearch])
 
   // Sync CUILs with search results
   useEffect(() => {

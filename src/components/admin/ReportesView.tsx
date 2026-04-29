@@ -24,9 +24,9 @@ import {
 
 interface ReportesViewProps {
   obras: Obra[] | PaginatedResponse<Obra>
-  pagos: Pago[]
-  visitas: Visita[]
-  entregas: Entrega[]
+  pagos: Pago[] | PaginatedResponse<Pago>
+  visitas: Visita[] | PaginatedResponse<Visita>
+  entregas: Entrega[] | PaginatedResponse<Entrega>
 }
 
 /**
@@ -46,19 +46,37 @@ export default function ReportesView({
       : (obras as PaginatedResponse<Obra>)?.data || []
   }, [obras])
 
-  const ventasMensuales = useMemo(() => processVentasMensuales(pagos), [pagos])
+  const pagosArray = useMemo(() => {
+    return Array.isArray(pagos)
+      ? pagos
+      : (pagos as PaginatedResponse<Pago>)?.data || []
+  }, [pagos])
+
+  const visitasArray = useMemo(() => {
+    return Array.isArray(visitas)
+      ? visitas
+      : (visitas as PaginatedResponse<Visita>)?.data || []
+  }, [visitas])
+
+  const entregasArray = useMemo(() => {
+    return Array.isArray(entregas)
+      ? entregas
+      : (entregas as PaginatedResponse<Entrega>)?.data || []
+  }, [entregas])
+
+  const ventasMensuales = useMemo(() => processVentasMensuales(pagosArray), [pagosArray])
   const obrasPorEstado = useMemo(
     () => processObrasPorEstado(obrasArray),
     [obrasArray]
   )
-  const visitasDelMes = useMemo(() => processVisitasDelMes(visitas), [visitas])
+  const visitasDelMes = useMemo(() => processVisitasDelMes(visitasArray), [visitasArray])
   const entregasDelMes = useMemo(
-    () => processEntregasDelMes(entregas),
-    [entregas]
+    () => processEntregasDelMes(entregasArray),
+    [entregasArray]
   )
   const ingresosAcumulados = useMemo(
-    () => processIngresosAcumulados(pagos),
-    [pagos]
+    () => processIngresosAcumulados(pagosArray),
+    [pagosArray]
   )
 
   const now = new Date()

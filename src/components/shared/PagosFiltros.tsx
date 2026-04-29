@@ -117,7 +117,7 @@ export default function PagosFiltros({
         router.push(`?${params.toString()}`)
       })
     },
-    [searchParams, router]
+    [searchParams, router, fechaDesde, fechaHasta, montoMin, montoMax]
   )
 
   const clearFilters = () => {

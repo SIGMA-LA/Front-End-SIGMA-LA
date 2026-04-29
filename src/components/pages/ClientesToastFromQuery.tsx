@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { notify } from '@/lib/toast'
@@ -20,12 +20,14 @@ export default function ClientesToastFromQuery({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const shownRef = useRef(false)
 
   useEffect(() => {
-    if (!toast) return
+    if (!toast || shownRef.current) return
 
     const message = toastMessages[toast]
     if (message) {
+      shownRef.current = true
       notify.success(message)
     }
 

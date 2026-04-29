@@ -39,6 +39,7 @@ export default async function PagosPage({
         usuario?.rol_actual === 'VENTAS' || usuario?.rol_actual === 'ADMIN'
       }
       usuarioRol={usuario?.rol_actual}
+      page={sp?.page ? Number(sp.page) : undefined}
     />
   )
 }
