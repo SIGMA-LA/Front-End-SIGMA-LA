@@ -89,9 +89,10 @@ export async function getClientes(
 export async function getCliente(cuil: string): Promise<Cliente | null> {
   if (!cuil) return null
   try {
+    const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling<Cliente>(
-      `${BASE_URL}/${encodeURIComponent(cuil)}`,
+      `${BASE_URL}/${encodeURIComponent(cuilNormalized)}`,
       {
         method: 'GET',
         headers: {
@@ -155,11 +156,12 @@ export async function updateCliente(
 ): Promise<ActionResponse<Cliente>> {
   if (!cuil) return { success: false, error: 'CUIL inválido' }
   try {
+    const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
     const payload = Object.fromEntries(formData.entries())
 
     const res = await fetchWithErrorHandling<Cliente>(
-      `${BASE_URL}/${encodeURIComponent(cuil)}`,
+      `${BASE_URL}/${encodeURIComponent(cuilNormalized)}`,
       {
         method: 'PUT',
         headers: {
@@ -194,8 +196,9 @@ export async function deleteCliente(
 ): Promise<ActionResponse> {
   if (!cuil) return { success: false, error: 'CUIL inválido' }
   try {
+    const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
-    await fetchWithErrorHandling(`${BASE_URL}/${encodeURIComponent(cuil)}`, {
+    await fetchWithErrorHandling(`${BASE_URL}/${encodeURIComponent(cuilNormalized)}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,

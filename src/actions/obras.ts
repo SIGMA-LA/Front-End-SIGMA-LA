@@ -132,24 +132,43 @@ export async function getObrasParaEntrega(
 /**
  * Retrieves obras associated with a specific client by CUIL
  * @param {string} cuil - Client CUIL
- * @returns {Promise<Obra[]>} List of matching obras
+ * @param {number} page - Page number
+ * @param {number} pageSize - Items per page
+ * @returns {Promise<PaginatedResponse<Obra>>} Paginated list of matching obras
  */
-export async function getObrasByCliente(cuil: string): Promise<Obra[]> {
+export async function getObrasByCliente(
+  cuil: string,
+  page: number = 1,
+  pageSize: number = 5
+): Promise<PaginatedResponse<Obra>> {
+  const emptyResponse: PaginatedResponse<Obra> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
   try {
     const token = await getAccessToken()
-    const url = `${BASE_URL}/cliente/${encodeURIComponent(cuil)}`
-    const res = await fetchWithErrorHandling<Obra[]>(url, {
+    const params = new URLSearchParams()
+    params.append('page', String(page))
+    params.append('pageSize', String(pageSize))
+
+    const cuilNormalized = cuil.replace(/-/g, '')
+    const url = `${BASE_URL}/cliente/${encodeURIComponent(cuilNormalized)}?${params.toString()}`
+    const res = await fetchWithErrorHandling<PaginatedResponse<Obra>>(url, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 0, tags: [`obras-cliente-${cuil}`] },
+      next: { revalidate: 0, tags: [`obras-cliente-${cuilNormalized}`] },
     })
-    return await res.json()
+    
+    const data = await res.json()
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Obra>
+    }
+    return emptyResponse
   } catch (error) {
     console.error('[getObrasByCliente]', error)
-    return []
+    return emptyResponse
   }
 }
 

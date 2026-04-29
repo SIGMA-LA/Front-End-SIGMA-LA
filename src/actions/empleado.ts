@@ -99,8 +99,9 @@ export async function getEmpleado(cuil: string): Promise<Empleado | null> {
   if (!cuil) return null
 
   try {
+    const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Empleado>(`${BASE_URL}/${cuil}`, {
+    const res = await fetchWithErrorHandling<Empleado>(`${BASE_URL}/${cuilNormalized}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -143,6 +144,7 @@ export async function createEmpleado(
   empleadoData: CreateEmpleadoData
 ): Promise<ActionResponse<Empleado>> {
   try {
+    const payload = { ...empleadoData, cuil: empleadoData.cuil.replace(/-/g, '') }
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling<Empleado>(BASE_URL, {
       method: 'POST',
@@ -150,7 +152,7 @@ export async function createEmpleado(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(empleadoData),
+      body: JSON.stringify(payload),
     })
 
     const data = await res.json()
@@ -174,8 +176,9 @@ export async function updateEmpleado(
   empleadoData: UpdateEmpleadoData
 ): Promise<ActionResponse<Empleado>> {
   try {
+    const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Empleado>(`${BASE_URL}/${cuil}`, {
+    const res = await fetchWithErrorHandling<Empleado>(`${BASE_URL}/${cuilNormalized}`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -205,8 +208,9 @@ export async function deleteEmpleado(
   cuil: string
 ): Promise<ActionResponse> {
   try {
+    const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
-    await fetchWithErrorHandling(`${BASE_URL}/${cuil}`, {
+    await fetchWithErrorHandling(`${BASE_URL}/${cuilNormalized}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
