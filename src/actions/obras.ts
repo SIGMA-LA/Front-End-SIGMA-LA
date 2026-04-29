@@ -491,17 +491,17 @@ export async function solicitarStockObra(
 }
 
 /**
- * Changes obra status to 'EN PRODUCCION'
+ * Changes obra status to 'EN PRODUCCION' manually by worker
  * @param {number} id - Obra ID
  * @returns {Promise<Obra>} Updated obra
  */
-export async function recibirStockObra(
+export async function iniciarProduccionObra(
   id: number
 ): Promise<ActionResponse<Obra>> {
   try {
     const token = await getAccessToken()
     const res = await fetchWithErrorHandling(
-      `${BASE_URL}/${id}/recibir-stock`,
+      `${BASE_URL}/${id}/iniciar-produccion`,
       {
         method: 'PATCH',
         headers: {
@@ -511,13 +511,12 @@ export async function recibirStockObra(
       }
     )
     const data = await res.json()
-    revalidatePath('/coordinacion/pedidos')
     revalidatePath('/produccion')
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Error al recibir stock'
-    console.error('[recibirStockObra]', message)
+      error instanceof Error ? error.message : 'Error al iniciar producción'
+    console.error('[iniciarProduccionObra]', message)
     return { success: false, error: message }
   }
 }

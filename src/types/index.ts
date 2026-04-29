@@ -21,6 +21,13 @@ export type {
 } from './obra'
 
 export type {
+  PedidoStock,
+  EstadoPedidoStock,
+  CreatePedidoStockInput,
+  UpdatePedidoStockEstadoInput
+} from './pedidoStock'
+
+export type {
   Pago,
   PagoFormData,
   PagosFilter,

@@ -13,10 +13,11 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { useCallback, useState } from 'react'
 import { formatDateOnly } from '@/lib/utils'
 import OrdenesProduccionList from './OrdenesProduccionList'
-import { finalizarProduccionObra } from '@/actions/obras'
+import { finalizarProduccionObra, iniciarProduccionObra } from '@/actions/obras'
 import ProduccionActionModal, {
   type ProduccionActionSummary,
 } from './ProduccionActionModal'
+import SolicitarStockModal from './SolicitarStockModal'
 import { notify } from '@/lib/toast'
 
 interface NotaFabricaDetailsProps {
@@ -67,6 +68,8 @@ export default function NotaFabricaDetails({
   const [pdfError, setPdfError] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isFinalizando, setIsFinalizando] = useState(false)
+  const [isIniciando, setIsIniciando] = useState(false)
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false)
   const [tieneOpFinalizada, setTieneOpFinalizada] = useState(false)
 
   const isEnProduccion = obra.estado === 'EN PRODUCCION'
@@ -114,6 +117,24 @@ export default function NotaFabricaDetails({
   const handleOpenPdf = () => {
     if (notaFabricaUrl) {
       window.open(notaFabricaUrl, '_blank')
+    }
+  }
+
+  const handleIniciarProduccion = async () => {
+    setIsIniciando(true)
+    try {
+      const result = await iniciarProduccionObra(obra.cod_obra)
+      if (result.success) {
+        notify.success('Producción iniciada correctamente.')
+        onProduccionFinalizada?.() // Reusing to refresh parent
+      } else {
+        notify.error(result.error || 'Error al iniciar la producción')
+      }
+    } catch (error) {
+      console.error(error)
+      notify.error('Error al iniciar la producción. Intente nuevamente.')
+    } finally {
+      setIsIniciando(false)
     }
   }
 
@@ -275,7 +296,7 @@ export default function NotaFabricaDetails({
         </div>
 
         {/* Botón para crear orden de producción (solo si la producción no está finalizada) */}
-        {obra.estado !== 'PRODUCCION FINALIZADA' && (
+        {isEnProduccion && (
           <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
             <Button
               onClick={onCrearOrden}
@@ -283,6 +304,28 @@ export default function NotaFabricaDetails({
             >
               <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
               <span>Crear Orden de Producción</span>
+            </Button>
+          </div>
+        )}
+
+        {/* Botones si está Pagada Parcialmente (Lista para empezar o pedir stock) */}
+        {obra.estado === 'PAGADA PARCIALMENTE' && (
+          <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
+            <Button
+              onClick={handleIniciarProduccion}
+              disabled={isIniciando}
+              className="flex-1 cursor-pointer bg-blue-600 py-4 text-base text-white hover:bg-blue-700 lg:py-5 lg:text-lg"
+            >
+              <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+              <span>{isIniciando ? 'Iniciando...' : 'Iniciar Producción'}</span>
+            </Button>
+            <Button
+              onClick={() => setIsStockModalOpen(true)}
+              variant="outline"
+              className="flex-1 cursor-pointer border-2 border-orange-500 bg-white py-4 text-base text-orange-600 hover:bg-orange-50 lg:py-5 lg:text-lg"
+            >
+              <AlertTriangle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+              <span>Falta Material / Pedir Stock</span>
             </Button>
           </div>
         )}
@@ -311,6 +354,13 @@ export default function NotaFabricaDetails({
           onConfirm={handleConfirmarFinalizar}
           onCancel={handleCerrarConfirmacion}
           loading={isFinalizando}
+        />
+
+        <SolicitarStockModal
+          isOpen={isStockModalOpen}
+          onClose={() => setIsStockModalOpen(false)}
+          obraId={obra.cod_obra}
+          onSuccess={() => onProduccionFinalizada?.()} // Reusing to refresh parent
         />
       </CardContent>
     </Card>
