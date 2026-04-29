@@ -40,6 +40,7 @@ export interface Obra {
   presupuesto?: Presupuesto[]
   pagos?: Pago[]
   pago?: Pago[] // Alias para el backend
+  esGrande?: boolean
 }
 
 export interface CreateObraInput {
@@ -50,6 +51,7 @@ export interface CreateObraInput {
   fecha_ini: string
   estado?: EstadoObra
   nota_fabrica?: string
+  esGrande?: boolean
 }
 
 export interface UpdateObraInput {
@@ -60,6 +62,7 @@ export interface UpdateObraInput {
   fecha_ini?: string
   estado?: EstadoObra
   nota_fabrica?: string
+  esGrande?: boolean
 }
 
 export interface PresupuestoInput {

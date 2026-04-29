@@ -38,6 +38,7 @@ export interface ObraFormData {
   cuil_cliente: string
   cuil_arquitecto?: string | null
   cod_localidad: number
+  esGrande?: boolean
 }
 
 interface CrearObraProps {
@@ -54,6 +55,7 @@ const initialState: ObraFormData = {
   estado: 'EN ESPERA DE PAGO',
   nota_fabrica: '',
   fecha_cancelacion: null,
+  esGrande: true,
 }
 
 // ---------------------------------------------------------------------------
@@ -166,6 +168,35 @@ export default function CrearObra({ provincias, obraExistente }: CrearObraProps)
                           <Plus className="h-4 w-4" />
                           REGISTRAR NUEVO PERFIL
                         </Link>
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <label className="block pl-1 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                          Tipo de Obra
+                        </label>
+                        <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:bg-slate-50">
+                          <div className="flex flex-col">
+                            <span className="text-[13px] font-bold text-slate-700">
+                              {formData.esGrande ?? true ? 'Obra Mayor' : 'Obra Menor'}
+                            </span>
+                            <span className="text-[11px] font-medium text-slate-500">
+                              {formData.esGrande ?? true
+                                ? 'Proyecto de gran envergadura o estándar'
+                                : 'Proyecto de escala reducida'}
+                            </span>
+                          </div>
+                          <div className="relative inline-flex items-center">
+                            <input
+                              type="checkbox"
+                              name="esGrande"
+                              checked={formData.esGrande ?? true}
+                              onChange={handleChange}
+                              disabled={isObraCancelada}
+                              className="peer sr-only"
+                            />
+                            <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:top-[2px] after:start-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800"></div>
+                          </div>
+                        </label>
                       </div>
                     </div>
                   </div>
