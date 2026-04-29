@@ -1,3 +1,4 @@
+﻿import { useState } from 'react'
 import {
   Calendar,
   CheckCircle,
@@ -6,11 +7,17 @@ import {
   Phone,
   User as UserIcon,
   Navigation,
+  FileText,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react'
 import type { Visita } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { abrirGoogleMaps, navegarADireccion } from '@/lib/maps'
+import { useOrdenesProduccion } from '@/hooks/visitador/useOrdenesVisita'
+import { DocumentViewer } from '@/components/shared/DocumentViewer'
+import OrdenProduccionSeccion from '../shared/entrega-details/OrdenProduccionSeccion'
 
 interface VisitaDetailsProps {
   visita: Visita
@@ -59,6 +66,18 @@ export default function VisitaDetails({
   visita,
   onFinalizarVisita,
 }: VisitaDetailsProps) {
+  const { ordenes, loading: loadingOPs, error: errorOPs } = useOrdenesProduccion(visita.obra?.cod_obra || null)
+  const [activeOpIndex, setActiveOpIndex] = useState(0)
+  const [viewerUrl, setViewerUrl] = useState('')
+  const [viewerTitle, setViewerTitle] = useState('')
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
+
+  const handleVerDocumento = (url: string, title: string) => {
+    setViewerUrl(url)
+    setViewerTitle(title)
+    setIsViewerOpen(true)
+  }
+
   const canFinalize =
     visita.estado === 'PROGRAMADA' || visita.estado === 'EN CURSO'
 
@@ -185,6 +204,59 @@ export default function VisitaDetails({
           </div>
         )}
 
+        {/* Órdenes de Producción */}
+        {visita.obra && (
+          <div className="space-y-4 border-t pt-6 lg:pt-8">
+            {loadingOPs ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <span className="ml-3 font-medium text-gray-600 lg:text-lg">
+                  Cargando órdenes...
+                </span>
+              </div>
+            ) : errorOPs ? (
+              <p className="rounded-lg bg-red-50 py-4 text-center font-medium text-red-600 lg:text-lg">
+                {errorOPs}
+              </p>
+            ) : ordenes.length > 0 ? (
+              <OrdenProduccionSeccion
+                ordenes={ordenes}
+                activeIndex={activeOpIndex}
+                onIndexChange={setActiveOpIndex}
+                onVerDocumento={handleVerDocumento}
+              />
+            ) : null}
+          </div>
+        )}
+
+        {/* Nota de Fábrica como Referencia */}
+        {visita.obra?.nota_fabrica && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-6 lg:p-8 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 lg:h-14 lg:w-14">
+                  <FileText className="h-6 w-6 lg:h-8 lg:w-8" />
+                </div>
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-bold tracking-wider text-blue-900 uppercase">
+                    Nota de Fábrica
+                  </h4>
+                  <p className="text-sm font-medium text-blue-700/80">
+                    Sugerida para medidas y remedición
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => handleVerDocumento(visita.obra!.nota_fabrica!, `Nota de Fábrica - ${visita.obra?.cliente.razon_social}`)}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 lg:px-6 lg:py-3 lg:text-base"
+              >
+                Ver Nota
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Botones responsivos */}
         <div className="flex flex-col space-y-4 border-t pt-6 sm:flex-row sm:space-y-0 sm:space-x-3 lg:space-x-4 lg:pt-8">
           {/* Botones de navegación */}
@@ -192,7 +264,8 @@ export default function VisitaDetails({
             <>
               <Button
                 onClick={handleVerEnMapa}
-                className="flex-1 cursor-pointer border border-blue-300 bg-white py-4 text-base text-blue-700 hover:bg-blue-50 sm:flex-initial lg:py-5 lg:text-lg"
+                variant="outline"
+                className="flex-1 cursor-pointer border-blue-300 text-blue-700 hover:bg-blue-50 sm:flex-initial lg:py-5 lg:text-lg"
               >
                 <MapPin className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
                 <span className="hidden sm:inline">Ver en mapa</span>
@@ -222,6 +295,14 @@ export default function VisitaDetails({
           )}
         </div>
       </CardContent>
+
+      {/* Visualizador de Documentos Reutilizado */}
+      <DocumentViewer
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        url={viewerUrl}
+        title={viewerTitle}
+      />
     </Card>
   )
 }
