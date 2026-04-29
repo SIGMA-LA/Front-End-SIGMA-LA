@@ -62,6 +62,7 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
         nota_fabrica: obraExistente.nota_fabrica || '',
         fecha_cancelacion: null,
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
+        esGrande: obraExistente.esGrande ?? true,
       })
       
       if (obraExistente.cliente) {
@@ -116,10 +117,12 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'cod_localidad' ? Number(value) : value,
+      [name]: type === 'checkbox' ? checked : (name === 'cod_localidad' ? Number(value) : value),
     }))
   }
 
