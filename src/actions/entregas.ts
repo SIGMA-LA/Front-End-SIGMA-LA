@@ -103,24 +103,26 @@ export async function getEntregasByEmpleado(
     url.searchParams.append('page', String(page))
     url.searchParams.append('pageSize', String(pageSize))
 
-    const res = await fetchWithErrorHandling<PaginatedResponse<EntregaApiPayload>>(
-      url.toString(),
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        next: {
-          revalidate: 30,
-          tags: ['entregas', `entregas-empleado-${cuilEmpleado}`],
-        },
-      }
-    )
+    const res = await fetchWithErrorHandling<
+      PaginatedResponse<EntregaApiPayload>
+    >(url.toString(), {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: {
+        revalidate: 30,
+        tags: ['entregas', `entregas-empleado-${cuilEmpleado}`],
+      },
+    })
     const apiResponse = await res.json()
 
-    console.log(apiResponse)
-    if (apiResponse && typeof apiResponse === 'object' && 'data' in apiResponse) {
+    if (
+      apiResponse &&
+      typeof apiResponse === 'object' &&
+      'data' in apiResponse
+    ) {
       const mappedData = apiResponse.data.map((e: EntregaApiPayload) => {
         const ee = (e.entrega_empleado || []).find(
           (emp: EntregaEmpleadoApi) => emp.cuil === cuilEmpleado
@@ -170,7 +172,11 @@ export async function getEntregas(
   pageSize: number = 25
 ): Promise<PaginatedResponse<Entrega>> {
   const emptyResponse: PaginatedResponse<Entrega> = {
-    data: [], total: 0, totalPages: 0, page, pageSize,
+    data: [],
+    total: 0,
+    totalPages: 0,
+    page,
+    pageSize,
   }
   try {
     const token = await getAccessToken()
@@ -194,7 +200,12 @@ export async function getEntregas(
 
     const data = await res.json()
 
-    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'data' in data &&
+      Array.isArray(data.data)
+    ) {
       return data as PaginatedResponse<Entrega>
     }
 
@@ -269,7 +280,9 @@ export async function finalizarEntrega(
     return { success: true, data }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'No se pudo finalizar la entrega. Intentá nuevamente.'
+      error instanceof Error
+        ? error.message
+        : 'No se pudo finalizar la entrega. Intentá nuevamente.'
     console.error('[finalizarEntrega]', message)
     return {
       success: false,
@@ -304,7 +317,9 @@ export async function cancelarEntrega(
     return { success: true }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'No se pudo cancelar la entrega. Intentá nuevamente.'
+      error instanceof Error
+        ? error.message
+        : 'No se pudo cancelar la entrega. Intentá nuevamente.'
     console.error('[cancelarEntrega]', message)
     return {
       success: false,
@@ -352,7 +367,9 @@ export async function createEntrega(
     return { success: true, data: data as unknown as Entrega }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'No se pudo crear la entrega. Intentá nuevamente.'
+      error instanceof Error
+        ? error.message
+        : 'No se pudo crear la entrega. Intentá nuevamente.'
     console.error('[createEntrega]', message)
     return {
       success: false,
@@ -408,7 +425,9 @@ export async function updateEntrega(
     return { success: true, data: data as unknown as Entrega }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'No se pudo actualizar la entrega. Intentá nuevamente.'
+      error instanceof Error
+        ? error.message
+        : 'No se pudo actualizar la entrega. Intentá nuevamente.'
     console.error('[updateEntrega]', message)
     return {
       success: false,
@@ -438,7 +457,9 @@ export async function deleteEntrega(id: number): Promise<ActionResponse> {
     return { success: true }
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'No se pudo eliminar la entrega. Intentá nuevamente.'
+      error instanceof Error
+        ? error.message
+        : 'No se pudo eliminar la entrega. Intentá nuevamente.'
     console.error('[deleteEntrega]', message)
     return {
       success: false,

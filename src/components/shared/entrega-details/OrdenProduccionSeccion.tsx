@@ -39,47 +39,61 @@ export default function OrdenProduccionSeccion({
         </h3>
       </div>
 
-      {/* Tabs si hay más de 1 OP */}
-      {ordenes.length > 1 && (
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          {ordenes.map((op, idx) => (
-            <button
-              key={op.cod_op}
-              type="button"
-              onClick={() => onIndexChange(idx)}
-              className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                activeIndex === idx
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-              }`}
-            >
-              OP #{op.cod_op}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-row items-start justify-between gap-4 sm:flex-col sm:gap-4">
+        {/* Tabs si hay más de 1 OP */}
+        {ordenes.length > 1 && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-1.5">
+            {ordenes.map((op, idx) => (
+              <button
+                key={op.cod_op}
+                type="button"
+                onClick={() => onIndexChange(idx)}
+                className={`rounded-lg px-4 py-2 text-sm font-bold transition-all sm:rounded-full sm:px-3 sm:py-1 sm:text-xs ${
+                  activeIndex === idx
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                }`}
+              >
+                OP #{op.cod_op}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* Info de la OP activa */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-purple-100 p-2">
-            <Package className="h-5 w-5 text-purple-600" />
+        {/* Info de la OP activa */}
+        <div className="flex flex-col items-end gap-3 sm:w-full sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 text-right sm:text-left">
+            <div className="hidden rounded-lg bg-purple-100 p-2 sm:block">
+              <Package className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-purple-600/80">
+                Orden Seleccionada
+              </p>
+              <p className="text-lg font-bold text-purple-900">
+                OP #{activeOp.cod_op}
+              </p>
+              <p className="text-xs text-purple-600/70">
+                Confeccionada:{' '}
+                {new Date(activeOp.fecha_confeccion).toLocaleDateString(
+                  'es-AR'
+                )}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-medium text-purple-600/80">Orden Seleccionada</p>
-            <p className="text-lg font-bold text-purple-900">OP #{activeOp.cod_op}</p>
-            <p className="text-xs text-purple-600/70">
-              Confeccionada: {new Date(activeOp.fecha_confeccion).toLocaleDateString('es-AR')}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onVerDocumento(
+                activeOp.url,
+                `Orden de Producción #${activeOp.cod_op}`
+              )
+            }
+            className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-purple-700"
+          >
+            Ver Documento
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => onVerDocumento(activeOp.url, `Orden de Producción #${activeOp.cod_op}`)}
-          className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-purple-700"
-        >
-          Ver Documento
-        </button>
       </div>
     </div>
   )
