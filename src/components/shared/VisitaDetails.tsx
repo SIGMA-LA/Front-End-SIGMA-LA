@@ -109,7 +109,7 @@ export default function VisitaDetails({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl xl:max-w-7xl">
         {/* Encabezado */}
         <div className="flex flex-shrink-0 items-center justify-between border-b bg-white p-6">
           <div className="flex items-center gap-4">
@@ -150,17 +150,24 @@ export default function VisitaDetails({
         </div>
 
         {/* Cuerpo Scrollable */}
-        <div className="space-y-6 overflow-y-auto bg-gray-50/50 p-6">
-          <DestinoSeccion visita={visita} />
+        <div className="overflow-y-auto bg-gray-50/50 p-6 lg:p-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="space-y-6">
+              <DestinoSeccion visita={visita} />
+              <NotasSeccion visita={visita} />
+            </div>
 
-          <CronogramaSeccion visita={visita} formatDateTime={formatDateTime} />
-
-          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
-            <EquipoSeccion visita={visita} />
-            <TransporteSeccion visita={visita} />
+            <div className="space-y-6">
+              <CronogramaSeccion
+                visita={visita}
+                formatDateTime={formatDateTime}
+              />
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-1">
+                <EquipoSeccion visita={visita} />
+                <TransporteSeccion visita={visita} />
+              </div>
+            </div>
           </div>
-
-          <NotasSeccion visita={visita} />
         </div>
       </div>
     </div>
