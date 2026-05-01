@@ -13,7 +13,6 @@ interface ConfiguracionesProps {
   className?: string
 }
 
-import { NotificacionesSection } from './configuraciones/NotificacionesSection'
 import { PerfilSection } from './configuraciones/PerfilSection'
 import { NegocioSection } from './configuraciones/NegocioSection'
 import { SeguridadSection } from './configuraciones/SeguridadSection'
@@ -201,17 +200,7 @@ export default function Configuraciones({
           )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            <NotificacionesSection
-              canales={configuraciones.notificaciones.configuracion.canales}
-              eventos={configuraciones.notificaciones.configuracion.eventos}
-              values={configuraciones.notificaciones.valores}
-              onChange={(field, value) =>
-                handleConfigChange('notificaciones', field, value)
-              }
-              disabled={isUIBlocked}
-            />
-
-            <PerfilSection
+              <PerfilSection
               perfil={configuraciones.perfil}
               onChange={(field, value) =>
                 handleConfigChange('perfil', field, value)
