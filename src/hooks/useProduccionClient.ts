@@ -60,21 +60,27 @@ export interface ProduccionActionSummary {
 // Hook
 // ---------------------------------------------------------------------------
 
-export default function useProduccionClient(usuario: Empleado, initialNotasSinOrden: Obra[]) {
+export default function useProduccionClient(
+  usuario: Empleado,
+  initialNotasSinOrden: Obra[]
+) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
   // Tabs state
   const [activeTab, setActiveTab] = useState<MainTab>('notas')
   const [activeNotasTab, setActiveNotasTab] = useState<NotasTab>('SIN_ORDEN')
-  const [activeOrdenesTab, setActiveOrdenesTab] = useState<OrdenesTab>('PENDIENTE')
-  
+  const [activeOrdenesTab, setActiveOrdenesTab] =
+    useState<OrdenesTab>('PENDIENTE')
+
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Filters state
-  const [notasFilters, setNotasFilters] = useState<ProduccionFilters>(EMPTY_FILTERS)
-  const [ordenesFilters, setOrdenesFilters] = useState<ProduccionFilters>(EMPTY_FILTERS)
+  const [notasFilters, setNotasFilters] =
+    useState<ProduccionFilters>(EMPTY_FILTERS)
+  const [ordenesFilters, setOrdenesFilters] =
+    useState<ProduccionFilters>(EMPTY_FILTERS)
 
   // Cache state
   const [notasCache, setNotasCache] = useState<NotasCache>(() => ({
@@ -91,7 +97,9 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
   // Selection state
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null)
   const [showCrearOrdenModal, setShowCrearOrdenModal] = useState(false)
-  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(null)
+  const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(
+    null
+  )
 
   // Production actions state
   const [isIniciarModalOpen, setIsIniciarModalOpen] = useState(false)
@@ -99,18 +107,52 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
   const [isProduccionLoading, setIsProduccionLoading] = useState(false)
 
   // Memoized keys and values
-  const activeNotasKey = useMemo(() => buildCacheKey(activeNotasTab, notasFilters), [activeNotasTab, notasFilters])
-  const activeOrdenesKey = useMemo(() => buildCacheKey(activeOrdenesTab, ordenesFilters), [activeOrdenesTab, ordenesFilters])
+  const activeNotasKey = useMemo(
+    () => buildCacheKey(activeNotasTab, notasFilters),
+    [activeNotasTab, notasFilters]
+  )
+  const activeOrdenesKey = useMemo(
+    () => buildCacheKey(activeOrdenesTab, ordenesFilters),
+    [activeOrdenesTab, ordenesFilters]
+  )
 
-  const currentNotas = useMemo(() => notasCache[activeNotasKey] ?? [], [notasCache, activeNotasKey])
-  const currentOrdenes = useMemo(() => ordenesCache[activeOrdenesKey] ?? [], [ordenesCache, activeOrdenesKey])
+  const rawNotas = notasCache[activeNotasKey] ?? []
+
+  const currentNotas = useMemo(() => {
+    if (activeNotasTab === 'EN_PRODUCCION') {
+      return rawNotas.filter((o) => o.estado === 'EN PRODUCCION')
+    }
+    if (activeNotasTab === 'FINALIZADA') {
+      return rawNotas.filter((o) => o.estado === 'PRODUCCION FINALIZADA')
+    }
+    return rawNotas
+  }, [rawNotas, activeNotasTab])
+
+  const currentOrdenes = useMemo(
+    () => ordenesCache[activeOrdenesKey] ?? [],
+    [ordenesCache, activeOrdenesKey]
+  )
 
   // Counts for Display
-  const notasSinOrdenCount = notasCache[buildCacheKey('SIN_ORDEN', EMPTY_FILTERS)]?.length ?? 0
-  const notasEnProduccionCount = notasCache[buildCacheKey('EN_PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
-  const ordenesPendientesCount = ordenesCache[buildCacheKey('PENDIENTE', EMPTY_FILTERS)]?.length ?? 0
-  const ordenesAprobadasCount = ordenesCache[buildCacheKey('APROBADA', EMPTY_FILTERS)]?.length ?? 0
-  const ordenesEnProduccionCount = ordenesCache[buildCacheKey('EN PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
+  const notasSinOrdenCount =
+    notasCache[buildCacheKey('SIN_ORDEN', EMPTY_FILTERS)]?.length ?? 0
+  const rawNotasEnProduccion =
+    notasCache[buildCacheKey('EN_PRODUCCION', EMPTY_FILTERS)] ?? []
+  const notasEnProduccionCount = rawNotasEnProduccion.filter(
+    (o) => o.estado === 'EN PRODUCCION'
+  ).length
+  const rawNotasFinalizadas =
+    notasCache[buildCacheKey('FINALIZADA', EMPTY_FILTERS)] ?? []
+  const notasFinalizadasCount = rawNotasFinalizadas.filter(
+    (o) => o.estado === 'PRODUCCION FINALIZADA'
+  ).length
+
+  const ordenesPendientesCount =
+    ordenesCache[buildCacheKey('PENDIENTE', EMPTY_FILTERS)]?.length ?? 0
+  const ordenesAprobadasCount =
+    ordenesCache[buildCacheKey('APROBADA', EMPTY_FILTERS)]?.length ?? 0
+  const ordenesEnProduccionCount =
+    ordenesCache[buildCacheKey('EN PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
 
   // Data Fetching: Notas
   useEffect(() => {
@@ -129,13 +171,16 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
           setNotasCache((prev) => ({ ...prev, [activeNotasKey]: notas }))
         }
       } catch {
-        if (!cancelled) setErrorNotas('No se pudieron cargar las notas de fábrica.')
+        if (!cancelled)
+          setErrorNotas('No se pudieron cargar las notas de fábrica.')
       } finally {
         if (!cancelled) setLoadingNotas(false)
       }
     }
     void fetchNotas()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [activeTab, activeNotasKey, activeNotasTab, notasFilters, notasCache])
 
   // Data Fetching: Ordenes
@@ -155,22 +200,33 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
           setOrdenesCache((prev) => ({ ...prev, [activeOrdenesKey]: ordenes }))
         }
       } catch {
-        if (!cancelled) setErrorOrdenes('No se pudieron cargar las órdenes de producción.')
+        if (!cancelled)
+          setErrorOrdenes('No se pudieron cargar las órdenes de producción.')
       } finally {
         if (!cancelled) setLoadingOrdenes(false)
       }
     }
     void fetchOrdenes()
-    return () => { cancelled = true }
-  }, [activeTab, activeOrdenesKey, activeOrdenesTab, ordenesFilters, ordenesCache])
+    return () => {
+      cancelled = true
+    }
+  }, [
+    activeTab,
+    activeOrdenesKey,
+    activeOrdenesTab,
+    ordenesFilters,
+    ordenesCache,
+  ])
 
   // Deselect if no longer visible
   useEffect(() => {
     if (activeTab === 'notas' && selectedObra) {
-      if (!currentNotas.some(o => o.cod_obra === selectedObra.cod_obra)) setSelectedObra(null)
+      if (!currentNotas.some((o) => o.cod_obra === selectedObra.cod_obra))
+        setSelectedObra(null)
     }
     if (activeTab === 'ordenes' && selectedOrden) {
-      if (!currentOrdenes.some(o => o.cod_op === selectedOrden.cod_op)) setSelectedOrden(null)
+      if (!currentOrdenes.some((o) => o.cod_op === selectedOrden.cod_op))
+        setSelectedOrden(null)
     }
   }, [activeTab, currentNotas, currentOrdenes, selectedObra, selectedOrden])
 
@@ -193,15 +249,19 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
 
   const handleRetryNotas = () => {
     setErrorNotas(null)
-    setNotasCache(prev => {
-      const next = { ...prev }; delete next[activeNotasKey]; return next
+    setNotasCache((prev) => {
+      const next = { ...prev }
+      delete next[activeNotasKey]
+      return next
     })
   }
 
   const handleRetryOrdenes = () => {
     setErrorOrdenes(null)
-    setOrdenesCache(prev => {
-      const next = { ...prev }; delete next[activeOrdenesKey]; return next
+    setOrdenesCache((prev) => {
+      const next = { ...prev }
+      delete next[activeOrdenesKey]
+      return next
     })
   }
 
@@ -215,11 +275,13 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
         setSelectedOrden({
           ...selectedOrden,
           estado: 'EN PRODUCCION',
-          obra: { ...selectedOrden.obra, estado: 'EN PRODUCCION' }
+          obra: { ...selectedOrden.obra, estado: 'EN PRODUCCION' },
         } as OrdenProduccion)
         setOrdenesCache({}) // Clear cache to force refresh
         notify.success('Producción iniciada correctamente.')
-        startTransition(() => { router.refresh() })
+        startTransition(() => {
+          router.refresh()
+        })
       } else {
         notify.error(result.error || 'Error al iniciar la producción')
       }
@@ -239,9 +301,12 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
       if (result.success) {
         setIsFinalizarModalOpen(false)
         setSelectedOrden(null)
-        setNotasCache({}); setOrdenesCache({})
+        setNotasCache({})
+        setOrdenesCache({})
         notify.success('Producción finalizada correctamente.')
-        startTransition(() => { router.refresh() })
+        startTransition(() => {
+          router.refresh()
+        })
       } else {
         notify.error(result.error || 'Error al finalizar la producción')
       }
@@ -259,12 +324,15 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
     return {
       entidadLabel: 'Orden de Producción',
       entidadValor: `#${selectedOrden.cod_op}`,
-      cliente: cliente?.tipo_cliente === 'EMPRESA'
-        ? cliente.razon_social?.trim() || 'N/A'
-        : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim() || 'N/A',
-      direccion: selectedOrden.obra?.direccion && selectedOrden.obra?.localidad
-        ? `${selectedOrden.obra.direccion}, ${selectedOrden.obra.localidad.nombre_localidad}`
-        : selectedOrden.obra?.direccion || 'Sin dirección',
+      cliente:
+        cliente?.tipo_cliente === 'EMPRESA'
+          ? cliente.razon_social?.trim() || 'N/A'
+          : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim() ||
+            'N/A',
+      direccion:
+        selectedOrden.obra?.direccion && selectedOrden.obra?.localidad
+          ? `${selectedOrden.obra.direccion}, ${selectedOrden.obra.localidad.nombre_localidad}`
+          : selectedOrden.obra?.direccion || 'Sin dirección',
       telefono: cliente?.telefono,
       mail: cliente?.mail,
       estadoActual: selectedOrden.estado,
@@ -301,6 +369,7 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
     currentOrdenes,
     notasSinOrdenCount,
     notasEnProduccionCount,
+    notasFinalizadasCount,
     ordenesPendientesCount,
     ordenesAprobadasCount,
     ordenesEnProduccionCount,
@@ -312,6 +381,10 @@ export default function useProduccionClient(usuario: Empleado, initialNotasSinOr
     handleRetryOrdenes,
     handleConfirmIniciar,
     handleConfirmFinalizar,
-    refreshAll: () => { setNotasCache({}); setOrdenesCache({}); startTransition(() => router.refresh()) }
+    refreshAll: () => {
+      setNotasCache({})
+      setOrdenesCache({})
+      startTransition(() => router.refresh())
+    },
   }
 }
