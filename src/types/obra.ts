@@ -8,6 +8,7 @@ import { ESTADOS_OBRA } from '@/constants'
 export type EstadoObra = (typeof ESTADOS_OBRA)[number]
 export type EstadoNotaFabricaProduccion =
   | 'SIN_ORDEN'
+  | 'CON_ORDEN'
   | 'EN_PRODUCCION'
   | 'FINALIZADA'
 

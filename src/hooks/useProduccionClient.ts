@@ -119,6 +119,10 @@ export default function useProduccionClient(
   const rawNotas = notasCache[activeNotasKey] ?? []
 
   const currentNotas = useMemo(() => {
+    if (activeNotasTab === 'CON_ORDEN') {
+      // Back-end already filters correctly; return as-is
+      return rawNotas
+    }
     if (activeNotasTab === 'EN_PRODUCCION') {
       return rawNotas.filter((o) => o.estado === 'EN PRODUCCION')
     }
@@ -136,6 +140,8 @@ export default function useProduccionClient(
   // Counts for Display
   const notasSinOrdenCount =
     notasCache[buildCacheKey('SIN_ORDEN', EMPTY_FILTERS)]?.length ?? 0
+  const notasConOrdenCount =
+    notasCache[buildCacheKey('CON_ORDEN', EMPTY_FILTERS)]?.length ?? 0
   const rawNotasEnProduccion =
     notasCache[buildCacheKey('EN_PRODUCCION', EMPTY_FILTERS)] ?? []
   const notasEnProduccionCount = rawNotasEnProduccion.filter(
@@ -368,6 +374,7 @@ export default function useProduccionClient(
     currentNotas,
     currentOrdenes,
     notasSinOrdenCount,
+    notasConOrdenCount,
     notasEnProduccionCount,
     notasFinalizadasCount,
     ordenesPendientesCount,

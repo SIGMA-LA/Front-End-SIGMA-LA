@@ -143,6 +143,16 @@ export default function SidebarNotasFabrica({
             SIN ORDEN
           </button>
           <button
+            onClick={() => onStatusChange('CON_ORDEN')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+              statusFilter === 'CON_ORDEN'
+                ? 'bg-white text-purple-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            CON ORDEN
+          </button>
+          <button
             onClick={() => onStatusChange('EN_PRODUCCION')}
             className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
               statusFilter === 'EN_PRODUCCION'
@@ -150,7 +160,7 @@ export default function SidebarNotasFabrica({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            EN PRODUCCION
+            EN PROD.
           </button>
           <button
             onClick={() => onStatusChange('FINALIZADA')}
@@ -160,7 +170,7 @@ export default function SidebarNotasFabrica({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            PROD. FINALIZADA
+            FINALIZADA
           </button>
         </div>
       </div>

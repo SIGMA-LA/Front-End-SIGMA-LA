@@ -4,7 +4,6 @@ import {
   MapPin,
   Phone,
   User as UserIcon,
-  Package,
   FileText,
   CheckCircle,
   AlertTriangle,
@@ -16,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { useCallback, useState, useEffect } from 'react'
 import { formatDateOnly } from '@/lib/utils'
 import OrdenesProduccionList from './OrdenesProduccionList'
-import { finalizarProduccionObra, iniciarProduccionObra } from '@/actions/obras'
+import { finalizarProduccionObra } from '@/actions/obras'
 import ProduccionActionModal, {
   type ProduccionActionSummary,
 } from './ProduccionActionModal'
@@ -72,7 +71,6 @@ export default function NotaFabricaDetails({
   const [pdfError, setPdfError] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isFinalizando, setIsFinalizando] = useState(false)
-  const [isIniciando, setIsIniciando] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
   const [tieneOpFinalizada, setTieneOpFinalizada] = useState(false)
   const [hasActivePedido, setHasActivePedido] = useState(false)
@@ -135,24 +133,6 @@ export default function NotaFabricaDetails({
   const handleOpenPdf = () => {
     if (notaFabricaUrl) {
       window.open(notaFabricaUrl, '_blank')
-    }
-  }
-
-  const handleIniciarProduccion = async () => {
-    setIsIniciando(true)
-    try {
-      const result = await iniciarProduccionObra(obra.cod_obra)
-      if (result.success) {
-        notify.success('Producción iniciada correctamente.')
-        onProduccionFinalizada?.() // Reusing to refresh parent
-      } else {
-        notify.error(result.error || 'Error al iniciar la producción')
-      }
-    } catch (error) {
-      console.error(error)
-      notify.error('Error al iniciar la producción. Intente nuevamente.')
-    } finally {
-      setIsIniciando(false)
     }
   }
 
@@ -343,31 +323,20 @@ export default function NotaFabricaDetails({
                   </Button>
                 )}
 
-                {/* Botones si está Pagada Parcialmente (Lista para empezar o pedir stock) */}
+                {/* Botón Pedir Stock (solo si la obra no tiene un pedido activo) */}
                 {obra.estado === 'PAGADA PARCIALMENTE' && (
-                  <>
-                    <Button
-                      onClick={handleIniciarProduccion}
-                      disabled={isIniciando}
-                      className="w-full cursor-pointer bg-blue-600 py-4 text-base text-white transition-colors hover:bg-blue-700 lg:py-5 lg:text-lg"
-                    >
-                      <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-                      <span>
-                        {isIniciando ? 'Iniciando...' : 'Iniciar Producción'}
-                      </span>
-                    </Button>
-                    <Button
-                      onClick={() => setIsStockModalOpen(true)}
-                      disabled={hasActivePedido}
-                      variant="outline"
-                      className="w-full cursor-pointer border-2 border-orange-500 bg-white py-4 text-base text-orange-600 transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-50 lg:py-5 lg:text-lg"
-                    >
-                      <AlertTriangle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-                      <span>
-                        {hasActivePedido ? 'Pedido en Curso' : 'Pedir Stock'}
-                      </span>
-                    </Button>
-                  </>
+                  <Button
+                    onClick={() => setIsStockModalOpen(true)}
+                    disabled={hasActivePedido}
+                    variant="outline"
+                    className="w-full cursor-pointer border-2 border-orange-500 bg-white py-4 text-base text-orange-600 transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-50 lg:py-5 lg:text-lg"
+                  >
+                    <AlertTriangle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+                    <span>
+                      {hasActivePedido ? 'Pedido en Curso' : 'Pedir Stock'}
+                    </span>
+
+                  </Button>
                 )}
 
                 {puedeFinalizarProduccion && (

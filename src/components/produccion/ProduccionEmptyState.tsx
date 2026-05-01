@@ -9,7 +9,7 @@ import { LucideIcon } from 'lucide-react'
 interface StatCardProps {
   count: number
   label: string
-  colorTheme: 'orange' | 'green' | 'amber' | 'blue'
+  colorTheme: 'orange' | 'green' | 'amber' | 'blue' | 'purple'
 }
 
 interface ProduccionEmptyStateProps {
@@ -28,6 +28,7 @@ function StatCard({ count, label, colorTheme }: StatCardProps) {
     green: 'bg-green-50 text-green-600',
     amber: 'bg-amber-50 text-amber-600',
     blue: 'bg-blue-50 text-blue-600',
+    purple: 'bg-purple-50 text-purple-600',
   }
 
   return (
