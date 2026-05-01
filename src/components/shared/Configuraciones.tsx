@@ -18,6 +18,8 @@ import { NegocioSection } from './configuraciones/NegocioSection'
 import { SeguridadSection } from './configuraciones/SeguridadSection'
 
 import { getPerfilConfig, updatePerfilConfig } from '@/actions/configuraciones'
+import { getActualParametros, updateParametros } from '@/actions/parametros'
+import { getCurrentUser } from '@/actions/auth'
 import { notify } from '@/lib/toast'
 import { NotificacionesData } from '@/types'
 
@@ -50,13 +52,22 @@ export default function Configuraciones({
   const [isFetching, setIsFetching] = useState(true)
   const [errorStatus, setErrorStatus] = useState<string | null>(null)
   const [successStatus, setSuccessStatus] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
 
   // Cargar datos iniciales del backend (apartado perfil)
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setErrorStatus(null)
-        const perfilDB = await getPerfilConfig()
+        const [perfilDB, parametrosDB, currentUser] = await Promise.all([
+          getPerfilConfig(),
+          getActualParametros(),
+          getCurrentUser(),
+        ])
+
+        if (currentUser) {
+          setUserRole(currentUser.rol_actual)
+        }
 
         if (perfilDB) {
           setConfiguraciones((prev) => ({
@@ -70,6 +81,17 @@ export default function Configuraciones({
             notificaciones:
               (perfilDB.notificaciones as NotificacionesData) ||
               prev.notificaciones,
+          }))
+        }
+
+        if (parametrosDB) {
+          setConfiguraciones((prev) => ({
+            ...prev,
+            negocio: {
+              ...prev.negocio,
+              presupuesto: parametrosDB.dias_vigencia_presu?.toString() || prev.negocio.presupuesto,
+              viaticos: parametrosDB.viatico_dia_persona?.toString() || prev.negocio.viaticos,
+            }
           }))
         }
       } catch (error) {
@@ -119,19 +141,49 @@ export default function Configuraciones({
   }
 
   const handleSave = async () => {
+    // Validaciones previas al guardado
+    const { presupuesto, viaticos } = configuraciones.negocio
+    if (!presupuesto || parseFloat(presupuesto) <= 0) {
+      setErrorStatus('Los días de vigencia del presupuesto deben ser mayores a 0.')
+      notify.error('Los días de vigencia del presupuesto deben ser mayores a 0.')
+      return
+    }
+    if (!viaticos || parseFloat(viaticos) <= 0) {
+      setErrorStatus('El costo de viático por día debe ser mayor a 0.')
+      notify.error('El costo de viático por día debe ser mayor a 0.')
+      return
+    }
+
     setIsLoading(true)
     setErrorStatus(null)
     setSuccessStatus(null)
     try {
+      const currentDate = new Date()
+      const dateString = currentDate.toISOString().split('T')[0]
+      const timeString = currentDate.toTimeString().split(' ')[0]
+
       // Usar el nuevo action para guardar el perfil y las notificaciones en el backend
-      await Promise.all([
+      const promises = [
         updatePerfilConfig(configuraciones.perfil),
         // Aquí podrías tener un updateNotificacionesConfig o incluirlo en el perfil
         updatePerfilConfig({
           ...configuraciones.perfil,
           notificaciones: configuraciones.notificaciones.valores,
         }),
-      ])
+      ]
+
+      if (userRole === 'VENTAS') {
+        promises.push(
+          updateParametros({
+            dias_vigencia_presu: parseInt(presupuesto),
+            viatico_dia_persona: parseFloat(viaticos),
+            fecha_cambio: dateString,
+            hora_cambio: timeString
+          })
+        )
+      }
+
+      await Promise.all(promises)
       setSuccessStatus('Configuraciones guardadas exitosamente.')
       notify.success('Configuraciones guardadas exitosamente.')
       setTimeout(() => setSuccessStatus(null), 4000)
@@ -199,8 +251,8 @@ export default function Configuraciones({
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-              <PerfilSection
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-2">
+            <PerfilSection
               perfil={configuraciones.perfil}
               onChange={(field, value) =>
                 handleConfigChange('perfil', field, value)
@@ -213,7 +265,7 @@ export default function Configuraciones({
               onChange={(field, value) =>
                 handleConfigChange('negocio', field, value)
               }
-              disabled={isUIBlocked}
+              disabled={isUIBlocked || userRole !== 'VENTAS'}
             />
           </div>
 
