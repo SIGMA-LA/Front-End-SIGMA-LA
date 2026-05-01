@@ -119,7 +119,9 @@ export async function createCliente(
 ): Promise<ActionResponse<Cliente>> {
   try {
     const token = await getAccessToken()
-    const payload = Object.fromEntries(formData.entries())
+    const payload = Object.fromEntries(
+      Array.from(formData.entries()).filter(([key]) => !key.startsWith('$ACTION_'))
+    )
 
     const res = await fetchWithErrorHandling<Cliente>(BASE_URL, {
       method: 'POST',
@@ -158,7 +160,9 @@ export async function updateCliente(
   try {
     const cuilNormalized = cuil.replace(/-/g, '')
     const token = await getAccessToken()
-    const payload = Object.fromEntries(formData.entries())
+    const payload = Object.fromEntries(
+      Array.from(formData.entries()).filter(([key]) => !key.startsWith('$ACTION_'))
+    )
 
     const res = await fetchWithErrorHandling<Cliente>(
       `${BASE_URL}/${encodeURIComponent(cuilNormalized)}`,

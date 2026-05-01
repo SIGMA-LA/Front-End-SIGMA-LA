@@ -67,7 +67,7 @@ export default function CrearOrdenModal({
         const result = await crearOrdenProduccion(formData)
         if (result.success) {
           setSelectedFile(null)
-          notify.success('Orden de produccion creada correctamente.')
+          notify.success('Orden de produccion registrada correctamente.')
           onSuccess?.()
           onClose()
         } else {
@@ -135,11 +135,10 @@ export default function CrearOrdenModal({
                 {/* 1. Contenedor relativo */}
                 <label
                   htmlFor="orden-file"
-                  className={`flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors lg:h-64 ${
-                    selectedFile
+                  className={`flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors lg:h-64 ${selectedFile
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-                  } ${isPending ? 'opacity-50' : ''}`}
+                    } ${isPending ? 'opacity-50' : ''}`}
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     {/* ... (contenido interno del label sin cambios) ... */}

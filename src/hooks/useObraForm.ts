@@ -64,14 +64,14 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
         esGrande: obraExistente.esGrande ?? true,
       })
-      
+
       if (obraExistente.cliente) {
         clienteSearch.selectCliente(obraExistente.cliente)
       }
       if (obraExistente.arquitecto) {
         arquitectoSearch.selectCliente(obraExistente.arquitecto)
       }
-      
+
       setProvinciaSeleccionada(obraExistente.localidad?.cod_provincia || '')
       if (obraExistente.presupuesto) setPresupuestos(obraExistente.presupuesto)
     }
@@ -119,7 +119,7 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
   ) => {
     const { name, value, type } = e.target
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : (name === 'cod_localidad' ? Number(value) : value),
@@ -133,11 +133,13 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
           p.nro_presupuesto === presupuestoData.nro_presupuesto ? presupuestoData : p
         )
       )
+      notify.success('Presupuesto registrado con éxito')
     } else {
       setPresupuestos((prev) => [
         ...prev,
         { ...presupuestoData, nro_presupuesto: -Date.now() },
       ])
+      notify.success('Presupuesto registrado con éxito')
     }
     setIsModalOpen(false)
   }
