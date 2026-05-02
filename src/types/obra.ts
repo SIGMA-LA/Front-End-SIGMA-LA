@@ -3,11 +3,13 @@ import type { Localidad } from '@/types/geo'
 import type { Entrega } from '@/types/entrega'
 import type { Visita } from '@/types/visita'
 import type { Pago } from '@/types/pago'
+import type { PedidoStock } from '@/types/pedidoStock'
 import { ESTADOS_OBRA } from '@/constants'
 
 export type EstadoObra = (typeof ESTADOS_OBRA)[number]
 export type EstadoNotaFabricaProduccion =
   | 'SIN_ORDEN'
+  | 'CON_ORDEN'
   | 'EN_PRODUCCION'
   | 'FINALIZADA'
 
@@ -39,7 +41,8 @@ export interface Obra {
   visita?: Visita[] // Alias para el backend
   presupuesto?: Presupuesto[]
   pagos?: Pago[]
-  pago?: Pago[] // Alias para el backend
+  pago?: Pago[]
+  pedido_stock?: PedidoStock | null
   esGrande?: boolean
 }
 

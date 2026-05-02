@@ -26,6 +26,11 @@ export default function NotaFabricaCard({
       default:
         'border-orange-200 bg-orange-50/40 hover:border-orange-300 hover:bg-orange-50',
     },
+    CON_ORDEN: {
+      selected: 'border-purple-400 bg-purple-50 ring-2 ring-purple-300',
+      default:
+        'border-purple-200 bg-purple-50/40 hover:border-purple-300 hover:bg-purple-50',
+    },
     EN_PRODUCCION: {
       selected: 'border-blue-400 bg-blue-50 ring-2 ring-blue-300',
       default:

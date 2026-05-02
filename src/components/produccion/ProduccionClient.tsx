@@ -62,6 +62,7 @@ export default function ProduccionClient({
     currentNotas,
     currentOrdenes,
     notasSinOrdenCount,
+    notasConOrdenCount,
     notasEnProduccionCount,
     notasFinalizadasCount,
     ordenesPendientesCount,
@@ -111,6 +112,11 @@ export default function ProduccionClient({
                   count={notasSinOrdenCount}
                   label="Sin Orden"
                   color="orange"
+                />
+                <StatBadge
+                  count={notasConOrdenCount}
+                  label="Con Orden"
+                  color="purple"
                 />
                 <StatBadge
                   count={notasEnProduccionCount}
@@ -224,6 +230,11 @@ export default function ProduccionClient({
                     colorTheme: 'orange',
                   },
                   {
+                    count: notasConOrdenCount,
+                    label: 'Con Orden',
+                    colorTheme: 'purple',
+                  },
+                  {
                     count: notasEnProduccionCount,
                     label: 'En Producción',
                     colorTheme: 'blue',
@@ -332,13 +343,14 @@ function StatBadge({
 }: {
   count: number
   label: string
-  color: 'orange' | 'green' | 'amber' | 'blue'
+  color: 'orange' | 'green' | 'amber' | 'blue' | 'purple'
 }) {
   const themes = {
     orange: 'bg-orange-50 text-orange-600',
     green: 'bg-green-50 text-green-600',
     amber: 'bg-amber-50 text-amber-600',
     blue: 'bg-blue-50 text-blue-600',
+    purple: 'bg-purple-50 text-purple-600',
   }
   return (
     <div
