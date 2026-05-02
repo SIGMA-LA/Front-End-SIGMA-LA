@@ -64,7 +64,7 @@ export function useNotaFabrica({
 
       setSelectedFile(null)
       setModoCambio(false)
-      onUploadSuccess?.(res.data!.nota_fabrica_pid || '')
+      onUploadSuccess?.(res.data!.nota_fabrica || '')
       notify.success('Nota de fabrica actualizada correctamente.')
       router.refresh()
       onClose()
@@ -91,7 +91,7 @@ export function useNotaFabrica({
         notify.error(res.error || 'Error al eliminar la nota de fábrica.')
         return
       }
-      onUploadSuccess?.(res.data!.nota_fabrica_pid || '')
+      onUploadSuccess?.(res.data!.nota_fabrica || '')
       setModoCambio(false)
       notify.success('Nota de fabrica eliminada correctamente.')
       router.refresh()
@@ -119,7 +119,7 @@ export function useNotaFabrica({
         notify.error(res.error || 'Error al eliminar la nota de fábrica.')
         return
       }
-      onUploadSuccess?.(res.data!.nota_fabrica_pid || '')
+      onUploadSuccess?.(res.data!.nota_fabrica || '')
       setModoCambio(true)
       setSelectedFile(null)
       notify.info('Nota eliminada. Ya puedes subir una nueva.')

@@ -27,27 +27,18 @@ export default function ObraCard({
   usuarioRol,
   provincias,
 }: ObraCardProps) {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'deu6htdbs'
-  const getNotaUrl = useCallback(
-    (publicId?: string | null) =>
-      publicId
-        ? `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}.pdf`
-        : '',
-    [cloudName]
-  )
-
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [notaFabricaModalOpen, setNotaFabricaModalOpen] = useState(false)
-  // nota_fabrica_pid contiene el public_id de Cloudinary, no nota_fabrica que es texto
+  
   const [notaFabricaUrl, setNotaFabricaUrl] = useState(
-    getNotaUrl(obra.nota_fabrica_pid)
+    obra.nota_fabrica || ''
   )
 
   useEffect(() => {
-    setNotaFabricaUrl(getNotaUrl(obra.nota_fabrica_pid))
-  }, [obra.nota_fabrica_pid, getNotaUrl])
+    setNotaFabricaUrl(obra.nota_fabrica || '')
+  }, [obra.nota_fabrica])
 
   const provincia = useMemo(() => {
     if (obra.localidad && provincias.length > 0) {
@@ -99,8 +90,8 @@ export default function ObraCard({
     })
   }
 
-  const handleNotaFabricaSuccess = (publicId: string) => {
-    setNotaFabricaUrl(getNotaUrl(publicId))
+  const handleNotaFabricaSuccess = (url: string) => {
+    setNotaFabricaUrl(url)
     router.refresh()
   }
 

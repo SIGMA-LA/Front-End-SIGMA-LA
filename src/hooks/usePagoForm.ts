@@ -59,7 +59,7 @@ export default function usePagoForm({
     if (open && obraPreseleccionada) {
       setSelectedObra(obraPreseleccionada)
       if (obraPreseleccionada.cantidad_pagos === 0 && obraPreseleccionada.presupuesto?.valor) {
-        setMonto((obraPreseleccionada.presupuesto.valor * 0.7).toString())
+        setMonto((obraPreseleccionada.presupuesto.valor * 0.7).toFixed(2))
       }
       setCurrentStep('pago')
     }
@@ -87,7 +87,7 @@ export default function usePagoForm({
     setSelectedObra(obra)
     if (obra) {
       if (obra.cantidad_pagos === 0 && obra.presupuesto?.valor) {
-        setMonto((obra.presupuesto.valor * 0.7).toString())
+        setMonto((obra.presupuesto.valor * 0.7).toFixed(2))
       } else {
         setMonto('')
       }
@@ -104,7 +104,7 @@ export default function usePagoForm({
       return
     }
 
-    const montoNumerico = parseFloat(monto.replace(/\./g, '').replace(',', '.'))
+    const montoNumerico = parseFloat(monto)
     if (isNaN(montoNumerico) || montoNumerico <= 0) {
       setError('El monto debe ser un número mayor a 0')
       return

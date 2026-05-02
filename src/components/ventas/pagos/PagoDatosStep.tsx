@@ -115,7 +115,7 @@ export default function PagoDatosStep({
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setMonto((selectedObra.saldoPendiente! * 0.7).toString())}
+                    onClick={() => setMonto((selectedObra.saldoPendiente! * 0.7).toFixed(2))}
                     className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 transition-colors hover:bg-blue-200"
                     disabled={loading}
                   >
