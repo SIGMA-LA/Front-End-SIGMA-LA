@@ -17,7 +17,8 @@ const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
-    maximumFractionDigits: 0,
+    notation: 'compact',
+    maximumFractionDigits: 1,
   }).format(amount)
 }
 
@@ -52,7 +53,7 @@ export default function DashboardView({ stats }: DashboardViewProps) {
         {/* Card 1: Ingresos del Mes */}
         <Card className="border border-green-200 bg-white hover:border-green-300 transition-colors">
           <CardContent className="p-6">
-             <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">
                   Ingresos del Mes
@@ -82,7 +83,7 @@ export default function DashboardView({ stats }: DashboardViewProps) {
         {/* Card 2: Cuentas por Cobrar */}
         <Card className="border border-red-200 bg-white hover:border-red-300 transition-colors">
           <CardContent className="p-6">
-             <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">
                   Cuentas por Cobrar
@@ -104,7 +105,7 @@ export default function DashboardView({ stats }: DashboardViewProps) {
         {/* Card 3: Obras Activas */}
         <Card className="border border-blue-200 bg-white hover:border-blue-300 transition-colors">
           <CardContent className="p-6">
-             <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">
                   Obras Activas
@@ -126,7 +127,7 @@ export default function DashboardView({ stats }: DashboardViewProps) {
         {/* Card 4: Nuevas Obras */}
         <Card className="border border-purple-200 bg-white hover:border-purple-300 transition-colors">
           <CardContent className="p-6">
-             <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">
                   Nuevas Obras
@@ -148,14 +149,14 @@ export default function DashboardView({ stats }: DashboardViewProps) {
 
       {/* Quick Access Cards */}
       <div className="mt-10 mb-4">
-         <h2 className="text-lg font-semibold text-gray-900">Accesos Rápidos</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Accesos Rápidos</h2>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Link href="/admin/empleados">
           <Card className="cursor-pointer border-0 shadow-sm transition-all hover:shadow-md hover:-translate-y-1 bg-white">
             <CardContent className="flex flex-col items-center justify-center p-8 text-center">
               <div className="rounded-full bg-blue-50 p-4 mb-4">
-                 <UserPlus className="h-8 w-8 text-blue-600" />
+                <UserPlus className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="mb-2 text-lg font-semibold text-gray-900">
                 Gestión de Personal
@@ -185,14 +186,14 @@ export default function DashboardView({ stats }: DashboardViewProps) {
           <Card className="cursor-pointer border-0 shadow-sm transition-all hover:shadow-md hover:-translate-y-1 bg-white">
             <CardContent className="flex flex-col items-center justify-center p-8 text-center">
               <div className="rounded-full bg-purple-50 p-4 mb-4">
-                 <Building className="h-8 w-8 text-purple-600" />
+                <Building className="h-8 w-8 text-purple-600" />
               </div>
-               <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                 Supervisar Obras
-               </h3>
-               <p className="text-sm text-gray-500">
-                 Monitorizar estado de todas las obras
-               </p>
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                Supervisar Obras
+              </h3>
+              <p className="text-sm text-gray-500">
+                Monitorizar estado de todas las obras
+              </p>
             </CardContent>
           </Card>
         </Link>
