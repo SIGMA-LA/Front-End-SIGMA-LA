@@ -12,7 +12,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react'
-import { Vehiculo, VehiculoEstado } from '@/types'
+import { Vehiculo, VehiculoEstado, UsosProgramadosVehiculo } from '@/types'
 import { getUsosProgramadosVehiculo } from '@/actions/vehiculos'
 
 interface VehiculoCardProps {
@@ -35,7 +35,7 @@ export default function VehiculoCard({
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isCheckingUsos, setIsCheckingUsos] = useState(false)
-  const [usos, setUsos] = useState<any>(null)
+  const [usos, setUsos] = useState<UsosProgramadosVehiculo | null>(null)
 
   const getEstadoBadgeColor = (estado: VehiculoEstado) => {
     switch (estado) {
@@ -197,7 +197,7 @@ export default function VehiculoCard({
               <span className="font-semibold">{vehiculo.patente}</span>?
             </p>
 
-            {usos && (usos.uso_vehiculo_entrega?.length > 0 || usos.uso_vehiculo_visita?.length > 0) && (
+            {usos && ((usos.uso_vehiculo_entrega?.length ?? 0) > 0 || (usos.uso_vehiculo_visita?.length ?? 0) > 0) && (
               <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                 <p className="font-semibold mb-2">Advertencia: Este vehículo está asignado a:</p>
                 <ul className="list-disc pl-5 space-y-1">

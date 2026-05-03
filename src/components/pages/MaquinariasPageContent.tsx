@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wrench, CheckCircle, XCircle } from 'lucide-react'
-import type { Maquinaria } from '@/types'
+import type { Maquinaria, UsosProgramadosMaquinaria, UsoMaquinaria } from '@/types'
 import { deleteMaquinaria, getUsosProgramadosMaquinaria } from '@/actions/maquinarias'
 import { notify } from '@/lib/toast'
 import MaquinariaCard from '@/components/coordinacion/maquinaria/MaquinariaCard'
@@ -25,7 +25,7 @@ export default function MaquinariasPageContent({
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isCheckingUsos, setIsCheckingUsos] = useState(false)
-  const [usos, setUsos] = useState<any>(null)
+  const [usos, setUsos] = useState<UsosProgramadosMaquinaria | null>(null)
 
   const maquinariasDisponibles = maquinarias.filter(
     (maquinaria) => maquinaria.estado === 'DISPONIBLE'
@@ -150,13 +150,13 @@ export default function MaquinariasPageContent({
         title="Eliminar Maquinaria"
         message={`¿Está seguro que desea eliminar la maquinaria "${selectedMaquinaria?.descripcion}"?`}
         warningContent={
-          usos?.uso_maquinaria?.length > 0 && (
+          (usos?.uso_maquinaria?.length ?? 0) > 0 && (
             <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
               <p className="mb-2 font-semibold">
                 Advertencia: Esta maquinaria está asignada a:
               </p>
               <ul className="list-disc space-y-1 pl-5">
-                {usos.uso_maquinaria.map((u: any) => (
+                {usos?.uso_maquinaria.map((u: UsoMaquinaria) => (
                   <li key={`e-${u.cod_entrega}`}>
                     Entrega en {u.entrega.obra.direccion} ({new Date(u.entrega.fecha_hora_entrega).toLocaleDateString('es-AR')})
                   </li>

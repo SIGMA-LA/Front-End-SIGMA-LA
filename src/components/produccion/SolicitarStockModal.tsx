@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+
 import { createPedidoStock } from '@/actions/pedidoStock'
 import { notify } from '@/lib/toast'
 
@@ -20,6 +20,8 @@ export default function SolicitarStockModal({
   onSuccess,
   isCoordinacion = false,
 }: SolicitarStockModalProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _unused = isCoordinacion
   const [descripcion, setDescripcion] = useState('')
   const [loading, setLoading] = useState(false)
 

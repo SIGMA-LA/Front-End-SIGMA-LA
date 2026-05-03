@@ -116,9 +116,8 @@ export default function useProduccionClient(
     [activeOrdenesTab, ordenesFilters]
   )
 
-  const rawNotas = notasCache[activeNotasKey] ?? []
-
   const currentNotas = useMemo(() => {
+    const rawNotas = notasCache[activeNotasKey] ?? []
     if (activeNotasTab === 'CON_ORDEN') {
       // Back-end already filters correctly; return as-is
       return rawNotas
@@ -130,7 +129,7 @@ export default function useProduccionClient(
       return rawNotas.filter((o) => o.estado === 'PRODUCCION FINALIZADA')
     }
     return rawNotas
-  }, [rawNotas, activeNotasTab])
+  }, [notasCache, activeNotasKey, activeNotasTab])
 
   const currentOrdenes = useMemo(
     () => ordenesCache[activeOrdenesKey] ?? [],

@@ -60,6 +60,7 @@ export type {
   AvailabilityStatus,
   UsoVehiculoEntrega,
   UsoVehiculoVisita,
+  UsosProgramadosVehiculo,
 } from './vehiculo'
 
 export type {
@@ -68,19 +69,14 @@ export type {
   UsoMaquinaria,
   EstadoMaquinaria,
   MaquinariaConDisponibilidad,
+  UsosProgramadosMaquinaria,
 } from './maquinaria'
 
 export type {
   ApiResponse,
   SearchParams,
   ParametroViatico,
-  PerfilFormData,
-  NotificacionesData,
-  NotificacionConfig,
-  NotificacionItem,
-  ValidationIssue,
-  ValidationDetail,
-  BackendErrorData,
+  PerfilFormData
 } from './common'
 
 export type {

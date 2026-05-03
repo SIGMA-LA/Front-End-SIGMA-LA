@@ -1,4 +1,5 @@
 import type { Visita } from './visita'
+import type { Entrega } from './entrega'
 import {
   ESTADOS_DISPONIBILIDAD,
   ESTADOS_VEHICULO,
@@ -42,6 +43,12 @@ export interface UsoVehiculoEntrega {
   fecha_hora_fin_real?: string
   estado: string
   vehiculo?: Vehiculo
+  entrega: Entrega
+}
+
+export interface UsosProgramadosVehiculo {
+  uso_vehiculo_entrega: UsoVehiculoEntrega[]
+  uso_vehiculo_visita: UsoVehiculoVisita[]
 }
 
 export interface UsoVehiculoVisita {
@@ -52,5 +59,5 @@ export interface UsoVehiculoVisita {
   fecha_hora_fin_real?: string
   estado: string
   vehiculo?: Vehiculo
-  visita?: Visita
+  visita: Visita
 }
