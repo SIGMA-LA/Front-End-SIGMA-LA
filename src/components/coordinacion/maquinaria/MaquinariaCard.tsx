@@ -1,6 +1,4 @@
-'use client'
-
-import { Wrench, Eye, Edit, Trash2 } from 'lucide-react'
+import { Wrench, Eye, Edit, Trash2, Loader2 } from 'lucide-react'
 import type { Maquinaria } from '@/types'
 
 interface MaquinariaCardProps {
@@ -8,6 +6,7 @@ interface MaquinariaCardProps {
   onViewDetails: (maquinaria: Maquinaria) => void
   onEdit: (maquinaria: Maquinaria) => void
   onDelete: (maquinaria: Maquinaria) => void
+  isLoading?: boolean
 }
 
 export default function MaquinariaCard({
@@ -15,6 +14,7 @@ export default function MaquinariaCard({
   onViewDetails,
   onEdit,
   onDelete,
+  isLoading = false,
 }: MaquinariaCardProps) {
   const isDisponible = maquinaria.estado === 'DISPONIBLE'
 
@@ -60,9 +60,14 @@ export default function MaquinariaCard({
           </button>
           <button
             onClick={() => onDelete(maquinaria)}
-            className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            disabled={isLoading}
+            className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
           >
-            <Trash2 className="h-4 w-4" />
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
           </button>
         </div>
       </div>

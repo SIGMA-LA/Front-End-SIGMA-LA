@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Calendar, Check, Loader2, Plus, ArrowRight, AlertTriangle, Building2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Package, Check, Loader2, Plus, ArrowRight, Building2, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Obra, PedidoStock, EstadoPedidoStock } from '@/types'
-import EstadoObraBadge from '../shared/EstadoObraBadge'
+
 import { getObrasParaPedidoStock } from '@/actions/obras'
-import { getPedidosStock, createPedidoStock, updatePedidoStockEstado } from '@/actions/pedidoStock'
+import { getPedidosStock, updatePedidoStockEstado } from '@/actions/pedidoStock'
 import SolicitarStockModal from '../produccion/SolicitarStockModal'
 import { notify } from '@/lib/toast'
 
@@ -80,7 +80,7 @@ export default function PedidosList() {
   }
 
   const pedidosActivos = pedidos.filter(p => p.estado !== 'RECIBIDO')
-  const pedidosRecibidos = pedidos.filter(p => p.estado === 'RECIBIDO')
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

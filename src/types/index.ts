@@ -60,6 +60,7 @@ export type {
   AvailabilityStatus,
   UsoVehiculoEntrega,
   UsoVehiculoVisita,
+  UsosProgramadosVehiculo,
 } from './vehiculo'
 
 export type {
@@ -68,6 +69,7 @@ export type {
   UsoMaquinaria,
   EstadoMaquinaria,
   MaquinariaConDisponibilidad,
+  UsosProgramadosMaquinaria,
 } from './maquinaria'
 
 export type {
@@ -95,3 +97,4 @@ export type {
 } from './componentProps'
 
 export type { PaginatedResponse } from './pagination'
+

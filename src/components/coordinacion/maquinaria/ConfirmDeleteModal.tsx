@@ -11,6 +11,7 @@ interface ConfirmDeleteModalProps {
   message?: string
   confirmText?: string
   cancelText?: string
+  warningContent?: React.ReactNode
 }
 
 export default function ConfirmDeleteModal({
@@ -22,6 +23,7 @@ export default function ConfirmDeleteModal({
   message = '¿Está seguro que desea eliminar este elemento? Esta acción no se puede deshacer.',
   confirmText = 'Eliminar',
   cancelText = 'Cancelar',
+  warningContent,
 }: ConfirmDeleteModalProps) {
   if (!open) return null
 
@@ -52,11 +54,12 @@ export default function ConfirmDeleteModal({
           <p className="text-gray-700">{message}</p>
         </div>
 
+        {warningContent}
+
         {/* Warning */}
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3">
           <p className="text-sm text-red-800">
-            <strong>Advertencia:</strong> Esta acción es permanente y no se
-            puede deshacer.
+            <strong>Advertencia:</strong> Esta acción puede ser revertida únicamente contactando soporte.
           </p>
         </div>
 

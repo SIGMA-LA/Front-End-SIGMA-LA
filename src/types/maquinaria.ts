@@ -1,5 +1,6 @@
 import type { AvailabilityStatus } from '@/types/vehiculo'
 import { ESTADOS_MAQUINARIA } from '@/constants'
+import type { Entrega } from './entrega'
 
 export type EstadoMaquinaria = (typeof ESTADOS_MAQUINARIA)[number]
 
@@ -23,6 +24,11 @@ export interface UsoMaquinaria {
   fecha_hora_fin_real?: string
   estado: string
   maquinaria?: Maquinaria
+  entrega: Entrega
+}
+
+export interface UsosProgramadosMaquinaria {
+  uso_maquinaria: UsoMaquinaria[]
 }
 
 export interface MaquinariaConDisponibilidad extends Maquinaria {

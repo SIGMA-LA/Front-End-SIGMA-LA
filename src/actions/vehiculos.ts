@@ -206,3 +206,28 @@ export async function deleteVehiculo(patente: string): Promise<ActionResponse> {
     return { success: false, error: message }
   }
 }
+
+/**
+ * Gets scheduled usages for a vehiculo
+ * @param {string} patente - Vehiculo patent/ID
+ */
+export async function getUsosProgramadosVehiculo(patente: string) {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/${patente}/usos-programados`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    )
+    return await res.json()
+  } catch (error) {
+    console.error('[getUsosProgramadosVehiculo]', error)
+    return { uso_vehiculo_entrega: [], uso_vehiculo_visita: [] }
+  }
+}

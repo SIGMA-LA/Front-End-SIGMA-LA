@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import {
   Calendar,
   CheckCircle,
@@ -8,7 +8,6 @@ import {
   User as UserIcon,
   Navigation,
   FileText,
-  ExternalLink,
   Loader2,
 } from 'lucide-react'
 import type { Visita } from '@/types'

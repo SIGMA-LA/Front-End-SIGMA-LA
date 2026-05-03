@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wrench, CheckCircle, XCircle } from 'lucide-react'
-import type { Maquinaria } from '@/types'
-import { deleteMaquinaria } from '@/actions/maquinarias'
+import type { Maquinaria, UsosProgramadosMaquinaria, UsoMaquinaria } from '@/types'
+import { deleteMaquinaria, getUsosProgramadosMaquinaria } from '@/actions/maquinarias'
 import { notify } from '@/lib/toast'
 import MaquinariaCard from '@/components/coordinacion/maquinaria/MaquinariaCard'
 import VerDetallesMaquinariaModal from '@/components/coordinacion/maquinaria/VerDetallesMaquinariaModal'
@@ -24,6 +24,8 @@ export default function MaquinariasPageContent({
     useState<Maquinaria | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isCheckingUsos, setIsCheckingUsos] = useState(false)
+  const [usos, setUsos] = useState<UsosProgramadosMaquinaria | null>(null)
 
   const maquinariasDisponibles = maquinarias.filter(
     (maquinaria) => maquinaria.estado === 'DISPONIBLE'
@@ -39,9 +41,18 @@ export default function MaquinariasPageContent({
     router.push(`/coordinacion/maquinarias/${maquinaria.cod_maquina}/editar`)
   }
 
-  const handleDelete = (maquinaria: Maquinaria) => {
+  const handleDelete = async (maquinaria: Maquinaria) => {
     setSelectedMaquinaria(maquinaria)
-    setShowDeleteModal(true)
+    setIsCheckingUsos(true)
+    try {
+      const result = await getUsosProgramadosMaquinaria(maquinaria.cod_maquina)
+      setUsos(result)
+    } catch (e) {
+      console.error('Error al obtener usos programados:', e)
+    } finally {
+      setIsCheckingUsos(false)
+      setShowDeleteModal(true)
+    }
   }
 
   const handleConfirmDelete = () => {
@@ -112,6 +123,7 @@ export default function MaquinariasPageContent({
               onViewDetails={handleViewDetails}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              isLoading={isCheckingUsos && selectedMaquinaria?.cod_maquina === maquinaria.cod_maquina}
             />
           ))}
         </div>
@@ -131,11 +143,31 @@ export default function MaquinariasPageContent({
         onCancel={() => {
           setShowDeleteModal(false)
           setSelectedMaquinaria(null)
+          setUsos(null)
         }}
         onConfirm={handleConfirmDelete}
         loading={isPending}
         title="Eliminar Maquinaria"
         message={`¿Está seguro que desea eliminar la maquinaria "${selectedMaquinaria?.descripcion}"?`}
+        warningContent={
+          (usos?.uso_maquinaria?.length ?? 0) > 0 && (
+            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="mb-2 font-semibold">
+                Advertencia: Esta maquinaria está asignada a:
+              </p>
+              <ul className="list-disc space-y-1 pl-5">
+                {usos?.uso_maquinaria.map((u: UsoMaquinaria) => (
+                  <li key={`e-${u.cod_entrega}`}>
+                    Entrega en {u.entrega.obra.direccion} ({new Date(u.entrega.fecha_hora_entrega).toLocaleDateString('es-AR')})
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 font-medium">
+                Se deberá reasignar otra maquinaria a estas actividades.
+              </p>
+            </div>
+          )
+        }
       />
     </>
   )
