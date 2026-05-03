@@ -35,7 +35,7 @@ export default function CrearCliente({
     formState,
     handleTipoClienteChange,
     handleChange,
-  } = useClienteFormLogic(initialData || (prefillData as any))
+  } = useClienteFormLogic((initialData || prefillData) as Cliente)
 
   const [state, formAction, isPending] = useActionState(action, {
     success: true,

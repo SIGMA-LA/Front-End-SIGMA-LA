@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle, Home, Loader2, Users, Plus, Edit2, Save, Ruler, Eye, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, Home, Loader2, Users, Plus, Edit2, Ruler, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Obra, Provincia, Visita } from '@/types'

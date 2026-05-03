@@ -1,7 +1,7 @@
 import { getProspectos } from '@/actions/visitas'
-import { getLocalidadesByProvincia, getProvincias } from '@/actions/localidad'
+import { getProvincias } from '@/actions/localidad'
 import SolicitarMedicionModal from '@/components/ventas/prospectos/SolicitarMedicionModal'
-import { Plus, CheckCircle2, MapPin, Calendar, ClipboardCheck } from 'lucide-react'
+import { Plus, MapPin, Calendar, ClipboardCheck } from 'lucide-react'
 import Link from 'next/link'
 import type { SearchParams } from '@/types'
 

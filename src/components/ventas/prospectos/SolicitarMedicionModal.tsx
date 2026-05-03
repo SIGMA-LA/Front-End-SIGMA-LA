@@ -75,7 +75,7 @@ export default function SolicitarMedicionModal({ provincias }: SolicitarMedicion
       } else {
         notify.error(res.error || 'Error al enviar solicitud')
       }
-    } catch (error) {
+    } catch {
       notify.error('Error al enviar solicitud')
     } finally {
       setIsSubmitting(false)

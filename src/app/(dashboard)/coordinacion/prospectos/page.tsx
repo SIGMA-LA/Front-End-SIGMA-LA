@@ -1,5 +1,5 @@
 import { getProspectos } from '@/actions/visitas'
-import { Calendar, ClipboardCheck, MapPin, Eye, CalendarPlus } from 'lucide-react'
+import { ClipboardCheck, MapPin, CalendarPlus } from 'lucide-react'
 import Link from 'next/link'
 import type { SearchParams } from '@/types'
 

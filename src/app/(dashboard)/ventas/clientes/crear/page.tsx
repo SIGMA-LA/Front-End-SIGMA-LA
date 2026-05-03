@@ -2,7 +2,7 @@ import CrearClienteForm from '@/components/ventas/CrearCliente'
 import { createCliente, type ActionResponse } from '@/actions/clientes'
 import { redirect } from 'next/navigation'
 
-import type { SearchParams } from '@/types'
+import type { SearchParams, Cliente } from '@/types'
 
 export default async function CrearClientePage({
   searchParams,
@@ -56,7 +56,7 @@ export default async function CrearClientePage({
           action={handleCrear}
           title="Nuevo Cliente"
           subtitle="Registra un nuevo cliente en el sistema"
-          prefillData={prefillData as any}
+          prefillData={prefillData as Partial<Cliente>}
         />
       </div>
     </div>
