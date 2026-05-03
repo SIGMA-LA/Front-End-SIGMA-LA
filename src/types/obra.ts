@@ -44,7 +44,6 @@ export interface Obra {
   pago?: Pago[]
   pedido_stock?: PedidoStock | null
   esGrande?: boolean
-  requiere_visita?: boolean
   mediciones?: string | null
 }
 

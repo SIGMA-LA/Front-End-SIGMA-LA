@@ -41,7 +41,6 @@ export interface ObraFormData {
   cuil_arquitecto?: string | null
   cod_localidad: number
   esGrande?: boolean
-  requiere_visita?: boolean
   mediciones?: string
   cod_visita?: number
 }
@@ -62,7 +61,6 @@ const initialState: ObraFormData = {
   nota_fabrica: '',
   fecha_cancelacion: null,
   esGrande: true,
-  requiere_visita: false,
   mediciones: '',
 }
 

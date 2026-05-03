@@ -64,7 +64,6 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
         fecha_cancelacion: null,
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
         esGrande: obraExistente.esGrande ?? true,
-        requiere_visita: obraExistente.requiere_visita ?? false,
         mediciones: obraExistente.mediciones || '',
       })
 
