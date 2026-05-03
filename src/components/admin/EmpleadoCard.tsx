@@ -10,6 +10,7 @@ import EmpleadoDetailsModal from './EmpleadoDetailsModal'
 import { deleteEmpleado } from '@/actions/empleado'
 import { getRolDisplayName } from '@/lib/empleado-utils'
 import Link from 'next/link'
+import { notify } from '@/lib/toast'
 
 interface EmpleadoCardProps {
   empleado: Empleado
@@ -39,6 +40,7 @@ export default function EmpleadoCard({ empleado }: EmpleadoCardProps) {
       }
 
       setShowDeleteModal(false)
+      notify.success('Empleado dado de baja exitosamente')
       router.refresh()
     } catch (error) {
       console.error('Error al borrar empleado:', error)
