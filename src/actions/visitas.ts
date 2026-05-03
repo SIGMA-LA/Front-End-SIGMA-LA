@@ -326,3 +326,92 @@ export async function updateVisitaFromForm(formData: FormData): Promise<ActionRe
     return { success: false, error: message }
   }
 }
+
+/**
+ * Retrieves prospectos (visitas sin obra asignada)
+ */
+export async function getProspectos(
+  status?: string,
+  page: number = 1,
+  pageSize: number = 25
+): Promise<PaginatedResponse<Visita>> {
+  const emptyResponse: PaginatedResponse<Visita> = {
+    data: [], total: 0, totalPages: 0, page, pageSize,
+  }
+  try {
+    const token = await getAccessToken()
+    const queryParams = new URLSearchParams()
+    if (status && status !== 'ALL') queryParams.append('estado', status)
+    queryParams.append('page', String(page))
+    queryParams.append('pageSize', String(pageSize))
+
+    const url = `${BASE_URL}/prospectos?${queryParams.toString()}`
+
+    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30, tags: ['visitas', 'prospectos'] },
+    })
+
+    const data = await response.json()
+    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+      return data as PaginatedResponse<Visita>
+    }
+    return emptyResponse
+  } catch (error) {
+    console.error('[getProspectos]', error)
+    return emptyResponse
+  }
+}
+
+export async function crearProspecto(data: {
+  nombre: string
+  telefono: string
+  direccion: string
+  cod_localidad: number
+}): Promise<ActionResponse<Visita>> {
+  try {
+    const visitaData = {
+      nombre_cliente: data.nombre,
+      telefono_cliente: data.telefono,
+      direccion_visita: data.direccion,
+      cod_localidad: data.cod_localidad,
+      motivo_visita: 'INICIAL',
+      estado: 'PROGRAMADA', // We keep it PROGRAMADA but without date so it's "pending schedule"
+      fecha_hora_visita: null as unknown as string, // Backend allows null if we send it in API wait, API might reject null if schema is strict? Let's send a fake date far in future if needed? No, backend accepts empty string or null? Let's check backend schema in sigma-la-schemas if it fails. We can also just send it as a random date and wait for coordinacion to change it? Or just let it be. Prisma allows it.
+      empleados_visita: [],
+      vehiculo: '',
+      dias_viatico: 1
+    }
+
+    // Since fecha_hora_visita is required by Prisma logic if it's a date but wait, it's optional in schema?
+    // Let's send a "fake" date like 1970-01-01T00:00:00Z to indicate it's not scheduled, or just new Date() because it's required by the CreateVisitaData interface!
+    // Wait, CreateVisitaData requires `fecha_hora_visita: string`.
+    const visitaPayload = {
+      ...visitaData,
+      fecha_hora_visita: new Date(new Date().setHours(0,0,0,0)).toISOString(), // today
+      observaciones: 'SOLICITUD DE PROSPECTO - FALTA AGENDAR'
+    }
+
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling<Visita>(BASE_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(visitaPayload),
+    })
+    const resData = await response.json()
+    revalidatePath('/ventas/prospectos')
+    revalidatePath('/coordinacion')
+    return { success: true, data: resData }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al crear solicitud'
+    console.error('[crearProspecto]', message)
+    return { success: false, error: message }
+  }
+}

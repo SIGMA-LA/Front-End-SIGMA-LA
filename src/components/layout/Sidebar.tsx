@@ -25,6 +25,7 @@ type MenuItem = { path: string; label: string; icon: LucideIcon }
 const menuItemsVentas: MenuItem[] = [
   { path: '/ventas', label: 'Dashboard', icon: Home },
   { path: '/ventas/obras', label: 'Obras', icon: Building2 },
+  { path: '/ventas/prospectos', label: 'Prospectos', icon: ClipboardList },
   { path: '/ventas/clientes', label: 'Clientes', icon: Users },
   { path: '/ventas/visitas', label: 'Visitas', icon: Calendar },
   { path: '/ventas/entregas', label: 'Entregas', icon: TruckIcon },
@@ -36,6 +37,7 @@ const menuItemsCoordinacion: MenuItem[] = [
   { path: '/coordinacion', label: 'Dashboard', icon: Home },
   { path: '/coordinacion/obras', label: 'Obras', icon: Building2 },
   { path: '/coordinacion/clientes', label: 'Clientes', icon: Users },
+  { path: '/coordinacion/prospectos', label: 'Prospectos', icon: ClipboardList },
   { path: '/coordinacion/visitas', label: 'Visitas', icon: Calendar },
   { path: '/coordinacion/entregas', label: 'Entregas', icon: TruckIcon },
   {

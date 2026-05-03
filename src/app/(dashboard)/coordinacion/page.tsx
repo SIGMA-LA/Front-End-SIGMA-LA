@@ -43,6 +43,7 @@ async function DashboardStats() {
     agendaHoyEntregas,
     completadosHoyVisitas,
     completadosHoyEntregas,
+    obrasConVisitaPendiente,
   } = stats
 
   const progressPercentage = agendaTotalHoy > 0 
@@ -167,6 +168,21 @@ async function DashboardStats() {
           </h3>
           
           <div className="space-y-4 relative z-10">
+            {obrasConVisitaPendiente > 0 && (
+              <div className="rounded-lg bg-white border border-yellow-200 p-4 shadow-sm flex items-start gap-4">
+                 <div className="mt-1 rounded-full bg-yellow-100 p-2">
+                   <Calendar className="h-5 w-5 text-yellow-600" />
+                 </div>
+                 <div>
+                   <p className="text-lg font-bold text-yellow-600">{obrasConVisitaPendiente}</p>
+                   <p className="font-medium text-gray-900">Nuevas solicitudes de medición (Prospectos)</p>
+                   <p className="text-sm text-gray-500 mt-1">
+                     Ventas ha solicitado visitas para potenciales clientes. Asigne fecha y personal para proceder con las mediciones.
+                   </p>
+                 </div>
+              </div>
+            )}
+
             <div className="rounded-lg bg-white border border-red-100 p-4 shadow-sm flex items-start gap-4">
                <div className="mt-1 rounded-full bg-red-100 p-2">
                  <Package className="h-5 w-5 text-red-600" />

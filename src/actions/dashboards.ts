@@ -89,6 +89,7 @@ export async function getCoordinacionDashboardStats() {
       completadosHoyEntregas,
       completadosTotalHoy: completadosHoyVisitas + completadosHoyEntregas,
       listasParaEntregar: obrasStats.listasParaEntregar || 0,
+      obrasConVisitaPendiente: obrasStats.obrasConVisitaPendiente || 0,
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -104,6 +105,7 @@ export async function getCoordinacionDashboardStats() {
       completadosHoyEntregas: 0,
       completadosTotalHoy: 0,
       listasParaEntregar: 0,
+      obrasConVisitaPendiente: 0,
     }
   }
 }

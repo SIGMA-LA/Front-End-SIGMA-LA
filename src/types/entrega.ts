@@ -50,5 +50,5 @@ export interface OrdenProduccion {
   fecha_validacion: string | null
   url: string
   public_id: string | null
-  obra: Obra
+  obra: Obra & { visita?: import('./visita').Visita[] }
 }
