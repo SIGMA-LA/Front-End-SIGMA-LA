@@ -9,6 +9,7 @@ import {
   CheckCircle,
   User as UserIcon,
   Tag,
+  Upload,
 } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import { Button } from '@/components/ui/Button'
@@ -20,6 +21,7 @@ interface OrdenProduccionDetailsProps {
   orden: OrdenProduccion
   onIniciarProduccion?: () => void
   onFinalizarProduccion?: () => void
+  onResubirOrden?: () => void
 }
 
 const getEstadoBadge = (estado: OrdenProduccion['estado']) => {
@@ -36,6 +38,7 @@ export default function OrdenProduccionDetails({
   orden,
   onIniciarProduccion,
   onFinalizarProduccion,
+  onResubirOrden,
 }: OrdenProduccionDetailsProps) {
   const [pdfLoading, setPdfLoading] = useState(true)
 
@@ -189,7 +192,7 @@ export default function OrdenProduccionDetails({
             </div>
 
             {/* Botones para iniciar/finalizar producción */}
-            {(canIniciar || canFinalizar) && (
+            {(canIniciar || canFinalizar || onResubirOrden) && (
               <div className="mt-auto border-t pt-6">
                 <h4 className="mb-4 text-sm font-semibold tracking-widest text-gray-500 uppercase">
                   Acciones Disponibles
@@ -211,6 +214,15 @@ export default function OrdenProduccionDetails({
                     >
                       <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
                       <span>Finalizar Producción</span>
+                    </Button>
+                  )}
+                  {onResubirOrden && orden.estado === 'PENDIENTE' && (
+                    <Button
+                      onClick={onResubirOrden}
+                      className="w-full cursor-pointer bg-purple-500 py-4 text-base text-white transition-colors hover:bg-purple-600 lg:py-5 lg:text-lg"
+                    >
+                      <Upload className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
+                      <span>Resubir OP</span>
                     </Button>
                   )}
                 </div>

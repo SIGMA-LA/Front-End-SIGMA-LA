@@ -97,6 +97,7 @@ export default function useProduccionClient(
   // Selection state
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null)
   const [showCrearOrdenModal, setShowCrearOrdenModal] = useState(false)
+  const [showResubirOrdenModal, setShowResubirOrdenModal] = useState(false)
   const [selectedOrden, setSelectedOrden] = useState<OrdenProduccion | null>(
     null
   )
@@ -363,6 +364,8 @@ export default function useProduccionClient(
     setSelectedObra,
     showCrearOrdenModal,
     setShowCrearOrdenModal,
+    showResubirOrdenModal,
+    setShowResubirOrdenModal,
     selectedOrden,
     setSelectedOrden,
     isIniciarModalOpen,

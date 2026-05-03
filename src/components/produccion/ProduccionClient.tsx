@@ -8,6 +8,7 @@ import SidebarOrdenesProduccion from './SidebarOrdenesProduccion'
 import NotaFabricaDetails from './NotaFabricaDetails'
 import OrdenProduccionDetails from './OrdenProduccionDetails'
 import CrearOrdenModal from './CrearOrdenModal'
+import ResubirOrdenModal from './ResubirOrdenModal'
 import ProduccionActionModal from './ProduccionActionModal'
 import ProduccionEmptyState from './ProduccionEmptyState'
 import useProduccionClient from '@/hooks/useProduccionClient'
@@ -52,6 +53,8 @@ export default function ProduccionClient({
     setSelectedObra,
     showCrearOrdenModal,
     setShowCrearOrdenModal,
+    showResubirOrdenModal,
+    setShowResubirOrdenModal,
     selectedOrden,
     setSelectedOrden,
     isIniciarModalOpen,
@@ -260,6 +263,7 @@ export default function ProduccionClient({
                   ? () => setIsFinalizarModalOpen(true)
                   : undefined
               }
+              onResubirOrden={() => setShowResubirOrdenModal(true)}
             />
           ) : (
             <ProduccionEmptyState
@@ -291,6 +295,13 @@ export default function ProduccionClient({
         isOpen={showCrearOrdenModal}
         onClose={() => setShowCrearOrdenModal(false)}
         obraCodigo={selectedObra?.cod_obra}
+        onSuccess={refreshAll}
+      />
+
+      <ResubirOrdenModal
+        isOpen={showResubirOrdenModal}
+        onClose={() => setShowResubirOrdenModal(false)}
+        cod_op={selectedOrden?.cod_op || 0}
         onSuccess={refreshAll}
       />
 
