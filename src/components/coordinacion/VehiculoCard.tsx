@@ -12,7 +12,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react'
-import { Vehiculo, VehiculoEstado, UsosProgramadosVehiculo } from '@/types'
+import { Vehiculo, VehiculoEstado, UsosProgramadosVehiculo, UsoVehiculoEntrega, UsoVehiculoVisita } from '@/types'
 import { getUsosProgramadosVehiculo } from '@/actions/vehiculos'
 
 interface VehiculoCardProps {
@@ -201,12 +201,12 @@ export default function VehiculoCard({
               <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                 <p className="font-semibold mb-2">Advertencia: Este vehículo está asignado a:</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  {usos.uso_vehiculo_entrega?.map((u: any) => (
+                  {usos.uso_vehiculo_entrega?.map((u: UsoVehiculoEntrega) => (
                     <li key={`e-${u.cod_entrega}`}>
                       Entrega en {u.entrega.obra.direccion} ({new Date(u.entrega.fecha_hora_entrega).toLocaleDateString('es-AR')})
                     </li>
                   ))}
-                  {usos.uso_vehiculo_visita?.map((u: any) => (
+                  {usos.uso_vehiculo_visita?.map((u: UsoVehiculoVisita) => (
                     <li key={`v-${u.cod_visita}`}>
                       Visita a {u.visita.obra?.direccion || u.visita.direccion_visita} ({new Date(u.visita.fecha_hora_visita).toLocaleDateString('es-AR')})
                     </li>
