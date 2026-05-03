@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import EliminarObraModal from '../ventas/EliminarObraModal'
 import NotaFabricaModal from '../ventas/NotaFabricaModal'
+import PresupuestosModal from '../ventas/PresupuestosModal'
 import Link from 'next/link'
 import { deleteObra, cancelObra } from '@/actions/obras'
 import { notify } from '@/lib/toast'
@@ -31,6 +32,7 @@ export default function ObraCard({
   const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [notaFabricaModalOpen, setNotaFabricaModalOpen] = useState(false)
+  const [presupuestosModalOpen, setPresupuestosModalOpen] = useState(false)
   
   const [notaFabricaUrl, setNotaFabricaUrl] = useState(
     obra.nota_fabrica || ''
@@ -129,6 +131,12 @@ export default function ObraCard({
         codObra={obra.cod_obra}
         onUploadSuccess={handleNotaFabricaSuccess}
         rolActual={usuarioRol}
+      />
+
+      <PresupuestosModal
+        isOpen={presupuestosModalOpen}
+        onClose={() => setPresupuestosModalOpen(false)}
+        presupuestos={obra.presupuesto || []}
       />
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
@@ -239,6 +247,15 @@ export default function ObraCard({
                   <DollarSign className="h-4 w-4" />
                   Pagos
                 </Link>
+                {obra.presupuesto && obra.presupuesto.length > 0 && (
+                  <button
+                    onClick={() => setPresupuestosModalOpen(true)}
+                    className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Ver Presupuestos
+                  </button>
+                )}
                 <button
                   onClick={() => setNotaFabricaModalOpen(true)}
                   className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
