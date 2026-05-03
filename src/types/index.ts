@@ -76,7 +76,13 @@ export type {
   ApiResponse,
   SearchParams,
   ParametroViatico,
-  PerfilFormData
+  PerfilFormData,
+  NotificacionesData,
+  NotificacionConfig,
+  NotificacionItem,
+  ValidationIssue,
+  ValidationDetail,
+  BackendErrorData,
 } from './common'
 
 export type {
@@ -91,3 +97,4 @@ export type {
 } from './componentProps'
 
 export type { PaginatedResponse } from './pagination'
+
