@@ -377,3 +377,53 @@ export async function finishProduccion(
 
 // Alias para compatibilidad
 export const crearOrdenProduccion = createOrdenProduccion
+
+/**
+ * Updates an orden de produccion with a new PDF file
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @param {FormData} formData - Form data with PDF file
+ * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result
+ */
+export async function updateOrdenProduccion(
+  cod_op: number,
+  formData: FormData
+): Promise<ActionResponse<OrdenProduccion>> {
+  try {
+    const file = formData.get('file') as File
+
+    if (!file || file.size === 0) {
+      return { success: false, error: 'Debe seleccionar un archivo' }
+    }
+
+    if (file.type !== 'application/pdf') {
+      return { success: false, error: 'Solo se permiten archivos PDF' }
+    }
+
+    const backendFormData = new FormData()
+    backendFormData.append('file', file)
+
+    const token = await getAccessToken()
+
+    const response = await fetchWithErrorHandling(`${BASE_URL}/${cod_op}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: backendFormData,
+    })
+
+    const wrapper = await response.json()
+    const data = wrapper.data || wrapper
+    revalidateTag('ordenes-produccion')
+    revalidateTag('notas-fabrica')
+    revalidateTag(`orden-${cod_op}`)
+    revalidatePath('/produccion')
+    revalidatePath('/coordinacion/ordenes-produccion')
+
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[updateOrdenProduccion]', message)
+    return { success: false, error: message }
+  }
+}
