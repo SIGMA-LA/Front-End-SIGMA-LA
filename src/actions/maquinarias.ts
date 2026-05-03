@@ -165,3 +165,28 @@ export async function deleteMaquinaria(id: number): Promise<ActionResponse> {
     return { success: false, error: message }
   }
 }
+
+/**
+ * Gets scheduled usages for a maquinaria
+ * @param {number} id - Maquinaria ID
+ */
+export async function getUsosProgramadosMaquinaria(id: number) {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(
+      `${BASE_URL}/${id}/usos-programados`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    )
+    return await res.json()
+  } catch (error) {
+    console.error('[getUsosProgramadosMaquinaria]', error)
+    return { uso_maquinaria: [] }
+  }
+}

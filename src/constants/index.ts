@@ -78,11 +78,8 @@ export const TIPOS_VEHICULO = [
 
 export const ESTADOS_VEHICULO = [
   'DISPONIBLE',
-  'EN USO',
-  'MANTENIMIENTO',
-  'REPARACION',
   'FUERA DE SERVICIO',
-  'RESERVADO',
+  'ELIMINADO',
 ] as const
 
 export const ESTADOS_DISPONIBILIDAD = [
@@ -91,7 +88,7 @@ export const ESTADOS_DISPONIBILIDAD = [
   'NO_DISPONIBLE',
 ] as const
 
-export const ESTADOS_MAQUINARIA = ['DISPONIBLE', 'NO DISPONIBLE'] as const
+export const ESTADOS_MAQUINARIA = ['DISPONIBLE', 'NO DISPONIBLE', 'ELIMINADO'] as const
 
 // ---------------------------------------------------------------------------
 // Numeric constants previously hardcoded across multiple components
