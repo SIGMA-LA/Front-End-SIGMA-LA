@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { createObra, updateObra } from '@/actions/obras'
 import { notify } from '@/lib/toast'
-import type { Obra } from '@/types'
+import type { Obra, Visita } from '@/types'
 import type { ObraFormData, PresupuestoFormData } from '@/components/ventas/CrearObra'
 import { useClienteSearch } from '@/hooks/useClienteSearch'
 
@@ -15,6 +15,7 @@ import { useClienteSearch } from '@/hooks/useClienteSearch'
 
 interface UseObraFormProps {
   obraExistente?: Obra | null
+  prospecto?: Visita | null
   initialState: ObraFormData
 }
 
@@ -22,7 +23,7 @@ interface UseObraFormProps {
 // Hook
 // ---------------------------------------------------------------------------
 
-export default function useObraForm({ obraExistente, initialState }: UseObraFormProps) {
+export default function useObraForm({ obraExistente, prospecto, initialState }: UseObraFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState<ObraFormData>(initialState)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -63,6 +64,8 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
         fecha_cancelacion: null,
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
         esGrande: obraExistente.esGrande ?? true,
+        requiere_visita: obraExistente.requiere_visita ?? false,
+        mediciones: obraExistente.mediciones || '',
       })
 
       if (obraExistente.cliente) {
@@ -74,8 +77,19 @@ export default function useObraForm({ obraExistente, initialState }: UseObraForm
 
       setProvinciaSeleccionada(obraExistente.localidad?.cod_provincia || '')
       if (obraExistente.presupuesto) setPresupuestos(obraExistente.presupuesto)
+    } else if (prospecto && !esModoEdicion) {
+      setFormData(prev => ({
+        ...prev,
+        direccion: prospecto.direccion_visita || '',
+        cod_localidad: prospecto.localidad?.cod_localidad || 0,
+        mediciones: prospecto.observaciones || '',
+        cod_visita: prospecto.cod_visita,
+      }))
+      if (prospecto.localidad?.cod_localidad && prospecto.localidad?.cod_provincia) {
+        setProvinciaSeleccionada(prospecto.localidad.cod_provincia)
+      }
     }
-  }, [obraExistente, esModoEdicion, clienteSearch, arquitectoSearch])
+  }, [obraExistente, esModoEdicion, clienteSearch, arquitectoSearch, prospecto])
 
   // Sync CUILs with search results
   useEffect(() => {

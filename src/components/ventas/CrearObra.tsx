@@ -1,13 +1,15 @@
 'use client'
 
-import { AlertCircle, Home, Loader2, Users, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { AlertCircle, Home, Loader2, Users, Plus, Edit2, Save, Ruler, Eye, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { Obra, Provincia } from '@/types'
+import type { Obra, Provincia, Visita } from '@/types'
 import CrearPresupuestoModal from './CrearPresupuestoModal'
 import ClienteSearchField from './ClienteSearchField'
 import UbicacionSeccion from './UbicacionSeccion'
 import PresupuestosSeccion from './PresupuestosSeccion'
+import MedicionesModal from './MedicionesModal'
 import useObraForm from '@/hooks/useObraForm'
 
 // ---------------------------------------------------------------------------
@@ -39,11 +41,15 @@ export interface ObraFormData {
   cuil_arquitecto?: string | null
   cod_localidad: number
   esGrande?: boolean
+  requiere_visita?: boolean
+  mediciones?: string
+  cod_visita?: number
 }
 
 interface CrearObraProps {
   provincias: Provincia[]
   obraExistente?: Obra | null
+  prospecto?: Visita | null
 }
 
 const initialState: ObraFormData = {
@@ -56,6 +62,8 @@ const initialState: ObraFormData = {
   nota_fabrica: '',
   fecha_cancelacion: null,
   esGrande: true,
+  requiere_visita: false,
+  mediciones: '',
 }
 
 // ---------------------------------------------------------------------------
@@ -66,11 +74,12 @@ const initialState: ObraFormData = {
  * Main form for creating or editing an 'Obra' (Project).
  * Modularized into subcomponents and logic extracted into useObraForm hook.
  */
-export default function CrearObra({ provincias, obraExistente }: CrearObraProps) {
+export default function CrearObra({ provincias, obraExistente, prospecto }: CrearObraProps) {
   const router = useRouter()
 
   const {
     formData,
+    setFormData,
     isSubmitting,
     isObraCancelada,
     esModoEdicion,
@@ -88,7 +97,10 @@ export default function CrearObra({ provincias, obraExistente }: CrearObraProps)
     handleChange,
     handleModalSubmit,
     handleSubmit,
-  } = useObraForm({ obraExistente, initialState })
+  } = useObraForm({ obraExistente, prospecto, initialState })
+
+  const [isMedicionesModalOpen, setIsMedicionesModalOpen] = useState(false)
+  const [medicionesModalMode, setMedicionesModalMode] = useState<'view' | 'edit'>('edit')
 
   return (
     <>
@@ -97,6 +109,16 @@ export default function CrearObra({ provincias, obraExistente }: CrearObraProps)
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         presupuestoExistente={presupuestoParaEditar}
+      />
+
+      <MedicionesModal
+        isOpen={isMedicionesModalOpen}
+        mode={medicionesModalMode}
+        initialValue={formData.mediciones}
+        onClose={() => setIsMedicionesModalOpen(false)}
+        onSubmit={(val) => {
+          setFormData((prev: ObraFormData) => ({ ...prev, mediciones: val }))
+        }}
       />
 
       <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-10">
@@ -134,8 +156,8 @@ export default function CrearObra({ provincias, obraExistente }: CrearObraProps)
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-12">
-                <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                   {/* Participant Selection */}
                   <div className="space-y-8">
                     <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-2">
@@ -197,6 +219,8 @@ export default function CrearObra({ provincias, obraExistente }: CrearObraProps)
                             <div className="peer h-6 w-11 rounded-full bg-slate-200 after:absolute after:top-[2px] after:start-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800"></div>
                           </div>
                         </label>
+
+
                       </div>
                     </div>
                   </div>
@@ -217,23 +241,89 @@ export default function CrearObra({ provincias, obraExistente }: CrearObraProps)
                   />
 
                   {/* Budgets Section */}
-                  <PresupuestosSeccion
-                    presupuestos={presupuestos}
-                    onOpenModalParaCrear={() => {
-                      setPresupuestoParaEditar(null)
-                      setIsModalOpen(true)
-                    }}
-                    onOpenModalParaEditar={(p) => {
-                      setPresupuestoParaEditar(p)
-                      setIsModalOpen(true)
-                    }}
-                    hayPresupuestoAceptado={hayPresupuestoAceptado}
-                    disabled={isObraCancelada}
-                  />
+                  {/* Budgets and Measurements Section */}
+                  <div className="space-y-8">
+                    {/* Budgets Section */}
+                    <div>
+                      <PresupuestosSeccion
+                        presupuestos={presupuestos}
+                        onOpenModalParaCrear={() => {
+                          setPresupuestoParaEditar(null)
+                          setIsModalOpen(true)
+                        }}
+                        onOpenModalParaEditar={(p) => {
+                          setPresupuestoParaEditar(p)
+                          setIsModalOpen(true)
+                        }}
+                        hayPresupuestoAceptado={hayPresupuestoAceptado}
+                        disabled={isObraCancelada}
+                      />
+                    </div>
+
+                    {/* Mediciones Section */}
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-2">
+                        <Ruler className="h-6 w-6 text-blue-600" />
+                        <h3 className="text-lg font-bold text-slate-800">Mediciones</h3>
+                      </div>
+
+                      <div>
+                        {!formData.mediciones ? (
+                          <div className="text-center space-y-4">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setMedicionesModalMode('edit')
+                                setIsMedicionesModalOpen(true)
+                              }}
+                              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50 py-3.5 text-sm font-bold text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-all"
+                              disabled={isObraCancelada}
+                            >
+                              <Plus className="h-5 w-5" />
+                              REGISTRAR MEDIDAS
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-full space-y-4">
+
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setMedicionesModalMode('view')
+                                  setIsMedicionesModalOpen(true)
+                                }}
+                                className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-xs font-bold text-white hover:bg-slate-800 transition-all shadow-md"
+                              >
+                                <Eye className="h-4 w-4" />
+                                VER MEDIDAS
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setMedicionesModalMode('edit')
+                                  setIsMedicionesModalOpen(true)
+                                }}
+                                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+                                disabled={isObraCancelada}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                                EDITAR MEDIDAS
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Submit Action Buttons */}
-                <div className="flex flex-col items-center gap-4 border-t-2 border-slate-50 pt-10 sm:flex-row lg:gap-6">
+                <div className="flex flex-col items-center gap-4 border-t-2 border-slate-50 pt-6 sm:flex-row lg:gap-6">
                   <button
                     type="button"
                     onClick={() => router.back()}

@@ -105,6 +105,25 @@ export default function OrdenProduccionCard({
             </p>
           </div>
 
+          {/* Estado de Visitas */}
+          <div className="pt-1">
+            {orden.obra?.visita?.some((v) => v.estado === 'COMPLETADA') ? (
+              <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                Visita completada
+              </span>
+            ) : orden.obra?.visita?.some(
+                (v) => v.estado === 'PROGRAMADA' || v.estado === 'EN CURSO'
+              ) ? (
+              <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+                Visita pendiente
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
+                Sin visita agendada
+              </span>
+            )}
+          </div>
+
           {/* Botones de acción */}
           <div className="flex gap-2 pt-2">
             <button
