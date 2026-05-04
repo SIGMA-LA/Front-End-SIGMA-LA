@@ -77,6 +77,7 @@ export default function EntregaDetails({
               </h2>
               <p className="mb-3 text-lg text-gray-600 lg:text-xl">
                 {entrega.obra.cliente?.razon_social ||
+                  [entrega.obra.cliente?.nombre, entrega.obra.cliente?.apellido].filter(Boolean).join(' ') ||
                   'Cliente no especificado'}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">
