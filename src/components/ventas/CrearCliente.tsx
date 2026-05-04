@@ -15,12 +15,14 @@ import { TipoClienteSelector, CamposPersona, CamposEmpresa } from './clientes/Se
 export default function CrearCliente({
   action,
   initialData,
+  prefillData,
   cancelUrl = '/ventas/clientes',
   title,
   subtitle,
 }: {
   action: (prevState: ActionResponse | null, formData: FormData) => Promise<ActionResponse>
   initialData?: Cliente
+  prefillData?: Partial<Cliente>
   cancelUrl?: string
   title?: string
   subtitle?: string
@@ -33,7 +35,7 @@ export default function CrearCliente({
     formState,
     handleTipoClienteChange,
     handleChange,
-  } = useClienteFormLogic(initialData)
+  } = useClienteFormLogic((initialData || prefillData) as Cliente)
 
   const [state, formAction, isPending] = useActionState(action, {
     success: true,

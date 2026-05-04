@@ -69,6 +69,22 @@ export default function OPConfirmModal({
             </div>
           </div>
 
+          {!orden.obra?.visita?.some((v) => v.estado === 'COMPLETADA') && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
+              <div>
+                <p className="text-sm font-bold text-yellow-900">
+                  Falta visita de medición
+                </p>
+                <p className="mt-1 text-sm text-yellow-800">
+                  Esta obra no tiene ninguna visita de medición completada.
+                  Si aprueba la orden sin medidas verificadas, Producción
+                  podría fabricar basándose solo en el presupuesto inicial.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Información de la orden */}
           <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
             <div>

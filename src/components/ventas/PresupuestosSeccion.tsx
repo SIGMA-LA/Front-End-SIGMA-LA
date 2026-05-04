@@ -19,7 +19,7 @@ export default function PresupuestosSeccion({
   disabled = false,
 }: PresupuestosSeccionProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 flex flex-col">
       <div className="flex items-center justify-between border-b-2 border-slate-50 pb-2">
         <div className="flex items-center gap-3">
           <Layers className="h-6 w-6 text-emerald-500" />
@@ -27,8 +27,8 @@ export default function PresupuestosSeccion({
         </div>
       </div>
 
-      <div className="relative flex h-[360px] flex-col rounded-2xl border border-slate-200/60 bg-slate-50/50 p-4 shadow-inner">
-        <div className="scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300 flex-1 space-y-3 overflow-y-auto pr-2">
+      <div className="relative flex min-h-[140px] max-h-[200px] flex-col rounded-2xl border border-slate-200/60 bg-slate-50/50 p-3 shadow-inner">
+        <div className="scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300 flex-1 space-y-2 overflow-y-auto pr-2">
           {presupuestos.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center space-y-4 p-6 text-center">
               <div className="rounded-full bg-white p-4 text-slate-200 shadow-sm">
@@ -42,7 +42,7 @@ export default function PresupuestosSeccion({
             presupuestos.map((p, idx) => (
               <div
                 key={p.nro_presupuesto || idx}
-                className="group animate-in zoom-in-95 flex items-center justify-between rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:border-emerald-200 hover:shadow-md"
+                className="group animate-in zoom-in-95 flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition-all duration-200 hover:border-emerald-200 hover:shadow-md"
               >
                 <div className="min-w-0">
                   <p className="text-[15px] leading-tight font-bold text-slate-900">

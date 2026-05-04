@@ -44,6 +44,7 @@ export interface Obra {
   pago?: Pago[]
   pedido_stock?: PedidoStock | null
   esGrande?: boolean
+  mediciones?: string | null
 }
 
 export interface CreateObraInput {
@@ -55,6 +56,9 @@ export interface CreateObraInput {
   estado?: EstadoObra
   nota_fabrica?: string
   esGrande?: boolean
+  requiere_visita?: boolean
+  mediciones?: string | null
+  cod_visita?: number
 }
 
 export interface UpdateObraInput {
@@ -66,6 +70,8 @@ export interface UpdateObraInput {
   estado?: EstadoObra
   nota_fabrica?: string
   esGrande?: boolean
+  requiere_visita?: boolean
+  mediciones?: string | null
 }
 
 export interface PresupuestoInput {
