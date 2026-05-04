@@ -119,7 +119,10 @@ export default function VisitaDetails({
               Visita #{visita.cod_visita}
             </h2>
             <p className="mb-3 text-lg text-gray-600 lg:text-xl">
-              {visita.obra?.cliente.razon_social || 'Visita sin obra asignada'}
+              {visita.obra?.cliente.razon_social ||
+                [visita.obra?.cliente.nombre, visita.obra?.cliente.apellido].filter(Boolean).join(' ') ||
+                [visita.nombre_cliente, visita.apellido_cliente].filter(Boolean).join(' ') ||
+                'Visita sin obra asignada'}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span
