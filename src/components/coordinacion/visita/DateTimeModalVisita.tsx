@@ -37,6 +37,8 @@ export default function DateTimeModalVisita({
   const [fechaRegreso, setFechaRegreso] = useState(initialValues.fechaRegreso)
   const [horaRegreso, setHoraRegreso] = useState(initialValues.horaRegreso)
 
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     if (isOpen) {
       setFecha(initialValues.fecha)
@@ -45,10 +47,43 @@ export default function DateTimeModalVisita({
       setHoraSalida(initialValues.horaSalida)
       setFechaRegreso(initialValues.fechaRegreso)
       setHoraRegreso(initialValues.horaRegreso)
+      setError(null)
     }
   }, [isOpen, initialValues])
 
-  if (!isOpen) return null
+  // Helper to combine date and time strings into a Date object
+  const createDateTime = (d: string, t: string): Date | null => {
+    if (!d || !t) return null
+    return new Date(`${d}T${t}`)
+  }
+
+  const validateSequence = (): boolean => {
+    const dtVisita = createDateTime(fecha, hora)
+    const dtSalida = createDateTime(fechaSalida, horaSalida)
+    const dtRegreso = createDateTime(fechaRegreso, horaRegreso)
+
+    if (!dtVisita || !dtSalida || !dtRegreso) return false
+
+    if (dtSalida > dtVisita) {
+      setError('La fecha de salida no puede ser posterior a la fecha de la visita.')
+      return false
+    }
+
+    if (dtVisita > dtRegreso) {
+      setError('La fecha de regreso no puede ser anterior a la fecha de la visita.')
+      return false
+    }
+
+    setError(null)
+    return true
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      validateSequence()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha, hora, fechaSalida, horaSalida, fechaRegreso, horaRegreso, isOpen])
 
   const isFormValid =
     fecha !== '' &&
@@ -56,7 +91,8 @@ export default function DateTimeModalVisita({
     fechaSalida !== '' &&
     horaSalida !== '' &&
     fechaRegreso !== '' &&
-    horaRegreso !== ''
+    horaRegreso !== '' &&
+    error === null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,6 +100,8 @@ export default function DateTimeModalVisita({
       onConfirm(fecha, hora, fechaSalida, horaSalida, fechaRegreso, horaRegreso)
     }
   }
+
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -86,6 +124,13 @@ export default function DateTimeModalVisita({
         </div>
 
         <div className="p-6">
+          {error && (
+            <div className="mb-6 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-600 border border-red-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Llegada al cliente (fecha de la visita) */}
             <div>
@@ -161,14 +206,14 @@ export default function DateTimeModalVisita({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={!isFormValid}
-                className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
               >
                 Confirmar Horarios
               </button>

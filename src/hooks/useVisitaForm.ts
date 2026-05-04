@@ -244,6 +244,23 @@ export default function useVisitaForm({
       return
     }
 
+    // Date Sequence Validation
+    const dtVisita = new Date(`${formData.fecha}T${formData.hora}`)
+    const dtSalida = new Date(`${formData.fechaSalida}T${formData.horaSalida}`)
+    const dtRegreso = new Date(`${formData.fechaRegreso}T${formData.horaRegreso}`)
+
+    if (dtSalida > dtVisita) {
+      setError('La fecha de salida no puede ser posterior a la fecha de la visita.')
+      notify.error('Error en las fechas: Salida posterior a la visita.')
+      return
+    }
+
+    if (dtVisita > dtRegreso) {
+      setError('La fecha de regreso no puede ser anterior a la fecha de la visita.')
+      notify.error('Error en las fechas: Regreso anterior a la visita.')
+      return
+    }
+
     startTransition(async () => {
       const formDataObj = new FormData()
 
