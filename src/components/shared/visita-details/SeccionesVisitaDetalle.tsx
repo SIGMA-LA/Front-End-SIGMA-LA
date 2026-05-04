@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { MapPin, User as UserIcon, Clock, Briefcase, Car, FileText } from 'lucide-react'
 import { Visita } from '@/types'
 
@@ -193,7 +194,7 @@ export function ViaticosSeccion({ visita, viaticoPorDia }: SectionProps & { viat
     }).format(amount)
   }
 
-  if (visita.dias_viaticos === undefined || visita.dias_viaticos <= 0) return null
+  if (visita.dias_viatico === undefined || visita.dias_viatico <= 0) return null
 
   return (
     <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
@@ -203,7 +204,7 @@ export function ViaticosSeccion({ visita, viaticoPorDia }: SectionProps & { viat
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-yellow-100 pb-2">
           <p className="text-xs text-yellow-700">Días proyectados:</p>
-          <p className="text-lg font-black text-yellow-900">{visita.dias_viaticos}</p>
+          <p className="text-lg font-black text-yellow-900">{visita.dias_viatico}</p>
         </div>
         {viaticoPorDia !== undefined && viaticoPorDia > 0 && (
           <>
@@ -222,7 +223,7 @@ export function ViaticosSeccion({ visita, viaticoPorDia }: SectionProps & { viat
             <div className="flex items-center justify-between pt-1">
               <p className="text-xs font-bold text-yellow-800 uppercase">Total Estimado:</p>
               <p className="text-xl font-black text-yellow-700">
-                {formatCurrency(visita.dias_viaticos * (visita.empleado_visita?.length || 0) * viaticoPorDia)}
+                {formatCurrency(visita.dias_viatico * (visita.empleado_visita?.length || 0) * viaticoPorDia)}
               </p>
             </div>
           </>
@@ -233,15 +234,31 @@ export function ViaticosSeccion({ visita, viaticoPorDia }: SectionProps & { viat
 }
 
 export function NotasSeccion({ visita }: SectionProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const hasLongNotes = (visita.observaciones?.length || 0) > 150
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-bold tracking-wider text-gray-900 uppercase">
         <FileText className="h-4 w-4 text-blue-500" /> Notas de Coordinación
       </h3>
       <div className="rounded-lg border border-blue-50/50 bg-blue-50/30 p-4">
-        <p className="rounded-md border border-blue-100 bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm">
-          {visita.observaciones || 'Sin observaciones adicionales proporcionadas.'}
-        </p>
+        <div className={`relative ${!isExpanded && hasLongNotes ? 'max-h-24 overflow-hidden' : ''}`}>
+          <p className="rounded-md border border-blue-100 bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm whitespace-pre-wrap">
+            {visita.observaciones || 'Sin observaciones adicionales proporcionadas.'}
+          </p>
+          {!isExpanded && hasLongNotes && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/80 to-transparent" />
+          )}
+        </div>
+        {hasLongNotes && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-700"
+          >
+            {isExpanded ? 'Ver menos' : 'Ver más'}
+          </button>
+        )}
       </div>
     </div>
   )

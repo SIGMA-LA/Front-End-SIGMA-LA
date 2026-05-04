@@ -51,10 +51,16 @@ export default function VisitaDetails({
       setError(null)
       try {
         const data = await getVisita(visitaProp.cod_visita)
+        if (!data) {
+          setError('No se pudo encontrar la visita seleccionada.')
+          return
+        }
+        
         const historicalViatico = await getViaticoByDate(new Date(data.fecha_hora_visita).toISOString())
         setVisita(data)
         setViaticoPorDia(historicalViatico.viatico_dia_persona)
       } catch (err: unknown) {
+        console.error('[VisitaDetails] Error fetching details:', err)
         setError(
           err instanceof Error
             ? err.message
@@ -159,6 +165,7 @@ export default function VisitaDetails({
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div className="space-y-6">
               <DestinoSeccion visita={visita} />
+              <ViaticosSeccion visita={visita} viaticoPorDia={viaticoPorDia} />
               <NotasSeccion visita={visita} />
             </div>
 
@@ -170,7 +177,6 @@ export default function VisitaDetails({
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-1">
                 <EquipoSeccion visita={visita} />
                 <TransporteSeccion visita={visita} />
-                <ViaticosSeccion visita={visita} viaticoPorDia={viaticoPorDia} />
               </div>
             </div>
           </div>

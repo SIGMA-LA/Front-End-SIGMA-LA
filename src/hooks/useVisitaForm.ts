@@ -195,7 +195,7 @@ export default function useVisitaForm({
       localidad: visitaEditar.localidad?.nombre_localidad ?? '',
       obraId: visitaEditar.obra?.cod_obra ?? undefined,
       vehiculo: usoV?.patente ?? '',
-      dias_viatico: visitaEditar.dias_viaticos ?? 0,
+      dias_viatico: visitaEditar.dias_viatico ?? 0,
       nombre_cliente: visitaEditar.nombre_cliente ?? '',
       apellido_cliente: visitaEditar.apellido_cliente ?? '',
       telefono_cliente: visitaEditar.telefono_cliente ?? '',
