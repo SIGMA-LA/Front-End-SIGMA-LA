@@ -1,6 +1,6 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { X, AlertCircle } from 'lucide-react'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -31,26 +31,27 @@ export default function ConfirmModal({
         className="bg-opacity-50 absolute inset-0 bg-transparent backdrop-blur-sm"
         onClick={!loading ? onCancel : undefined}
       />
-      <div className="relative w-full max-w-lg rounded-lg bg-white shadow-xl lg:max-w-2xl">
-        <div className="flex items-center justify-between border-b p-5 lg:p-7">
-          <h3 className="text-lg font-semibold text-gray-800 lg:text-2xl">
+      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl lg:max-w-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 p-5 lg:p-7">
+          <h3 className="text-lg font-bold text-gray-800 lg:text-2xl">
             {title}
           </h3>
           <button
             onClick={!loading ? onCancel : undefined}
             disabled={loading}
-            className="text-gray-400 transition-colors hover:text-gray-600 disabled:cursor-not-allowed"
+            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed"
           >
-            <X className="h-6 w-6 lg:h-7 lg:w-7" />
+            <X className="h-5 w-5 lg:h-6 lg:w-6" />
           </button>
         </div>
         <div className="space-y-5 p-5 lg:space-y-6 lg:p-7">
           <div className="space-y-3">
             <label
               htmlFor="observaciones"
-              className="block text-sm font-medium text-gray-700 lg:text-base"
+              className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 lg:text-base"
             >
-              Observaciones / Medidas / Motivo de cancelación
+              Observaciones / Medidas / Motivo
+              <span className="text-red-500" title="Campo obligatorio">*</span>
             </label>
             <textarea
               id="observaciones"
@@ -59,21 +60,33 @@ export default function ConfirmModal({
               onChange={(e) => onObservacionesChange(e.target.value)}
               rows={4}
               disabled={loading}
-              className="w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 lg:px-5 lg:py-4 lg:text-base"
+              className={`w-full resize-none rounded-xl border px-4 py-3 text-sm shadow-sm transition-all focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 lg:px-5 lg:py-4 lg:text-base ${
+                !observaciones.trim()
+                  ? 'border-amber-300 bg-amber-50/30 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10'
+                  : 'border-gray-300 bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10'
+              }`}
             />
+            {!observaciones.trim() && (
+              <div className="flex items-start gap-3 rounded-xl border border-amber-200/60 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm mt-2">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                <p className="leading-relaxed">
+                  Por favor, ingresá las <strong>medidas tomadas</strong> o el <strong>motivo de cancelación</strong> para poder finalizar el reporte.
+                </p>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col space-y-3 rounded-b-lg border-t bg-gray-50 p-5 sm:flex-row-reverse sm:space-y-0 sm:space-x-4 sm:space-x-reverse lg:p-7">
           <button
             onClick={onConfirm}
-            disabled={loading}
+            disabled={loading || !observaciones.trim()}
             className="flex-1 rounded-md border border-transparent bg-green-600 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:px-6 lg:py-4 lg:text-base"
           >
             {loading ? 'Procesando...' : 'Visita Realizada'}
           </button>
           <button
             onClick={onCancelVisit}
-            disabled={loading}
+            disabled={loading || !observaciones.trim()}
             className="flex-1 rounded-md border border-red-300 bg-red-50 px-5 py-3 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:px-6 lg:py-4 lg:text-base"
           >
             {loading ? 'Procesando...' : 'No se Pudo Realizar'}
