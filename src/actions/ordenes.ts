@@ -21,14 +21,17 @@ export async function getOrdenProduccion(
 ): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling<OrdenProduccion>(`${BASE_URL}/${cod_op}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      next: { revalidate: 30, tags: [`orden-${cod_op}`] },
-    })
+    const response = await fetchWithErrorHandling<OrdenProduccion>(
+      `${BASE_URL}/${cod_op}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        next: { revalidate: 30, tags: [`orden-${cod_op}`] },
+      }
+    )
 
     const data = await response.json()
     return { success: true, data }
@@ -275,17 +278,20 @@ export async function approveOrdenProduccion(
 ): Promise<ActionResponse<OrdenProduccion>> {
   try {
     const token = await getAccessToken()
-    const response = await fetchWithErrorHandling(`${BASE_URL}/${cod_op}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        estado: 'APROBADA',
-        fecha_validacion: new Date().toISOString(),
-      }),
-    })
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/${cod_op}/aprobar`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          estado: 'APROBADA',
+          fecha_validacion: new Date().toISOString(),
+        }),
+      }
+    )
 
     const data = await response.json()
     revalidateTag('ordenes-produccion')
@@ -328,7 +334,8 @@ export async function startProduccion(
 
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al iniciar producción'
+    const message =
+      error instanceof Error ? error.message : 'Error al iniciar producción'
     console.error('[startProduccion]', message)
     return { success: false, error: message }
   }
@@ -369,7 +376,8 @@ export async function finishProduccion(
 
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al finalizar producción'
+    const message =
+      error instanceof Error ? error.message : 'Error al finalizar producción'
     console.error('[finishProduccion]', message)
     return { success: false, error: message }
   }

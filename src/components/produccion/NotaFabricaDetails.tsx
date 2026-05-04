@@ -79,7 +79,8 @@ export default function NotaFabricaDetails({
 
   const isEnProduccion = obra.estado === 'EN PRODUCCION'
   const isPagadaParcialmente = obra.estado === 'PAGADA PARCIALMENTE'
-  const puedeCrearOrden = isPagadaParcialmente && !hasActivePedido
+  const isEnEsperaDeStock = obra.estado === 'EN ESPERA DE STOCK'
+  const puedeCrearOrden = isPagadaParcialmente || isEnEsperaDeStock
   const puedeFinalizarProduccion = isEnProduccion && tieneOpFinalizada
 
   const handleOrdenesLoaded = useCallback((ordenes: OrdenProduccion[]) => {
@@ -300,7 +301,7 @@ export default function NotaFabricaDetails({
                 Acciones
               </h4>
               <div className="flex flex-col gap-3">
-                {isPagadaParcialmente && (
+                {(isPagadaParcialmente || isEnEsperaDeStock) && (
                   <Button
                     onClick={onCrearOrden}
                     disabled={!puedeCrearOrden}
@@ -308,12 +309,14 @@ export default function NotaFabricaDetails({
                   >
                     <CheckCircle className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
                     <span>
-                      {hasActivePedido ? 'Crear Orden (stock pendiente)' : 'Crear Orden de Producción'}
+                      {hasActivePedido
+                        ? 'Crear Orden (stock pendiente)'
+                        : 'Crear Orden de Producción'}
                     </span>
                   </Button>
                 )}
 
-                {(isPagadaParcialmente || hasPedido) && (
+                {(isPagadaParcialmente || hasPedido || isEnEsperaDeStock) && (
                   <Button
                     onClick={() => setIsStockModalOpen(true)}
                     disabled={hasPedido}
