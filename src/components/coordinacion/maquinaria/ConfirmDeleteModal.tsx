@@ -12,6 +12,8 @@ interface ConfirmDeleteModalProps {
   confirmText?: string
   cancelText?: string
   warningContent?: React.ReactNode
+  disableConfirm?: boolean
+  confirmDisabledMessage?: string
 }
 
 export default function ConfirmDeleteModal({
@@ -24,6 +26,8 @@ export default function ConfirmDeleteModal({
   confirmText = 'Eliminar',
   cancelText = 'Cancelar',
   warningContent,
+  disableConfirm = false,
+  confirmDisabledMessage,
 }: ConfirmDeleteModalProps) {
   if (!open) return null
 
@@ -74,14 +78,19 @@ export default function ConfirmDeleteModal({
           </button>
           <button
             onClick={onConfirm}
-            disabled={loading}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
+            disabled={loading || disableConfirm}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors disabled:cursor-not-allowed ${disableConfirm
+                ? 'bg-gray-400 hover:bg-gray-400'
+                : 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
+              }`}
           >
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Eliminando...
               </>
+            ) : disableConfirm && confirmDisabledMessage ? (
+              confirmDisabledMessage
             ) : (
               confirmText
             )}

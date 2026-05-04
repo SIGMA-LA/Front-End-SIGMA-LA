@@ -163,11 +163,13 @@ export default function MaquinariasPageContent({
                 ))}
               </ul>
               <p className="mt-2 font-medium">
-                Se deberá reasignar otra maquinaria a estas actividades.
+                La maquinaria no puede ser eliminada porque tiene usos asignados. Se deben reasignar o cancelar las actividades primero.
               </p>
             </div>
           )
         }
+        disableConfirm={(usos?.uso_maquinaria?.length ?? 0) > 0}
+        confirmDisabledMessage="No se puede eliminar"
       />
     </>
   )
