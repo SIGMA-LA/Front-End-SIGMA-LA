@@ -1,11 +1,14 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Localidad, Provincia } from '@/types'
+import type { Localidad, Provincia, CreateLocalidadData } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 const BASE_URL = `${API_URL}/provincias`
+const LOCALIDADES_URL = `${API_URL}/localidades`
 
 /**
  * Retrieves all provincias from the system
@@ -77,5 +80,34 @@ export async function getLocalidadesByProvincia(
   } catch (error) {
     console.error('[getLocalidadesByProvincia]', error)
     return []
+  }
+}
+
+/**
+ * Creates a new Localidad
+ */
+export async function createLocalidad(
+  localidadData: CreateLocalidadData
+): Promise<ActionResponse<Localidad>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling<Localidad>(LOCALIDADES_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(localidadData),
+    })
+
+    const data = await res.json()
+
+    revalidatePath('/admin/localidades')
+
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'No se pudo crear la localidad. Intentá nuevamente.'
+    console.error('[createLocalidad]', message)
+    return { success: false, error: message }
   }
 }

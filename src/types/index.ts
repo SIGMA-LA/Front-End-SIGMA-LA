@@ -8,7 +8,7 @@ export type {
   UpdateEmpleadoData,
 } from './auth'
 
-export type { Provincia, Localidad } from './geo'
+export type { Provincia, Localidad, CreateLocalidadData } from './geo'
 
 export type {
   Obra,

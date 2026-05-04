@@ -10,3 +10,8 @@ export interface Localidad {
   cod_provincia: number
   provincia: Provincia
 }
+
+export interface CreateLocalidadData {
+  nombre_localidad: string
+  cod_provincia: number
+}

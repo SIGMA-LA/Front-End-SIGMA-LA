@@ -17,6 +17,7 @@ import {
   BarChart2,
   LucideIcon,
   TruckIcon,
+  MapPin,
 } from 'lucide-react'
 import { Empleado } from '@/types'
 
@@ -60,6 +61,7 @@ const menuItemsAdmin: MenuItem[] = [
   { path: '/admin/empleados', label: 'Empleados', icon: Users },
   { path: '/admin/clientes', label: 'Clientes', icon: UserStar },
   { path: '/admin/obras', label: 'Obras', icon: Building2 },
+  { path: '/admin/localidades', label: 'Localidades', icon: MapPin },
   { path: '/admin/reportes', label: 'Reportes', icon: BarChart2 },
   { path: '/admin/configuraciones', label: 'Configuraciones', icon: Settings },
 ]
