@@ -49,7 +49,9 @@ export default function OrdenProduccionDetails({
       : `${cliente?.nombre ?? ''} ${cliente?.apellido ?? ''}`.trim()
   const nombreClienteMostrado = nombreCliente || 'N/A'
 
-  const canIniciar = orden.estado === 'APROBADA'
+  const isEnEsperaDeStock = orden.obra?.estado === 'EN ESPERA DE STOCK'
+  const canIniciar = orden.estado === 'APROBADA' && !isEnEsperaDeStock
+  const isEsperandoStock = orden.estado === 'APROBADA' && isEnEsperaDeStock
   const canFinalizar = orden.estado === 'EN PRODUCCION'
 
   const handleOpenPdf = () => {
@@ -192,19 +194,27 @@ export default function OrdenProduccionDetails({
             </div>
 
             {/* Botones para iniciar/finalizar producción */}
-            {(canIniciar || canFinalizar || onResubirOrden) && (
+            {(canIniciar ||
+              canFinalizar ||
+              onResubirOrden ||
+              isEsperandoStock) && (
               <div className="mt-auto border-t pt-6">
                 <h4 className="mb-4 text-sm font-semibold tracking-widest text-gray-500 uppercase">
                   Acciones Disponibles
                 </h4>
                 <div className="flex flex-col gap-3">
-                  {canIniciar && onIniciarProduccion && (
+                  {(canIniciar || isEsperandoStock) && onIniciarProduccion && (
                     <Button
                       onClick={onIniciarProduccion}
-                      className="w-full cursor-pointer bg-green-600 py-4 text-base text-white transition-colors hover:bg-green-700 lg:py-5 lg:text-lg"
+                      disabled={isEsperandoStock}
+                      className="w-full cursor-pointer bg-green-600 py-4 text-base text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 lg:py-5 lg:text-lg"
                     >
                       <Play className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-                      <span>Iniciar Producción</span>
+                      <span>
+                        {isEsperandoStock
+                          ? 'Esperando Stock'
+                          : 'Iniciar Producción'}
+                      </span>
                     </Button>
                   )}
                   {canFinalizar && onFinalizarProduccion && (
