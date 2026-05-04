@@ -85,25 +85,6 @@ export default function EntregaRecursosPersonal({
             )}
           </div>
         </div>
-
-        {entrega.dias_viaticos && entrega.dias_viaticos > 0 && (
-          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
-            <h3 className="mb-2 text-sm font-bold tracking-wider text-yellow-900 uppercase">
-              Costo de Viáticos
-            </h3>
-            <div className="mt-3 flex items-end justify-between">
-              <div>
-                <p className="text-xs text-yellow-700">
-                  Total {entrega.dias_viaticos} días x {entrega.entrega_empleado?.length || 0} pers.
-                </p>
-                <p className="text-xs text-yellow-600">
-                  Valor diario: {formatCurrency(viaticoPorDia)}
-                </p>
-              </div>
-              <p className="text-2xl font-black text-yellow-900">{formatCurrency(totalViaticos)}</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Columna Derecha: Recursos */}

@@ -15,7 +15,7 @@ interface SeccionDetalleEntregaProps {
   obraId: number | null
   direccion: string | null
   detalle: string
-  onObraChange: (obraId: number | null, direccion: string) => void
+  onObraChange: (obraId: number | null, direccion: string, estado?: string) => void
   onDetalleChange: (v: string) => void
   onBuscarObras: (query: string) => Promise<Obra[] | { data: Obra[] }>
   availableOPs: OrdenProduccion[]
@@ -129,7 +129,7 @@ export default function SeccionDetalleEntrega({
             <ObraSearchSelect
               key={esFinal ? 'final' : 'parcial'}
               buscarObras={onBuscarObras}
-              onSelectObra={(obra: Obra) => onObraChange(obra.cod_obra, obra.direccion)}
+              onSelectObra={(obra: Obra) => onObraChange(obra.cod_obra, obra.direccion, obra.estado)}
               placeholder={
                 esFinal
                   ? 'Buscar obra PAGADA TOTALMENTE...'

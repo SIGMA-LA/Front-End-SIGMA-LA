@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2, Truck } from 'lucide-react'
+import { Loader2, Truck, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useMemo, useCallback } from 'react'
 import { getVehiculos } from '@/actions/vehiculos'
@@ -89,6 +89,7 @@ export default function CrearEntregaForm({
     isFromObra,
     isPending,
     error,
+    opWarning,
     setError,
     buscarObrasSegunTipo,
     getEmpleadoNombre,
@@ -129,6 +130,13 @@ export default function CrearEntregaForm({
 
           <FormErrorBanner error={error} onDismiss={() => setError(null)} />
 
+          {opWarning && (
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+              <p className="text-sm font-medium text-amber-800">{opWarning}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <SeccionDetalleEntrega
               esFinal={esFinal}
@@ -136,8 +144,8 @@ export default function CrearEntregaForm({
               obraId={formData.obraId}
               direccion={formData.direccion}
               detalle={formData.detalle}
-              onObraChange={(id, dir) =>
-                setFormData((p) => ({ ...p, obraId: id, direccion: dir }))
+              onObraChange={(id, dir, estado) =>
+                setFormData((p) => ({ ...p, obraId: id, direccion: dir, obraEstado: estado ?? p.obraEstado }))
               }
               onDetalleChange={(v) =>
                 setFormData((p) => ({ ...p, detalle: v }))
