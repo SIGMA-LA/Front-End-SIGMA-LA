@@ -29,6 +29,28 @@ export async function getActualViatico(): Promise<ParametroViatico> {
 }
 
 /**
+ * Retrieves the viatico parameter value for a specific date
+ * @param {string} date - ISO date string
+ * @returns {Promise<ParametroViatico>} Viatico per person per day for that date
+ */
+export async function getViaticoByDate(date: string): Promise<ParametroViatico> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling(`${BASE_URL}/viatico-fecha?fecha=${date}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 3600 },
+    })
+    return (await res.json()) as ParametroViatico
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message !== 'Not found') {
+      console.error('[getViaticoByDate]', error)
+    }
+    // Fallback to current if historical fails
+    return getActualViatico()
+  }
+}
+
+/**
  * Retrieves the actual parametro record
  */
 export async function getActualParametros() {
