@@ -10,6 +10,7 @@ import {
   CronogramaSeccion,
   EquipoSeccion,
   TransporteSeccion,
+  ViaticosSeccion,
   NotasSeccion,
 } from './visita-details/SeccionesVisitaDetalle'
 
@@ -168,7 +169,8 @@ export default function VisitaDetails({
               />
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-1">
                 <EquipoSeccion visita={visita} />
-                <TransporteSeccion visita={visita} viaticoPorDia={viaticoPorDia} />
+                <TransporteSeccion visita={visita} />
+                <ViaticosSeccion visita={visita} viaticoPorDia={viaticoPorDia} />
               </div>
             </div>
           </div>
