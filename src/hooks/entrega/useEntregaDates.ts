@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { VIATICO_POR_DIA } from '@/constants'
 
-export function useEntregaDates() {
+export function useEntregaDates(initialViaticoPorDia: number = 0) {
   const [fechaSalida, setFechaSalida] = useState('')
   const [horaSalida, setHoraSalida] = useState('')
   const [fechaRegreso, setFechaRegreso] = useState('')
@@ -23,8 +22,8 @@ export function useEntregaDates() {
 
   const calculateTotalViaticos = useCallback((totalPersonas: number, customDias?: number) => {
     const d = customDias !== undefined ? customDias : diasViaticos
-    return d * totalPersonas * VIATICO_POR_DIA
-  }, [diasViaticos])
+    return d * totalPersonas * initialViaticoPorDia
+  }, [diasViaticos, initialViaticoPorDia])
 
   return useMemo(() => ({
     fechaSalida,
@@ -38,6 +37,6 @@ export function useEntregaDates() {
     diasViaticos,
     setDiasViaticos,
     calculateTotalViaticos,
-    viaticoPorDia: VIATICO_POR_DIA,
-  }), [fechaSalida, horaSalida, fechaRegreso, horaRegreso, diasViaticos, calculateTotalViaticos])
+    viaticoPorDia: initialViaticoPorDia,
+  }), [fechaSalida, horaSalida, fechaRegreso, horaRegreso, diasViaticos, calculateTotalViaticos, initialViaticoPorDia])
 }

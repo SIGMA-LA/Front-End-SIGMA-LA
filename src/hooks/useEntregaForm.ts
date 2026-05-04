@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createEntrega, updateEntrega } from '@/actions/entregas'
 import { getObrasParaEntrega } from '@/actions/obras'
+import { getActualViatico, getViaticoByDate } from '@/actions/parametros'
 import { notify } from '@/lib/toast'
 import type {
   Obra,
@@ -115,8 +116,23 @@ export default function useEntregaForm({
   })
 
   // Sub-hooks for Specialized Logic
-  const dateLogic = useEntregaDates()
+  const [viaticoPorDia, setViaticoPorDia] = useState(0)
+  const dateLogic = useEntregaDates(viaticoPorDia)
   const opLogic = useEntregaOPs(formData.obraId, entregaToEdit)
+
+  // Fetch viatico rate
+  useEffect(() => {
+    async function fetchViatico() {
+      if (entregaToEdit) {
+        const res = await getViaticoByDate(new Date(entregaToEdit.fecha_hora_entrega).toISOString())
+        setViaticoPorDia(res.viatico_dia_persona)
+      } else {
+        const res = await getActualViatico()
+        setViaticoPorDia(res.viatico_dia_persona)
+      }
+    }
+    fetchViatico()
+  }, [entregaToEdit])
 
   // Selection States
   const [encargado, setEncargado] = useState<string | null>(null)

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Info } from 'lucide-react'
 import type { Entrega } from '@/types'
-import { getActualViatico } from '@/actions/parametros'
+import { getViaticoByDate } from '@/actions/parametros'
 import { getEntrega } from '@/actions/entregas'
 import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
@@ -46,12 +46,11 @@ export default function EntregaDetailsModal({
         setLoading(true)
         setError(null)
         try {
-          const [entregaData, params] = await Promise.all([
-            getEntrega(entrega!.cod_entrega),
-            getActualViatico(),
-          ])
+          const entregaData = await getEntrega(entrega!.cod_entrega)
+          const historicalViatico = await getViaticoByDate(new Date(entregaData.fecha_hora_entrega).toISOString())
+          
           setEstaEntrega(entregaData)
-          setViaticoPorDia(params.viatico_dia_persona)
+          setViaticoPorDia(historicalViatico.viatico_dia_persona)
         } catch (err) {
           setError('Error al cargar los detalles de la entrega')
           console.error(err)
