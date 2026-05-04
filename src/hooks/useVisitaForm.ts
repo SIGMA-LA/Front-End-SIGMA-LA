@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Visita, Obra, Empleado, Localidad, Provincia } from '@/types'
 import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
+import { getActualViatico, getViaticoByDate } from '@/actions/parametros'
 import { notify } from '@/lib/toast'
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,8 @@ export interface UseVisitaFormReturn {
   isPending: boolean
   error: string | null
   setError: (v: string | null) => void
+  viaticoPorDia: number
+  totalViaticos: number
   getEmpleadoNombre: (cuil: string) => string
   handleLoadLocalidades: (provinciaCod: number) => Promise<void>
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
@@ -116,6 +119,23 @@ export default function useVisitaForm({
   const [selectedProvincia, setSelectedProvincia] = useState<number | undefined>(undefined)
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [loadingLocalidades, setLoadingLocalidades] = useState(false)
+  const [viaticoPorDia, setViaticoPorDia] = useState(0)
+
+  // Fetch viatico rate
+  useEffect(() => {
+    async function fetchViatico() {
+      if (visitaEditar) {
+        const res = await getViaticoByDate(new Date(visitaEditar.fecha_hora_visita).toISOString())
+        setViaticoPorDia(res.viatico_dia_persona)
+      } else {
+        const res = await getActualViatico()
+        setViaticoPorDia(res.viatico_dia_persona)
+      }
+    }
+    fetchViatico()
+  }, [visitaEditar])
+
+  const totalViaticos = (formData.dias_viatico || 0) * ( (visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) * viaticoPorDia
 
   // Sync motivo_visita with isVisitaInicial toggle
   useEffect(() => {
@@ -342,5 +362,7 @@ export default function useVisitaForm({
     getEmpleadoNombre,
     handleLoadLocalidades,
     handleSubmit,
+    viaticoPorDia,
+    totalViaticos,
   }
 }

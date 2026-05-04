@@ -151,7 +151,7 @@ export function EquipoSeccion({ visita }: SectionProps) {
   )
 }
 
-export function TransporteSeccion({ visita }: SectionProps) {
+export function TransporteSeccion({ visita, viaticoPorDia }: SectionProps & { viaticoPorDia?: number }) {
   const usoVehiculo = Array.isArray(visita.uso_vehiculo_visita)
     ? visita.uso_vehiculo_visita[0]
     : visita.uso_vehiculo_visita
@@ -184,14 +184,40 @@ export function TransporteSeccion({ visita }: SectionProps) {
         </div>
       </div>
 
-      {visita.dias_viaticos && visita.dias_viaticos > 0 && (
-        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
-          <h3 className="mb-2 text-sm font-bold tracking-wider text-yellow-900 uppercase">
+      {visita.dias_viaticos !== undefined && visita.dias_viaticos > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+          <h3 className="mb-2 text-sm font-bold tracking-wider text-emerald-900 uppercase">
             Viáticos
           </h3>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-yellow-700">Días proyectados:</p>
-            <p className="text-xl font-black text-yellow-900">{visita.dias_viaticos}</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-emerald-100 pb-2">
+              <p className="text-xs text-emerald-700">Días proyectados:</p>
+              <p className="text-lg font-black text-emerald-900">{visita.dias_viaticos}</p>
+            </div>
+            {viaticoPorDia !== undefined && viaticoPorDia > 0 && (
+              <>
+                <div className="flex items-center justify-between border-b border-emerald-100 pb-2">
+                  <p className="text-xs text-emerald-700">Personal:</p>
+                  <p className="text-sm font-bold text-emerald-900">
+                    {visita.empleado_visita?.length || 0} personas
+                  </p>
+                </div>
+                <div className="flex items-center justify-between border-b border-emerald-100 pb-2">
+                  <p className="text-xs text-emerald-700">Valor base (histórico):</p>
+                  <p className="text-sm font-bold text-emerald-900">
+                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(viaticoPorDia)}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-xs font-bold text-emerald-800 uppercase">Total Estimado:</p>
+                  <p className="text-xl font-black text-emerald-600">
+                    {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(
+                      visita.dias_viaticos * (visita.empleado_visita?.length || 0) * viaticoPorDia
+                    )}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

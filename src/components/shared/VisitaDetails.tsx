@@ -4,6 +4,7 @@ import { Calendar, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Visita } from '@/types'
 import { getVisita } from '@/actions/visitas'
+import { getViaticoByDate } from '@/actions/parametros'
 import {
   DestinoSeccion,
   CronogramaSeccion,
@@ -41,6 +42,7 @@ export default function VisitaDetails({
   const [visita, setVisita] = useState<Visita | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viaticoPorDia, setViaticoPorDia] = useState(0)
 
   useEffect(() => {
     async function fetchVisita() {
@@ -48,7 +50,9 @@ export default function VisitaDetails({
       setError(null)
       try {
         const data = await getVisita(visitaProp.cod_visita)
+        const historicalViatico = await getViaticoByDate(new Date(data.fecha_hora_visita).toISOString())
         setVisita(data)
+        setViaticoPorDia(historicalViatico.viatico_dia_persona)
       } catch (err: unknown) {
         setError(
           err instanceof Error
@@ -164,7 +168,7 @@ export default function VisitaDetails({
               />
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-1">
                 <EquipoSeccion visita={visita} />
-                <TransporteSeccion visita={visita} />
+                <TransporteSeccion visita={visita} viaticoPorDia={viaticoPorDia} />
               </div>
             </div>
           </div>
