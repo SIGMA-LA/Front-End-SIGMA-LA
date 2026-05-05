@@ -8,17 +8,17 @@ import { getProvincias } from '@/actions/localidad'
 import type { Provincia, CreateLocalidadData } from '@/types'
 
 interface LocalidadFormularioProps {
-  onSubmit: (data: CreateLocalidadData) => Promise<void>
+  onSubmit: (data: CreateLocalidadData) => void
+  isPending?: boolean
 }
 
-export default function LocalidadFormulario({ onSubmit }: LocalidadFormularioProps) {
+export default function LocalidadFormulario({ onSubmit, isPending = false }: LocalidadFormularioProps) {
   const [formData, setFormData] = useState<CreateLocalidadData>({
     nombre_localidad: '',
     cod_provincia: 0,
   })
   const [provincias, setProvincias] = useState<Provincia[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -47,16 +47,11 @@ export default function LocalidadFormulario({ onSubmit }: LocalidadFormularioPro
       return
     }
 
-    setIsPending(true)
     setError(null)
     try {
-      await onSubmit(formData)
-      // Reset form on success
-      setFormData({ nombre_localidad: '', cod_provincia: 0 })
+      onSubmit(formData)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la localidad')
-    } finally {
-      setIsPending(false)
     }
   }
 

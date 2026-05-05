@@ -84,6 +84,27 @@ export async function getLocalidadesByProvincia(
 }
 
 /**
+ * Retrieves all localidades from the system
+ */
+export async function getLocalidades(): Promise<Localidad[]> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling<Localidad[]>(LOCALIDADES_URL, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60, tags: ['localidades'] },
+    })
+    return await res.json()
+  } catch (error) {
+    console.error('[getLocalidades]', error)
+    return []
+  }
+}
+
+/**
  * Creates a new Localidad
  */
 export async function createLocalidad(

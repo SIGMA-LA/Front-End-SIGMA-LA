@@ -1,18 +1,27 @@
+'use client'
+
 import { ArrowLeft } from 'lucide-react'
 import LocalidadFormulario from '@/components/admin/LocalidadFormulario'
 import { createLocalidad } from '@/actions/localidad'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useTransition } from 'react'
 
 import type { CreateLocalidadData } from '@/types'
 
 export default function CrearLocalidadPage() {
-  async function handleCreate(data: CreateLocalidadData) {
-    'use server'
-    const result = await createLocalidad(data)
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
-    if (!result.success) {
-      throw new Error(result.error || 'Error al crear la localidad')
-    }
+  async function handleCreate(data: CreateLocalidadData) {
+    startTransition(async () => {
+      const result = await createLocalidad(data)
+      if (result.success) {
+        router.push('/admin/localidades')
+      } else {
+        throw new Error(result.error || 'Error al crear la localidad')
+      }
+    })
   }
 
   return (
@@ -28,7 +37,7 @@ export default function CrearLocalidadPage() {
           </Link>
         </div>
 
-        <LocalidadFormulario onSubmit={handleCreate} />
+        <LocalidadFormulario onSubmit={handleCreate} isPending={isPending} />
       </div>
     </div>
   )
