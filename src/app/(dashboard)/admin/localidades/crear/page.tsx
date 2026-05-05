@@ -18,6 +18,7 @@ export default function CrearLocalidadPage() {
       const result = await createLocalidad(data)
       if (result.success) {
         router.push('/admin/localidades')
+        router.refresh()
       } else {
         throw new Error(result.error || 'Error al crear la localidad')
       }

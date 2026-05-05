@@ -84,12 +84,17 @@ export async function getLocalidadesByProvincia(
 }
 
 /**
- * Retrieves all localidades from the system
+ * Retrieves all localidades from the system or searches by name
  */
-export async function getLocalidades(): Promise<Localidad[]> {
+export async function getLocalidades(searchTerm?: string): Promise<Localidad[]> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Localidad[]>(LOCALIDADES_URL, {
+    const url = new URL(LOCALIDADES_URL)
+    if (searchTerm && searchTerm.trim()) {
+      url.searchParams.append('search', searchTerm.trim())
+    }
+
+    const res = await fetchWithErrorHandling<Localidad[]>(url.toString(), {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useCallback, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, MapPin, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, MapPin, Trash2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { deleteLocalidad } from '@/actions/localidad'
+import { Input } from '@/components/ui/Input'
+import { deleteLocalidad, getLocalidades } from '@/actions/localidad'
 import ConfirmacionEliminarLocalidadModal from '@/components/admin/ConfirmacionEliminarLocalidadModal'
 import type { Localidad } from '@/types'
 
@@ -13,11 +15,38 @@ interface LocalidadesPageClientProps {
 }
 
 export default function LocalidadesPageClient({ localidades: initialLocalidades }: LocalidadesPageClientProps) {
+  const router = useRouter()
   const [localidades, setLocalidades] = useState(initialLocalidades)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [localidadToDelete, setLocalidadToDelete] = useState<Localidad | null>(null)
   const [isPending, startTransition] = useTransition()
   const [apiError, setApiError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleSearch = useCallback(
+    (term: string) => {
+      setSearchTerm(term)
+      setIsSearching(true)
+
+      startTransition(async () => {
+        try {
+          const results = await getLocalidades(term)
+          setLocalidades(results)
+        } catch (error) {
+          console.error('Error searching localidades:', error)
+        } finally {
+          setIsSearching(false)
+        }
+      })
+    },
+    [startTransition]
+  )
+
+  const handleClearSearch = () => {
+    setSearchTerm('')
+    setLocalidades(initialLocalidades)
+  }
 
   const handleDeleteClick = (localidad: Localidad) => {
     setLocalidadToDelete(localidad)
@@ -34,6 +63,7 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
         setLocalidades(prev => prev.filter(l => l.cod_localidad !== localidadToDelete.cod_localidad))
         setShowDeleteModal(false)
         setLocalidadToDelete(null)
+        router.refresh()
       } else {
         setApiError(result.error || 'Error al eliminar la localidad')
       }
@@ -68,23 +98,56 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
             </Link>
           </div>
 
+          {/* Search Bar */}
+          <div className="mb-6 rounded-2xl border border-gray-100 bg-white px-6 py-4 shadow-xl shadow-gray-200/50">
+            <div className="flex items-center gap-3">
+              <Search className="h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Buscar localidad por nombre..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="flex-1 h-10 rounded-xl border-gray-200 bg-white text-base transition-all hover:bg-gray-50 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 shadow-sm"
+              />
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Content */}
           {localidades.length === 0 ? (
             <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-xl shadow-gray-200/50">
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <MapPin className="h-12 w-12 text-gray-400" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  No hay localidades
+                  {searchTerm ? 'Sin resultados' : 'No hay localidades'}
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Comienza creando tu primera localidad.
+                  {searchTerm
+                    ? `No se encontraron localidades que coincidan con "${searchTerm}"`
+                    : 'Comienza creando tu primera localidad.'}
                 </p>
-                <Link href="/admin/localidades/crear" className="mt-6">
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Crear Localidad
-                  </Button>
-                </Link>
+                {searchTerm ? (
+                  <button
+                    onClick={handleClearSearch}
+                    className="mt-6 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    Limpiar búsqueda
+                  </button>
+                ) : (
+                  <Link href="/admin/localidades/crear" className="mt-6">
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Crear Localidad
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           ) : (
