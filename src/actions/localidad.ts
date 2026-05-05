@@ -105,20 +105,19 @@ export async function getLocalidades(): Promise<Localidad[]> {
 }
 
 /**
- * Creates a new Localidad
+ * Deletes a Localidad
  */
-export async function createLocalidad(
-  localidadData: CreateLocalidadData
+export async function deleteLocalidad(
+  cod_localidad: number
 ): Promise<ActionResponse<Localidad>> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Localidad>(LOCALIDADES_URL, {
-      method: 'POST',
+    const res = await fetchWithErrorHandling<Localidad>(`${LOCALIDADES_URL}/${cod_localidad}`, {
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(localidadData),
     })
 
     const data = await res.json()
@@ -127,8 +126,8 @@ export async function createLocalidad(
 
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo crear la localidad. Intentá nuevamente.'
-    console.error('[createLocalidad]', message)
+    const message = error instanceof Error ? error.message : 'No se pudo eliminar la localidad. Intentá nuevamente.'
+    console.error('[deleteLocalidad]', message)
     return { success: false, error: message }
   }
 }
