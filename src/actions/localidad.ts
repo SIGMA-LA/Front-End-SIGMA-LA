@@ -105,14 +105,42 @@ export async function getLocalidades(): Promise<Localidad[]> {
 }
 
 /**
+ * Creates a new Localidad
+ */
+export async function createLocalidad(
+  data: CreateLocalidadData,
+): Promise<ActionResponse<Localidad>> {
+  try {
+    const token = await getAccessToken()
+    const res = await fetchWithErrorHandling<Localidad>(LOCALIDADES_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    const createdLocalidad = await res.json()
+    revalidatePath('/admin/localidades')
+
+    return { success: true, data: createdLocalidad }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'No se pudo crear la localidad. Intentá nuevamente.'
+    console.error('[createLocalidad]', message)
+    return { success: false, error: message }
+  }
+}
+
+/**
  * Deletes a Localidad
  */
 export async function deleteLocalidad(
   cod_localidad: number
-): Promise<ActionResponse<Localidad>> {
+): Promise<ActionResponse<void>> {
   try {
     const token = await getAccessToken()
-    const res = await fetchWithErrorHandling<Localidad>(`${LOCALIDADES_URL}/${cod_localidad}`, {
+    const res = await fetchWithErrorHandling<void>(`${LOCALIDADES_URL}/${cod_localidad}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -120,11 +148,13 @@ export async function deleteLocalidad(
       },
     })
 
-    const data = await res.json()
+    if (res.status !== 204) {
+      await res.json()
+    }
 
     revalidatePath('/admin/localidades')
 
-    return { success: true, data }
+    return { success: true }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'No se pudo eliminar la localidad. Intentá nuevamente.'
     console.error('[deleteLocalidad]', message)

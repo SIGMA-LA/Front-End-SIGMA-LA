@@ -90,6 +90,7 @@ export default function LocalidadFormulario({ onSubmit, isPending = false }: Loc
                 onChange={(e) => handleChange('nombre_localidad', e.target.value)}
                 placeholder="Ingresa el nombre de la localidad"
                 required
+                className="mt-2 h-12 w-full rounded-xl border-gray-200 bg-white text-base transition-all hover:bg-gray-50 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 shadow-sm"
               />
             </div>
           </div>
