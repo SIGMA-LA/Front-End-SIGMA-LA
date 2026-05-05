@@ -69,15 +69,14 @@ export default function ConfirmacionEliminarLocalidadModal({
                 label="Provincia"
                 value={localidad.provincia?.nombre || 'N/A'}
               />
-              <Divider />
-              <SummaryRow label="Código" value={localidad.cod_localidad.toString()} mono />
             </div>
 
             {/* Warning message */}
             <div className="mt-4 flex items-start gap-3 rounded-lg bg-red-50 p-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
               <p className="text-sm text-red-900">
-                Al eliminar esta localidad, se perderán todos los datos asociados.
+                ¿Está seguro de eliminar esta localidad? 
+                <br />
                 Esta acción es irreversible.
               </p>
             </div>

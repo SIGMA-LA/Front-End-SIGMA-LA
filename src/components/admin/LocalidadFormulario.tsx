@@ -10,9 +10,11 @@ import type { Provincia, CreateLocalidadData } from '@/types'
 interface LocalidadFormularioProps {
   onSubmit: (data: CreateLocalidadData) => void
   isPending?: boolean
+  error?: string | null
+  setError?: (error: string | null) => void
 }
 
-export default function LocalidadFormulario({ onSubmit, isPending = false }: LocalidadFormularioProps) {
+export default function LocalidadFormulario({ onSubmit, isPending = false, error: externalError = null, setError: setExternalError }: LocalidadFormularioProps) {
   const [formData, setFormData] = useState<CreateLocalidadData>({
     nombre_localidad: '',
     cod_provincia: 0,
@@ -48,11 +50,7 @@ export default function LocalidadFormulario({ onSubmit, isPending = false }: Loc
     }
 
     setError(null)
-    try {
-      onSubmit(formData)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear la localidad')
-    }
+    onSubmit(formData)
   }
 
   return (
@@ -121,9 +119,9 @@ export default function LocalidadFormulario({ onSubmit, isPending = false }: Loc
           </div>
 
           {/* Error Message */}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-700">{error}</p>
+          {(error || externalError) && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-800">{error || externalError}</p>
             </div>
           )}
 

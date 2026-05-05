@@ -5,24 +5,32 @@ import LocalidadFormulario from '@/components/admin/LocalidadFormulario'
 import { createLocalidad } from '@/actions/localidad'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useState } from 'react'
 
 import type { CreateLocalidadData } from '@/types'
 
 export default function CrearLocalidadPage() {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleCreate(data: CreateLocalidadData) {
-    startTransition(async () => {
+    setIsPending(true)
+    setError(null)
+    
+    try {
       const result = await createLocalidad(data)
       if (result.success) {
         router.push('/admin/localidades')
         router.refresh()
       } else {
-        throw new Error(result.error || 'Error al crear la localidad')
+        setError(result.error || 'Error al crear la localidad')
       }
-    })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear la localidad')
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (
@@ -38,7 +46,7 @@ export default function CrearLocalidadPage() {
           </Link>
         </div>
 
-        <LocalidadFormulario onSubmit={handleCreate} isPending={isPending} />
+        <LocalidadFormulario onSubmit={handleCreate} isPending={isPending} error={error} setError={setError} />
       </div>
     </div>
   )
