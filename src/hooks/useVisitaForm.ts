@@ -184,19 +184,19 @@ export default function useVisitaForm({
       setIsLoadingOps(true)
       try {
         const { getOrdenesProduccionBusquedaAvanzada } = await import('@/actions/ordenes')
-        const ops = await getOrdenesProduccionBusquedaAvanzada({
+        const response = await getOrdenesProduccionBusquedaAvanzada({
           cod_obra: formData.obraId,
           estado: 'PENDIENTE',
-        })
-        
+        }, 1, 1000)
+
         // Filtrar las OPs elegibles según reglas de negocio
-        const filteredOps = ops.filter((op) => {
+        const filteredOps = response.data.filter((op: OrdenProduccion) => {
           // 1. Solo OPs en estado PENDIENTE (excluye EN PRODUCCION, TERMINADA, APROBADA)
           if (op.estado !== 'PENDIENTE') return false
 
           // 2. Excluir si ya tiene una visita vinculada que no esté CANCELADA
           const tieneVisitaActiva = op.visita && op.visita.estado !== 'CANCELADA'
-          
+
           // Nota: Si la OP es la que viene por URL (selectedOps), la dejamos visible
           if (tieneVisitaActiva && !selectedOps.includes(op.cod_op)) {
             return false
@@ -215,7 +215,7 @@ export default function useVisitaForm({
     fetchOps()
   }, [formData.obraId, selectedOps])
 
-  const totalViaticos = (formData.dias_viatico || 0) * ( (visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) * viaticoPorDia
+  const totalViaticos = (formData.dias_viatico || 0) * ((visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) * viaticoPorDia
 
   // Sync motivo_visita with isVisitaInicial toggle
   useEffect(() => {
@@ -391,7 +391,7 @@ export default function useVisitaForm({
       if (formData.obraId) {
         formDataObj.append('obraId', formData.obraId.toString())
       }
-      
+
       if (selectedOps.length > 0) {
         formDataObj.append('cod_ops', JSON.stringify(selectedOps))
       }
