@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import Link from 'next/link'
 import type { OrdenProduccion } from '@/types'
-import { MapPin, Package, Calendar, Eye, CheckCircle } from 'lucide-react'
+import { MapPin, Package, Calendar, Eye, CheckCircle, CalendarPlus } from 'lucide-react'
 
 interface OrdenProduccionCardProps {
   orden: OrdenProduccion
@@ -107,12 +108,13 @@ export default function OrdenProduccionCard({
 
           {/* Estado de Visitas */}
           <div className="pt-1">
-            {orden.obra?.visita?.some((v) => v.estado === 'COMPLETADA') ? (
+            {orden.visita?.estado === 'COMPLETADA' ? (
               <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
                 Visita completada
               </span>
-            ) : orden.obra?.visita?.some(
-                (v) => v.estado === 'PROGRAMADA' || v.estado === 'EN CURSO'
+            ) : orden.visita &&
+              ['PROGRAMADA', 'EN CURSO', 'REPROGRAMADA'].includes(
+                orden.visita.estado || ''
               ) ? (
               <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
                 Visita pendiente
@@ -143,6 +145,16 @@ export default function OrdenProduccionCard({
                 <CheckCircle className="h-4 w-4" />
                 {isApproving ? 'Aprobando...' : 'Aprobar'}
               </button>
+            )}
+
+            {!orden.cod_visita && (
+              <Link
+                href={`/coordinacion/visitas/crear?cod_obra=${orden.cod_obra}&cod_op=${orden.cod_op}`}
+                className="flex items-center gap-2 rounded-lg border border-indigo-600 bg-white px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                Agendar Visita
+              </Link>
             )}
           </div>
         </div>
