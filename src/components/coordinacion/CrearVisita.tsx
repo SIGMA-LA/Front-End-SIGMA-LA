@@ -6,6 +6,7 @@ import type { Localidad, Visita, Obra, Empleado, Provincia, Vehiculo } from '@/t
 import FormErrorBanner from '@/components/shared/FormErrorBanner'
 import DateTimeSelectionVisita from './visita/DateTimeSelectionVisita'
 import PersonalSelection from './entrega/PersonalSelection'
+import ViaticosSection from './entrega/ViaticosSection'
 import DateTimeModalVisita from './visita/DateTimeModalVisita'
 import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
 import SelectionModal from '@/components/shared/SelectionModal'
@@ -62,6 +63,8 @@ export default function CrearVisita({
     getEmpleadoNombre,
     handleLoadLocalidades,
     handleSubmit,
+    viaticoPorDia,
+    totalViaticos,
   } = useVisitaForm({ preloadedObra, visitaEditar, empleados, provincias, buscarLocalidades })
 
   return (
@@ -176,6 +179,14 @@ export default function CrearVisita({
             acompanantes={selectedAcompanantes}
             getEmpleadoNombre={getEmpleadoNombre}
             onAsignarClick={() => setIsPersonalModalOpen(true)}
+          />
+
+          <ViaticosSection
+            diasViaticos={formData.dias_viatico}
+            totalViaticos={totalViaticos}
+            viaticoPorDia={viaticoPorDia}
+            numAcompanantes={selectedAcompanantes.length}
+            hayEncargado={!!visitadorPrincipal}
           />
 
           <VisitaLogisticaSeccion

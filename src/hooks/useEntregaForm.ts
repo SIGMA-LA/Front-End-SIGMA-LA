@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createEntrega, updateEntrega } from '@/actions/entregas'
 import { getObrasParaEntrega } from '@/actions/obras'
+import { getActualViatico, getViaticoByDate } from '@/actions/parametros'
 import { notify } from '@/lib/toast'
 import type {
   Obra,
@@ -24,6 +25,7 @@ import { useEntregaDates } from './entrega/useEntregaDates'
 interface EntregaFormData {
   obraId: number | null
   direccion: string
+  obraEstado?: string | null
   fecha: string
   hora: string
   detalle: string
@@ -81,6 +83,7 @@ export interface UseEntregaFormReturn {
   isFromObra: boolean
   isPending: boolean
   error: string | null
+  opWarning: string | null
   setError: (v: string | null) => void
   buscarObrasSegunTipo: (query: string) => Promise<Obra[]>
   getEmpleadoNombre: (cuil: string) => string
@@ -106,14 +109,30 @@ export default function useEntregaForm({
   const [formData, setFormData] = useState<EntregaFormData>({
     obraId: preloadedObra?.cod_obra ?? null,
     direccion: preloadedObra?.direccion ?? '',
+    obraEstado: preloadedObra?.estado ?? null,
     fecha: '',
     hora: '',
     detalle: '',
   })
 
   // Sub-hooks for Specialized Logic
-  const dateLogic = useEntregaDates()
+  const [viaticoPorDia, setViaticoPorDia] = useState(0)
+  const dateLogic = useEntregaDates(viaticoPorDia)
   const opLogic = useEntregaOPs(formData.obraId, entregaToEdit)
+
+  // Fetch viatico rate
+  useEffect(() => {
+    async function fetchViatico() {
+      if (entregaToEdit) {
+        const res = await getViaticoByDate(new Date(entregaToEdit.fecha_hora_entrega).toISOString())
+        setViaticoPorDia(res.viatico_dia_persona)
+      } else {
+        const res = await getActualViatico()
+        setViaticoPorDia(res.viatico_dia_persona)
+      }
+    }
+    fetchViatico()
+  }, [entregaToEdit])
 
   // Selection States
   const [encargado, setEncargado] = useState<string | null>(null)
@@ -130,6 +149,7 @@ export default function useEntregaForm({
   const [viewerUrl, setViewerUrl] = useState('')
   const [viewerTitle, setViewerTitle] = useState('')
   const [isViewerOpen, setIsViewerOpen] = useState(false)
+  const [opWarning, setOpWarning] = useState<string | null>(null)
 
   const openViewer = (url: string, title: string) => {
     setViewerUrl(url)
@@ -149,6 +169,7 @@ export default function useEntregaForm({
     setFormData({
       obraId: entregaToEdit.cod_obra,
       direccion: entregaToEdit.obra?.direccion ?? '',
+      obraEstado: entregaToEdit.obra?.estado ?? null,
       fecha: dateStr,
       hora: timeStr,
       detalle: entregaToEdit.detalle ?? '',
@@ -186,6 +207,25 @@ export default function useEntregaForm({
     setSelectedMaquinaria(maqs)
   }, [entregaToEdit, dateLogic])
 
+  useEffect(() => {
+    if (opLogic.availableOPs.length > 0 && opLogic.selectedOPs.length === opLogic.availableOPs.length) {
+      if (formData.obraEstado === 'PAGADA TOTALMENTE') {
+        if (!esFinal) {
+          setEsFinal(true)
+          setOpWarning("La entrega se cambió automáticamente a Entrega Final al seleccionar todas las OPs restantes.")
+        } else {
+          setOpWarning(null)
+        }
+      } else if (formData.obraEstado === 'PRODUCCION FINALIZADA' || formData.obraEstado === 'EN PRODUCCION') {
+        setOpWarning("Atención: No puede asignar la totalidad de OPs en este estado. Deje al menos 1 OP sin asignar o cambie el estado de la obra.")
+      } else {
+        setOpWarning(null)
+      }
+    } else {
+      setOpWarning(null)
+    }
+  }, [opLogic.selectedOPs.length, opLogic.availableOPs.length, formData.obraEstado, esFinal])
+
   const totalViaticos = useMemo(() => {
     const totalPersonas = (encargado ? 1 : 0) + acompanantes.length
     return dateLogic.calculateTotalViaticos(totalPersonas)
@@ -220,6 +260,14 @@ export default function useEntregaForm({
       setError('Debe especificar la salida, llegada y el regreso estimados')
       notify.error('Error en el formulario. Revise los detalles.')
       return
+    }
+
+    if (opLogic.availableOPs.length > 0 && opLogic.selectedOPs.length === opLogic.availableOPs.length) {
+      if (formData.obraEstado === 'PRODUCCION FINALIZADA' || formData.obraEstado === 'EN PRODUCCION') {
+        setError('No puede asignar la totalidad de OPs en este estado. Deje al menos 1 OP sin asignar o marque la obra como Pagada Totalmente para Entrega Final.')
+        notify.error('Error en el formulario. Revise los detalles.')
+        return
+      }
     }
 
     const fechaEntregaMs = new Date(`${formData.fecha}T${formData.hora}:00`).getTime()
@@ -315,7 +363,7 @@ export default function useEntregaForm({
     viewerUrl, viewerTitle, isViewerOpen, openViewer, closeViewer,
     isDateTimeModalOpen, setIsDateTimeModalOpen, isPersonalModalOpen, setIsPersonalModalOpen,
     isVehiculoModalOpen, setIsVehiculoModalOpen, isMaquinariaModalOpen, setIsMaquinariaModalOpen,
-    isFromObra, isPending, error, setError,
+    isFromObra, isPending, error, opWarning, setError,
     buscarObrasSegunTipo, getEmpleadoNombre, handleConfirmPersonal, handleSubmit,
   }
 }

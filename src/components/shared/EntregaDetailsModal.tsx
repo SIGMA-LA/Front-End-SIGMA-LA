@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { X, Info } from 'lucide-react'
+import { X, Info, FileText } from 'lucide-react'
 import type { Entrega } from '@/types'
-import { getActualViatico } from '@/actions/parametros'
+import { getViaticoByDate } from '@/actions/parametros'
 import { getEntrega } from '@/actions/entregas'
 import { DocumentViewer } from '@/components/shared/DocumentViewer'
 
@@ -46,12 +46,15 @@ export default function EntregaDetailsModal({
         setLoading(true)
         setError(null)
         try {
-          const [entregaData, params] = await Promise.all([
-            getEntrega(entrega!.cod_entrega),
-            getActualViatico(),
-          ])
+          const entregaData = await getEntrega(entrega!.cod_entrega)
+          if (!entregaData) {
+            setError('No se pudo encontrar la entrega seleccionada.')
+            return
+          }
+          const historicalViatico = await getViaticoByDate(new Date(entregaData.fecha_hora_entrega).toISOString())
+          
           setEstaEntrega(entregaData)
-          setViaticoPorDia(params.viatico_dia_persona)
+          setViaticoPorDia(historicalViatico.viatico_dia_persona)
         } catch (err) {
           setError('Error al cargar los detalles de la entrega')
           console.error(err)
@@ -90,9 +93,16 @@ export default function EntregaDetailsModal({
       : `${estaEntrega.obra.cliente?.nombre ?? ''} ${estaEntrega.obra.cliente?.apellido ?? ''}`.trim()) ||
     'N/A'
 
-  const vehiculoData = estaEntrega.vehiculos?.[0] as
+  const vehiculoData = (estaEntrega.uso_vehiculo_entrega?.[0] || estaEntrega.vehiculos?.[0]) as
     | { fecha_hora_ini_uso?: string; fecha_hora_ini_est?: string }
     | undefined
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+    }).format(amount)
+  }
 
   return (
     <>
@@ -129,38 +139,45 @@ export default function EntregaDetailsModal({
                   }}
                 />
 
-                {/* Notas de Carga */}
-                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-bold tracking-wider text-gray-900 uppercase">
-                    <Info className="h-4 w-4 text-blue-500" /> Notas de Carga
-                  </h3>
-                  <div className="space-y-4 rounded-lg border border-blue-50/50 bg-blue-50/30 p-4 text-sm text-gray-700">
-                    <div>
-                      <span className="mb-1.5 block font-semibold text-gray-900">
-                        Detalle de Transporte:
-                      </span>
-                      <p className="rounded-md border border-blue-100 bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm">
-                        {estaEntrega.detalle ||
-                          'Sin detalle de carga proporcionado'}
-                      </p>
-                    </div>
-
-                    {(estaEntrega.estado === 'ENTREGADO' ||
-                      estaEntrega.estado === 'CANCELADO') && (
-                      <div className="border-t border-blue-200 pt-4">
-                        <span className="mb-1.5 block font-semibold text-gray-900">
-                          Observaciones Extras:
-                        </span>
-                        <p
-                          className={`rounded-md border p-3 text-sm ${estaEntrega.observaciones ? 'border-blue-50 bg-blue-100/40 text-gray-700 italic' : 'border-gray-100 bg-gray-50/50 text-gray-500'}`}
-                        >
-                          {estaEntrega.observaciones ||
-                            'Sin observaciones adicionales registradas.'}
-                        </p>
+                {/* Viáticos Section */}
+                {estaEntrega.dias_viaticos && estaEntrega.dias_viaticos > 0 && (
+                  <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
+                    <h3 className="mb-2 text-sm font-bold tracking-wider text-yellow-900 uppercase">
+                      Costo de Viáticos
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-yellow-100 pb-2">
+                        <p className="text-xs text-yellow-700">Días proyectados:</p>
+                        <p className="text-lg font-black text-yellow-900">{estaEntrega.dias_viaticos}</p>
                       </div>
-                    )}
+                      {viaticoPorDia > 0 && (
+                        <>
+                          <div className="flex items-center justify-between border-b border-yellow-100 pb-2">
+                            <p className="text-xs text-yellow-700">Personal asignado:</p>
+                            <p className="text-sm font-bold text-yellow-900">
+                              {estaEntrega.entrega_empleado?.length || 0} personas
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between border-b border-yellow-100 pb-2">
+                            <p className="text-xs text-yellow-700">Valor base (histórico):</p>
+                            <p className="text-sm font-bold text-yellow-900">
+                              {formatCurrency(viaticoPorDia)}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between pt-1">
+                            <p className="text-xs font-bold text-yellow-800 uppercase">Total Estimado:</p>
+                            <p className="text-xl font-black text-yellow-700">
+                              {formatCurrency(totalViaticos)}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Notas de Carga */}
+                <NotasCargaSeccion entrega={estaEntrega} />
               </div>
             </div>
           </div>
@@ -180,6 +197,71 @@ export default function EntregaDetailsModal({
 // ---------------------------------------------------------------------------
 // Internal Overlays
 // ---------------------------------------------------------------------------
+
+function NotasCargaSeccion({ entrega }: { entrega: Entrega }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isObsExpanded, setIsObsExpanded] = useState(false)
+  
+  const hasLongDetalle = (entrega.detalle?.length || 0) > 150
+  const hasLongObs = (entrega.observaciones?.length || 0) > 150
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-bold tracking-wider text-gray-900 uppercase">
+        <Info className="h-4 w-4 text-blue-500" /> Notas de Carga
+      </h3>
+      <div className="space-y-4 rounded-lg border border-blue-50/50 bg-blue-50/30 p-4 text-sm text-gray-700">
+        <div>
+          <span className="mb-1.5 block font-semibold text-gray-900">
+            Detalle de Transporte:
+          </span>
+          <div className={`relative ${!isExpanded && hasLongDetalle ? 'max-h-24 overflow-hidden' : ''}`}>
+            <p className="rounded-md border border-blue-100 bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm whitespace-pre-wrap">
+              {entrega.detalle || 'Sin detalle de carga proporcionado'}
+            </p>
+            {!isExpanded && hasLongDetalle && (
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white/80 to-transparent" />
+            )}
+          </div>
+          {hasLongDetalle && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+            >
+              {isExpanded ? 'Ver menos' : 'Ver más'}
+            </button>
+          )}
+        </div>
+
+        {(entrega.estado === 'ENTREGADO' || entrega.estado === 'CANCELADO' || entrega.observaciones) && (
+          <div className="border-t border-blue-200 pt-4">
+            <span className="mb-1.5 block font-semibold text-gray-900">
+              Observaciones Extras:
+            </span>
+            <div className={`relative ${!isObsExpanded && hasLongObs ? 'max-h-24 overflow-hidden' : ''}`}>
+              <p
+                className={`rounded-md border p-3 text-sm leading-relaxed whitespace-pre-wrap ${entrega.observaciones ? 'border-blue-50 bg-blue-100/40 text-gray-700 italic' : 'border-gray-100 bg-gray-50/50 text-gray-500'}`}
+              >
+                {entrega.observaciones || 'Sin observaciones adicionales registradas.'}
+              </p>
+              {!isObsExpanded && hasLongObs && (
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white/20 to-transparent" />
+              )}
+            </div>
+            {hasLongObs && (
+              <button
+                onClick={() => setIsObsExpanded(!isObsExpanded)}
+                className="mt-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+              >
+                {isObsExpanded ? 'Ver menos' : 'Ver más'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function LoadingOverlay() {
   return (

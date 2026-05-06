@@ -26,7 +26,7 @@ export interface Visita {
   direccion_visita?: string
   uso_vehiculo_visita?: UsoVehiculoVisita | UsoVehiculoVisita[]
   fecha_cancelacion?: string
-  dias_viaticos?: number
+  dias_viatico?: number
   nombre_cliente?: string
   apellido_cliente?: string
   telefono_cliente?: string
