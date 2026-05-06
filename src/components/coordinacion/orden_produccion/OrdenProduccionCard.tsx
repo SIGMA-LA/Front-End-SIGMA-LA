@@ -145,7 +145,7 @@ export default function OrdenProduccionCard({
               Ver Detalles
             </button>
 
-            {(orden.estado === 'PENDIENTE' || orden.estado === 'RECHAZADA') && (
+            {orden.estado === 'PENDIENTE' && (
               <div className="flex gap-2">
                 <button
                   onClick={handleAprobar}
@@ -155,16 +155,14 @@ export default function OrdenProduccionCard({
                   <CheckCircle className="h-4 w-4" />
                   {isApproving ? 'Aprobando...' : 'Aprobar'}
                 </button>
-                
-                {orden.estado === 'PENDIENTE' && (
-                  <button
-                    onClick={handleRechazar}
-                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Rechazar
-                  </button>
-                )}
+
+                <button
+                  onClick={handleRechazar}
+                  className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Rechazar
+                </button>
               </div>
             )}
 

@@ -38,7 +38,7 @@ export default function OrdenesProduccionContent({
 
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState<string>(
-    searchParams.get('estado') || ESTADOS_ORDEN_PRODUCCION[0]
+    searchParams.get('estado') || ''
   )
   const [filtroCliente, setFiltroCliente] = useState<string>('')
 
@@ -68,6 +68,8 @@ export default function OrdenesProduccionContent({
     } else {
       params.delete('estado')
     }
+    // Reset page when filters change
+    params.delete('page')
     router.push(`?${params.toString()}`)
   }
 
