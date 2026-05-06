@@ -19,7 +19,7 @@ export const AREAS_TRABAJO = [
   'COMPRAS',
   'RECURSOS_HUMANOS',
   'FINANZAS',
-  'ADMINISTRACION',
+  'ADMINISTRADOR',
   'PLANTA',
 ] as const
 

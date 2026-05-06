@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { Cliente, PaginatedResponse } from '@/types'
@@ -137,6 +137,7 @@ export async function createCliente(
     revalidatePath('/admin/clientes')
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
+    revalidateTag('clientes')
 
     return { success: true, data }
   } catch (error) {
@@ -181,6 +182,10 @@ export async function updateCliente(
     revalidatePath('/admin/clientes')
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
+    revalidatePath(`/admin/clientes/${cuil}/editar`)
+    revalidatePath(`/ventas/clientes/${cuil}/editar`)
+    revalidateTag('clientes')
+    revalidateTag(`cliente-${cuil}`)
 
     return { success: true, data }
   } catch (error) {
@@ -213,6 +218,8 @@ export async function deleteCliente(
     revalidatePath('/admin/clientes')
     revalidatePath('/coordinacion/clientes')
     revalidatePath('/ventas/clientes')
+    revalidateTag('clientes')
+    revalidateTag(`cliente-${cuil}`)
 
     return { success: true }
   } catch (error) {
