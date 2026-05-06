@@ -2,6 +2,7 @@ import type { Empleado } from '@/types/auth'
 import type { Obra } from '@/types/obra'
 import type { UsoMaquinaria } from '@/types/maquinaria'
 import type { UsoVehiculoEntrega } from '@/types/vehiculo'
+import type { Visita } from '@/types/visita'
 import {
   ESTADOS_ENTREGA,
   ESTADOS_ORDEN_PRODUCCION,
@@ -50,5 +51,8 @@ export interface OrdenProduccion {
   fecha_validacion: string | null
   url: string
   public_id: string | null
-  obra: Obra & { visita?: import('./visita').Visita[] }
+  cod_visita: number | null
+  motivo_rechazo: string | null
+  visita: Visita | null
+  obra: Obra & { visita?: Visita[] }
 }

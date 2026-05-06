@@ -10,6 +10,7 @@ import { notify } from '@/lib/toast'
 import OrdenProduccionCard from './OrdenProduccionCard'
 import OrdenProduccionDetailsModal from './OrdenProduccionDetailsModal'
 import OPConfirmModal from './OPConfirmModal'
+import RechazarOPModal from './RechazarOPModal'
 
 interface OrdenesProduccionContentProps {
   ordenes: OrdenProduccion[]
@@ -29,11 +30,15 @@ export default function OrdenesProduccionContent({
   const [ordenToApprove, setOrdenToApprove] = useState<OrdenProduccion | null>(
     null
   )
+  const [ordenToReject, setOrdenToReject] = useState<OrdenProduccion | null>(
+    null
+  )
   const [isApproving, setIsApproving] = useState(false)
+  const [isRechazarModalOpen, setIsRechazarModalOpen] = useState(false)
 
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState<string>(
-    searchParams.get('estado') || ESTADOS_ORDEN_PRODUCCION[0]
+    searchParams.get('estado') || ''
   )
   const [filtroCliente, setFiltroCliente] = useState<string>('')
 
@@ -63,6 +68,8 @@ export default function OrdenesProduccionContent({
     } else {
       params.delete('estado')
     }
+    // Reset page when filters change
+    params.delete('page')
     router.push(`?${params.toString()}`)
   }
 
@@ -96,6 +103,11 @@ export default function OrdenesProduccionContent({
   const handleAprobar = (orden: OrdenProduccion) => {
     setOrdenToApprove(orden)
     setIsConfirmModalOpen(true)
+  }
+
+  const handleRechazar = (orden: OrdenProduccion) => {
+    setOrdenToReject(orden)
+    setIsRechazarModalOpen(true)
   }
 
   const handleVerDetalles = (orden: OrdenProduccion) => {
@@ -185,6 +197,7 @@ export default function OrdenesProduccionContent({
               orden={orden}
               onVerDetalles={handleVerDetalles}
               onAprobar={handleAprobar}
+              onRechazar={handleRechazar}
             />
           ))}
         </div>
@@ -208,6 +221,19 @@ export default function OrdenesProduccionContent({
         }}
         loading={isApproving}
       />
+
+      {/* Modal de Rechazo */}
+      {ordenToReject && (
+        <RechazarOPModal
+          isOpen={isRechazarModalOpen}
+          onClose={() => {
+            setIsRechazarModalOpen(false)
+            setOrdenToReject(null)
+            router.refresh()
+          }}
+          cod_op={ordenToReject.cod_op}
+        />
+      )}
     </>
   )
 }

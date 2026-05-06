@@ -10,12 +10,15 @@ import {
   User as UserIcon,
   Tag,
   Upload,
+  AlertCircle,
+  Info,
 } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 import { useState } from 'react'
 import { formatDateOnly } from '@/lib/utils'
+import MedicionesVisitaModal from '../coordinacion/orden_produccion/MedicionesVisitaModal'
 
 interface OrdenProduccionDetailsProps {
   orden: OrdenProduccion
@@ -30,6 +33,7 @@ const getEstadoBadge = (estado: OrdenProduccion['estado']) => {
     APROBADA: 'bg-blue-100 text-blue-800',
     'EN PRODUCCION': 'bg-yellow-100 text-yellow-800',
     FINALIZADA: 'bg-green-100 text-green-800',
+    RECHAZADA: 'bg-red-100 text-red-800',
   }
   return badges[estado] || 'bg-gray-100 text-gray-800'
 }
@@ -41,6 +45,7 @@ export default function OrdenProduccionDetails({
   onResubirOrden,
 }: OrdenProduccionDetailsProps) {
   const [pdfLoading, setPdfLoading] = useState(true)
+  const [isMedicionesModalOpen, setIsMedicionesModalOpen] = useState(false)
 
   const cliente = orden.obra?.cliente
   const nombreCliente =
@@ -63,6 +68,35 @@ export default function OrdenProduccionDetails({
   return (
     <Card className="mx-auto w-full max-w-7xl border-gray-200 bg-white shadow-lg lg:max-w-[95%]">
       <CardContent className="flex flex-col gap-6 p-6 lg:gap-8 lg:p-10">
+        {/* Banner de Rechazo */}
+        {orden.estado === 'RECHAZADA' && (
+          <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="rounded-xl bg-red-100 p-3 h-fit">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-red-900">Orden Rechazada por Coordinación</h3>
+                <p className="mt-1 text-red-800 font-medium leading-relaxed">
+                  Motivo: {orden.motivo_rechazo || 'No se especificó motivo.'}
+                </p>
+                <p className="mt-2 text-sm text-red-600 italic">
+                  Por favor, revise las mediciones de la visita y corrija el archivo PDF antes de resubirlo.
+                </p>
+              </div>
+              {orden.visita?.estado === 'COMPLETADA' && (
+                <Button
+                  onClick={() => setIsMedicionesModalOpen(true)}
+                  className="bg-white border-2 border-red-200 text-red-700 hover:bg-red-100 shadow-none px-6"
+                >
+                  <Info className="mr-2 h-5 w-5" />
+                  Ver Mediciones
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-start justify-between space-x-4 border-b pb-6">
           <div className="flex-1">
@@ -226,13 +260,17 @@ export default function OrdenProduccionDetails({
                       <span>Finalizar Producción</span>
                     </Button>
                   )}
-                  {onResubirOrden && orden.estado === 'PENDIENTE' && (
+                  {(onResubirOrden && (orden.estado === 'PENDIENTE' || orden.estado === 'RECHAZADA')) && (
                     <Button
                       onClick={onResubirOrden}
-                      className="w-full cursor-pointer bg-purple-500 py-4 text-base text-white transition-colors hover:bg-purple-600 lg:py-5 lg:text-lg"
+                      className={`w-full cursor-pointer py-4 text-base text-white transition-colors lg:py-5 lg:text-lg ${
+                        orden.estado === 'RECHAZADA' 
+                          ? 'bg-red-600 hover:bg-red-700 shadow-red-100' 
+                          : 'bg-purple-500 hover:bg-purple-600'
+                      }`}
                     >
                       <Upload className="mr-2 h-5 w-5 lg:h-6 lg:w-6" />
-                      <span>Resubir OP</span>
+                      <span>{orden.estado === 'RECHAZADA' ? 'Corregir y Resubir OP' : 'Resubir OP'}</span>
                     </Button>
                   )}
                 </div>
@@ -240,6 +278,14 @@ export default function OrdenProduccionDetails({
             )}
           </div>
         </div>
+        
+        {orden.visita && (
+          <MedicionesVisitaModal
+            isOpen={isMedicionesModalOpen}
+            onClose={() => setIsMedicionesModalOpen(false)}
+            visita={orden.visita}
+          />
+        )}
       </CardContent>
     </Card>
   )

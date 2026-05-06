@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import Link from 'next/link'
 import type { OrdenProduccion } from '@/types'
-import { MapPin, Package, Calendar, Eye, CheckCircle } from 'lucide-react'
+import { MapPin, Package, Calendar, Eye, CheckCircle, CalendarPlus, XCircle } from 'lucide-react'
 
 interface OrdenProduccionCardProps {
   orden: OrdenProduccion
   onVerDetalles: (orden: OrdenProduccion) => void
   onAprobar: (orden: OrdenProduccion) => void
+  onRechazar: (orden: OrdenProduccion) => void
 }
 
 const formatDate = (dateString: string) =>
@@ -25,6 +27,8 @@ const getEstadoBadgeColor = (estado: string) => {
       return 'bg-green-500'
     case 'FINALIZADA':
       return 'bg-gray-500'
+    case 'RECHAZADA':
+      return 'bg-red-500'
     default:
       return 'bg-gray-400'
   }
@@ -34,6 +38,7 @@ export default function OrdenProduccionCard({
   orden,
   onVerDetalles,
   onAprobar,
+  onRechazar,
 }: OrdenProduccionCardProps) {
   const [isApproving, setIsApproving] = useState(false)
   const cliente = orden.obra?.cliente
@@ -50,6 +55,11 @@ export default function OrdenProduccionCard({
     } finally {
       setIsApproving(false)
     }
+  }
+
+  const handleRechazar = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onRechazar(orden)
   }
 
   const handleVerDetalles = (e: React.MouseEvent) => {
@@ -107,12 +117,13 @@ export default function OrdenProduccionCard({
 
           {/* Estado de Visitas */}
           <div className="pt-1">
-            {orden.obra?.visita?.some((v) => v.estado === 'COMPLETADA') ? (
+            {orden.visita?.estado === 'COMPLETADA' ? (
               <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
                 Visita completada
               </span>
-            ) : orden.obra?.visita?.some(
-                (v) => v.estado === 'PROGRAMADA' || v.estado === 'EN CURSO'
+            ) : orden.visita &&
+              ['PROGRAMADA', 'EN CURSO', 'REPROGRAMADA'].includes(
+                orden.visita.estado || ''
               ) ? (
               <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
                 Visita pendiente
@@ -135,14 +146,34 @@ export default function OrdenProduccionCard({
             </button>
 
             {orden.estado === 'PENDIENTE' && (
-              <button
-                onClick={handleAprobar}
-                disabled={isApproving}
-                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAprobar}
+                  disabled={isApproving}
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {isApproving ? 'Aprobando...' : 'Aprobar'}
+                </button>
+
+                <button
+                  onClick={handleRechazar}
+                  className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Rechazar
+                </button>
+              </div>
+            )}
+
+            {!orden.cod_visita && (
+              <Link
+                href={`/coordinacion/visitas/crear?cod_obra=${orden.cod_obra}&cod_op=${orden.cod_op}`}
+                className="flex items-center gap-2 rounded-lg border border-indigo-600 bg-white px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50"
               >
-                <CheckCircle className="h-4 w-4" />
-                {isApproving ? 'Aprobando...' : 'Aprobar'}
-              </button>
+                <CalendarPlus className="h-4 w-4" />
+                Agendar Visita
+              </Link>
             )}
           </div>
         </div>

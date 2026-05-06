@@ -2,6 +2,7 @@ import type { Empleado } from '@/types/auth'
 import type { Obra } from '@/types/obra'
 import type { Localidad } from '@/types/geo'
 import type { UsoVehiculoVisita } from '@/types/vehiculo'
+import type { OrdenProduccion } from '@/types/entrega'
 import { ESTADOS_VISITA, MOTIVOS_VISITA } from '@/constants'
 
 export type MotivoVisita = (typeof MOTIVOS_VISITA)[number]
@@ -32,6 +33,7 @@ export interface Visita {
   telefono_cliente?: string
   mail_cliente?: string
   localidad?: Localidad
+  ordenes_de_produccion?: OrdenProduccion[]
 }
 
 export type VisitaFormData = {
@@ -51,4 +53,5 @@ export type VisitaFormData = {
   nombre_cliente?: string | null
   apellido_cliente?: string | null
   telefono_cliente?: string | null
+  cod_ops?: number[]
 }

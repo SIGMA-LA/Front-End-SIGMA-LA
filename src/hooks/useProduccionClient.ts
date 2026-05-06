@@ -23,7 +23,7 @@ import { notify } from '@/lib/toast'
 
 export type MainTab = 'notas' | 'ordenes'
 export type NotasTab = EstadoNotaFabricaProduccion
-export type OrdenesTab = EstadoOrdenProduccion
+export type OrdenesTab = EstadoOrdenProduccion | 'TODOS'
 
 interface ProduccionFilters {
   fechaDesde: string
@@ -71,7 +71,7 @@ export default function useProduccionClient(
   const [activeTab, setActiveTab] = useState<MainTab>('notas')
   const [activeNotasTab, setActiveNotasTab] = useState<NotasTab>('SIN_ORDEN')
   const [activeOrdenesTab, setActiveOrdenesTab] =
-    useState<OrdenesTab>('PENDIENTE')
+    useState<OrdenesTab>('TODOS')
 
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -113,7 +113,7 @@ export default function useProduccionClient(
     [activeNotasTab, notasFilters]
   )
   const activeOrdenesKey = useMemo(
-    () => buildCacheKey(activeOrdenesTab, ordenesFilters),
+    () => buildCacheKey(activeOrdenesTab || 'TODOS', ordenesFilters),
     [activeOrdenesTab, ordenesFilters]
   )
 
@@ -159,6 +159,8 @@ export default function useProduccionClient(
     ordenesCache[buildCacheKey('APROBADA', EMPTY_FILTERS)]?.length ?? 0
   const ordenesEnProduccionCount =
     ordenesCache[buildCacheKey('EN PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
+  const ordenesRechazadasCount =
+    ordenesCache[buildCacheKey('RECHAZADA', EMPTY_FILTERS)]?.length ?? 0
 
   // Data Fetching: Notas
   useEffect(() => {
@@ -198,12 +200,13 @@ export default function useProduccionClient(
       setLoadingOrdenes(true)
       setErrorOrdenes(null)
       try {
-        const ordenes = await getOrdenesProduccionPorEstadoYFechas({
-          estado: activeOrdenesTab,
+        const response = await getOrdenesProduccionPorEstadoYFechas({
+          estado: activeOrdenesTab === 'TODOS' ? undefined : activeOrdenesTab,
           ...getRequestFilters(ordenesFilters),
+          pageSize: 1000, // Fetch many for the internal cache/counts
         })
         if (!cancelled) {
-          setOrdenesCache((prev) => ({ ...prev, [activeOrdenesKey]: ordenes }))
+          setOrdenesCache((prev) => ({ ...prev, [activeOrdenesKey]: response.data }))
         }
       } catch {
         if (!cancelled)
@@ -382,6 +385,7 @@ export default function useProduccionClient(
     ordenesPendientesCount,
     ordenesAprobadasCount,
     ordenesEnProduccionCount,
+    ordenesRechazadasCount,
     selectedOrdenSummary,
     handleTabChange,
     handleNotasTabChange,

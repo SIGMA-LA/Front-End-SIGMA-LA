@@ -279,6 +279,7 @@ export async function createVisitaFromForm(formData: FormData): Promise<ActionRe
       nombre_cliente: (formData.get('nombre') as string) || null,
       apellido_cliente: (formData.get('apellido') as string) || null,
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
+      cod_ops: formData.get('cod_ops') ? JSON.parse(formData.get('cod_ops') as string) : undefined,
     }
 
     return await createVisita(visitaData)
@@ -318,6 +319,7 @@ export async function updateVisitaFromForm(formData: FormData): Promise<ActionRe
       nombre_cliente: (formData.get('nombre') as string) || null,
       apellido_cliente: (formData.get('apellido') as string) || null,
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
+      cod_ops: formData.get('cod_ops') ? JSON.parse(formData.get('cod_ops') as string) : undefined,
     }
     return await updateVisita(codVisita, visitaData)
   } catch (error) {

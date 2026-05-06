@@ -11,9 +11,12 @@ import {
   Building2,
   Eye,
   ExternalLink,
+  Info,
 } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import PDFViewerModal from './PDFViewerModal'
+import MedicionesVisitaModal from './MedicionesVisitaModal'
+import { AlertCircle } from 'lucide-react'
 
 interface OrdenProduccionDetailsModalProps {
   isOpen: boolean
@@ -60,6 +63,13 @@ const getEstadoInfo = (estado: string) => {
         borderColor: 'border-gray-200',
         badgeColor: 'bg-gray-500',
       }
+    case 'RECHAZADA':
+      return {
+        bgColor: 'bg-red-50',
+        textColor: 'text-red-700',
+        borderColor: 'border-red-200',
+        badgeColor: 'bg-red-500',
+      }
     default:
       return {
         bgColor: 'bg-gray-50',
@@ -76,6 +86,7 @@ export default function OrdenProduccionDetailsModal({
   onClose,
 }: OrdenProduccionDetailsModalProps) {
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false)
+  const [isMedicionesModalOpen, setIsMedicionesModalOpen] = useState(false)
 
   if (!isOpen || !orden) return null
 
@@ -126,6 +137,23 @@ export default function OrdenProduccionDetailsModal({
         {/* Content */}
         <div className="p-6">
           <div className="space-y-6">
+            {/* Alerta de Rechazo */}
+            {orden.estado === 'RECHAZADA' && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm ring-1 ring-red-100">
+                <div className="flex gap-3">
+                  <div className="rounded-lg bg-red-100 p-2 h-fit">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-red-900">Orden Rechazada</h4>
+                    <p className="mt-1 text-sm text-red-800 leading-relaxed">
+                      {orden.motivo_rechazo || 'No se proporcionó un motivo específico.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Estado */}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -204,6 +232,45 @@ export default function OrdenProduccionDetailsModal({
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Visita Vinculada */}
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Calendar className="h-4 w-4" />
+                Visita de Medición
+              </label>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                {orden.visita ? (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${orden.visita.estado === 'COMPLETADA' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                        <p className="text-sm font-medium text-gray-900">
+                          Visita #{orden.visita.cod_visita} - {orden.visita.estado}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {formatDate(orden.visita.fecha_hora_visita)}
+                      </p>
+                    </div>
+                    {orden.visita.estado === 'COMPLETADA' && (
+                      <button
+                        onClick={() => setIsMedicionesModalOpen(true)}
+                        className="flex items-center justify-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
+                      >
+                        <Info className="h-4 w-4" />
+                        Ver Mediciones
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <Info className="h-4 w-4" />
+                    <p className="text-sm">No hay una visita vinculada a esta orden.</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -300,6 +367,15 @@ export default function OrdenProduccionDetailsModal({
           onClose={() => setIsPDFModalOpen(false)}
           pdfUrl={orden.url}
           title={`Orden de Producción #${orden.cod_op}`}
+        />
+      )}
+
+      {/* Modal de Mediciones */}
+      {orden.visita && (
+        <MedicionesVisitaModal
+          isOpen={isMedicionesModalOpen}
+          onClose={() => setIsMedicionesModalOpen(false)}
+          visita={orden.visita}
         />
       )}
     </div>

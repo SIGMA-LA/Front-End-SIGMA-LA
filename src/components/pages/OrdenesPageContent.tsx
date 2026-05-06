@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { ClipboardList } from 'lucide-react'
 import { getOrdenesProduccion } from '@/actions/ordenes'
 import OrdenesProduccionContent from '@/components/coordinacion/orden_produccion/OrdenesProduccionContent'
+import PaginationControls from '@/components/shared/PaginationControls'
 import type { EstadoOrdenProduccion } from '@/types'
 
 function OrdenesListSkeleton() {
@@ -33,11 +34,19 @@ function OrdenesListSkeleton() {
   )
 }
 
-async function OrdenesGrid({ estado }: { estado?: string }) {
+async function OrdenesGrid({
+  estado,
+  page,
+  pageSize
+}: {
+  estado?: string,
+  page: number,
+  pageSize: number
+}) {
   // Ajustamos el estado para que coincida con lo que espera la acción
   const estadoFilter = estado as EstadoOrdenProduccion | undefined
 
-  const result = await getOrdenesProduccion({ estado: estadoFilter })
+  const result = await getOrdenesProduccion({ estado: estadoFilter }, page, pageSize)
 
   if (!result.success) {
     return (
@@ -49,15 +58,33 @@ async function OrdenesGrid({ estado }: { estado?: string }) {
     )
   }
 
-  return <OrdenesProduccionContent ordenes={result.data || []} />
+  const paginatedResult = result.data
+
+  return (
+    <>
+      <OrdenesProduccionContent ordenes={paginatedResult?.data || []} />
+      <div className="mt-8">
+        <PaginationControls
+          page={paginatedResult?.page || 1}
+          totalPages={paginatedResult?.totalPages || 1}
+          total={paginatedResult?.total || 0}
+          pageSize={paginatedResult?.pageSize || 25}
+        />
+      </div>
+    </>
+  )
 }
 
 interface OrdenesPageContentProps {
   estadoInitial?: string
+  page?: number
+  pageSize?: number
 }
 
 export default async function OrdenesPageContent({
-  estadoInitial = 'PENDIENTE',
+  estadoInitial = '',
+  page = 1,
+  pageSize = 10,
 }: OrdenesPageContentProps) {
   // El filtro 'estadoInitial' lo usa el componente cliente para su estado por defecto
   // y nosotros para la búsqueda inicial en el servidor.
@@ -83,8 +110,15 @@ export default async function OrdenesPageContent({
         </div>
 
         {/* Listado con Suspense */}
-        <Suspense key={estadoInitial} fallback={<OrdenesListSkeleton />}>
-          <OrdenesGrid estado={estadoInitial} />
+        <Suspense
+          key={`${estadoInitial}-${page}`}
+          fallback={<OrdenesListSkeleton />}
+        >
+          <OrdenesGrid
+            estado={estadoInitial}
+            page={page}
+            pageSize={pageSize}
+          />
         </Suspense>
       </div>
     </div>

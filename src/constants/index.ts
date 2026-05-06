@@ -50,6 +50,7 @@ export const ESTADOS_ORDEN_PRODUCCION = [
   'APROBADA',
   'EN PRODUCCION',
   'FINALIZADA',
+  'RECHAZADA',
 ] as const
 
 export const MOTIVOS_VISITA = [

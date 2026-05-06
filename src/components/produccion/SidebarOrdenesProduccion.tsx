@@ -4,7 +4,7 @@ import { Calendar, Filter } from 'lucide-react'
 import type { OrdenProduccion, EstadoOrdenProduccion } from '@/types'
 import OrdenProduccionCard from './OrdenProduccionCard'
 
-type TabType = EstadoOrdenProduccion
+type TabType = EstadoOrdenProduccion | 'TODOS'
 
 interface SidebarOrdenesFilters {
   fechaDesde: string
@@ -133,8 +133,18 @@ export default function SidebarOrdenesProduccion({
       <div className="border-b border-gray-50 bg-white px-4 py-3">
         <div className="flex rounded-xl bg-gray-100/80 p-1">
           <button
+            onClick={() => onStatusChange('TODOS')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[9px] font-bold transition-all ${
+              statusFilter === 'TODOS'
+                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            TODOS
+          </button>
+          <button
             onClick={() => onStatusChange('PENDIENTE')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[9px] font-bold transition-all ${
               statusFilter === 'PENDIENTE'
                 ? 'bg-white text-amber-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
@@ -143,8 +153,18 @@ export default function SidebarOrdenesProduccion({
             PENDIENTES
           </button>
           <button
+            onClick={() => onStatusChange('RECHAZADA')}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[9px] font-bold transition-all ${
+              statusFilter === 'RECHAZADA'
+                ? 'bg-white text-red-600 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            RECHAZADAS
+          </button>
+          <button
             onClick={() => onStatusChange('APROBADA')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[9px] font-bold transition-all ${
               statusFilter === 'APROBADA'
                 ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
@@ -154,7 +174,7 @@ export default function SidebarOrdenesProduccion({
           </button>
           <button
             onClick={() => onStatusChange('EN PRODUCCION')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[9px] font-bold transition-all ${
               statusFilter === 'EN PRODUCCION'
                 ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'
@@ -164,7 +184,7 @@ export default function SidebarOrdenesProduccion({
           </button>
           <button
             onClick={() => onStatusChange('FINALIZADA')}
-            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[10px] font-bold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[9px] font-bold transition-all ${
               statusFilter === 'FINALIZADA'
                 ? 'bg-white text-green-600 shadow-sm ring-1 ring-gray-200'
                 : 'text-gray-500 hover:text-gray-700'

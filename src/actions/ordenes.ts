@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { EstadoOrdenProduccion, OrdenProduccion } from '@/types'
+import type { EstadoOrdenProduccion, OrdenProduccion, PaginatedResponse } from '@/types'
 import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
@@ -45,21 +45,23 @@ export async function getOrdenProduccion(
 /**
  * Retrieves ordenes de produccion with optional estado/date filters.
  * Accepts either a plain estado string or a filters object.
- * @returns {Promise<{success: boolean, data: OrdenProduccion[], error?: string}>} Operation result with ordenes list
+ * @returns {Promise<ActionResponse<PaginatedResponse<OrdenProduccion>>>} Operation result with paginated ordenes list
  */
 export async function getOrdenesProduccion(
   filtersOrEstado?:
     | EstadoOrdenProduccion
-    | OrdenesProduccionBusquedaAvanzadaFilters
-): Promise<ActionResponse<OrdenProduccion[]>> {
+    | OrdenesProduccionBusquedaAvanzadaFilters,
+  page: number = 1,
+  pageSize: number = 25
+): Promise<ActionResponse<PaginatedResponse<OrdenProduccion>>> {
   try {
     const filters =
       typeof filtersOrEstado === 'string' ||
-      typeof filtersOrEstado === 'undefined'
+        typeof filtersOrEstado === 'undefined'
         ? { estado: filtersOrEstado }
         : filtersOrEstado
 
-    const data = await getOrdenesProduccionBusquedaAvanzada(filters)
+    const data = await getOrdenesProduccionBusquedaAvanzada(filters, page, pageSize)
     return { success: true, data }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
@@ -67,7 +69,7 @@ export async function getOrdenesProduccion(
     return {
       success: false,
       error: message,
-      data: [],
+      data: { data: [], total: 0, totalPages: 0, page, pageSize },
     }
   }
 }
@@ -79,6 +81,7 @@ export interface OrdenesProduccionEstadoFechasFilters {
   estado?: EstadoOrdenProduccion
   fechaDesde?: string
   fechaHasta?: string
+  cod_obra?: number
 }
 
 export type OrdenesProduccionBusquedaAvanzadaFilters =
@@ -87,16 +90,21 @@ export type OrdenesProduccionBusquedaAvanzadaFilters =
 async function fetchOrdenesConFiltros(
   filters: OrdenesProduccionBusquedaAvanzadaFilters,
   revalidate: number,
-  tags: string[]
-): Promise<OrdenProduccion[]> {
+  tags: string[],
+  page: number = 1,
+  pageSize: number = 25
+): Promise<PaginatedResponse<OrdenProduccion>> {
   const params = new URLSearchParams()
   if (filters.estado) params.set('estado', filters.estado)
   if (filters.fechaDesde) params.set('fechaDesde', filters.fechaDesde)
   if (filters.fechaHasta) params.set('fechaHasta', filters.fechaHasta)
+  if (filters.cod_obra) params.set('cod_obra', String(filters.cod_obra))
+  params.set('page', String(page))
+  params.set('pageSize', String(pageSize))
 
-  const url = `${BASE_URL}${params.toString() ? `?${params.toString()}` : ''}`
+  const url = `${BASE_URL}?${params.toString()}`
   const token = await getAccessToken()
-  const response = await fetchWithErrorHandling<OrdenProduccion[]>(url, {
+  const response = await fetchWithErrorHandling<PaginatedResponse<OrdenProduccion>>(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -106,7 +114,11 @@ async function fetchOrdenesConFiltros(
   })
 
   const data = await response.json()
-  return Array.isArray(data) ? data : []
+  if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    return data as PaginatedResponse<OrdenProduccion>
+  }
+
+  return { data: [], total: 0, totalPages: 0, page, pageSize }
 }
 
 /**
@@ -116,43 +128,39 @@ export async function getOrdenesProduccionPorEstadoYFechas({
   estado,
   fechaDesde,
   fechaHasta,
-}: OrdenesProduccionEstadoFechasFilters): Promise<OrdenProduccion[]> {
+  page = 1,
+  pageSize = 25,
+}: OrdenesProduccionEstadoFechasFilters & { page?: number, pageSize?: number }): Promise<PaginatedResponse<OrdenProduccion>> {
   try {
     const estadoTag = estado ? estado.replace(/\s+/g, '-').toLowerCase() : 'all'
 
     return await fetchOrdenesConFiltros({ estado, fechaDesde, fechaHasta }, 0, [
       'ordenes-produccion',
       `ordenes-produccion-${estadoTag}`,
-    ])
+    ], page, pageSize)
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not found') {
-      return []
-    }
     console.error('[getOrdenesProduccionPorEstadoYFechas]', error)
-    return []
+    return { data: [], total: 0, totalPages: 0, page, pageSize }
   }
 }
 
-/**
- * Retrieves ordenes for Coordinacion by estado and optional date filters.
- */
 export async function getOrdenesProduccionBusquedaAvanzada({
   estado,
   fechaDesde,
   fechaHasta,
-}: OrdenesProduccionBusquedaAvanzadaFilters): Promise<OrdenProduccion[]> {
+  cod_obra,
+}: OrdenesProduccionBusquedaAvanzadaFilters, page: number = 1, pageSize: number = 25): Promise<PaginatedResponse<OrdenProduccion>> {
   try {
     return await fetchOrdenesConFiltros(
-      { estado, fechaDesde, fechaHasta },
+      { estado, fechaDesde, fechaHasta, cod_obra },
       30,
-      ['ordenes-produccion']
+      ['ordenes-produccion'],
+      page,
+      pageSize
     )
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not found') {
-      return []
-    }
     console.error('[getOrdenesProduccionBusquedaAvanzada]', error)
-    return []
+    return { data: [], total: 0, totalPages: 0, page, pageSize }
   }
 }
 
@@ -163,11 +171,15 @@ export async function getOrdenesProduccionFiltradas({
   estado,
   fechaDesde,
   fechaHasta,
-}: OrdenesProduccionEstadoFechasFilters): Promise<OrdenProduccion[]> {
+  page = 1,
+  pageSize = 25,
+}: OrdenesProduccionEstadoFechasFilters & { page?: number, pageSize?: number }): Promise<PaginatedResponse<OrdenProduccion>> {
   return getOrdenesProduccionPorEstadoYFechas({
     estado,
     fechaDesde,
     fechaHasta,
+    page,
+    pageSize,
   })
 }
 
@@ -432,6 +444,43 @@ export async function updateOrdenProduccion(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido'
     console.error('[updateOrdenProduccion]', message)
+    return { success: false, error: message }
+  }
+}
+
+/**
+ * Rejects a production order with a reason
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @param {string} motivo - Reason for rejection
+ * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result
+ */
+export async function rejectOrdenProduccion(
+  cod_op: number,
+  motivo: string
+): Promise<ActionResponse<OrdenProduccion>> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/${cod_op}/rechazar`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ motivo }),
+      }
+    )
+
+    const data = await response.json()
+    revalidateTag('ordenes-produccion')
+    revalidatePath('/coordinacion/ordenes-produccion')
+    revalidatePath('/produccion')
+
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[rejectOrdenProduccion]', message)
     return { success: false, error: message }
   }
 }

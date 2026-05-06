@@ -32,6 +32,11 @@ export default function OPConfirmModal({
     }
   }
 
+  const visitCompletada = orden.visita?.estado === 'COMPLETADA'
+  const hasVisitasObra = orden.obra?.visita?.some((v) => v.estado === 'COMPLETADA')
+  
+  const showWarning = !visitCompletada
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl bg-white shadow-2xl">
@@ -69,7 +74,7 @@ export default function OPConfirmModal({
             </div>
           </div>
 
-          {!orden.obra?.visita?.some((v) => v.estado === 'COMPLETADA') && (
+          {showWarning && (
             <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4">
               <AlertCircle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
               <div>
@@ -77,9 +82,10 @@ export default function OPConfirmModal({
                   Falta visita de medición
                 </p>
                 <p className="mt-1 text-sm text-yellow-800">
-                  Esta obra no tiene ninguna visita de medición completada.
-                  Si aprueba la orden sin medidas verificadas, Producción
-                  podría fabricar basándose solo en el presupuesto inicial.
+                  {hasVisitasObra 
+                    ? 'Esta orden no tiene vinculada la visita de medición completada. Se recomienda vincularla para asegurar la precisión de la producción.'
+                    : 'Esta obra no tiene ninguna visita de medición completada. Producción podría fabricar basándose solo en el presupuesto inicial.'
+                  }
                 </p>
               </div>
             </div>
