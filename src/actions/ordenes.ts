@@ -79,6 +79,7 @@ export interface OrdenesProduccionEstadoFechasFilters {
   estado?: EstadoOrdenProduccion
   fechaDesde?: string
   fechaHasta?: string
+  cod_obra?: number
 }
 
 export type OrdenesProduccionBusquedaAvanzadaFilters =
@@ -93,6 +94,7 @@ async function fetchOrdenesConFiltros(
   if (filters.estado) params.set('estado', filters.estado)
   if (filters.fechaDesde) params.set('fechaDesde', filters.fechaDesde)
   if (filters.fechaHasta) params.set('fechaHasta', filters.fechaHasta)
+  if (filters.cod_obra) params.set('cod_obra', String(filters.cod_obra))
 
   const url = `${BASE_URL}${params.toString() ? `?${params.toString()}` : ''}`
   const token = await getAccessToken()
@@ -133,17 +135,15 @@ export async function getOrdenesProduccionPorEstadoYFechas({
   }
 }
 
-/**
- * Retrieves ordenes for Coordinacion by estado and optional date filters.
- */
 export async function getOrdenesProduccionBusquedaAvanzada({
   estado,
   fechaDesde,
   fechaHasta,
+  cod_obra,
 }: OrdenesProduccionBusquedaAvanzadaFilters): Promise<OrdenProduccion[]> {
   try {
     return await fetchOrdenesConFiltros(
-      { estado, fechaDesde, fechaHasta },
+      { estado, fechaDesde, fechaHasta, cod_obra },
       30,
       ['ordenes-produccion']
     )

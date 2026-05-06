@@ -255,6 +255,51 @@ export default function VisitaDetails({
                 </div>
               )}
 
+              {/* Órdenes de Producción Vinculadas (Documentos Relacionados) */}
+              {visita.ordenes_de_produccion && visita.ordenes_de_produccion.length > 0 && (
+                <div className="space-y-3">
+                  <h5 className="px-1 text-sm font-semibold text-gray-600">
+                    Órdenes a Validar
+                  </h5>
+                  <div className="grid gap-3">
+                    {visita.ordenes_de_produccion.map((op) => (
+                      <div
+                        key={op.cod_op}
+                        className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                              <FileText className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-indigo-900 uppercase">
+                                Orden #{op.cod_op}
+                              </h4>
+                              <p className="text-xs font-medium text-indigo-700/80">
+                                {op.estado}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={() =>
+                              handleVerDocumento(
+                                op.url,
+                                `Orden de Producción #${op.cod_op}`
+                              )
+                            }
+                            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700"
+                          >
+                            Ver Orden
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Órdenes de Producción */}
               {visita.obra && (
                 <div className="flex flex-1 flex-col">
