@@ -25,11 +25,9 @@ export interface Obra {
   cod_obra: number
   cod_localidad: number
   cuil_cliente: string
-  cuil_arquitecto?: string
   estado: EstadoObra
   direccion: string
   cliente: Cliente
-  arquitecto?: Cliente | null
   nota_fabrica?: string
   nota_fabrica_pid?: string
   fecha_ini: string
@@ -44,34 +42,29 @@ export interface Obra {
   pago?: Pago[]
   pedido_stock?: PedidoStock | null
   esGrande?: boolean
-  mediciones?: string | null
 }
 
 export interface CreateObraInput {
   direccion: string
   cuil_cliente: string
-  cuil_arquitecto?: string | null
   cod_localidad: number
   fecha_ini: string
   estado?: EstadoObra
   nota_fabrica?: string
   esGrande?: boolean
   requiere_visita?: boolean
-  mediciones?: string | null
   cod_visita?: number
 }
 
 export interface UpdateObraInput {
   direccion?: string
   cuil_cliente?: string
-  cuil_arquitecto?: string | null
   cod_localidad?: number
   fecha_ini?: string
   estado?: EstadoObra
   nota_fabrica?: string
   esGrande?: boolean
   requiere_visita?: boolean
-  mediciones?: string | null
 }
 
 export interface PresupuestoInput {
