@@ -1,9 +1,10 @@
 import { Suspense } from 'react'
 import { ClipboardList } from 'lucide-react'
 import { getOrdenesProduccion } from '@/actions/ordenes'
+import { getClientes } from '@/actions/clientes'
 import OrdenesProduccionContent from '@/components/coordinacion/orden_produccion/OrdenesProduccionContent'
 import PaginationControls from '@/components/shared/PaginationControls'
-import type { EstadoOrdenProduccion } from '@/types'
+import type { EstadoOrdenProduccion, Cliente } from '@/types'
 
 function OrdenesListSkeleton() {
   return (
@@ -36,17 +37,25 @@ function OrdenesListSkeleton() {
 
 async function OrdenesGrid({
   estado,
+  cliente,
   page,
-  pageSize
+  pageSize,
+  allClientes,
 }: {
-  estado?: string,
-  page: number,
+  estado?: string
+  cliente?: string
+  page: number
   pageSize: number
+  allClientes: Cliente[]
 }) {
   // Ajustamos el estado para que coincida con lo que espera la acción
   const estadoFilter = estado as EstadoOrdenProduccion | undefined
 
-  const result = await getOrdenesProduccion({ estado: estadoFilter }, page, pageSize)
+  const result = await getOrdenesProduccion(
+    { estado: estadoFilter, cuil_cliente: cliente },
+    page,
+    pageSize
+  )
 
   if (!result.success) {
     return (
@@ -62,7 +71,10 @@ async function OrdenesGrid({
 
   return (
     <>
-      <OrdenesProduccionContent ordenes={paginatedResult?.data || []} />
+      <OrdenesProduccionContent
+        ordenes={paginatedResult?.data || []}
+        clientes={allClientes}
+      />
       <div className="mt-8">
         <PaginationControls
           page={paginatedResult?.page || 1}
@@ -77,17 +89,21 @@ async function OrdenesGrid({
 
 interface OrdenesPageContentProps {
   estadoInitial?: string
+  clienteInitial?: string
   page?: number
   pageSize?: number
 }
 
 export default async function OrdenesPageContent({
   estadoInitial = '',
+  clienteInitial = '',
   page = 1,
   pageSize = 10,
 }: OrdenesPageContentProps) {
   // El filtro 'estadoInitial' lo usa el componente cliente para su estado por defecto
   // y nosotros para la búsqueda inicial en el servidor.
+  const clientesResult = await getClientes('', 1, 1000)
+  const allClientes = clientesResult.data || []
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -111,13 +127,15 @@ export default async function OrdenesPageContent({
 
         {/* Listado con Suspense */}
         <Suspense
-          key={`${estadoInitial}-${page}`}
+          key={`${estadoInitial}-${clienteInitial}-${page}`}
           fallback={<OrdenesListSkeleton />}
         >
           <OrdenesGrid
             estado={estadoInitial}
+            cliente={clienteInitial}
             page={page}
             pageSize={pageSize}
+            allClientes={allClientes}
           />
         </Suspense>
       </div>

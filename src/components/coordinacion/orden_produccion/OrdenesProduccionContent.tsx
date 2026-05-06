@@ -14,10 +14,12 @@ import RechazarOPModal from './RechazarOPModal'
 
 interface OrdenesProduccionContentProps {
   ordenes: OrdenProduccion[]
+  clientes: Cliente[]
 }
 
 export default function OrdenesProduccionContent({
   ordenes,
+  clientes,
 }: OrdenesProduccionContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -36,42 +38,22 @@ export default function OrdenesProduccionContent({
   const [isApproving, setIsApproving] = useState(false)
   const [isRechazarModalOpen, setIsRechazarModalOpen] = useState(false)
 
-  // Filtros
-  const [filtroEstado, setFiltroEstado] = useState<string>(
-    searchParams.get('estado') || ''
-  )
-  const [filtroCliente, setFiltroCliente] = useState<string>('')
+  // Filtros desde URL
+  const filtroEstado = searchParams.get('estado') || ''
+  const filtroCliente = searchParams.get('cliente') || ''
 
-  // Extraer clientes únicos
-  const clientes = useMemo(() => {
-    const clientesUnicos = new Map<string, Cliente>()
-    ordenes.forEach((orden) => {
-      if (orden.obra?.cliente) {
-        clientesUnicos.set(orden.obra.cliente.cuil, orden.obra.cliente)
-      }
-    })
-    return Array.from(clientesUnicos.values())
-  }, [ordenes])
-
-  // Filtrar órdenes por cliente
-  const ordenesFiltradas = useMemo(() => {
-    return filtroCliente
-      ? ordenes.filter((orden) => orden.obra?.cliente?.cuil === filtroCliente)
-      : ordenes
-  }, [ordenes, filtroCliente])
-
-  const handleEstadoChange = (nuevoEstado: string) => {
-    setFiltroEstado(nuevoEstado)
+  const handleFilterChange = (key: 'estado' | 'cliente', value: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (nuevoEstado) {
-      params.set('estado', nuevoEstado)
+    if (value) {
+      params.set(key, value)
     } else {
-      params.delete('estado')
+      params.delete(key)
     }
     // Reset page when filters change
     params.delete('page')
     router.push(`?${params.toString()}`)
   }
+
 
   const handleConfirmAprobar = async () => {
     if (!ordenToApprove) return
@@ -140,7 +122,7 @@ export default function OrdenesProduccionContent({
             <select
               id="filtro-estado"
               value={filtroEstado}
-              onChange={(e) => handleEstadoChange(e.target.value)}
+              onChange={(e) => handleFilterChange('estado', e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="">Todos los estados</option>
@@ -163,7 +145,7 @@ export default function OrdenesProduccionContent({
             <select
               id="filtro-cliente"
               value={filtroCliente}
-              onChange={(e) => setFiltroCliente(e.target.value)}
+              onChange={(e) => handleFilterChange('cliente', e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               <option value="">Todos los clientes</option>
@@ -180,7 +162,7 @@ export default function OrdenesProduccionContent({
       </div>
 
       {/* Lista de Órdenes */}
-      {ordenesFiltradas.length === 0 ? (
+      {ordenes.length === 0 ? (
         <div className="py-12 text-center">
           <Package className="mx-auto h-12 w-12 text-gray-400" />
           <p className="mt-4 text-gray-600">
@@ -191,7 +173,7 @@ export default function OrdenesProduccionContent({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {ordenesFiltradas.map((orden) => (
+          {ordenes.map((orden) => (
             <OrdenProduccionCard
               key={orden.cod_op}
               orden={orden}

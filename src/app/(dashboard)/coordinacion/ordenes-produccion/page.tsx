@@ -18,6 +18,7 @@ export default async function CoordinacionOrdenesPage({
   return (
     <OrdenesPageContent
       estadoInitial={typeof sp.estado === 'string' ? sp.estado : sp.estado?.[0]}
+      clienteInitial={typeof sp.cliente === 'string' ? sp.cliente : sp.cliente?.[0]}
       page={Number(sp.page) || 1}
     />
   )
