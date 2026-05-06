@@ -19,6 +19,7 @@ export default function SolicitarMedicionModal({ provincias }: SolicitarMedicion
   
   const [formData, setFormData] = useState({
     nombre: '',
+    apellido: '',
     telefono: '',
     direccion: '',
     cod_localidad: 0,
@@ -47,7 +48,7 @@ export default function SolicitarMedicionModal({ provincias }: SolicitarMedicion
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.nombre || !formData.telefono || !formData.direccion || !formData.cod_localidad) {
+    if (!formData.nombre || !formData.apellido || !formData.telefono || !formData.direccion || !formData.cod_localidad) {
       notify.warning('Por favor complete todos los campos')
       return
     }
@@ -56,6 +57,7 @@ export default function SolicitarMedicionModal({ provincias }: SolicitarMedicion
     try {
       const res = await crearProspecto({
         nombre: formData.nombre,
+        apellido: formData.apellido,
         telefono: formData.telefono,
         direccion: formData.direccion,
         cod_localidad: formData.cod_localidad
@@ -66,6 +68,7 @@ export default function SolicitarMedicionModal({ provincias }: SolicitarMedicion
         setIsOpen(false)
         setFormData({
           nombre: '',
+          apellido: '',
           telefono: '',
           direccion: '',
           cod_localidad: 0,
@@ -115,20 +118,37 @@ export default function SolicitarMedicionModal({ provincias }: SolicitarMedicion
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-600">
-                    <User className="h-3.5 w-3.5" />
-                    NOMBRE Y APELLIDO
-                  </label>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    placeholder="Ej: Juan Pérez"
-                    required
-                  />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-600">
+                      <User className="h-3.5 w-3.5" />
+                      NOMBRE
+                    </label>
+                    <input
+                      type="text"
+                      name="nombre"
+                      value={formData.nombre}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      placeholder="Ej: Juan"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-600">
+                      <User className="h-3.5 w-3.5" />
+                      APELLIDO
+                    </label>
+                    <input
+                      type="text"
+                      name="apellido"
+                      value={formData.apellido}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      placeholder="Ej: Pérez"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div>

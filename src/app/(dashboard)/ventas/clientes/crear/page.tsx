@@ -10,20 +10,9 @@ export default async function CrearClientePage({
   searchParams: SearchParams
 }) {
   const sp = await searchParams
-  const nombreRaw = typeof sp.nombre === 'string' ? sp.nombre : undefined
+  const nombre = typeof sp.nombre === 'string' ? sp.nombre : ''
+  const apellido = typeof sp.apellido === 'string' ? sp.apellido : ''
   const telefonoRaw = typeof sp.telefono === 'string' ? sp.telefono : undefined
-  
-  let nombre = ''
-  let apellido = ''
-  if (nombreRaw) {
-    const parts = nombreRaw.split(' ')
-    if (parts.length > 1) {
-      apellido = parts.pop() || ''
-      nombre = parts.join(' ')
-    } else {
-      nombre = nombreRaw
-    }
-  }
 
   const prefillData = (nombre || telefonoRaw) ? {
     cuil: '',

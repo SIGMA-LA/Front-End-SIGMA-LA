@@ -1,16 +1,18 @@
-﻿import { getProspectos } from '@/actions/visitas'
+import { getProspectos } from '@/actions/visitas'
 import { getProvincias } from '@/actions/localidad'
 import SolicitarMedicionModal from '@/components/ventas/prospectos/SolicitarMedicionModal'
 import {
   Plus,
   MapPin,
   Calendar,
+  Phone,
   ClipboardCheck,
   ClipboardList,
   UserPlus,
   FileText,
 } from 'lucide-react'
 import Link from 'next/link'
+import ReSolicitarBtn from '@/components/ventas/prospectos/ReSolicitarBtn'
 import type { SearchParams } from '@/types'
 
 export default async function ProspectosPage({
@@ -76,14 +78,20 @@ export default async function ProspectosPage({
                           className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
                             prospecto.estado === 'COMPLETADA'
                               ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                              : prospecto.estado === 'PROGRAMADA'
-                                ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                : 'border-slate-200 bg-slate-50 text-slate-700'
+                              : prospecto.estado === 'CANCELADA'
+                                ? 'border-rose-200 bg-rose-50 text-rose-700'
+                                : prospecto.fecha_hora_visita
+                                  ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                  : 'border-slate-200 bg-slate-50 text-slate-700'
                           }`}
                         >
                           {prospecto.estado === 'COMPLETADA'
                             ? 'Medición Lista'
-                            : 'Pendiente de Medición'}
+                            : prospecto.estado === 'CANCELADA'
+                              ? 'Cancelada'
+                              : prospecto.fecha_hora_visita
+                                ? 'Pendiente de Medición'
+                                : 'Pendiente de Agendar'}
                         </span>
                       </div>
 
@@ -94,6 +102,12 @@ export default async function ProspectosPage({
                           {prospecto.localidad &&
                             `, ${prospecto.localidad.nombre_localidad}`}
                         </div>
+                        {prospecto.telefono_cliente && (
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            {prospecto.telefono_cliente}
+                          </div>
+                        )}
                         {prospecto.fecha_hora_visita && (
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-4 w-4 text-gray-500" />
@@ -126,7 +140,7 @@ export default async function ProspectosPage({
                   {prospecto.estado === 'COMPLETADA' ? (
                     <div className="flex flex-wrap gap-2">
                       <Link
-                        href={`/ventas/clientes/crear?nombre=${encodeURIComponent((prospecto.nombre_cliente || '') + ' ' + (prospecto.apellido_cliente || ''))}&telefono=${encodeURIComponent(prospecto.telefono_cliente || '')}`}
+                        href={`/ventas/clientes/crear?nombre=${encodeURIComponent(prospecto.nombre_cliente || '')}&apellido=${encodeURIComponent(prospecto.apellido_cliente || '')}&telefono=${encodeURIComponent(prospecto.telefono_cliente || '')}`}
                         className="inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3.5 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
                       >
                         <UserPlus className="h-4 w-4" />
@@ -139,6 +153,11 @@ export default async function ProspectosPage({
                         <FileText className="h-4 w-4" />
                         Generar obra
                       </Link>
+                    </div>
+                  ) : prospecto.estado === 'CANCELADA' ? (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500 italic">Solicitud cancelada por Coordinación</span>
+                      <ReSolicitarBtn cod_visita={prospecto.cod_visita} />
                     </div>
                   ) : (
                     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-sm font-medium text-slate-500">
