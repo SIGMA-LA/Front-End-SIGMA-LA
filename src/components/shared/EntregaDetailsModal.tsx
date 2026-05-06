@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { X, Info, FileText } from 'lucide-react'
+import { X, Info } from 'lucide-react'
 import type { Entrega } from '@/types'
 import { getViaticoByDate } from '@/actions/parametros'
 import { getEntrega } from '@/actions/entregas'
@@ -122,8 +122,6 @@ export default function EntregaDetailsModal({
 
                 <EntregaRecursosPersonal
                   entrega={estaEntrega}
-                  viaticoPorDia={viaticoPorDia}
-                  totalViaticos={totalViaticos}
                 />
               </div>
 

@@ -96,7 +96,7 @@ export default function MedicionesVisitaModal({
             <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
               {visita.observaciones ? (
                 <p className="whitespace-pre-wrap text-sm text-slate-600 leading-relaxed italic">
-                  "{visita.observaciones}"
+                  &quot;{visita.observaciones}&quot;
                 </p>
               ) : (
                 <p className="text-sm text-slate-400 italic">No se registraron observaciones detalladas.</p>

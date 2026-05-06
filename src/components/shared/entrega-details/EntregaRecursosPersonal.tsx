@@ -4,24 +4,11 @@ import { Shield, Users, Truck, Wrench } from 'lucide-react'
 import type { Entrega, Vehiculo, Maquinaria } from '@/types'
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-  }).format(amount)
-}
-
-// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface EntregaRecursosPersonalProps {
   entrega: Entrega
-  viaticoPorDia: number
-  totalViaticos: number
 }
 
 // ---------------------------------------------------------------------------
@@ -30,8 +17,6 @@ interface EntregaRecursosPersonalProps {
 
 export default function EntregaRecursosPersonal({
   entrega,
-  viaticoPorDia,
-  totalViaticos,
 }: EntregaRecursosPersonalProps) {
   const encargado = entrega.entrega_empleado?.find((e) => e.rol_entrega === 'ENCARGADO')
   const acompanantes = entrega.entrega_empleado?.filter((e) => e.rol_entrega !== 'ENCARGADO')
