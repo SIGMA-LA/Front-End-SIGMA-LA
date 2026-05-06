@@ -82,6 +82,7 @@ export interface OrdenesProduccionEstadoFechasFilters {
   fechaDesde?: string
   fechaHasta?: string
   cod_obra?: number
+  cuil_cliente?: string
 }
 
 export type OrdenesProduccionBusquedaAvanzadaFilters =
@@ -99,6 +100,7 @@ async function fetchOrdenesConFiltros(
   if (filters.fechaDesde) params.set('fechaDesde', filters.fechaDesde)
   if (filters.fechaHasta) params.set('fechaHasta', filters.fechaHasta)
   if (filters.cod_obra) params.set('cod_obra', String(filters.cod_obra))
+  if (filters.cuil_cliente) params.set('cuil_cliente', filters.cuil_cliente)
   params.set('page', String(page))
   params.set('pageSize', String(pageSize))
 
@@ -128,13 +130,14 @@ export async function getOrdenesProduccionPorEstadoYFechas({
   estado,
   fechaDesde,
   fechaHasta,
+  cuil_cliente,
   page = 1,
   pageSize = 25,
 }: OrdenesProduccionEstadoFechasFilters & { page?: number, pageSize?: number }): Promise<PaginatedResponse<OrdenProduccion>> {
   try {
     const estadoTag = estado ? estado.replace(/\s+/g, '-').toLowerCase() : 'all'
 
-    return await fetchOrdenesConFiltros({ estado, fechaDesde, fechaHasta }, 0, [
+    return await fetchOrdenesConFiltros({ estado, fechaDesde, fechaHasta, cuil_cliente }, 0, [
       'ordenes-produccion',
       `ordenes-produccion-${estadoTag}`,
     ], page, pageSize)
@@ -149,10 +152,11 @@ export async function getOrdenesProduccionBusquedaAvanzada({
   fechaDesde,
   fechaHasta,
   cod_obra,
+  cuil_cliente,
 }: OrdenesProduccionBusquedaAvanzadaFilters, page: number = 1, pageSize: number = 25): Promise<PaginatedResponse<OrdenProduccion>> {
   try {
     return await fetchOrdenesConFiltros(
-      { estado, fechaDesde, fechaHasta, cod_obra },
+      { estado, fechaDesde, fechaHasta, cod_obra, cuil_cliente },
       30,
       ['ordenes-produccion'],
       page,
