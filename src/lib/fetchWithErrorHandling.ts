@@ -98,6 +98,11 @@ export async function fetchWithErrorHandling<T = unknown>(
       throw new Error(errorMsg)
     }
 
+    if (res.status === 204) {
+      res.json = async () => undefined as unknown as T
+      return res as Response & { json(): Promise<T> }
+    }
+
     const originalJson = res.json.bind(res)
     res.json = async <R = unknown>() => {
       const json = (await originalJson()) as {
