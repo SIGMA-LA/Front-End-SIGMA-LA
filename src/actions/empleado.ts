@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
 import type { Empleado } from '@/types'
@@ -159,6 +159,7 @@ export async function createEmpleado(
 
     revalidatePath('/admin/empleados')
     revalidatePath('/coordinacion/empleados')
+    revalidateTag('empleados')
 
     return { success: true, data }
   } catch (error) {
@@ -192,6 +193,9 @@ export async function updateEmpleado(
     revalidatePath('/admin/empleados')
     revalidatePath('/coordinacion/empleados')
     revalidatePath(`/admin/empleados/${cuil}`)
+    revalidatePath(`/admin/empleados/${cuil}/editar`)
+    revalidateTag('empleados')
+    revalidateTag(`empleado-${cuil}`)
 
     return { success: true, data }
   } catch (error) {
@@ -220,6 +224,8 @@ export async function deleteEmpleado(
 
     revalidatePath('/admin/empleados')
     revalidatePath('/coordinacion/empleados')
+    revalidateTag('empleados')
+    revalidateTag(`empleado-${cuil}`)
 
     return { success: true }
   } catch (error) {

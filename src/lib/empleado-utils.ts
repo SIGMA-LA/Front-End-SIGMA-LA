@@ -21,6 +21,8 @@ export const AREAS_VALIDAS = [
   { value: 'COMPRAS', label: 'Compras' },
   { value: 'RECURSOS_HUMANOS', label: 'Recursos Humanos' },
   { value: 'FINANZAS', label: 'Finanzas' },
+  { value: 'ADMINISTRADOR', label: 'Administrador' },
+  { value: 'PLANTA', label: 'Planta' },
 ] as const
 
 export const getRolLabel = (rol: RolEmpleado) => {
