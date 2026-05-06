@@ -171,7 +171,7 @@ export default function useVisitaForm({
         fetchObra()
       }
     }
-  }, [])
+  }, [formData.obraId])
 
   // Fetch eligible OPs when obraId changes
   useEffect(() => {
@@ -213,7 +213,7 @@ export default function useVisitaForm({
       }
     }
     fetchOps()
-  }, [formData.obraId])
+  }, [formData.obraId, selectedOps])
 
   const totalViaticos = (formData.dias_viatico || 0) * ( (visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) * viaticoPorDia
 
