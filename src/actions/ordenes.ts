@@ -435,3 +435,40 @@ export async function updateOrdenProduccion(
     return { success: false, error: message }
   }
 }
+
+/**
+ * Rejects a production order with a reason
+ * @param {number} cod_op - Orden de produccion code/ID
+ * @param {string} motivo - Reason for rejection
+ * @returns {Promise<{success: boolean, data?: OrdenProduccion, error?: string}>} Operation result
+ */
+export async function rejectOrdenProduccion(
+  cod_op: number,
+  motivo: string
+): Promise<ActionResponse<OrdenProduccion>> {
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling(
+      `${BASE_URL}/${cod_op}/rechazar`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ motivo }),
+      }
+    )
+
+    const data = await response.json()
+    revalidateTag('ordenes-produccion')
+    revalidatePath('/coordinacion/ordenes-produccion')
+    revalidatePath('/produccion')
+
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido'
+    console.error('[rejectOrdenProduccion]', message)
+    return { success: false, error: message }
+  }
+}

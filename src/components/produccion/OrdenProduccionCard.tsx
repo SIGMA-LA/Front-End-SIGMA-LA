@@ -41,6 +41,12 @@ export default function OrdenProduccionCard({
           color: 'bg-purple-500',
           style: 'border-purple-400 bg-purple-50 ring-2 ring-purple-300',
         }
+      case 'RECHAZADA':
+        return {
+          text: 'Rechazada',
+          color: 'bg-red-500',
+          style: 'border-red-400 bg-red-50 ring-2 ring-red-300',
+        }
       default:
         return {
           text: 'Pendiente',

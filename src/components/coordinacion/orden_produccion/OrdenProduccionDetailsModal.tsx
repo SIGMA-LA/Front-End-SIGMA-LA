@@ -16,6 +16,7 @@ import {
 import type { OrdenProduccion } from '@/types'
 import PDFViewerModal from './PDFViewerModal'
 import MedicionesVisitaModal from './MedicionesVisitaModal'
+import { AlertCircle } from 'lucide-react'
 
 interface OrdenProduccionDetailsModalProps {
   isOpen: boolean
@@ -61,6 +62,13 @@ const getEstadoInfo = (estado: string) => {
         textColor: 'text-gray-700',
         borderColor: 'border-gray-200',
         badgeColor: 'bg-gray-500',
+      }
+    case 'RECHAZADA':
+      return {
+        bgColor: 'bg-red-50',
+        textColor: 'text-red-700',
+        borderColor: 'border-red-200',
+        badgeColor: 'bg-red-500',
       }
     default:
       return {
@@ -129,6 +137,23 @@ export default function OrdenProduccionDetailsModal({
         {/* Content */}
         <div className="p-6">
           <div className="space-y-6">
+            {/* Alerta de Rechazo */}
+            {orden.estado === 'RECHAZADA' && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm ring-1 ring-red-100">
+                <div className="flex gap-3">
+                  <div className="rounded-lg bg-red-100 p-2 h-fit">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-red-900">Orden Rechazada</h4>
+                    <p className="mt-1 text-sm text-red-800 leading-relaxed">
+                      {orden.motivo_rechazo || 'No se proporcionó un motivo específico.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Estado */}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">

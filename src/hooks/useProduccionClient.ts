@@ -159,6 +159,8 @@ export default function useProduccionClient(
     ordenesCache[buildCacheKey('APROBADA', EMPTY_FILTERS)]?.length ?? 0
   const ordenesEnProduccionCount =
     ordenesCache[buildCacheKey('EN PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
+  const ordenesRechazadasCount =
+    ordenesCache[buildCacheKey('RECHAZADA', EMPTY_FILTERS)]?.length ?? 0
 
   // Data Fetching: Notas
   useEffect(() => {
@@ -382,6 +384,7 @@ export default function useProduccionClient(
     ordenesPendientesCount,
     ordenesAprobadasCount,
     ordenesEnProduccionCount,
+    ordenesRechazadasCount,
     selectedOrdenSummary,
     handleTabChange,
     handleNotasTabChange,

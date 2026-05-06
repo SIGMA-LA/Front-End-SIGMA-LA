@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { OrdenProduccion } from '@/types'
-import { MapPin, Package, Calendar, Eye, CheckCircle, CalendarPlus } from 'lucide-react'
+import { MapPin, Package, Calendar, Eye, CheckCircle, CalendarPlus, XCircle } from 'lucide-react'
 
 interface OrdenProduccionCardProps {
   orden: OrdenProduccion
   onVerDetalles: (orden: OrdenProduccion) => void
   onAprobar: (orden: OrdenProduccion) => void
+  onRechazar: (orden: OrdenProduccion) => void
 }
 
 const formatDate = (dateString: string) =>
@@ -26,6 +27,8 @@ const getEstadoBadgeColor = (estado: string) => {
       return 'bg-green-500'
     case 'FINALIZADA':
       return 'bg-gray-500'
+    case 'RECHAZADA':
+      return 'bg-red-500'
     default:
       return 'bg-gray-400'
   }
@@ -35,6 +38,7 @@ export default function OrdenProduccionCard({
   orden,
   onVerDetalles,
   onAprobar,
+  onRechazar,
 }: OrdenProduccionCardProps) {
   const [isApproving, setIsApproving] = useState(false)
   const cliente = orden.obra?.cliente
@@ -51,6 +55,11 @@ export default function OrdenProduccionCard({
     } finally {
       setIsApproving(false)
     }
+  }
+
+  const handleRechazar = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onRechazar(orden)
   }
 
   const handleVerDetalles = (e: React.MouseEvent) => {
@@ -136,15 +145,27 @@ export default function OrdenProduccionCard({
               Ver Detalles
             </button>
 
-            {orden.estado === 'PENDIENTE' && (
-              <button
-                onClick={handleAprobar}
-                disabled={isApproving}
-                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <CheckCircle className="h-4 w-4" />
-                {isApproving ? 'Aprobando...' : 'Aprobar'}
-              </button>
+            {(orden.estado === 'PENDIENTE' || orden.estado === 'RECHAZADA') && (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAprobar}
+                  disabled={isApproving}
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {isApproving ? 'Aprobando...' : 'Aprobar'}
+                </button>
+                
+                {orden.estado === 'PENDIENTE' && (
+                  <button
+                    onClick={handleRechazar}
+                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Rechazar
+                  </button>
+                )}
+              </div>
             )}
 
             {!orden.cod_visita && (

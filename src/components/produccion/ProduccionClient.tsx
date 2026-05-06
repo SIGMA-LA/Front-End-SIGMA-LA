@@ -71,6 +71,7 @@ export default function ProduccionClient({
     ordenesPendientesCount,
     ordenesAprobadasCount,
     ordenesEnProduccionCount,
+    ordenesRechazadasCount,
     selectedOrdenSummary,
     handleTabChange,
     handleNotasTabChange,
@@ -148,6 +149,11 @@ export default function ProduccionClient({
                   count={ordenesEnProduccionCount}
                   label="En Producción"
                   color="green"
+                />
+                <StatBadge
+                  count={ordenesRechazadasCount}
+                  label="Rechazadas"
+                  color="orange"
                 />
               </>
             )}

@@ -52,6 +52,7 @@ export interface OrdenProduccion {
   url: string
   public_id: string | null
   cod_visita: number | null
+  motivo_rechazo: string | null
   visita: Visita | null
   obra: Obra & { visita?: Visita[] }
 }
