@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Visita, Obra, Empleado, Localidad, Provincia } from '@/types'
+import type { Visita, Obra, Empleado, Localidad, Provincia, OrdenProduccion } from '@/types'
+import { getObra } from '@/actions/obras'
 import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
 import { getActualViatico, getViaticoByDate } from '@/actions/parametros'
 import { notify } from '@/lib/toast'
@@ -62,6 +63,10 @@ export interface UseVisitaFormReturn {
   isPending: boolean
   error: string | null
   setError: (v: string | null) => void
+  selectedOps: number[]
+  setSelectedOps: (v: number[] | ((prev: number[]) => number[])) => void
+  eligibleOps: OrdenProduccion[]
+  isLoadingOps: boolean
   viaticoPorDia: number
   totalViaticos: number
   getEmpleadoNombre: (cuil: string) => string
@@ -120,6 +125,9 @@ export default function useVisitaForm({
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [loadingLocalidades, setLoadingLocalidades] = useState(false)
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
+  const [selectedOps, setSelectedOps] = useState<number[]>([])
+  const [eligibleOps, setEligibleOps] = useState<OrdenProduccion[]>([])
+  const [isLoadingOps, setIsLoadingOps] = useState(false)
 
   // Fetch viatico rate
   useEffect(() => {
@@ -134,6 +142,78 @@ export default function useVisitaForm({
     }
     fetchViatico()
   }, [visitaEditar])
+
+  // Handle cod_op and cod_obra from URL searchParams
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const codOp = params.get('cod_op')
+      const codObra = params.get('cod_obra')
+
+      if (codOp) {
+        setSelectedOps([Number(codOp)])
+        setIsVisitaInicial(false)
+      }
+
+      if (codObra && !formData.obraId) {
+        const fetchObra = async () => {
+          const obra = await getObra(Number(codObra))
+          if (obra) {
+            setFormData((prev) => ({
+              ...prev,
+              obraId: obra.cod_obra,
+              direccion: obra.direccion,
+              localidad: obra.localidad?.nombre_localidad ?? '',
+            }))
+            setIsVisitaInicial(false)
+          }
+        }
+        fetchObra()
+      }
+    }
+  }, [])
+
+  // Fetch eligible OPs when obraId changes
+  useEffect(() => {
+    async function fetchOps() {
+      if (!formData.obraId) {
+        setEligibleOps([])
+        return
+      }
+
+      setIsLoadingOps(true)
+      try {
+        const { getOrdenesProduccionBusquedaAvanzada } = await import('@/actions/ordenes')
+        const ops = await getOrdenesProduccionBusquedaAvanzada({
+          cod_obra: formData.obraId,
+          estado: 'PENDIENTE',
+        })
+        
+        // Filtrar las OPs elegibles según reglas de negocio
+        const filteredOps = ops.filter((op) => {
+          // 1. Solo OPs en estado PENDIENTE (excluye EN PRODUCCION, TERMINADA, APROBADA)
+          if (op.estado !== 'PENDIENTE') return false
+
+          // 2. Excluir si ya tiene una visita vinculada que no esté CANCELADA
+          const tieneVisitaActiva = op.visita && op.visita.estado !== 'CANCELADA'
+          
+          // Nota: Si la OP es la que viene por URL (selectedOps), la dejamos visible
+          if (tieneVisitaActiva && !selectedOps.includes(op.cod_op)) {
+            return false
+          }
+
+          return true
+        })
+
+        setEligibleOps(filteredOps)
+      } catch (err) {
+        console.error('Error fetching eligible OPs:', err)
+      } finally {
+        setIsLoadingOps(false)
+      }
+    }
+    fetchOps()
+  }, [formData.obraId])
 
   const totalViaticos = (formData.dias_viatico || 0) * ( (visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) * viaticoPorDia
 
@@ -311,6 +391,10 @@ export default function useVisitaForm({
       if (formData.obraId) {
         formDataObj.append('obraId', formData.obraId.toString())
       }
+      
+      if (selectedOps.length > 0) {
+        formDataObj.append('cod_ops', JSON.stringify(selectedOps))
+      }
 
       const action = visitaEditar ? updateVisitaFromForm : createVisitaFromForm
       try {
@@ -359,6 +443,10 @@ export default function useVisitaForm({
     isPending,
     error,
     setError,
+    selectedOps,
+    setSelectedOps,
+    eligibleOps,
+    isLoadingOps,
     getEmpleadoNombre,
     handleLoadLocalidades,
     handleSubmit,

@@ -14,6 +14,7 @@ import { MOTIVOS_VISITA_OPTIONS } from '@/constants'
 import useVisitaForm from '@/hooks/useVisitaForm'
 import VisitaUbicacionSeccion from './visita/VisitaUbicacionSeccion'
 import VisitaLogisticaSeccion from './visita/VisitaLogisticaSeccion'
+import VisitaOPSelection from './visita/VisitaOPSelection'
 
 /**
  * Form for scheduling or editing a visit (visita).
@@ -63,6 +64,10 @@ export default function CrearVisita({
     getEmpleadoNombre,
     handleLoadLocalidades,
     handleSubmit,
+    selectedOps,
+    setSelectedOps,
+    eligibleOps,
+    isLoadingOps,
     viaticoPorDia,
     totalViaticos,
   } = useVisitaForm({ preloadedObra, visitaEditar, empleados, provincias, buscarLocalidades })
@@ -106,6 +111,13 @@ export default function CrearVisita({
             loadingLocalidades={loadingLocalidades}
             handleLoadLocalidades={handleLoadLocalidades}
             buscarObras={buscarObras}
+          />
+
+          <VisitaOPSelection
+            eligibleOps={eligibleOps}
+            selectedOps={selectedOps}
+            onChange={setSelectedOps}
+            isLoading={isLoadingOps}
           />
 
           {/* Section: Motivo y Coordinación */}
