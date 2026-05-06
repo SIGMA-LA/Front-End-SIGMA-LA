@@ -371,6 +371,7 @@ export async function getProspectos(
 
 export async function crearProspecto(data: {
   nombre: string
+  apellido: string
   telefono: string
   direccion: string
   cod_localidad: number
@@ -378,10 +379,11 @@ export async function crearProspecto(data: {
   try {
     const visitaData = {
       nombre_cliente: data.nombre,
+      apellido_cliente: data.apellido,
       telefono_cliente: data.telefono,
       direccion_visita: data.direccion,
       cod_localidad: data.cod_localidad,
-      motivo_visita: 'INICIAL',
+      motivo_visita: 'VISITA INICIAL',
       estado: 'PROGRAMADA', // We keep it PROGRAMADA but without date so it's "pending schedule"
       fecha_hora_visita: null as unknown as string, // Backend allows null if we send it in API wait, API might reject null if schema is strict? Let's send a fake date far in future if needed? No, backend accepts empty string or null? Let's check backend schema in sigma-la-schemas if it fails. We can also just send it as a random date and wait for coordinacion to change it? Or just let it be. Prisma allows it.
       empleados_visita: [],
@@ -389,12 +391,10 @@ export async function crearProspecto(data: {
       dias_viatico: 1
     }
 
-    // Since fecha_hora_visita is required by Prisma logic if it's a date but wait, it's optional in schema?
-    // Let's send a "fake" date like 1970-01-01T00:00:00Z to indicate it's not scheduled, or just new Date() because it's required by the CreateVisitaData interface!
-    // Wait, CreateVisitaData requires `fecha_hora_visita: string`.
+    // The date is null until Coordination schedules it.
     const visitaPayload = {
       ...visitaData,
-      fecha_hora_visita: new Date(new Date().setHours(0,0,0,0)).toISOString(), // today
+      fecha_hora_visita: null, 
       observaciones: 'SOLICITUD DE PROSPECTO - FALTA AGENDAR'
     }
 
@@ -414,6 +414,33 @@ export async function crearProspecto(data: {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error al crear solicitud'
     console.error('[crearProspecto]', message)
+    return { success: false, error: message }
+  }
+}
+
+export async function reSolicitarMedicion(cod_visita: number) {
+  try {
+    const token = await getAccessToken()
+    await fetchWithErrorHandling<Visita>(`${BASE_URL}/${cod_visita}/re-solicitar`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        estado: 'PROGRAMADA',
+        fecha_hora_visita: null,
+        fecha_cancelacion: null,
+        observaciones: 'RE-SOLICITUD DE MEDICIÓN (Previamente cancelada)'
+      }),
+    })
+    
+    revalidatePath('/ventas/prospectos')
+    revalidatePath('/coordinacion')
+    return { success: true }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al re-solicitar medición'
+    console.error('[reSolicitarMedicion]', message)
     return { success: false, error: message }
   }
 }

@@ -263,12 +263,12 @@ export default function useVisitaForm({
       : null
 
     setFormData({
-      fechaSalida: fSalidaLocal?.toISOString().slice(0, 10) ?? '',
-      horaSalida: fSalidaLocal?.toISOString().slice(11, 16) ?? '',
-      fecha: fechaLocal?.toISOString().slice(0, 10) ?? '',
-      hora: fechaLocal?.toISOString().slice(11, 16) ?? '',
-      fechaRegreso: fRegresoLocal?.toISOString().slice(0, 10) ?? '',
-      horaRegreso: fRegresoLocal?.toISOString().slice(11, 16) ?? '',
+      fechaSalida: fSalidaLocal ? fSalidaLocal.toISOString().slice(0, 10) : '',
+      horaSalida: fSalidaLocal ? fSalidaLocal.toISOString().slice(11, 16) : '',
+      fecha: fechaLocal ? fechaLocal.toISOString().slice(0, 10) : '',
+      hora: fechaLocal ? fechaLocal.toISOString().slice(11, 16) : '',
+      fechaRegreso: fRegresoLocal ? fRegresoLocal.toISOString().slice(0, 10) : '',
+      horaRegreso: fRegresoLocal ? fRegresoLocal.toISOString().slice(11, 16) : '',
       motivo_visita: visitaEditar.motivo_visita ?? 'OTRO',
       observaciones: visitaEditar.observaciones ?? '',
       direccion: visitaEditar.direccion_visita ?? '',
