@@ -114,10 +114,6 @@ export function ObraGeneralInfo({ obra }: { obra: Obra }) {
       ? obra.cliente.razon_social
       : `${obra.cliente?.nombre ?? ''} ${obra.cliente?.apellido ?? ''}`.trim() || 'N/A'
 
-  const nombreArquitecto = obra.arquitecto
-    ? `${obra.arquitecto.nombre ?? ''} ${obra.arquitecto.apellido ?? ''}`.trim()
-    : null
-
   return (
     <Card>
       <CardHeader>
@@ -144,14 +140,6 @@ export function ObraGeneralInfo({ obra }: { obra: Obra }) {
             </label>
             <p className="text-gray-900">{nombreCliente}</p>
           </div>
-          {nombreArquitecto && (
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-600">
-                <DraftingCompass className="mb-1 inline h-4 w-4" /> Arquitecto
-              </label>
-              <p className="text-gray-900">{nombreArquitecto}</p>
-            </div>
-          )}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-600">
               <Calendar className="mb-1 inline h-4 w-4" /> Fecha Inicio

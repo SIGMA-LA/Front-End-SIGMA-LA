@@ -109,10 +109,6 @@ export default function ObraCard({
       : `${obra.cliente?.nombre ?? ''} ${obra.cliente?.apellido ?? ''}`.trim() ||
         'N/A'
 
-  const nombreArquitecto = obra.arquitecto
-    ? `${obra.arquitecto.nombre ?? ''} ${obra.arquitecto.apellido ?? ''}`.trim()
-    : null
-
   return (
     <>
       <EliminarObraModal
@@ -184,24 +180,6 @@ export default function ObraCard({
                 </p>
               </div>
             </div>
-
-            {/* Arquitecto */}
-            {nombreArquitecto && (
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-orange-100 p-2">
-                  <DraftingCompass className="h-5 w-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500">
-                    Arquitecto
-                  </p>
-                  <p className="font-semibold text-gray-900">
-                    {nombreArquitecto}
-                  </p>
-                  <p className="text-sm text-gray-600">Profesional Resp.</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Botones */}

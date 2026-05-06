@@ -9,7 +9,6 @@ import CrearPresupuestoModal from './CrearPresupuestoModal'
 import ClienteSearchField from './ClienteSearchField'
 import UbicacionSeccion from './UbicacionSeccion'
 import PresupuestosSeccion from './PresupuestosSeccion'
-import MedicionesModal from './MedicionesModal'
 import useObraForm from '@/hooks/useObraForm'
 
 // ---------------------------------------------------------------------------
@@ -38,10 +37,8 @@ export interface ObraFormData {
     | 'ENTREGADA'
     | 'CANCELADA'
   cuil_cliente: string
-  cuil_arquitecto?: string | null
   cod_localidad: number
   esGrande?: boolean
-  mediciones?: string
   cod_visita?: number
 }
 
@@ -54,14 +51,12 @@ interface CrearObraProps {
 const initialState: ObraFormData = {
   direccion: '',
   cuil_cliente: '',
-  cuil_arquitecto: null,
   cod_localidad: 0,
   fecha_ini: '',
   estado: 'EN ESPERA DE PAGO',
   nota_fabrica: '',
   fecha_cancelacion: null,
   esGrande: true,
-  mediciones: '',
 }
 
 // ---------------------------------------------------------------------------
@@ -82,7 +77,6 @@ export default function CrearObra({ provincias, obraExistente, prospecto }: Crea
     isObraCancelada,
     esModoEdicion,
     clienteSearch,
-    arquitectoSearch,
     isModalOpen,
     setIsModalOpen,
     presupuestos,
@@ -97,9 +91,6 @@ export default function CrearObra({ provincias, obraExistente, prospecto }: Crea
     handleSubmit,
   } = useObraForm({ obraExistente, prospecto, initialState })
 
-  const [isMedicionesModalOpen, setIsMedicionesModalOpen] = useState(false)
-  const [medicionesModalMode, setMedicionesModalMode] = useState<'view' | 'edit'>('edit')
-
   return (
     <>
       <CrearPresupuestoModal
@@ -107,16 +98,6 @@ export default function CrearObra({ provincias, obraExistente, prospecto }: Crea
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         presupuestoExistente={presupuestoParaEditar}
-      />
-
-      <MedicionesModal
-        isOpen={isMedicionesModalOpen}
-        mode={medicionesModalMode}
-        initialValue={formData.mediciones}
-        onClose={() => setIsMedicionesModalOpen(false)}
-        onSubmit={(val) => {
-          setFormData((prev: ObraFormData) => ({ ...prev, mediciones: val }))
-        }}
       />
 
       <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-10">
@@ -160,7 +141,7 @@ export default function CrearObra({ provincias, obraExistente, prospecto }: Crea
                   <div className="space-y-8">
                     <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-2">
                       <Users className="h-6 w-6 text-blue-600" />
-                      <h3 className="text-lg font-bold text-slate-800">Cliente y Arquitecto</h3>
+                      <h3 className="text-lg font-bold text-slate-800">Cliente</h3>
                     </div>
 
                     <div className="space-y-6">
@@ -169,14 +150,6 @@ export default function CrearObra({ provincias, obraExistente, prospecto }: Crea
                         searchState={clienteSearch}
                         disabled={isObraCancelada}
                         colorTheme="green"
-                      />
-
-                      <ClienteSearchField
-                        label="Arquitecto Responsable"
-                        searchState={arquitectoSearch}
-                        disabled={isObraCancelada}
-                        optional
-                        colorTheme="indigo"
                       />
 
                       <div className="pt-4">
@@ -256,66 +229,6 @@ export default function CrearObra({ provincias, obraExistente, prospecto }: Crea
                         hayPresupuestoAceptado={hayPresupuestoAceptado}
                         disabled={isObraCancelada}
                       />
-                    </div>
-
-                    {/* Mediciones Section */}
-                    <div className="space-y-8">
-                      <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-2">
-                        <Ruler className="h-6 w-6 text-blue-600" />
-                        <h3 className="text-lg font-bold text-slate-800">Mediciones</h3>
-                      </div>
-
-                      <div>
-                        {!formData.mediciones ? (
-                          <div className="text-center space-y-4">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setMedicionesModalMode('edit')
-                                setIsMedicionesModalOpen(true)
-                              }}
-                              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50 py-3.5 text-sm font-bold text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-all"
-                              disabled={isObraCancelada}
-                            >
-                              <Plus className="h-5 w-5" />
-                              REGISTRAR MEDIDAS
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="w-full space-y-4">
-
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  setMedicionesModalMode('view')
-                                  setIsMedicionesModalOpen(true)
-                                }}
-                                className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-xs font-bold text-white hover:bg-slate-800 transition-all shadow-md"
-                              >
-                                <Eye className="h-4 w-4" />
-                                VER MEDIDAS
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  setMedicionesModalMode('edit')
-                                  setIsMedicionesModalOpen(true)
-                                }}
-                                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
-                                disabled={isObraCancelada}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                                EDITAR MEDIDAS
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </div>

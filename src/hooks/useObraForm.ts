@@ -36,7 +36,6 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
 
   // Participants Search Hooks
   const clienteSearch = useClienteSearch()
-  const arquitectoSearch = useClienteSearch(true) // soloPersonas = true
 
   // Modal and Presupuestos state
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -57,21 +56,16 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
       setFormData({
         direccion: obraExistente.direccion || '',
         cuil_cliente: obraExistente.cliente?.cuil || '',
-        cuil_arquitecto: obraExistente.arquitecto?.cuil || null,
         cod_localidad: obraExistente.localidad?.cod_localidad || 0,
         fecha_ini,
         nota_fabrica: obraExistente.nota_fabrica || '',
         fecha_cancelacion: null,
         estado: obraExistente.estado || 'EN ESPERA DE PAGO',
         esGrande: obraExistente.esGrande ?? true,
-        mediciones: obraExistente.mediciones || '',
       })
 
       if (obraExistente.cliente) {
         clienteSearch.selectCliente(obraExistente.cliente)
-      }
-      if (obraExistente.arquitecto) {
-        arquitectoSearch.selectCliente(obraExistente.arquitecto)
       }
 
       setProvinciaSeleccionada(obraExistente.localidad?.cod_provincia || '')
@@ -81,23 +75,21 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
         ...prev,
         direccion: prospecto.direccion_visita || '',
         cod_localidad: prospecto.localidad?.cod_localidad || 0,
-        mediciones: prospecto.observaciones || '',
         cod_visita: prospecto.cod_visita,
       }))
       if (prospecto.localidad?.cod_localidad && prospecto.localidad?.cod_provincia) {
         setProvinciaSeleccionada(prospecto.localidad.cod_provincia)
       }
     }
-  }, [obraExistente, esModoEdicion, clienteSearch, arquitectoSearch, prospecto])
+  }, [obraExistente, esModoEdicion, clienteSearch, prospecto])
 
   // Sync CUILs with search results
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
       cuil_cliente: clienteSearch.selectedCliente?.cuil || '',
-      cuil_arquitecto: arquitectoSearch.selectedCliente?.cuil || null,
     }))
-  }, [clienteSearch.selectedCliente?.cuil, arquitectoSearch.selectedCliente?.cuil])
+  }, [clienteSearch.selectedCliente?.cuil])
 
   // Fetch localities
   useEffect(() => {
@@ -200,7 +192,6 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
     isObraCancelada,
     esModoEdicion,
     clienteSearch,
-    arquitectoSearch,
     isModalOpen,
     setIsModalOpen,
     presupuestos,

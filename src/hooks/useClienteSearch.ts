@@ -32,10 +32,10 @@ export interface ClienteSearchState {
 // ---------------------------------------------------------------------------
 
 /**
- * Reusable debounced client (or architect) search.
+ * Reusable debounced client search.
  * Skips the API call when the current query matches the selected client's name.
  *
- * @param soloPersonas - When true, filters out EMPRESA tipo_cliente results (used for arquitecto search).
+ * @param soloPersonas - When true, filters out EMPRESA tipo_cliente results.
  */
 export function useClienteSearch(soloPersonas = false): ClienteSearchState {
   const [query, setQuery] = useState('')
