@@ -17,7 +17,8 @@ export default function useVisitadorActions() {
 
   // Selection State
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null)
-  const [selectedEntrega, setSelectedEntrega] = useState<EntregaEmpleado | null>(null)
+  const [selectedEntrega, setSelectedEntrega] =
+    useState<EntregaEmpleado | null>(null)
 
   // Modal State
   const [showVisitaModal, setShowVisitaModal] = useState(false)
@@ -46,7 +47,19 @@ export default function useVisitadorActions() {
   const handleConfirmarFinalizacionVisita = async () => {
     if (!selectedVisita) return
     startTransition(async () => {
-      const result = await finalizarVisita(selectedVisita.cod_visita, observacionesVisita)
+      let finalObs = selectedVisita.observaciones
+        ? `${selectedVisita.observaciones}\n`
+        : ''
+      if (observacionesVisita.trim()) {
+        finalObs += `Visitador: ${observacionesVisita.trim()}`
+      } else if (!finalObs) {
+        finalObs = 'Visitador: Sin observaciones adicionales'
+      }
+
+      const result = await finalizarVisita(
+        selectedVisita.cod_visita,
+        finalObs.trim()
+      )
       if (result.success) {
         setShowVisitaModal(false)
         setObservacionesVisita('')
@@ -65,7 +78,11 @@ export default function useVisitadorActions() {
       return
     }
     startTransition(async () => {
-      const result = await cancelarVisita(selectedVisita.cod_visita, observacionesVisita)
+      const finalObs = selectedVisita.observaciones
+        ? `${selectedVisita.observaciones}\nVisitador: ${observacionesVisita.trim()}`
+        : `Visitador: ${observacionesVisita.trim()}`
+
+      const result = await cancelarVisita(selectedVisita.cod_visita, finalObs)
       if (result.success) {
         setShowVisitaModal(false)
         setObservacionesVisita('')
@@ -81,7 +98,19 @@ export default function useVisitadorActions() {
   const handleFinalizarEntrega = async () => {
     if (!selectedEntrega) return
     startTransition(async () => {
-      const result = await finalizarEntrega(selectedEntrega.cod_entrega, observacionesEntrega || undefined)
+      let finalObs = selectedEntrega.entrega?.observaciones
+        ? `${selectedEntrega.entrega.observaciones}\n`
+        : ''
+      if (observacionesEntrega.trim()) {
+        finalObs += `Visitador: ${observacionesEntrega.trim()}`
+      } else if (!finalObs) {
+        finalObs = 'Visitador: Sin observaciones adicionales'
+      }
+
+      const result = await finalizarEntrega(
+        selectedEntrega.cod_entrega,
+        finalObs.trim() || undefined
+      )
       if (result.success) {
         setShowEntregaModal(false)
         setObservacionesEntrega('')
@@ -97,9 +126,14 @@ export default function useVisitadorActions() {
   const handleCancelarEntrega = async () => {
     if (!selectedEntrega) return
     startTransition(async () => {
+      const obsInput = observacionesEntrega.trim() || 'No se especificó motivo.'
+      const finalObs = selectedEntrega.entrega?.observaciones
+        ? `${selectedEntrega.entrega.observaciones}\nVisitador: ${obsInput}`
+        : `Visitador: ${obsInput}`
+
       const result = await cancelarEntrega(
         selectedEntrega.cod_entrega,
-        observacionesEntrega || 'No se especificó motivo.',
+        finalObs
       )
       if (result.success) {
         setShowEntregaModal(false)

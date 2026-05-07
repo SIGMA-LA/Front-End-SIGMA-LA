@@ -2,7 +2,14 @@
 
 import { Calendar, Loader2, ClipboardList } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import type { Localidad, Visita, Obra, Empleado, Provincia, Vehiculo } from '@/types'
+import type {
+  Localidad,
+  Visita,
+  Obra,
+  Empleado,
+  Provincia,
+  Vehiculo,
+} from '@/types'
 import FormErrorBanner from '@/components/shared/FormErrorBanner'
 import DateTimeSelectionVisita from './visita/DateTimeSelectionVisita'
 import PersonalSelection from './entrega/PersonalSelection'
@@ -10,7 +17,7 @@ import ViaticosSection from './entrega/ViaticosSection'
 import DateTimeModalVisita from './visita/DateTimeModalVisita'
 import AsignarPersonalModal from '@/components/shared/AsignarPersonalModal'
 import SelectionModal from '@/components/shared/SelectionModal'
-import { MOTIVOS_VISITA_OPTIONS } from '@/constants'
+import { MOTIVOS_VISITA } from '@/constants'
 import useVisitaForm from '@/hooks/useVisitaForm'
 import VisitaUbicacionSeccion from './visita/VisitaUbicacionSeccion'
 import VisitaLogisticaSeccion from './visita/VisitaLogisticaSeccion'
@@ -70,14 +77,20 @@ export default function CrearVisita({
     isLoadingOps,
     viaticoPorDia,
     totalViaticos,
-  } = useVisitaForm({ preloadedObra, visitaEditar, empleados, provincias, buscarLocalidades })
+  } = useVisitaForm({
+    preloadedObra,
+    visitaEditar,
+    empleados,
+    provincias,
+    buscarLocalidades,
+  })
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-4xl">
         {/* Heading */}
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm">
             <Calendar className="h-6 w-6" />
           </div>
           <div>
@@ -88,7 +101,7 @@ export default function CrearVisita({
                   ? `Nueva Visita - ${preloadedObra.direccion}`
                   : 'Registrar Nueva Visita'}
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="mt-0.5 text-sm text-slate-500">
               Complete los detalles para coordinar la visita operativa
             </p>
           </div>
@@ -126,50 +139,72 @@ export default function CrearVisita({
               <div className="rounded-lg bg-cyan-100/80 p-2 shadow-inner">
                 <ClipboardList className="h-5 w-5 text-cyan-600" />
               </div>
-              <h3 className="font-semibold text-slate-800">Motivo y Coordinación</h3>
+              <h3 className="font-semibold text-slate-800">
+                Motivo y Coordinación
+              </h3>
             </div>
-            <div className="p-5 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-5 p-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Propósito de la visita *
                   </label>
                   {isVisitaInicial ? (
-                    <div className="w-full rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-cyan-800 shadow-sm h-[50px] flex items-center gap-2">
-                      <span className="font-semibold text-sm">Visita inicial</span>
+                    <div className="flex h-[50px] w-full items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-cyan-800 shadow-sm">
+                      <span className="text-sm font-semibold">
+                        Visita inicial
+                      </span>
                     </div>
                   ) : (
                     <select
                       value={formData.motivo_visita}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, motivo_visita: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          motivo_visita: e.target.value,
+                        }))
+                      }
                       required
-                      className="w-full rounded-xl border border-slate-300 p-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 shadow-sm text-slate-700 bg-white outline-none"
+                      className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-700 shadow-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
                     >
-                      <option value="" disabled>Seleccione un motivo...</option>
-                      {MOTIVOS_VISITA_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      <option value="" disabled>
+                        Seleccione un motivo...
+                      </option>
+                      {MOTIVOS_VISITA.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
                   )}
                 </div>
                 <div>
-                  <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Proyección de Viáticos
                   </label>
-                  <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-700 shadow-sm cursor-not-allowed h-[50px] flex items-center">
+                  <div className="flex h-[50px] w-full cursor-not-allowed items-center rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-700 shadow-sm">
                     <span className="font-bold text-slate-800">
-                      {formData.dias_viatico > 0 ? `${formData.dias_viatico} Días Calculados` : 'Sin despliegues adicionales'}
+                      {formData.dias_viatico > 0
+                        ? `${formData.dias_viatico} Días Calculados`
+                        : 'Sin despliegues adicionales'}
                     </span>
                   </div>
                 </div>
               </div>
               <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Instrucciones Relevantes</label>
+                <label className="mb-2 block text-xs font-bold tracking-wider text-slate-500 uppercase">
+                  Instrucciones Relevantes
+                </label>
                 <textarea
                   value={formData.observaciones}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, observaciones: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      observaciones: e.target.value,
+                    }))
+                  }
                   rows={2}
-                  className="w-full resize-none rounded-xl border border-slate-300 p-3 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 shadow-sm text-slate-700 bg-white outline-none"
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-white p-3 text-slate-700 shadow-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
                   placeholder="Instrucciones clave para el personal en el terreno..."
                 />
               </div>
@@ -204,15 +239,17 @@ export default function CrearVisita({
           <VisitaLogisticaSeccion
             vehiculos={vehiculos}
             vehiculoAsignado={formData.vehiculo}
-            onDesvincular={() => setFormData((prev) => ({ ...prev, vehiculo: '' }))}
+            onDesvincular={() =>
+              setFormData((prev) => ({ ...prev, vehiculo: '' }))
+            }
             onAsignarClick={() => setIsVehiculoModalOpen(true)}
           />
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
             <button
               type="button"
               onClick={() => router.back()}
-              className="rounded-xl px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+              className="rounded-xl px-6 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100"
               disabled={isPending}
             >
               Cancelar
@@ -220,9 +257,18 @@ export default function CrearVisita({
             <button
               type="submit"
               disabled={isPending}
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-md hover:shadow-lg disabled:opacity-50 transition-all"
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50"
             >
-              {isPending ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Procesando...</> : visitaEditar ? 'Guardar Cambios' : 'Confirmar Visita'}
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />{' '}
+                  Procesando...
+                </>
+              ) : visitaEditar ? (
+                'Guardar Cambios'
+              ) : (
+                'Confirmar Visita'
+              )}
             </button>
           </div>
         </form>
@@ -241,7 +287,15 @@ export default function CrearVisita({
           horaRegreso: formData.horaRegreso,
         }}
         onConfirm={(nf, nh, nfs, nhs, nfr, nhr) => {
-          setFormData((prev) => ({ ...prev, fecha: nf, hora: nh, fechaSalida: nfs, horaSalida: nhs, fechaRegreso: nfr, horaRegreso: nhr }))
+          setFormData((prev) => ({
+            ...prev,
+            fecha: nf,
+            hora: nh,
+            fechaSalida: nfs,
+            horaSalida: nhs,
+            fechaRegreso: nfr,
+            horaRegreso: nhr,
+          }))
           setIsDateTimeModalOpen(false)
         }}
       />
@@ -266,7 +320,8 @@ export default function CrearVisita({
         items={vehiculos.map((v) => ({
           id: v.patente,
           label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
-          disabled: v.estado !== 'DISPONIBLE' && formData.vehiculo !== v.patente,
+          disabled:
+            v.estado !== 'DISPONIBLE' && formData.vehiculo !== v.patente,
         }))}
         selectedItems={formData.vehiculo ? [formData.vehiculo] : []}
         onClose={() => setIsVehiculoModalOpen(false)}
@@ -281,7 +336,8 @@ export default function CrearVisita({
           return results.map((v) => ({
             id: v.patente,
             label: `${v.tipo_vehiculo} - ${v.patente} (${v.estado})`,
-            disabled: v.estado !== 'DISPONIBLE' && formData.vehiculo !== v.patente,
+            disabled:
+              v.estado !== 'DISPONIBLE' && formData.vehiculo !== v.patente,
           }))
         }}
       />

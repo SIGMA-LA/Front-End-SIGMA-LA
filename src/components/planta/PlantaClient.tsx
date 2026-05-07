@@ -31,7 +31,8 @@ export default function PlantaClient({
   errorInitial,
 }: PlantaClientProps) {
   // UI state
-  const [selectedEntrega, setSelectedEntrega] = useState<EntregaEmpleado | null>(null)
+  const [selectedEntrega, setSelectedEntrega] =
+    useState<EntregaEmpleado | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [observacionesFinal, setObservacionesFinal] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -72,13 +73,25 @@ export default function PlantaClient({
     if (!selectedEntrega || finalizandoEntrega) return
     try {
       setFinalizandoEntrega(true)
-      finalizarEntrega(selectedEntrega.cod_entrega, observacionesFinal || undefined)
+      let finalObs = selectedEntrega.entrega?.observaciones
+        ? `${selectedEntrega.entrega.observaciones}\n`
+        : ''
+      if (observacionesFinal.trim()) {
+        finalObs += `Planta: ${observacionesFinal.trim()}`
+      } else if (!finalObs) {
+        finalObs = 'Planta: Sin observaciones adicionales'
+      }
+
+      finalizarEntrega(
+        selectedEntrega.cod_entrega,
+        finalObs.trim() || undefined
+      )
       setSelectedEntrega({
         ...selectedEntrega,
         entrega: {
           ...selectedEntrega.entrega,
           estado: 'ENTREGADO',
-          observaciones: observacionesFinal || selectedEntrega.entrega.observaciones,
+          observaciones: finalObs.trim(),
         },
       })
       setShowConfirmModal(false)
@@ -96,7 +109,12 @@ export default function PlantaClient({
     if (!selectedEntrega || finalizandoEntrega) return
     try {
       setFinalizandoEntrega(true)
-      cancelarEntrega(selectedEntrega.cod_entrega, observacionesFinal || 'No se especificó motivo.')
+      const obsInput = observacionesFinal.trim() || 'No se especificó motivo.'
+      const finalObs = selectedEntrega.entrega?.observaciones
+        ? `${selectedEntrega.entrega.observaciones}\nPlanta: ${obsInput}`
+        : `Planta: ${obsInput}`
+
+      cancelarEntrega(selectedEntrega.cod_entrega, finalObs)
       setSelectedEntrega(null)
       setShowConfirmModal(false)
       setObservacionesFinal('')
@@ -114,7 +132,11 @@ export default function PlantaClient({
   // ---------------------------------------------------------------------------
 
   const badgeLabel = `ENTREGAS ${
-    estadoFiltro === 'PENDIENTE' ? 'PENDIENTES' : estadoFiltro === 'ENTREGADO' ? 'ENTREGADAS' : 'CANCELADAS'
+    estadoFiltro === 'PENDIENTE'
+      ? 'PENDIENTES'
+      : estadoFiltro === 'ENTREGADO'
+        ? 'ENTREGADAS'
+        : 'CANCELADAS'
   } LISTADAS`
 
   return (

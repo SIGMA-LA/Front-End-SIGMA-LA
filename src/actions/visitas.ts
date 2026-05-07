@@ -1,9 +1,14 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { fetchWithErrorHandling } from '@/lib/fetchWithErrorHandling'
 import { getAccessToken } from './auth'
-import type { Visita, VisitaFormData, MotivoVisita, PaginatedResponse } from '@/types'
+import type {
+  Visita,
+  VisitaFormData,
+  MotivoVisita,
+  PaginatedResponse,
+} from '@/types'
 import type { ActionResponse } from '@/types/actions'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
@@ -45,7 +50,11 @@ export async function getVisitas(
   pageSize: number = 25
 ): Promise<PaginatedResponse<Visita>> {
   const emptyResponse: PaginatedResponse<Visita> = {
-    data: [], total: 0, totalPages: 0, page, pageSize,
+    data: [],
+    total: 0,
+    totalPages: 0,
+    page,
+    pageSize,
   }
   try {
     const token = await getAccessToken()
@@ -55,23 +64,30 @@ export async function getVisitas(
     queryParams.append('page', String(page))
     queryParams.append('pageSize', String(pageSize))
 
-    const url =
-      filtro?.trim()
-        ? `${BASE_URL}/buscar?${queryParams.toString()}`
-        : `${BASE_URL}?${queryParams.toString()}`
+    const url = filtro?.trim()
+      ? `${BASE_URL}/buscar?${queryParams.toString()}`
+      : `${BASE_URL}?${queryParams.toString()}`
 
-    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      next: { revalidate: 30, tags: ['visitas'] },
-    })
+    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: { revalidate: 30, tags: ['visitas'] },
+      }
+    )
 
     const data = await response.json()
 
-    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'data' in data &&
+      Array.isArray(data.data)
+    ) {
       return data as PaginatedResponse<Visita>
     }
 
@@ -162,7 +178,10 @@ export async function createVisita(
     revalidatePath('/visitador')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo crear la visita. Intentá nuevamente.'
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'No se pudo crear la visita. Intentá nuevamente.'
     console.error('[createVisita]', message)
     return { success: false, error: message }
   }
@@ -188,7 +207,10 @@ export async function updateVisita(
     revalidatePath(`/coordinacion/visitas/${id}/editar`)
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo actualizar la visita. Intentá nuevamente.'
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'No se pudo actualizar la visita. Intentá nuevamente.'
     console.error('[updateVisita]', message)
     return { success: false, error: message }
   }
@@ -213,11 +235,17 @@ export async function finalizarVisita(
     )
 
     const data = await response.json()
+    revalidateTag('visitas')
+    revalidateTag(`visita-${codVisita}`)
+    for (const emp of data.empleado_visita || []) {
+      revalidateTag(`visitas-empleado-${emp.cuil}`)
+    }
     revalidatePath('/visitador')
     revalidatePath('/coordinacion/visitas')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al finalizar la visita'
+    const message =
+      error instanceof Error ? error.message : 'Error al finalizar la visita'
     console.error('[finalizarVisita]', message)
     return { success: false, error: message }
   }
@@ -242,11 +270,17 @@ export async function cancelarVisita(
     )
 
     const data = await response.json()
+    revalidateTag('visitas')
+    revalidateTag(`visita-${codVisita}`)
+    for (const emp of data.empleado_visita || []) {
+      revalidateTag(`visitas-empleado-${emp.cuil}`)
+    }
     revalidatePath('/visitador')
     revalidatePath('/coordinacion/visitas')
     return { success: true, data }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al cancelar la visita'
+    const message =
+      error instanceof Error ? error.message : 'Error al cancelar la visita'
     console.error('[cancelarVisita]', message)
     return { success: false, error: message }
   }
@@ -256,16 +290,23 @@ export async function cancelarVisita(
  * Creates a visita from form data and redirects
  * @param {FormData} formData - Form data from client
  */
-export async function createVisitaFromForm(formData: FormData): Promise<ActionResponse<Visita>> {
+export async function createVisitaFromForm(
+  formData: FormData
+): Promise<ActionResponse<Visita>> {
   try {
-    const visitaData: VisitaFormData & { fechaSalida?: string; fechaHasta?: string } = {
+    const visitaData: VisitaFormData & {
+      fechaSalida?: string
+      fechaHasta?: string
+    } = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00Z`,
-      fechaSalida: formData.get('fechaSalida') && formData.get('horaSalida')
-        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00Z`
-        : undefined,
-      fechaHasta: formData.get('fechaRegreso') && formData.get('horaRegreso')
-        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00Z`
-        : undefined,
+      fechaSalida:
+        formData.get('fechaSalida') && formData.get('horaSalida')
+          ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00Z`
+          : undefined,
+      fechaHasta:
+        formData.get('fechaRegreso') && formData.get('horaRegreso')
+          ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00Z`
+          : undefined,
       motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -279,12 +320,15 @@ export async function createVisitaFromForm(formData: FormData): Promise<ActionRe
       nombre_cliente: (formData.get('nombre') as string) || null,
       apellido_cliente: (formData.get('apellido') as string) || null,
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
-      cod_ops: formData.get('cod_ops') ? JSON.parse(formData.get('cod_ops') as string) : undefined,
+      cod_ops: formData.get('cod_ops')
+        ? JSON.parse(formData.get('cod_ops') as string)
+        : undefined,
     }
 
     return await createVisita(visitaData)
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al procesar el formulario'
+    const message =
+      error instanceof Error ? error.message : 'Error al procesar el formulario'
     console.error('[createVisitaFromForm]', message)
     return { success: false, error: message }
   }
@@ -294,18 +338,25 @@ export async function createVisitaFromForm(formData: FormData): Promise<ActionRe
  * Updates a visita from form data and redirects
  * @param {FormData} formData - Form data from client
  */
-export async function updateVisitaFromForm(formData: FormData): Promise<ActionResponse<Visita>> {
+export async function updateVisitaFromForm(
+  formData: FormData
+): Promise<ActionResponse<Visita>> {
   try {
     const codVisita = Number(formData.get('cod_visita'))
 
-    const visitaData: Partial<VisitaFormData> & { fechaSalida?: string; fechaHasta?: string } = {
+    const visitaData: Partial<VisitaFormData> & {
+      fechaSalida?: string
+      fechaHasta?: string
+    } = {
       fecha_hora_visita: `${formData.get('fecha')}T${formData.get('hora')}:00Z`,
-      fechaSalida: formData.get('fechaSalida') && formData.get('horaSalida')
-        ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00Z`
-        : undefined,
-      fechaHasta: formData.get('fechaRegreso') && formData.get('horaRegreso')
-        ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00Z`
-        : undefined,
+      fechaSalida:
+        formData.get('fechaSalida') && formData.get('horaSalida')
+          ? `${formData.get('fechaSalida')}T${formData.get('horaSalida')}:00Z`
+          : undefined,
+      fechaHasta:
+        formData.get('fechaRegreso') && formData.get('horaRegreso')
+          ? `${formData.get('fechaRegreso')}T${formData.get('horaRegreso')}:00Z`
+          : undefined,
       motivo_visita: formData.get('tipo') as MotivoVisita,
       observaciones: formData.get('observaciones') as string,
       direccion_visita: formData.get('direccion') as string,
@@ -319,11 +370,14 @@ export async function updateVisitaFromForm(formData: FormData): Promise<ActionRe
       nombre_cliente: (formData.get('nombre') as string) || null,
       apellido_cliente: (formData.get('apellido') as string) || null,
       telefono_cliente: (formData.get('clienteTelefono') as string) || null,
-      cod_ops: formData.get('cod_ops') ? JSON.parse(formData.get('cod_ops') as string) : undefined,
+      cod_ops: formData.get('cod_ops')
+        ? JSON.parse(formData.get('cod_ops') as string)
+        : undefined,
     }
     return await updateVisita(codVisita, visitaData)
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al procesar el formulario'
+    const message =
+      error instanceof Error ? error.message : 'Error al procesar el formulario'
     console.error('[updateVisitaFromForm]', message)
     return { success: false, error: message }
   }
@@ -338,7 +392,11 @@ export async function getProspectos(
   pageSize: number = 25
 ): Promise<PaginatedResponse<Visita>> {
   const emptyResponse: PaginatedResponse<Visita> = {
-    data: [], total: 0, totalPages: 0, page, pageSize,
+    data: [],
+    total: 0,
+    totalPages: 0,
+    page,
+    pageSize,
   }
   try {
     const token = await getAccessToken()
@@ -349,17 +407,25 @@ export async function getProspectos(
 
     const url = `${BASE_URL}/prospectos?${queryParams.toString()}`
 
-    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      next: { revalidate: 30, tags: ['visitas', 'prospectos'] },
-    })
+    const response = await fetchWithErrorHandling<PaginatedResponse<Visita>>(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        next: { revalidate: 30, tags: ['visitas', 'prospectos'] },
+      }
+    )
 
     const data = await response.json()
-    if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'data' in data &&
+      Array.isArray(data.data)
+    ) {
       return data as PaginatedResponse<Visita>
     }
     return emptyResponse
@@ -388,14 +454,14 @@ export async function crearProspecto(data: {
       fecha_hora_visita: null as unknown as string,
       empleados_visita: [],
       vehiculo: '',
-      dias_viatico: 1
+      dias_viatico: 1,
     }
 
     // The date is null until Coordination schedules it.
     const visitaPayload = {
       ...visitaData,
-      fecha_hora_visita: null, 
-      observaciones: 'SOLICITUD DE PROSPECTO - FALTA AGENDAR'
+      fecha_hora_visita: null,
+      observaciones: 'SOLICITUD DE PROSPECTO - FALTA AGENDAR',
     }
 
     const token = await getAccessToken()
@@ -412,7 +478,8 @@ export async function crearProspecto(data: {
     revalidatePath('/coordinacion')
     return { success: true, data: resData }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al crear solicitud'
+    const message =
+      error instanceof Error ? error.message : 'Error al crear solicitud'
     console.error('[crearProspecto]', message)
     return { success: false, error: message }
   }
@@ -439,7 +506,8 @@ export async function reSolicitarMedicion(cod_visita: number) {
     revalidatePath('/coordinacion')
     return { success: true }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al re-solicitar medición'
+    const message =
+      error instanceof Error ? error.message : 'Error al re-solicitar medición'
     console.error('[reSolicitarMedicion]', message)
     return { success: false, error: message }
   }

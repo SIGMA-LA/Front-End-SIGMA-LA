@@ -16,26 +16,30 @@ export default function VisitaCardVisitador({
 }: VisitaCardVisitadorProps) {
   const styles = {
     pendiente: {
-      selected: 'border-orange-400 bg-orange-50 ring-2 ring-orange-300 shadow-lg',
-      default: 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      selected:
+        'border-orange-400 bg-orange-50 ring-2 ring-orange-300 shadow-lg',
+      default:
+        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
       badge: 'bg-orange-500',
     },
     realizada: {
       selected: 'border-green-400 bg-green-50 ring-2 ring-green-300 shadow-lg',
-      default: 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      default:
+        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
       badge: 'bg-green-500',
     },
     cancelada: {
       selected: 'border-red-400 bg-red-50 ring-2 ring-red-300 shadow-lg',
-      default: 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
+      default:
+        'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md',
       badge: 'bg-red-500',
     },
   }
 
-  const variant = isPendiente 
-    ? 'pendiente' 
-    : visita.estado === 'CANCELADA' 
-      ? 'cancelada' 
+  const variant = isPendiente
+    ? 'pendiente'
+    : visita.estado === 'CANCELADA'
+      ? 'cancelada'
       : 'realizada'
 
   return (
@@ -46,15 +50,16 @@ export default function VisitaCardVisitador({
       }`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex-grow space-y-1.5 min-w-0 pr-3">
+        <div className="min-w-0 flex-grow space-y-1.5 pr-3">
           {/* Fecha y Hora */}
           <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
-            {formatDate(visita.fecha_hora_visita)} - {formatTime(visita.fecha_hora_visita)}
+            {formatDate(visita.fecha_hora_visita)} -{' '}
+            {formatTime(visita.fecha_hora_visita)}
           </p>
 
           {/* Motivo/Detalle */}
           <div className="flex items-center gap-1.5">
-            <h4 className="text-sm font-bold text-gray-700 leading-tight truncate lg:text-base">
+            <h4 className="truncate text-sm leading-tight font-bold text-gray-700 lg:text-base">
               {getMotivoText(visita.motivo_visita)}
             </h4>
           </div>
@@ -62,8 +67,10 @@ export default function VisitaCardVisitador({
           {/* Dirección con icono */}
           <div className="flex items-start space-x-1">
             <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400 lg:h-6 lg:w-6" />
-            <p className="text-sm leading-relaxed text-gray-600 lg:text-base break-words min-w-0">
-              {visita.obra?.direccion || visita.direccion_visita || 'Sin dirección'}
+            <p className="min-w-0 text-sm leading-relaxed break-words text-gray-600 lg:text-base">
+              {visita.obra?.direccion ||
+                visita.direccion_visita ||
+                'Sin dirección'}
             </p>
           </div>
         </div>
@@ -73,7 +80,11 @@ export default function VisitaCardVisitador({
           <span
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-md lg:px-4 lg:py-2 lg:text-sm ${styles[variant].badge}`}
           >
-            {variant === 'pendiente' ? 'PENDIENTE' : variant === 'cancelada' ? 'CANCELADA' : 'REALIZADA'}
+            {variant === 'pendiente'
+              ? 'PENDIENTE'
+              : variant === 'cancelada'
+                ? 'CANCELADA'
+                : 'REALIZADA'}
           </span>
         </div>
       </div>
@@ -88,8 +99,6 @@ const getMotivoText = (motivo: string) => {
     REPARACION: 'Reparación',
     ASESORAMIENTO: 'Asesoramiento',
     'VISITA INICIAL': 'Visita Inicial',
-    'TOMA DE MEDIDAS': 'Toma de medidas',
-    'REPLANTEO': 'Replanteo',
   }
   return motivos[motivo] || motivo
 }
