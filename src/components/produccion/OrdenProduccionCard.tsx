@@ -73,12 +73,20 @@ export default function OrdenProduccionCard({
     >
       <div className="flex items-start justify-between">
         <div className="flex-grow space-y-1.5">
-          {/* Número de orden */}
           <div className="flex items-center space-x-2">
             <Package className="h-4 w-4 text-gray-400 lg:h-5 lg:w-5" />
             <p className="text-sm leading-relaxed font-semibold text-gray-800 lg:text-base">
               Orden #{orden.cod_op}
             </p>
+            <span
+              className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider lg:text-xs ${
+                orden.obra.esGrande
+                  ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                  : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+              }`}
+            >
+              {orden.obra.esGrande ? 'Obra Grande' : 'Obra Estándar'}
+            </span>
           </div>
 
           {/* Fecha de validación */}

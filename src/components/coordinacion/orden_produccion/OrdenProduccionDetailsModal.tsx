@@ -12,6 +12,7 @@ import {
   Eye,
   ExternalLink,
   Info,
+  Maximize,
 } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import PDFViewerModal from './PDFViewerModal'
@@ -216,6 +217,16 @@ export default function OrdenProduccionDetailsModal({
                   <p className="text-sm font-medium text-gray-900">
                     {orden.obra?.estado || 'N/A'}
                   </p>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Maximize className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Tamaño de Obra</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {orden.obra.esGrande ? 'Obra Grande' : 'Obra Estándar'}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex items-start gap-2">

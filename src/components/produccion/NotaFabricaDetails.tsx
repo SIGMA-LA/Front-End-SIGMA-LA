@@ -131,9 +131,20 @@ export default function NotaFabricaDetails({
         {/* Header */}
         <div className="flex items-start justify-between space-x-4 border-b pb-6">
           <div className="flex-1">
-            <h2 className="mb-0 text-2xl font-bold text-gray-900 lg:text-4xl">
-              Nota de Fábrica - Obra #{obra.cod_obra}
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="mb-0 text-2xl font-bold text-gray-900 lg:text-4xl">
+                Nota de Fábrica - Obra #{obra.cod_obra}
+              </h2>
+              <span
+                className={`rounded-md px-3 py-1 text-xs font-bold uppercase tracking-wider lg:text-sm ${
+                  obra.esGrande
+                    ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                    : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+                }`}
+              >
+                {obra.esGrande ? 'Obra Grande' : 'Obra Estándar'}
+              </span>
+            </div>
           </div>
           <div className="flex-shrink-0">
             <FileText className="h-12 w-12 text-gray-300 sm:h-14 sm:w-14 lg:h-16 lg:w-16" />

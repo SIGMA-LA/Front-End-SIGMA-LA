@@ -78,6 +78,15 @@ export default function OrdenProduccionCard({
               <p className="text-base font-semibold text-gray-800 lg:text-lg">
                 Orden #{orden.cod_op}
               </p>
+              <span
+                className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  orden.obra.esGrande
+                    ? 'bg-purple-100 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                    : 'bg-blue-100 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+                }`}
+              >
+                {orden.obra.esGrande ? 'Obra Grande' : 'Obra Estándar'}
+              </span>
             </div>
             <span
               className={`rounded-lg px-3 py-1 text-xs font-semibold text-white shadow-sm ${getEstadoBadgeColor(orden.estado)}`}
