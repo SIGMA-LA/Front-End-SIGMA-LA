@@ -63,6 +63,7 @@ export const MOTIVOS_VISITA = [
 
 export const ESTADOS_VISITA = [
   'PENDIENTE',
+  'SIN AGENDAR',
   'PROGRAMADA',
   'EN CURSO',
   'CANCELADA',
@@ -118,6 +119,7 @@ export const COLORES_ESTADO_OBRA: Record<(typeof ESTADOS_OBRA)[number], string> 
 
 export const COLORES_ESTADO_VISITA: Record<(typeof ESTADOS_VISITA)[number], string> = {
   PENDIENTE: '#94a3b8',
+  'SIN AGENDAR': '#64748b',
   PROGRAMADA: '#3b82f6',
   'EN CURSO': '#f59e0b',
   CANCELADA: '#ef4444',
