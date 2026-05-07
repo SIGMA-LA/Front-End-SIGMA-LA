@@ -32,6 +32,7 @@ export default function PagoCard({
         return
       }
       setShowConfirm(false)
+      notify.success('Pago eliminado correctamente.')
       onRefresh?.()
     } catch {
       notify.error('Error al eliminar el pago')

@@ -88,6 +88,7 @@ export default function VisitaCard({ visita, rolActual }: VisitaCardProps) {
         if (result.success) {
           setShowCancelModal(false)
           setMotivoCancelacion('')
+          notify.success('Visita cancelada correctamente.')
           router.refresh()
         } else {
           notify.error(result.error || 'Error al cancelar la visita')

@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Visita, Obra, Empleado, Localidad, Provincia, OrdenProduccion } from '@/types'
+import type {
+  Visita,
+  Obra,
+  Empleado,
+  Localidad,
+  Provincia,
+  OrdenProduccion,
+} from '@/types'
 import { getObra } from '@/actions/obras'
 import { createVisitaFromForm, updateVisitaFromForm } from '@/actions/visitas'
 import { getActualViatico, getViaticoByDate } from '@/actions/parametros'
@@ -114,14 +121,16 @@ export default function useVisitaForm({
   })
 
   const [isVisitaInicial, setIsVisitaInicial] = useState(
-    !preloadedObra && !visitaEditar?.obra?.cod_obra,
+    !preloadedObra && !visitaEditar?.obra?.cod_obra
   )
   const [visitadorPrincipal, setVisitadorPrincipal] = useState('')
   const [selectedAcompanantes, setSelectedAcompanantes] = useState<string[]>([])
   const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false)
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false)
   const [isVehiculoModalOpen, setIsVehiculoModalOpen] = useState(false)
-  const [selectedProvincia, setSelectedProvincia] = useState<number | undefined>(undefined)
+  const [selectedProvincia, setSelectedProvincia] = useState<
+    number | undefined
+  >(undefined)
   const [localidades, setLocalidades] = useState<Localidad[]>([])
   const [loadingLocalidades, setLoadingLocalidades] = useState(false)
   const [viaticoPorDia, setViaticoPorDia] = useState(0)
@@ -133,7 +142,9 @@ export default function useVisitaForm({
   useEffect(() => {
     async function fetchViatico() {
       if (visitaEditar) {
-        const res = await getViaticoByDate(new Date(visitaEditar.fecha_hora_visita).toISOString())
+        const res = await getViaticoByDate(
+          new Date(visitaEditar.fecha_hora_visita).toISOString()
+        )
         setViaticoPorDia(res.viatico_dia_persona)
       } else {
         const res = await getActualViatico()
@@ -183,11 +194,17 @@ export default function useVisitaForm({
 
       setIsLoadingOps(true)
       try {
-        const { getOrdenesProduccionBusquedaAvanzada } = await import('@/actions/ordenes')
-        const response = await getOrdenesProduccionBusquedaAvanzada({
-          cod_obra: formData.obraId,
-          estado: 'PENDIENTE',
-        }, 1, 1000)
+        const { getOrdenesProduccionBusquedaAvanzada } = await import(
+          '@/actions/ordenes'
+        )
+        const response = await getOrdenesProduccionBusquedaAvanzada(
+          {
+            cod_obra: formData.obraId,
+            estado: 'PENDIENTE',
+          },
+          1,
+          1000
+        )
 
         // Filtrar las OPs elegibles según reglas de negocio
         const filteredOps = response.data.filter((op: OrdenProduccion) => {
@@ -195,7 +212,8 @@ export default function useVisitaForm({
           if (op.estado !== 'PENDIENTE') return false
 
           // 2. Excluir si ya tiene una visita vinculada que no esté CANCELADA
-          const tieneVisitaActiva = op.visita && op.visita.estado !== 'CANCELADA'
+          const tieneVisitaActiva =
+            op.visita && op.visita.estado !== 'CANCELADA'
 
           // Nota: Si la OP es la que viene por URL (selectedOps), la dejamos visible
           if (tieneVisitaActiva && !selectedOps.includes(op.cod_op)) {
@@ -215,7 +233,10 @@ export default function useVisitaForm({
     fetchOps()
   }, [formData.obraId, selectedOps])
 
-  const totalViaticos = (formData.dias_viatico || 0) * ((visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) * viaticoPorDia
+  const totalViaticos =
+    (formData.dias_viatico || 0) *
+    ((visitadorPrincipal ? 1 : 0) + selectedAcompanantes.length) *
+    viaticoPorDia
 
   // Sync motivo_visita with isVisitaInicial toggle
   useEffect(() => {
@@ -232,8 +253,13 @@ export default function useVisitaForm({
     if (formData.fecha && formData.fechaRegreso) {
       const start = new Date(formData.fecha)
       const end = new Date(formData.fechaRegreso)
-      const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-      setFormData((prev) => ({ ...prev, dias_viatico: diff > 0 ? diff : diff === 0 ? 1 : 0 }))
+      const diff = Math.floor(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      )
+      setFormData((prev) => ({
+        ...prev,
+        dias_viatico: diff > 0 ? diff : diff === 0 ? 1 : 0,
+      }))
     }
   }, [formData.fecha, formData.fechaRegreso])
 
@@ -245,19 +271,25 @@ export default function useVisitaForm({
       ? new Date(visitaEditar.fecha_hora_visita)
       : null
     const fechaLocal = fechaVisita
-      ? new Date(fechaVisita.getTime() - fechaVisita.getTimezoneOffset() * 60000)
+      ? new Date(
+          fechaVisita.getTime() - fechaVisita.getTimezoneOffset() * 60000
+        )
       : null
 
     const usoV = Array.isArray(visitaEditar.uso_vehiculo_visita)
       ? visitaEditar.uso_vehiculo_visita[0]
       : visitaEditar.uso_vehiculo_visita
 
-    const fSalida = usoV?.fecha_hora_ini_uso ? new Date(usoV.fecha_hora_ini_uso) : fechaVisita
+    const fSalida = usoV?.fecha_hora_ini_uso
+      ? new Date(usoV.fecha_hora_ini_uso)
+      : fechaVisita
     const fSalidaLocal = fSalida
       ? new Date(fSalida.getTime() - fSalida.getTimezoneOffset() * 60000)
       : null
 
-    const fRegreso = usoV?.fecha_hora_fin_est ? new Date(usoV.fecha_hora_fin_est) : fechaVisita
+    const fRegreso = usoV?.fecha_hora_fin_est
+      ? new Date(usoV.fecha_hora_fin_est)
+      : fechaVisita
     const fRegresoLocal = fRegreso
       ? new Date(fRegreso.getTime() - fRegreso.getTimezoneOffset() * 60000)
       : null
@@ -267,8 +299,12 @@ export default function useVisitaForm({
       horaSalida: fSalidaLocal ? fSalidaLocal.toISOString().slice(11, 16) : '',
       fecha: fechaLocal ? fechaLocal.toISOString().slice(0, 10) : '',
       hora: fechaLocal ? fechaLocal.toISOString().slice(11, 16) : '',
-      fechaRegreso: fRegresoLocal ? fRegresoLocal.toISOString().slice(0, 10) : '',
-      horaRegreso: fRegresoLocal ? fRegresoLocal.toISOString().slice(11, 16) : '',
+      fechaRegreso: fRegresoLocal
+        ? fRegresoLocal.toISOString().slice(0, 10)
+        : '',
+      horaRegreso: fRegresoLocal
+        ? fRegresoLocal.toISOString().slice(11, 16)
+        : '',
       motivo_visita: visitaEditar.motivo_visita ?? 'OTRO',
       observaciones: visitaEditar.observaciones ?? '',
       direccion: visitaEditar.direccion_visita ?? '',
@@ -286,7 +322,9 @@ export default function useVisitaForm({
 
     if (visitaEditar.empleado_visita?.length) {
       setVisitadorPrincipal(visitaEditar.empleado_visita[0]?.cuil ?? '')
-      setSelectedAcompanantes(visitaEditar.empleado_visita.slice(1).map((e) => e.cuil))
+      setSelectedAcompanantes(
+        visitaEditar.empleado_visita.slice(1).map((e) => e.cuil)
+      )
     }
 
     if (visitaEditar.localidad?.cod_provincia) {
@@ -294,12 +332,17 @@ export default function useVisitaForm({
       setLoadingLocalidades(true)
       buscarLocalidades(visitaEditar.localidad.cod_provincia)
         .then((locs) => setLocalidades(locs))
-        .catch((err: Error) => console.error('Error cargando localidades:', err))
+        .catch((err: Error) =>
+          console.error('Error cargando localidades:', err)
+        )
         .finally(() => setLoadingLocalidades(false))
     }
 
     if (visitaEditar.obra && !visitaEditar.direccion_visita) {
-      setFormData((prev) => ({ ...prev, direccion: visitaEditar.obra?.direccion ?? '' }))
+      setFormData((prev) => ({
+        ...prev,
+        direccion: visitaEditar.obra?.direccion ?? '',
+      }))
     }
   }, [visitaEditar, buscarLocalidades])
 
@@ -347,16 +390,22 @@ export default function useVisitaForm({
     // Date Sequence Validation
     const dtVisita = new Date(`${formData.fecha}T${formData.hora}`)
     const dtSalida = new Date(`${formData.fechaSalida}T${formData.horaSalida}`)
-    const dtRegreso = new Date(`${formData.fechaRegreso}T${formData.horaRegreso}`)
+    const dtRegreso = new Date(
+      `${formData.fechaRegreso}T${formData.horaRegreso}`
+    )
 
     if (dtSalida > dtVisita) {
-      setError('La fecha de salida no puede ser posterior a la fecha de la visita.')
+      setError(
+        'La fecha de salida no puede ser posterior a la fecha de la visita.'
+      )
       notify.error('Error en las fechas: Salida posterior a la visita.')
       return
     }
 
     if (dtVisita > dtRegreso) {
-      setError('La fecha de regreso no puede ser anterior a la fecha de la visita.')
+      setError(
+        'La fecha de regreso no puede ser anterior a la fecha de la visita.'
+      )
       notify.error('Error en las fechas: Regreso anterior a la visita.')
       return
     }
@@ -375,17 +424,28 @@ export default function useVisitaForm({
       formDataObj.append('horaRegreso', formData.horaRegreso)
       formDataObj.append('tipo', formData.motivo_visita)
       formDataObj.append('direccion', formData.direccion)
-      formDataObj.append('observaciones', formData.observaciones)
+
+      let finalObs = formData.observaciones.trim()
+      if (finalObs && !visitaEditar && !finalObs.startsWith('Coordinación:')) {
+        finalObs = `Coordinación: ${finalObs}`
+      }
+      formDataObj.append('observaciones', finalObs)
+
       formDataObj.append('vehiculo', formData.vehiculo)
       formDataObj.append('diasViatico', formData.dias_viatico.toString())
-      if (formData.nombre_cliente) formDataObj.append('nombre', formData.nombre_cliente)
-      if (formData.apellido_cliente) formDataObj.append('apellido', formData.apellido_cliente)
-      if (formData.telefono_cliente) formDataObj.append('clienteTelefono', formData.telefono_cliente)
+      if (formData.nombre_cliente)
+        formDataObj.append('nombre', formData.nombre_cliente)
+      if (formData.apellido_cliente)
+        formDataObj.append('apellido', formData.apellido_cliente)
+      if (formData.telefono_cliente)
+        formDataObj.append('clienteTelefono', formData.telefono_cliente)
       if (formData.cod_localidad) {
         formDataObj.append('cod_localidad', formData.cod_localidad.toString())
       }
 
-      const empArr = [visitadorPrincipal, ...selectedAcompanantes].filter(Boolean)
+      const empArr = [visitadorPrincipal, ...selectedAcompanantes].filter(
+        Boolean
+      )
       formDataObj.append('empleados_visita', JSON.stringify(empArr))
 
       if (formData.obraId) {
@@ -401,17 +461,24 @@ export default function useVisitaForm({
         const res = await action(formDataObj)
         if (res.success) {
           notify.success(
-            visitaEditar ? 'Visita actualizada correctamente.' : 'Visita programada correctamente.',
+            visitaEditar
+              ? 'Visita actualizada correctamente.'
+              : 'Visita programada correctamente.'
           )
           router.push('/coordinacion/visitas')
           router.refresh()
         } else {
           setError(res.error ?? 'Error al procesar la visita')
-          notify.error('No se pudo completar la operación. Revise los conflictos de agenda.')
+          notify.error(
+            'No se pudo completar la operación. Revise los conflictos de agenda.'
+          )
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Error desconocido'
-        if (msg.includes('NEXT_REDIRECT') || (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')) {
+        if (
+          msg.includes('NEXT_REDIRECT') ||
+          (err as { digest?: string }).digest?.includes('NEXT_REDIRECT')
+        ) {
           throw err
         }
         setError(msg)

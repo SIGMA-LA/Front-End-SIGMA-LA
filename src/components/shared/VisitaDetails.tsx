@@ -21,8 +21,6 @@ const getTipoText = (tipo: string) => {
     'RE-MEDICION': 'Re-Medición',
     REPARACION: 'Reparación',
     ASESORAMIENTO: 'Asesoramiento',
-    'TOMA DE MEDIDAS': 'Toma de medidas',
-    REPLANTEO: 'Replanteo',
   }
   return tipos[tipo] || tipo
 }
@@ -55,8 +53,10 @@ export default function VisitaDetails({
           setError('No se pudo encontrar la visita seleccionada.')
           return
         }
-        
-        const historicalViatico = await getViaticoByDate(new Date(data.fecha_hora_visita).toISOString())
+
+        const historicalViatico = await getViaticoByDate(
+          new Date(data.fecha_hora_visita).toISOString()
+        )
         setVisita(data)
         setViaticoPorDia(historicalViatico.viatico_dia_persona)
       } catch (err: unknown) {
