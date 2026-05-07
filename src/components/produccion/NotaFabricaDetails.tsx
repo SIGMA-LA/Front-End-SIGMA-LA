@@ -71,7 +71,7 @@ export default function NotaFabricaDetails({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isFinalizando, setIsFinalizando] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
-  const [tieneOpFinalizada, setTieneOpFinalizada] = useState(false)
+  const [ordenes, setOrdenes] = useState<OrdenProduccion[]>([])
 
   const pedido = obra.pedido_stock ?? null
   const hasPedido = pedido !== null
@@ -80,11 +80,19 @@ export default function NotaFabricaDetails({
   const isEnProduccion = obra.estado === 'EN PRODUCCION'
   const isPagadaParcialmente = obra.estado === 'PAGADA PARCIALMENTE'
   const isEnEsperaDeStock = obra.estado === 'EN ESPERA DE STOCK'
-  const puedeCrearOrden = isPagadaParcialmente || isEnEsperaDeStock
-  const puedeFinalizarProduccion = isEnProduccion && tieneOpFinalizada
+  const puedeCrearOrden =
+    isPagadaParcialmente || isEnEsperaDeStock || isEnProduccion
 
-  const handleOrdenesLoaded = useCallback((ordenes: OrdenProduccion[]) => {
-    setTieneOpFinalizada(ordenes.some((op) => op.estado === 'FINALIZADA'))
+  const tieneOpFinalizada = ordenes.some((op) => op.estado === 'FINALIZADA')
+  const todasOpsCerradas =
+    ordenes.length > 0 &&
+    ordenes.every((op) => op.estado === 'FINALIZADA' || op.estado === 'CANCELADA')
+
+  const puedeFinalizarProduccion =
+    isEnProduccion && tieneOpFinalizada && todasOpsCerradas
+
+  const handleOrdenesLoaded = useCallback((nuevasOrdenes: OrdenProduccion[]) => {
+    setOrdenes(nuevasOrdenes)
   }, [])
 
   const notaFabricaUrl = obra.nota_fabrica || null
@@ -312,7 +320,7 @@ export default function NotaFabricaDetails({
                 Acciones
               </h4>
               <div className="flex flex-col gap-3">
-                {(isPagadaParcialmente || isEnEsperaDeStock) && (
+                {(isPagadaParcialmente || isEnEsperaDeStock || isEnProduccion) && (
                   <Button
                     onClick={onCrearOrden}
                     disabled={!puedeCrearOrden}
