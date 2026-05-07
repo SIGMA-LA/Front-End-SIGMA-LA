@@ -72,6 +72,7 @@ export default function ProduccionClient({
     ordenesAprobadasCount,
     ordenesEnProduccionCount,
     ordenesRechazadasCount,
+    ordenesFinalizadasCount,
     selectedOrdenSummary,
     handleTabChange,
     handleNotasTabChange,
@@ -112,49 +113,36 @@ export default function ProduccionClient({
           <div className="flex space-x-3 text-sm lg:space-x-4 lg:text-base">
             {activeTab === 'notas' ? (
               <>
-                <StatBadge
-                  count={notasSinOrdenCount}
-                  label="Sin Orden"
-                  color="orange"
-                />
-                <StatBadge
-                  count={notasConOrdenCount}
-                  label="Con Orden"
-                  color="purple"
-                />
-                <StatBadge
-                  count={notasEnProduccionCount}
-                  label="En Producción"
-                  color="blue"
-                />
-                <StatBadge
-                  count={notasFinalizadasCount}
-                  label="Finalizadas"
-                  color="green"
-                />
+                {activeNotasTab === 'SIN_ORDEN' && (
+                  <StatBadge count={notasSinOrdenCount} label="Sin Orden" color="orange" />
+                )}
+                {activeNotasTab === 'CON_ORDEN' && (
+                  <StatBadge count={notasConOrdenCount} label="Con Orden" color="purple" />
+                )}
+                {activeNotasTab === 'EN_PRODUCCION' && (
+                  <StatBadge count={notasEnProduccionCount} label="En Producción" color="blue" />
+                )}
+                {activeNotasTab === 'FINALIZADA' && (
+                  <StatBadge count={notasFinalizadasCount} label="Finalizadas" color="green" />
+                )}
               </>
             ) : (
               <>
-                <StatBadge
-                  count={ordenesPendientesCount}
-                  label="Pendientes"
-                  color="amber"
-                />
-                <StatBadge
-                  count={ordenesAprobadasCount}
-                  label="Aprobadas"
-                  color="blue"
-                />
-                <StatBadge
-                  count={ordenesEnProduccionCount}
-                  label="En Producción"
-                  color="green"
-                />
-                <StatBadge
-                  count={ordenesRechazadasCount}
-                  label="Rechazadas"
-                  color="orange"
-                />
+                {activeOrdenesTab === 'PENDIENTE' && (
+                  <StatBadge count={ordenesPendientesCount} label="Pendientes" color="amber" />
+                )}
+                {activeOrdenesTab === 'APROBADA' && (
+                  <StatBadge count={ordenesAprobadasCount} label="Aprobadas" color="blue" />
+                )}
+                {activeOrdenesTab === 'EN PRODUCCION' && (
+                  <StatBadge count={ordenesEnProduccionCount} label="En Producción" color="green" />
+                )}
+                {activeOrdenesTab === 'RECHAZADA' && (
+                  <StatBadge count={ordenesRechazadasCount} label="Rechazadas" color="orange" />
+                )}
+                {activeOrdenesTab === 'FINALIZADA' && (
+                  <StatBadge count={ordenesFinalizadasCount} label="Finalizadas" color="green" />
+                )}
               </>
             )}
           </div>
@@ -232,28 +220,7 @@ export default function ProduccionClient({
               <ProduccionEmptyState
                 icon={FileText}
                 message="Selecciona una nota de fábrica para ver los detalles"
-                stats={[
-                  {
-                    count: notasSinOrdenCount,
-                    label: 'Sin Orden',
-                    colorTheme: 'orange',
-                  },
-                  {
-                    count: notasConOrdenCount,
-                    label: 'Con Orden',
-                    colorTheme: 'purple',
-                  },
-                  {
-                    count: notasEnProduccionCount,
-                    label: 'En Producción',
-                    colorTheme: 'blue',
-                  },
-                  {
-                    count: notasFinalizadasCount,
-                    label: 'Finalizadas',
-                    colorTheme: 'green',
-                  },
-                ]}
+                stats={[]}
               />
             )
           ) : selectedOrden ? (
@@ -275,23 +242,7 @@ export default function ProduccionClient({
             <ProduccionEmptyState
               icon={Package}
               message="Selecciona una orden de producción para ver los detalles"
-              stats={[
-                {
-                  count: ordenesPendientesCount,
-                  label: 'Pendientes',
-                  colorTheme: 'amber',
-                },
-                {
-                  count: ordenesAprobadasCount,
-                  label: 'Aprobadas',
-                  colorTheme: 'blue',
-                },
-                {
-                  count: ordenesEnProduccionCount,
-                  label: 'En Producción',
-                  colorTheme: 'green',
-                },
-              ]}
+              stats={[]}
             />
           )}
         </main>

@@ -53,7 +53,9 @@ export default function FinalizarEntregaModal({
             </p>
             <p>
               <strong className="text-gray-800">Cliente:</strong>{' '}
-              {entregaSeleccionada.obra.cliente?.razon_social}
+              {entregaSeleccionada.obra.cliente?.razon_social ||
+                `${entregaSeleccionada.obra.cliente?.nombre || ''} ${entregaSeleccionada.obra.cliente?.apellido || ''}`.trim() ||
+                'Cliente sin nombre'}
             </p>
           </div>
           <div className="space-y-3">

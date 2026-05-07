@@ -23,7 +23,7 @@ import { notify } from '@/lib/toast'
 
 export type MainTab = 'notas' | 'ordenes'
 export type NotasTab = EstadoNotaFabricaProduccion
-export type OrdenesTab = EstadoOrdenProduccion | 'TODOS'
+export type OrdenesTab = EstadoOrdenProduccion
 
 interface ProduccionFilters {
   fechaDesde: string
@@ -71,7 +71,7 @@ export default function useProduccionClient(
   const [activeTab, setActiveTab] = useState<MainTab>('notas')
   const [activeNotasTab, setActiveNotasTab] = useState<NotasTab>('SIN_ORDEN')
   const [activeOrdenesTab, setActiveOrdenesTab] =
-    useState<OrdenesTab>('TODOS')
+    useState<OrdenesTab>('PENDIENTE')
 
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -113,7 +113,7 @@ export default function useProduccionClient(
     [activeNotasTab, notasFilters]
   )
   const activeOrdenesKey = useMemo(
-    () => buildCacheKey(activeOrdenesTab || 'TODOS', ordenesFilters),
+    () => buildCacheKey(activeOrdenesTab, ordenesFilters),
     [activeOrdenesTab, ordenesFilters]
   )
 
@@ -161,6 +161,8 @@ export default function useProduccionClient(
     ordenesCache[buildCacheKey('EN PRODUCCION', EMPTY_FILTERS)]?.length ?? 0
   const ordenesRechazadasCount =
     ordenesCache[buildCacheKey('RECHAZADA', EMPTY_FILTERS)]?.length ?? 0
+  const ordenesFinalizadasCount =
+    ordenesCache[buildCacheKey('FINALIZADA', EMPTY_FILTERS)]?.length ?? 0
 
   // Data Fetching: Notas
   useEffect(() => {
@@ -201,7 +203,7 @@ export default function useProduccionClient(
       setErrorOrdenes(null)
       try {
         const response = await getOrdenesProduccionPorEstadoYFechas({
-          estado: activeOrdenesTab === 'TODOS' ? undefined : activeOrdenesTab,
+          estado: activeOrdenesTab,
           ...getRequestFilters(ordenesFilters),
           pageSize: 1000, // Fetch many for the internal cache/counts
         })
@@ -386,6 +388,7 @@ export default function useProduccionClient(
     ordenesAprobadasCount,
     ordenesEnProduccionCount,
     ordenesRechazadasCount,
+    ordenesFinalizadasCount,
     selectedOrdenSummary,
     handleTabChange,
     handleNotasTabChange,
