@@ -12,6 +12,7 @@ import {
   Upload,
   AlertCircle,
   Info,
+  Maximize,
 } from 'lucide-react'
 import type { OrdenProduccion } from '@/types'
 import { Button } from '@/components/ui/Button'
@@ -196,6 +197,12 @@ export default function OrdenProduccionDetails({
                   <Package className="h-5 w-5 flex-shrink-0 text-blue-500 lg:h-6 lg:w-6" />
                   <span className="font-medium">
                     Obra #{orden.obra.cod_obra}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm lg:space-x-4">
+                  <Maximize className="h-5 w-5 flex-shrink-0 text-blue-500 lg:h-6 lg:w-6" />
+                  <span className="font-medium">
+                    Tamaño de Obra: {orden.obra.esGrande ? 'Grande' : 'Estándar'}
                   </span>
                 </div>
                 <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm lg:space-x-4">
