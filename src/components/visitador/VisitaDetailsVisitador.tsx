@@ -51,12 +51,13 @@ const getEstadoBadge = (estado: Visita['estado']) => {
 }
 
 const getMotivoText = (motivo: Visita['motivo_visita']) => {
-  const motivos = {
+  const motivos: Record<string, string> = {
     MEDICION: 'Medición',
     'RE-MEDICION': 'Re-medición',
     REPARACION: 'Reparación',
     ASESORAMIENTO: 'Asesoramiento',
     'VISITA INICIAL': 'Visita Inicial',
+    OTRO: 'Otro',
   }
   return motivos[motivo] || motivo
 }

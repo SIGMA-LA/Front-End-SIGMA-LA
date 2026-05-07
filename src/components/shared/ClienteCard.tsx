@@ -7,6 +7,7 @@ import type { Cliente, Empleado } from '@/types'
 import VerDetallesCliente from './VerDetallesCliente'
 import { deleteCliente } from '@/actions/clientes'
 import ConfirmDeleteModal from '../ventas/ConfirmDeleteModal'
+import { notify } from '@/lib/toast'
 
 interface ClienteCardProps {
   cliente: Cliente
@@ -53,6 +54,7 @@ export default function ClienteCard({
         const result = await deleteCliente(cliente.cuil)
         if (result.success) {
           setShowDeleteModal(false)
+          notify.success('Cliente eliminado correctamente.')
           router.refresh()
         } else {
           setShowDeleteModal(false)

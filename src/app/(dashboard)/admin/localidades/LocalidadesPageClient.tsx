@@ -9,16 +9,21 @@ import { Input } from '@/components/ui/Input'
 import { deleteLocalidad, getLocalidades } from '@/actions/localidad'
 import ConfirmacionEliminarLocalidadModal from '@/components/admin/ConfirmacionEliminarLocalidadModal'
 import type { Localidad } from '@/types'
+import { notify } from '@/lib/toast'
 
 interface LocalidadesPageClientProps {
   localidades: Localidad[]
 }
 
-export default function LocalidadesPageClient({ localidades: initialLocalidades }: LocalidadesPageClientProps) {
+export default function LocalidadesPageClient({
+  localidades: initialLocalidades,
+}: LocalidadesPageClientProps) {
   const router = useRouter()
   const [localidades, setLocalidades] = useState(initialLocalidades)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [localidadToDelete, setLocalidadToDelete] = useState<Localidad | null>(null)
+  const [localidadToDelete, setLocalidadToDelete] = useState<Localidad | null>(
+    null
+  )
   const [isPending, startTransition] = useTransition()
   const [apiError, setApiError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -60,9 +65,14 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
     startTransition(async () => {
       const result = await deleteLocalidad(localidadToDelete.cod_localidad)
       if (result.success) {
-        setLocalidades(prev => prev.filter(l => l.cod_localidad !== localidadToDelete.cod_localidad))
+        setLocalidades((prev) =>
+          prev.filter(
+            (l) => l.cod_localidad !== localidadToDelete.cod_localidad
+          )
+        )
         setShowDeleteModal(false)
         setLocalidadToDelete(null)
+        notify.success('Localidad eliminada correctamente.')
         router.refresh()
       } else {
         setApiError(result.error || 'Error al eliminar la localidad')
@@ -107,12 +117,12 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
                 placeholder="Buscar localidad por nombre..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="flex-1 h-10 rounded-xl border-gray-200 bg-white text-base transition-all hover:bg-gray-50 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 shadow-sm"
+                className="h-10 flex-1 rounded-xl border-gray-200 bg-white text-base shadow-sm transition-all hover:bg-gray-50 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
               />
               {searchTerm && (
                 <button
                   onClick={handleClearSearch}
-                  className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                  className="px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
                 >
                   Limpiar
                 </button>
@@ -136,7 +146,7 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
                 {searchTerm ? (
                   <button
                     onClick={handleClearSearch}
-                    className="mt-6 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    className="mt-6 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
                   >
                     Limpiar búsqueda
                   </button>
@@ -151,7 +161,7 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-200/50 overflow-hidden">
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-200/50">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="border-b border-gray-100 bg-gray-50/50">
@@ -169,7 +179,10 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {localidades.map((localidad) => (
-                      <tr key={localidad.cod_localidad} className="hover:bg-gray-50/50 transition-colors">
+                      <tr
+                        key={localidad.cod_localidad}
+                        className="transition-colors hover:bg-gray-50/50"
+                      >
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
                           {localidad.nombre_localidad}
                         </td>
@@ -179,7 +192,7 @@ export default function LocalidadesPageClient({ localidades: initialLocalidades 
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteClick(localidad)}
-                            className="text-red-600 hover:text-red-700 transition-colors p-2"
+                            className="p-2 text-red-600 transition-colors hover:text-red-700"
                             disabled={isPending}
                           >
                             <Trash2 className="h-4 w-4" />

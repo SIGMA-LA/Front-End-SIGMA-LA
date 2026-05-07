@@ -6,6 +6,7 @@ import { createLocalidad } from '@/actions/localidad'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { notify } from '@/lib/toast'
 
 import type { CreateLocalidadData } from '@/types'
 
@@ -17,17 +18,20 @@ export default function CrearLocalidadPage() {
   async function handleCreate(data: CreateLocalidadData) {
     setIsPending(true)
     setError(null)
-    
+
     try {
       const result = await createLocalidad(data)
       if (result.success) {
+        notify.success('Localidad creada correctamente.')
         router.push('/admin/localidades')
         router.refresh()
       } else {
         setError(result.error || 'Error al crear la localidad')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear la localidad')
+      setError(
+        err instanceof Error ? err.message : 'Error al crear la localidad'
+      )
     } finally {
       setIsPending(false)
     }
@@ -46,7 +50,12 @@ export default function CrearLocalidadPage() {
           </Link>
         </div>
 
-        <LocalidadFormulario onSubmit={handleCreate} isPending={isPending} error={error} setError={setError} />
+        <LocalidadFormulario
+          onSubmit={handleCreate}
+          isPending={isPending}
+          error={error}
+          setError={setError}
+        />
       </div>
     </div>
   )
