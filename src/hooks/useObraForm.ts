@@ -81,7 +81,11 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
         setProvinciaSeleccionada(prospecto.localidad.cod_provincia)
       }
     }
-  }, [obraExistente, esModoEdicion, clienteSearch, prospecto])
+    // Solo re-inicializar si cambia la obra o el prospecto. 
+    // Usamos selectCliente específicamente en lugar de todo el objeto clienteSearch 
+    // para evitar bucles infinitos cuando el estado de búsqueda cambia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [obraExistente?.cod_obra, prospecto?.cod_visita, esModoEdicion, clienteSearch.selectCliente])
 
   // Sync CUILs with search results
   useEffect(() => {
