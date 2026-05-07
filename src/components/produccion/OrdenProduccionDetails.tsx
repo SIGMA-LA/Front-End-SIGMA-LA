@@ -35,6 +35,7 @@ const getEstadoBadge = (estado: OrdenProduccion['estado']) => {
     'EN PRODUCCION': 'bg-yellow-100 text-yellow-800',
     FINALIZADA: 'bg-green-100 text-green-800',
     RECHAZADA: 'bg-red-100 text-red-800',
+    CANCELADA: 'bg-slate-100 text-slate-800',
   }
   return badges[estado] || 'bg-gray-100 text-gray-800'
 }

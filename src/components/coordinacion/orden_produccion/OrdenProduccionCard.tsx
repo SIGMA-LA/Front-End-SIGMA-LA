@@ -29,6 +29,8 @@ const getEstadoBadgeColor = (estado: string) => {
       return 'bg-gray-500'
     case 'RECHAZADA':
       return 'bg-red-500'
+    case 'CANCELADA':
+      return 'bg-slate-500'
     default:
       return 'bg-gray-400'
   }
