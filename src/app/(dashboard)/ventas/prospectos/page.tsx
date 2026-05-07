@@ -80,21 +80,21 @@ export default async function ProspectosPage({
                               ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                               : prospecto.estado === 'CANCELADA'
                                 ? 'border-rose-200 bg-rose-50 text-rose-700'
-                                : prospecto.fecha_hora_visita
-                                  ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                                : prospecto.estado === 'SIN AGENDAR' || !prospecto.fecha_hora_visita || new Date(prospecto.fecha_hora_visita).getFullYear() <= 1970
+                                  ? 'border-slate-200 bg-slate-50 text-slate-700'
+                                  : 'border-amber-200 bg-amber-50 text-amber-700'
                           }`}
                         >
                           {prospecto.estado === 'COMPLETADA'
                             ? 'Medición Lista'
                             : prospecto.estado === 'CANCELADA'
                               ? 'Cancelada'
-                              : prospecto.fecha_hora_visita
-                                ? 'Pendiente de Medición'
-                                : 'Pendiente de Agendar'}
+                              : prospecto.estado === 'SIN AGENDAR' || !prospecto.fecha_hora_visita || new Date(prospecto.fecha_hora_visita).getFullYear() <= 1970
+                                ? 'Pendiente de Agendar'
+                                : 'Pendiente de Medición'}
                         </span>
                       </div>
-
+ 
                       <div className="mt-2 flex flex-col gap-2 text-sm text-gray-600 sm:flex-row sm:items-center sm:gap-6">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="h-4 w-4 text-gray-500" />
@@ -108,7 +108,7 @@ export default async function ProspectosPage({
                             {prospecto.telefono_cliente}
                           </div>
                         )}
-                        {prospecto.fecha_hora_visita && (
+                        {prospecto.fecha_hora_visita && new Date(prospecto.fecha_hora_visita).getFullYear() > 1970 && (
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-4 w-4 text-gray-500" />
                             Agendado para:{' '}

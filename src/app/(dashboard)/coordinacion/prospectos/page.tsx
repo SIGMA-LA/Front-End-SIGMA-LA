@@ -1,4 +1,4 @@
-﻿import { getProspectos } from '@/actions/visitas'
+import { getProspectos } from '@/actions/visitas'
 import {
   ClipboardCheck,
   MapPin,
@@ -16,8 +16,8 @@ export default async function CoordinacionProspectosPage({
   const sp = await searchParams
   const page = Number(typeof sp.page === 'string' ? sp.page : sp.page?.[0]) || 1
 
-  // Get PROGRAMADA (pending measurement assignment) prospectos
-  const prospectosRes = await getProspectos('PROGRAMADA', page, 25)
+  // Get SIN AGENDAR (pending measurement assignment) prospectos
+  const prospectosRes = await getProspectos('SIN AGENDAR', page, 25)
   const prospectos = prospectosRes.data
 
   return (

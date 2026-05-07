@@ -450,8 +450,8 @@ export async function crearProspecto(data: {
       direccion_visita: data.direccion,
       cod_localidad: data.cod_localidad,
       motivo_visita: 'VISITA INICIAL',
-      estado: 'PROGRAMADA', // We keep it PROGRAMADA but without date so it's "pending schedule"
-      fecha_hora_visita: null as unknown as string, // Backend allows null if we send it in API wait, API might reject null if schema is strict? Let's send a fake date far in future if needed? No, backend accepts empty string or null? Let's check backend schema in sigma-la-schemas if it fails. We can also just send it as a random date and wait for coordinacion to change it? Or just let it be. Prisma allows it.
+      estado: 'SIN AGENDAR',
+      fecha_hora_visita: null as unknown as string,
       empleados_visita: [],
       vehiculo: '',
       dias_viatico: 1,
@@ -488,23 +488,20 @@ export async function crearProspecto(data: {
 export async function reSolicitarMedicion(cod_visita: number) {
   try {
     const token = await getAccessToken()
-    await fetchWithErrorHandling<Visita>(
-      `${BASE_URL}/${cod_visita}/re-solicitar`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          estado: 'PROGRAMADA',
-          fecha_hora_visita: null,
-          fecha_cancelacion: null,
-          observaciones: 'RE-SOLICITUD DE MEDICIÓN (Previamente cancelada)',
-        }),
-      }
-    )
-
+    await fetchWithErrorHandling<Visita>(`${BASE_URL}/${cod_visita}/re-solicitar`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        estado: 'SIN AGENDAR',
+        fecha_hora_visita: null,
+        fecha_cancelacion: null,
+        observaciones: 'RE-SOLICITUD DE MEDICIÓN (Previamente cancelada)'
+      }),
+    })
+    
     revalidatePath('/ventas/prospectos')
     revalidatePath('/coordinacion')
     return { success: true }
