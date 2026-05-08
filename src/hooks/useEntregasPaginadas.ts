@@ -33,6 +33,7 @@ export interface UseEntregasPaginadasReturn {
   hasMore: boolean
   lastElementRef: (node: HTMLDivElement | null) => void
   handleRetry: () => Promise<void>
+  refresh: () => Promise<void>
 }
 
 // ---------------------------------------------------------------------------
@@ -139,9 +140,9 @@ export default function useEntregasPaginadas({
     void loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
   }, [estadoFiltro, debouncedSearch, debouncedDate, loadEntregas])
 
-  const handleRetry = async () => {
+  const refresh = useCallback(async () => {
     await loadEntregas(estadoFiltro, debouncedSearch, debouncedDate)
-  }
+  }, [estadoFiltro, debouncedSearch, debouncedDate, loadEntregas])
 
   return {
     entregas,
@@ -156,6 +157,7 @@ export default function useEntregasPaginadas({
     error,
     hasMore,
     lastElementRef,
-    handleRetry,
+    handleRetry: refresh,
+    refresh,
   }
 }

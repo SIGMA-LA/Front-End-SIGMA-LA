@@ -61,8 +61,6 @@ export default function VisitadorClient({
     'VISITAS'
   )
 
-  const actions = useVisitadorActions()
-
   // Paginated visitas
   const {
     visitas,
@@ -75,6 +73,7 @@ export default function VisitadorClient({
     loading: loadingVisitas,
     loadingMore: loadingMoreVisitas,
     lastElementRef: visitaLastRef,
+    refresh: refreshVisitas,
   } = useVisitasPaginadas({
     cuil: usuario.cuil,
     initialData: initialData.visitasPendientes,
@@ -92,9 +91,15 @@ export default function VisitadorClient({
     loading: loadingEntregas,
     loadingMore: loadingMoreEntregas,
     lastElementRef: entregaLastRef,
+    refresh: refreshEntregas,
   } = useEntregasPaginadas({
     cuil: usuario.cuil,
     initialData: initialData.entregasPendientes,
+  })
+
+  const actions = useVisitadorActions({
+    onRefreshVisitas: refreshVisitas,
+    onRefreshEntregas: refreshEntregas,
   })
 
   const entregaStatusFilter =

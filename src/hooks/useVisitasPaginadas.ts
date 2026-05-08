@@ -40,6 +40,7 @@ export interface UseVisitasPaginadasReturn {
   hasMore: boolean
   lastElementRef: (node: HTMLDivElement | null) => void
   handleRetry: () => Promise<void>
+  refresh: () => Promise<void>
 }
 
 // ---------------------------------------------------------------------------
@@ -147,9 +148,9 @@ export default function useVisitasPaginadas({
     void loadVisitas(statusFilter, debouncedSearch, debouncedDate)
   }, [statusFilter, debouncedSearch, debouncedDate, loadVisitas])
 
-  const handleRetry = async () => {
+  const refresh = useCallback(async () => {
     await loadVisitas(statusFilter, debouncedSearch, debouncedDate)
-  }
+  }, [statusFilter, debouncedSearch, debouncedDate, loadVisitas])
 
   return {
     visitas,
@@ -164,6 +165,7 @@ export default function useVisitasPaginadas({
     error,
     hasMore,
     lastElementRef,
-    handleRetry,
+    handleRetry: refresh,
+    refresh,
   }
 }

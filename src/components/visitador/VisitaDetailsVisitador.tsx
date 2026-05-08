@@ -82,33 +82,34 @@ export default function VisitaDetails({
     setIsViewerOpen(true)
   }
 
-  const canFinalize =
-    visita.estado === 'PROGRAMADA' || visita.estado === 'EN CURSO'
+  // Obtener datos del cliente unificados
+  const clienteNombre = visita.obra?.cliente
+    ? (visita.obra.cliente.razon_social ||
+       [visita.obra.cliente.nombre, visita.obra.cliente.apellido].filter(Boolean).join(' '))
+    : ([visita.nombre_cliente, visita.apellido_cliente].filter(Boolean).join(' ') ||
+       'Visita sin obra asignada');
 
-  // Función para obtener la dirección completa para navegación
-  const getDireccionCompleta = () => {
-    const direccion = visita.direccion_visita || visita.obra?.direccion
-    const localidad = visita.obra?.localidad?.nombre_localidad
-
-    return { direccion, localidad }
-  }
+  const telefono = visita.obra?.cliente.telefono || visita.telefono_cliente;
+  const mail = visita.obra?.cliente.mail;
+  const direccion = visita.direccion_visita || visita.obra?.direccion;
+  const localidadNombre = visita.obra?.localidad?.nombre_localidad || visita.localidad?.nombre_localidad;
 
   const handleVerEnMapa = () => {
-    const { direccion, localidad } = getDireccionCompleta()
     if (direccion) {
-      abrirGoogleMaps(direccion, localidad)
+      abrirGoogleMaps(direccion, localidadNombre)
     }
   }
 
   const handleNavegar = () => {
-    const { direccion, localidad } = getDireccionCompleta()
     if (direccion) {
-      navegarADireccion(direccion, localidad)
+      navegarADireccion(direccion, localidadNombre)
     }
   }
 
-  const { direccion, localidad } = getDireccionCompleta()
   const tieneUbicacion = !!direccion
+
+  const canFinalize =
+    visita.estado === 'PROGRAMADA' || visita.estado === 'EN CURSO'
 
   return (
     <Card className="mx-auto w-full max-w-7xl border-gray-200 bg-white shadow-lg lg:max-w-full">
@@ -120,10 +121,7 @@ export default function VisitaDetails({
               Visita #{visita.cod_visita}
             </h2>
             <p className="mb-3 text-lg text-gray-600 lg:text-xl">
-              {visita.obra?.cliente.razon_social ||
-                [visita.obra?.cliente.nombre, visita.obra?.cliente.apellido].filter(Boolean).join(' ') ||
-                [visita.nombre_cliente, visita.apellido_cliente].filter(Boolean).join(' ') ||
-                'Visita sin obra asignada'}
+              {clienteNombre}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span
@@ -148,49 +146,36 @@ export default function VisitaDetails({
           {/* Main Info Column */}
           <div className="flex flex-col gap-6 lg:col-span-7">
             {/* Información de contacto responsiva */}
-            {visita.obra && (
-              <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:gap-6 lg:text-base">
+            {/* Información de contacto unificada */}
+            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 lg:gap-6 lg:text-base">
+              {telefono && (
                 <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm lg:space-x-4">
                   <Phone className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
-                  <span className="break-all">
-                    {visita.obra.cliente.telefono}
-                  </span>
+                  <span className="break-all">{telefono}</span>
                 </div>
+              )}
+              {mail && (
                 <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm lg:space-x-4">
                   <Mail className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
-                  <span className="break-all">{visita.obra.cliente.mail}</span>
+                  <span className="break-all">{mail}</span>
                 </div>
+              )}
+              {direccion && (
                 <div className="col-span-1 flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm sm:col-span-2 lg:space-x-4">
                   <MapPin className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
                   <span className="break-words">
                     {direccion}
-                    {localidad && `, ${localidad}`}
+                    {localidadNombre && `, ${localidadNombre}`}
                   </span>
                 </div>
-                <div className="col-span-1 flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm sm:col-span-2 lg:space-x-4">
-                  <Calendar className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
-                  <span>
-                    Programada: {formatDateTime(visita.fecha_hora_visita)}
-                  </span>
-                </div>
+              )}
+              <div className="col-span-1 flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm sm:col-span-2 lg:space-x-4">
+                <Calendar className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
+                <span>
+                  Programada: {formatDateTime(visita.fecha_hora_visita)}
+                </span>
               </div>
-            )}
-
-            {/* Información sin obra */}
-            {!visita.obra && visita.direccion_visita && (
-              <div className="grid grid-cols-1 gap-4 text-sm lg:gap-6 lg:text-base">
-                <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm lg:space-x-4">
-                  <MapPin className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
-                  <span className="break-words">{visita.direccion_visita}</span>
-                </div>
-                <div className="flex items-center space-x-3 rounded-lg border border-gray-100 bg-gray-50 p-4 shadow-sm lg:space-x-4">
-                  <Calendar className="h-5 w-5 text-blue-500 lg:h-6 lg:w-6" />
-                  <span>
-                    Programada: {formatDateTime(visita.fecha_hora_visita)}
-                  </span>
-                </div>
-              </div>
-            )}
+            </div>
 
             {/* Observaciones */}
             {visita.observaciones && (
