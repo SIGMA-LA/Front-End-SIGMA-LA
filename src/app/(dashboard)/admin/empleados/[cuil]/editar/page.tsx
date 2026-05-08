@@ -20,7 +20,12 @@ export default async function EditarEmpleadoPage({
 
   async function handleUpdate(data: CreateEmpleadoData | UpdateEmpleadoData) {
     'use server'
-    return await updateEmpleado(cuil, data as UpdateEmpleadoData)
+
+    const result = await updateEmpleado(cuil, data as Record<string, unknown>)
+
+    if (!result.success) {
+      throw new Error(result.error || 'Error al actualizar empleado')
+    }
   }
 
   return (
