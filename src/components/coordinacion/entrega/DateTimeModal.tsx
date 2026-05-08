@@ -37,6 +37,8 @@ export default function DateTimeModal({
   const [fechaRegreso, setFechaRegreso] = useState(initialValues.fechaRegreso)
   const [horaRegreso, setHoraRegreso] = useState(initialValues.horaRegreso)
 
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     if (isOpen) {
       setFecha(initialValues.fecha)
@@ -45,8 +47,43 @@ export default function DateTimeModal({
       setHoraSalida(initialValues.horaSalida)
       setFechaRegreso(initialValues.fechaRegreso)
       setHoraRegreso(initialValues.horaRegreso)
+      setError(null)
     }
   }, [isOpen, initialValues])
+
+  // Helper to combine date and time strings into a Date object
+  const createDateTime = (d: string, t: string): Date | null => {
+    if (!d || !t) return null
+    return new Date(`${d}T${t}`)
+  }
+
+  const validateSequence = (): boolean => {
+    const dtEntrega = createDateTime(fecha, hora)
+    const dtSalida = createDateTime(fechaSalida, horaSalida)
+    const dtRegreso = createDateTime(fechaRegreso, horaRegreso)
+
+    if (!dtEntrega || !dtSalida || !dtRegreso) return false
+
+    if (dtSalida > dtEntrega) {
+      setError('La fecha de salida de planta no puede ser posterior a la fecha de llegada al cliente.')
+      return false
+    }
+
+    if (dtEntrega > dtRegreso) {
+      setError('La fecha de regreso a planta no puede ser anterior a la fecha de llegada al cliente.')
+      return false
+    }
+
+    setError(null)
+    return true
+  }
+
+  useEffect(() => {
+    if (isOpen) {
+      validateSequence()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha, hora, fechaSalida, horaSalida, fechaRegreso, horaRegreso, isOpen])
 
   if (!isOpen) return null
 
@@ -56,7 +93,8 @@ export default function DateTimeModal({
     fechaSalida !== '' &&
     horaSalida !== '' &&
     fechaRegreso !== '' &&
-    horaRegreso !== ''
+    horaRegreso !== '' &&
+    error === null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,6 +124,13 @@ export default function DateTimeModal({
         </div>
 
         <div className="p-6">
+          {error && (
+            <div className="mb-6 rounded-lg bg-red-50 p-3 text-sm font-medium text-red-600 border border-red-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
