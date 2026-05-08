@@ -9,6 +9,7 @@ import type {
   RolEmpleado,
   AreaTrabajo,
 } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 import { notify } from '@/lib/toast'
 
 interface FormErrors {
@@ -30,7 +31,7 @@ const formatCUIL = (value: string): string => {
 
 export default function useEmpleadoForm(
   empleado: Empleado | null | undefined,
-  onSubmit: (data: CreateEmpleadoData | UpdateEmpleadoData) => Promise<void>
+  onSubmit: (data: CreateEmpleadoData | UpdateEmpleadoData) => Promise<ActionResponse<any>>
 ) {
   const router = useRouter()
   const isEdit = Boolean(empleado)
@@ -131,7 +132,13 @@ export default function useEmpleadoForm(
         ...(contrasenia.trim() !== '' ? { contrasenia } : {})
       } as CreateEmpleadoData | UpdateEmpleadoData
 
-      await onSubmit(dataToSubmit)
+      const result = await onSubmit(dataToSubmit) as unknown as ActionResponse
+      
+      if (result && !result.success) {
+        setApiError(result.error || 'Error al procesar el empleado')
+        notify.error(result.error || 'Error al procesar el empleado')
+        return
+      }
       
       notify.success(isEdit ? 'Empleado actualizado correctamente.' : 'Empleado creado correctamente.')
       setShowConfirmModal(false)

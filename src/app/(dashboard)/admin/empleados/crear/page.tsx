@@ -8,11 +8,7 @@ import type { CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
 export default function CrearEmpleadoPage() {
   async function handleCreate(data: CreateEmpleadoData | UpdateEmpleadoData) {
     'use server'
-    const result = await createEmpleado(data as CreateEmpleadoData)
-
-    if (!result.success) {
-      throw new Error(result.error || 'Error al crear empleado')
-    }
+    return await createEmpleado(data as CreateEmpleadoData)
   }
 
   return (

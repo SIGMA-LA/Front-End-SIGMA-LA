@@ -4,6 +4,7 @@ import { User } from 'lucide-react'
 import ConfirmacionEmpleadoModal from '@/components/admin/ConfirmacionEmpleadoModal'
 import { Button } from '@/components/ui/Button'
 import type { Empleado, CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
+import type { ActionResponse } from '@/types/actions'
 import useEmpleadoForm from '@/hooks/useEmpleadoForm'
 import { InfoPersonal, InfoLaboral, SeguridadAcceso } from './empleado/SeccionesEmpleado'
 
@@ -16,7 +17,7 @@ export default function EmpleadoFormulario({
   onSubmit,
 }: {
   empleado?: Empleado | null
-  onSubmit: (data: CreateEmpleadoData | UpdateEmpleadoData) => Promise<void>
+  onSubmit: (data: CreateEmpleadoData | UpdateEmpleadoData) => Promise<ActionResponse<any>>
 }) {
   const {
     formData,
