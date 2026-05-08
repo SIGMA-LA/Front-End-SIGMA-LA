@@ -231,8 +231,29 @@ export async function getOrdenesByObra(
 export async function getOrdenesByObraAndFinalizada(
   cod_obra: number
 ): Promise<OrdenProduccion[]> {
-  const ordenes = await getOrdenesByObra(cod_obra)
-  return ordenes.filter((orden) => orden.estado === 'FINALIZADA')
+  try {
+    const token = await getAccessToken()
+    const response = await fetchWithErrorHandling<OrdenProduccion[]>(
+      `${BASE_URL}/obra/${cod_obra}/finalizada`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        next: {
+          revalidate: 30,
+          tags: ['ordenes-produccion', `ordenes-obra-${cod_obra}`],
+        },
+      }
+    )
+
+    const data = await response.json()
+    return Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('[getOrdenesByObraAndFinalizada]', error)
+    return []
+  }
 }
 
 /**
