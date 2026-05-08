@@ -5,7 +5,11 @@ import ConfirmacionEmpleadoModal from '@/components/admin/ConfirmacionEmpleadoMo
 import { Button } from '@/components/ui/Button'
 import type { Empleado, CreateEmpleadoData, UpdateEmpleadoData } from '@/types'
 import useEmpleadoForm from '@/hooks/useEmpleadoForm'
-import { InfoPersonal, InfoLaboral, SeguridadAcceso } from './empleado/SeccionesEmpleado'
+import {
+  InfoPersonal,
+  InfoLaboral,
+  SeguridadAcceso,
+} from './empleado/SeccionesEmpleado'
 
 /**
  * Main form for creating or editing an employee (empleado).
@@ -30,7 +34,7 @@ export default function EmpleadoFormulario({
     isEdit,
     handleChange,
     handlePreSubmit,
-    handleConfirmSubmit
+    handleConfirmSubmit,
   } = useEmpleadoForm(empleado, onSubmit)
 
   return (
@@ -39,7 +43,7 @@ export default function EmpleadoFormulario({
         {/* Header */}
         <div className="border-b border-gray-100 bg-white px-8 py-8">
           <div className="flex items-center gap-5">
-            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100/50">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-blue-100/50 bg-blue-50">
               <User className="h-8 w-8 text-blue-600" />
             </div>
             <div>
@@ -47,31 +51,36 @@ export default function EmpleadoFormulario({
                 {isEdit ? 'Editar Empleado' : 'Nuevo Empleado'}
               </h2>
               <p className="mt-1.5 text-sm text-gray-500">
-                {isEdit ? 'Actualiza la información del empleado seleccionado' : 'Registra un nuevo empleado con sus roles y credenciales'}
+                {isEdit
+                  ? 'Actualiza la información del empleado seleccionado'
+                  : 'Registra un nuevo empleado con sus roles y credenciales'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handlePreSubmit} className="p-8 space-y-12 bg-gray-50/30">
-          <InfoPersonal 
-            formData={formData} 
-            errors={errors} 
-            handleChange={handleChange} 
-            isEdit={isEdit} 
+        <form
+          onSubmit={handlePreSubmit}
+          className="space-y-12 bg-gray-50/30 p-8"
+        >
+          <InfoPersonal
+            formData={formData}
+            errors={errors}
+            handleChange={handleChange}
+            isEdit={isEdit}
           />
-          
-          <InfoLaboral 
-            formData={formData} 
-            errors={errors} 
-            handleChange={handleChange} 
+
+          <InfoLaboral
+            formData={formData}
+            errors={errors}
+            handleChange={handleChange}
           />
-          
-          <SeguridadAcceso 
-            formData={formData} 
-            errors={errors} 
-            handleChange={handleChange} 
+
+          <SeguridadAcceso
+            formData={formData}
+            errors={errors}
+            handleChange={handleChange}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             isEdit={isEdit}
@@ -83,17 +92,21 @@ export default function EmpleadoFormulario({
               type="button"
               onClick={() => window.history.back()}
               variant="outline"
-              className="h-12 w-full rounded-xl text-base font-medium sm:w-auto sm:px-8 border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              className="h-12 w-full rounded-xl border-gray-300 text-base font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto sm:px-8"
               disabled={isPending}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="h-12 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-base font-semibold sm:w-auto sm:px-8 text-white transition-all shadow-md shadow-blue-500/20"
+              className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-md shadow-blue-500/20 transition-all hover:bg-blue-700 sm:w-auto sm:px-8"
               disabled={isPending}
             >
-              {isPending ? 'Procesando...' : isEdit ? 'Guardar Cambios' : 'Crear Empleado'}
+              {isPending
+                ? 'Procesando...'
+                : isEdit
+                  ? 'Guardar Cambios'
+                  : 'Crear Empleado'}
             </Button>
           </div>
         </form>

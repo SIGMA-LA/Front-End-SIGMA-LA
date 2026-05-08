@@ -83,7 +83,7 @@ export default function useEmpleadoForm(
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
     const cuilNumbers = formData.cuil.replace(/\D/g, '')
-    
+
     if (!cuilNumbers) {
       newErrors.cuil = 'El CUIL es obligatorio'
     } else if (cuilNumbers.length < 11 || cuilNumbers.length > 13) {
@@ -124,21 +124,26 @@ export default function useEmpleadoForm(
     try {
       const cuilLimpio = formData.cuil.replace(/\D/g, '')
       const { contrasenia, ...rest } = formData
-      
+
       const dataToSubmit = {
         ...rest,
         cuil: cuilLimpio,
-        ...(contrasenia.trim() !== '' ? { contrasenia } : {})
+        ...(contrasenia.trim() !== '' ? { contrasenia } : {}),
       } as CreateEmpleadoData | UpdateEmpleadoData
 
       await onSubmit(dataToSubmit)
-      
-      notify.success(isEdit ? 'Empleado actualizado correctamente.' : 'Empleado creado correctamente.')
+
+      notify.success(
+        isEdit
+          ? 'Empleado actualizado correctamente.'
+          : 'Empleado creado correctamente.'
+      )
       setShowConfirmModal(false)
       router.push('/admin/empleados')
       router.refresh()
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error al procesar el empleado'
+      const message =
+        error instanceof Error ? error.message : 'Error al procesar el empleado'
       setApiError(message)
       notify.error(message)
     } finally {
@@ -158,6 +163,6 @@ export default function useEmpleadoForm(
     isEdit,
     handleChange,
     handlePreSubmit,
-    handleConfirmSubmit
+    handleConfirmSubmit,
   }
 }
