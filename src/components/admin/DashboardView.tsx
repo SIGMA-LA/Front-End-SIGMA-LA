@@ -167,7 +167,7 @@ export default function DashboardView({ stats }: DashboardViewProps) {
             </CardContent>
           </Card>
         </Link>
-        <Link href="/admin/reportes">
+        {/* <Link href="/admin/reportes">
           <Card className="cursor-pointer border-0 shadow-sm transition-all hover:shadow-md hover:-translate-y-1 bg-white">
             <CardContent className="flex flex-col items-center justify-center p-8 text-center">
               <div className="rounded-full bg-green-50 p-4 mb-4">
@@ -181,7 +181,7 @@ export default function DashboardView({ stats }: DashboardViewProps) {
               </p>
             </CardContent>
           </Card>
-        </Link>
+        </Link> */}
         <Link href="/admin/obras">
           <Card className="cursor-pointer border-0 shadow-sm transition-all hover:shadow-md hover:-translate-y-1 bg-white">
             <CardContent className="flex flex-col items-center justify-center p-8 text-center">

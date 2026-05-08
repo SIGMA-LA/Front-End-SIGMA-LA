@@ -31,7 +31,7 @@ const menuItemsCoordinacion = [
 const menuItemsAdmin = [
   { path: '/admin', label: 'Dashboard' },
   { path: '/admin/empleados', label: 'Empleados' },
-  { path: '/admin/reportes', label: 'Reportes' },
+  // { path: '/admin/reportes', label: 'Reportes' },
   { path: '/admin/obras', label: 'Obras' },
   { path: '/admin/configuraciones', label: 'Configuraciones' },
 ]
