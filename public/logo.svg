@@ -1,0 +1,24 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradiente del círculo -->
+    <radialGradient id="bgGradient" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#b8d9ff"></stop>
+      <stop offset="100%" stop-color="#7db5ff"></stop>
+    </radialGradient>
+
+    <!-- Sombra suave -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.15"></feDropShadow>
+    </filter>
+  </defs>
+
+  <!-- Fondo circular -->
+  <circle cx="64" cy="64" r="44" fill="url(#bgGradient)" filter="url(#shadow)"></circle>
+
+  <!-- Sigma estilizada -->
+  <path d="M78 42
+       H50
+       L66 62
+       L50 82
+       H78" fill="none" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>

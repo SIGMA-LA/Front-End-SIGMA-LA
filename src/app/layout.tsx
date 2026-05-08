@@ -8,6 +8,9 @@ import AppToaster from '@/components/ui/AppToaster'
 export const metadata: Metadata = {
   title: 'SIGMA-LA',
   description: 'Sistema de Gestión y Monitoreo de Actividades',
+  icons: {
+    icon: '/logo.svg',
+  },
 }
 
 export default function RootLayout({
