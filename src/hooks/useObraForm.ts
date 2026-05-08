@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getLocalidadesByProvincia } from '@/actions/localidad'
 import { createObra, updateObra } from '@/actions/obras'
+import { getActualParametros } from '@/actions/parametros'
 import { notify } from '@/lib/toast'
 import type { Obra, Visita } from '@/types'
 import type { ObraFormData, PresupuestoFormData } from '@/components/ventas/CrearObra'
@@ -135,7 +136,30 @@ export default function useObraForm({ obraExistente, prospecto, initialState }: 
     }))
   }
 
-  const handleModalSubmit = (presupuestoData: PresupuestoFormData) => {
+  const handleModalSubmit = async (presupuestoData: PresupuestoFormData) => {
+    // Validar vigencia antes de registrar en el estado local
+    if (presupuestoData.fecha_aceptacion && presupuestoData.fecha_emision) {
+      const params = await getActualParametros()
+      
+      if (params && typeof params.dias_vigencia_presu === 'number') {
+        const diasVigencia = params.dias_vigencia_presu
+        
+        // Normalizar fechas para comparación de días (ignorar horas/DST)
+        const fEmision = new Date(presupuestoData.fecha_emision)
+        const fAceptacion = new Date(presupuestoData.fecha_aceptacion)
+
+        const utc1 = Date.UTC(fEmision.getUTCFullYear(), fEmision.getUTCMonth(), fEmision.getUTCDate())
+        const utc2 = Date.UTC(fAceptacion.getUTCFullYear(), fAceptacion.getUTCMonth(), fAceptacion.getUTCDate())
+
+        const diffDays = Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24))
+
+        if (diffDays > diasVigencia) {
+          notify.error(`No se puede registrar: el presupuesto ha superado los ${diasVigencia} días de vigencia permitidos (Diferencia: ${diffDays} días).`)
+          return
+        }
+      }
+    }
+
     if (presupuestoData.nro_presupuesto) {
       setPresupuestos((prev) =>
         prev.map((p) =>
