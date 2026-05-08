@@ -7,7 +7,15 @@ import { finalizarVisita, cancelarVisita } from '@/actions/visitas'
 import { finalizarEntrega, cancelarEntrega } from '@/actions/entregas'
 import { notify } from '@/lib/toast'
 
-export default function useVisitadorActions() {
+interface UseVisitadorActionsParams {
+  onRefreshVisitas?: () => Promise<void>
+  onRefreshEntregas?: () => Promise<void>
+}
+
+export default function useVisitadorActions({
+  onRefreshVisitas,
+  onRefreshEntregas,
+}: UseVisitadorActionsParams = {}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -65,6 +73,7 @@ export default function useVisitadorActions() {
         setObservacionesVisita('')
         setSelectedVisita(null)
         notify.success('Visita finalizada correctamente.')
+        if (onRefreshVisitas) await onRefreshVisitas()
         router.refresh()
       } else {
         notify.error(result.error ?? 'Error al finalizar la visita')
@@ -88,6 +97,7 @@ export default function useVisitadorActions() {
         setObservacionesVisita('')
         setSelectedVisita(null)
         notify.success('Visita cancelada correctamente.')
+        if (onRefreshVisitas) await onRefreshVisitas()
         router.refresh()
       } else {
         notify.error(result.error ?? 'Error al cancelar la visita')
@@ -116,6 +126,7 @@ export default function useVisitadorActions() {
         setObservacionesEntrega('')
         setSelectedEntrega(null)
         notify.success('Entrega finalizada correctamente.')
+        if (onRefreshEntregas) await onRefreshEntregas()
         router.refresh()
       } else {
         notify.error(result.error ?? 'Error al finalizar la entrega')
@@ -140,6 +151,7 @@ export default function useVisitadorActions() {
         setObservacionesEntrega('')
         setSelectedEntrega(null)
         notify.success('Entrega cancelada correctamente.')
+        if (onRefreshEntregas) await onRefreshEntregas()
         router.refresh()
       } else {
         notify.error(result.error ?? 'Error al cancelar la entrega')
